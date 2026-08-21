@@ -28,7 +28,6 @@ import { SettingTile } from '../setting-tile';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { BreakWord } from '../../styles/Text.css';
 import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
 import { timeDayMonYear, timeHourMinute } from '../../utils/time';
 import { useClient } from '../../hooks/useClient';
 import { getIgnoredUsersContent, useIgnoredUsers } from '../../hooks/useIgnoredUsers';
@@ -41,8 +40,8 @@ type UserKickAlertProps = {
   ts?: number;
 };
 export function UserKickAlert({ reason, kickedBy, ts }: UserKickAlertProps) {
-  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
-  const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
+  const [hour24Clock] = useSetting('hour24Clock');
+  const [dateFormatString] = useSetting('dateFormatString');
 
   const time = ts ? timeHourMinute(ts, hour24Clock) : undefined;
   const date = ts ? timeDayMonYear(ts, dateFormatString) : undefined;
@@ -91,8 +90,8 @@ type UserBanAlertProps = {
 export function UserBanAlert({ userId, reason, canUnban, bannedBy, ts }: UserBanAlertProps) {
   const ct = useClient();
   const roomId = useRoom();
-  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
-  const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
+  const [hour24Clock] = useSetting('hour24Clock');
+  const [dateFormatString] = useSetting('dateFormatString');
 
   const time = ts ? timeHourMinute(ts, hour24Clock) : undefined;
   const date = ts ? timeDayMonYear(ts, dateFormatString) : undefined;
@@ -176,8 +175,8 @@ type UserInviteAlertProps = {
 export function UserInviteAlert({ userId, reason, canKick, invitedBy, ts }: UserInviteAlertProps) {
   const ct = useClient();
   const roomId = useRoom();
-  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
-  const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
+  const [hour24Clock] = useSetting('hour24Clock');
+  const [dateFormatString] = useSetting('dateFormatString');
 
   const time = ts ? timeHourMinute(ts, hour24Clock) : undefined;
   const date = ts ? timeDayMonYear(ts, dateFormatString) : undefined;

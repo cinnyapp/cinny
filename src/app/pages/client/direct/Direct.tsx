@@ -42,7 +42,6 @@ import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCatego
 import { markAsRead } from '../../../utils/notifications';
 import { stopPropagation } from '../../../utils/keyboard';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import {
   getRoomNotificationMode,
   useRoomsNotificationPreferencesContext,
@@ -66,7 +65,7 @@ type DirectMenuProps = {
   requestClose: () => void;
 };
 const DirectMenu = forwardRef<HTMLDivElement, DirectMenuProps>(({ requestClose }, ref) => {
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideActivity] = useSetting('hideActivity');
   const directRooms = useDirectRooms();
   const roomsNotifications = useRoomsNotifications(directRooms, roomToNotificationsAtom);
   const notifications = useRoomsTotalNotifications(roomsNotifications);

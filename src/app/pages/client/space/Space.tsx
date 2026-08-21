@@ -65,7 +65,6 @@ import { stopPropagation } from '../../../utils/keyboard';
 import { getMatrixToRoom } from '../../../plugins/matrix-to';
 import { getViaServers } from '../../../plugins/via-servers';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import {
   getRoomNotificationMode,
   useRoomsNotificationPreferencesContext,
@@ -101,7 +100,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ requestClose }, 
   const ct = useClient();
   const { userId } = ct.session;
   const spaceId = useSpace();
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideActivity] = useSetting('hideActivity');
   const roomToParents = useAtomValue(roomToParentsAtom);
   const powerLevelsStateResult = usePowerLevelsState(spaceId);
   const powerLevels = usePowerLevels(powerLevelsStateResult.value);

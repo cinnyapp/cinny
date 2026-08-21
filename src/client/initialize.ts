@@ -1,6 +1,6 @@
 import { MatrixRequest } from 'neurone/lib/matrix-request';
 import { Disposer } from 'neurone/lib/utils/disposable';
-import { Session } from '../app/state/sessions';
+import { removeSession, Session } from './sessions';
 import {
   ClientContext,
   createSecretsObservable,
@@ -38,15 +38,23 @@ import { MachineManager } from './MachineManager';
 import { DecryptionManager } from './decryption';
 import { initializeCrypto } from './crypto';
 import { MegolmBackup } from './MegolmBackup';
+import { clearUserLocalStorage } from './localStorage';
 
-export const initializeClient = async (session: Session): Promise<ClientContext> => {
+export type InitializeClientResult = {
+  ct: ClientContext;
+  dispose: () => void;
+};
+export const initializeClient = async (session: Session): Promise<InitializeClientResult> => {
   const disposer = new Disposer();
 
-  const { storage, deleteStorage } = await createStorage(session.userId);
+  const { storage, deleteStorage, disconnectStorage } = await createStorage(session);
 
   const requestAuthJSON: MatrixRequest = getAuthJSONRequest(session.baseUrl, session.accessToken);
 
-  const { machine, deleteCryptoStorage } = await initializeCrypto(session, requestAuthJSON);
+  const { machine, deleteCryptoStorage, closeMachine } = await initializeCrypto(
+    session,
+    requestAuthJSON
+  );
   await machine.outgoingRequests.processAll();
 
   const state = await createStateContext(storage, disposer);
@@ -98,6 +106,8 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
     disposer.run();
     await deleteCryptoStorage();
     await deleteStorage();
+    clearUserLocalStorage(session.userId);
+    removeSession(session);
   });
 
   const clearCacheAndReload = async () => {
@@ -160,6 +170,8 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
   });
 
   disposer.collect(
+    disconnectStorage,
+    closeMachine,
     megolmBackup,
     decryption,
     syncObservable,
@@ -172,5 +184,8 @@ export const initializeClient = async (session: Session): Promise<ClientContext>
     syncResponseManager
   );
 
-  return ct;
+  return {
+    ct,
+    dispose: () => disposer.run(),
+  };
 };

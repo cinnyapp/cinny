@@ -34,7 +34,6 @@ import { useDebounce } from '../../../hooks/useDebounce';
 import { useAsyncSearch, UseAsyncSearchOptions } from '../../../hooks/useAsyncSearch';
 import { useMembershipFilter, useMembershipFilterMenu } from '../../../hooks/useMemberFilter';
 import { useMemberPowerSort, useMemberSort, useMemberSortMenu } from '../../../hooks/useMemberSort';
-import { settingsAtom } from '../../../state/settings';
 import { useSetting } from '../../../state/hooks/settings';
 import { UseStateProvider } from '../../../components/UseStateProvider';
 import { MembershipFilterMenu } from '../../../components/MembershipFilterMenu';
@@ -90,7 +89,7 @@ export function Members({ requestClose }: MembersProps) {
 
   const membershipFilterMenu = useMembershipFilterMenu(membersAPI.getMembership);
   const sortFilterMenu = useMemberSortMenu(membersAPI.getName);
-  const [sortFilterIndex, setSortFilterIndex] = useSetting(settingsAtom, 'memberSortFilterIndex');
+  const [sortFilterIndex, setSortFilterIndex] = useSetting('memberSortFilterIndex');
   const [membershipFilterIndex, setMembershipFilterIndex] = useState(0);
 
   const membershipFilter = useMembershipFilter(membershipFilterIndex, membershipFilterMenu);

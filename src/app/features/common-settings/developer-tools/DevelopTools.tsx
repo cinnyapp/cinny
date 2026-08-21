@@ -20,7 +20,6 @@ import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import { copyToClipboard } from '../../../utils/dom';
 import { useRoom } from '../../../hooks/useRoom';
 import { StateEventEditor } from './StateEventEditor';
@@ -221,7 +220,7 @@ type DeveloperToolsProps = {
   requestClose: () => void;
 };
 export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
-  const [developerTools, setDeveloperTools] = useSetting(settingsAtom, 'developerTools');
+  const [developerTools, setDeveloperTools] = useSetting('developerTools');
   const ct = useClient();
   const roomId = useRoom();
 
@@ -255,8 +254,7 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
   if (openAccountData !== undefined) {
     return (
       <AccountDataEditor
-        type={openAccountData?.type}
-        content={openAccountData?.content}
+        event={openAccountData ?? undefined}
         submitChange={submitAccountData}
         requestClose={handleClose}
       />

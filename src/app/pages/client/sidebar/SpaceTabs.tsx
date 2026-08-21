@@ -86,7 +86,6 @@ import { getMatrixToRoom } from '../../../plugins/matrix-to';
 import { getViaServers } from '../../../plugins/via-servers';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import { useOpenSpaceSettings } from '../../../state/hooks/spaceSettings';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
@@ -115,7 +114,7 @@ type SpaceMenuProps = {
 const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
   ({ spaceId, requestClose, onUnpin, notifications }, ref) => {
     const ct = useClient();
-    const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+    const [hideActivity] = useSetting('hideActivity');
     const powerLevelState = usePowerLevelsState(spaceId);
     const powerLevels = usePowerLevels(powerLevelState.value);
     const creators = useRoomCreators(spaceId);

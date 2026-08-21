@@ -1,9 +1,6 @@
 import { WritableAtom } from 'jotai';
-import {
-  atomWithLocalStorage,
-  getLocalStorageItem,
-  setLocalStorageItem,
-} from './utils/atomWithLocalStorage';
+import { atomWithLocalStorage } from './utils/atomWithLocalStorage';
+import { getLocalStorageItem, setLocalStorageItem } from '../../client/localStorage';
 
 export type CallPreferences = {
   microphone: boolean;
@@ -19,10 +16,12 @@ const DEFAULT_PREFERENCES: CallPreferences = {
   sound: true,
 };
 
-export type CallPreferencesAtom = WritableAtom<CallPreferences, [CallPreferences], undefined>;
+export type CallPreferencesAtom = WritableAtom<CallPreferences, [CallPreferences], void>;
+
+const getStoreKey = (userId: string) => `${CALL_PREFERENCES}${userId}`;
 
 export const makeCallPreferencesAtom = (userId: string): CallPreferencesAtom => {
-  const storeKey = `${CALL_PREFERENCES}${userId}`;
+  const storeKey = getStoreKey(userId);
 
   const callPreferencesAtom = atomWithLocalStorage<CallPreferences>(
     storeKey,
@@ -36,4 +35,8 @@ export const makeCallPreferencesAtom = (userId: string): CallPreferencesAtom => 
   );
 
   return callPreferencesAtom;
+};
+
+export const clearCallPreferenceStore = (userId: string) => {
+  localStorage.removeItem(getStoreKey(userId));
 };

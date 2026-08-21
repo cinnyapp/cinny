@@ -46,7 +46,6 @@ import {
   getMentions,
 } from '../../../components/editor';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import { UseStateProvider } from '../../../components/UseStateProvider';
 import { EmojiBoard } from '../../../components/emoji-board';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
@@ -66,9 +65,9 @@ export const MessageEditor = as<'div', MessageEditorProps>(
   ({ roomId, event, imagePackRooms, onCancel, ...props }, ref) => {
     const ct = useClient();
     const editor = useEditor();
-    const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
-    const [globalToolbar] = useSetting(settingsAtom, 'editorToolbar');
-    const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
+    const [enterForNewline] = useSetting('enterForNewline');
+    const [globalToolbar] = useSetting('editorToolbar');
+    const [isMarkdown] = useSetting('isMarkdown');
     const [toolbar, setToolbar] = useState(globalToolbar);
     const isComposing = useComposingCheck();
 

@@ -17,8 +17,12 @@ import { stopPropagation } from '../../utils/keyboard';
 import { deleteClientStorage } from '../../../client/storage';
 import { clearNavToActivePathStore } from '../../state/navToActivePath';
 import { deleteClientCryptoStorage } from '../../../client/crypto';
+import { useSession } from '../../hooks/useSessions';
+import { clearUserLocalStorage } from '../../../client/localStorage';
+import { removeSession } from '../../../client/sessions';
 
-export function ClientRootOptions({ userId, ct }: { userId: string; ct?: ClientContext }) {
+export function ClientRootOptions({ ct }: { ct?: ClientContext }) {
+  const session = useSession();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const handleToggle: MouseEventHandler<HTMLButtonElement> = (evt) => {
@@ -29,24 +33,27 @@ export function ClientRootOptions({ userId, ct }: { userId: string; ct?: ClientC
     });
   };
 
-  const handleClearCache = () => {
-    clearNavToActivePathStore(userId);
+  const handleClearCache = async () => {
+    clearNavToActivePathStore(session.userId);
     if (ct) {
       ct.clearCacheAndReload();
       return;
     }
-    deleteClientStorage(userId);
+    await deleteClientStorage(session);
+    window.location.reload();
   };
 
   const handleLogout = async () => {
     if (ct) {
-      ct.logout();
+      await ct.logout();
       return;
     }
 
-    localStorage.clear();
-    await deleteClientCryptoStorage(userId);
-    await deleteClientStorage(userId);
+    await deleteClientCryptoStorage(session);
+    await deleteClientStorage(session);
+    clearUserLocalStorage(session.userId);
+    removeSession(session);
+    window.location.reload();
   };
 
   return (

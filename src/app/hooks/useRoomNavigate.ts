@@ -11,7 +11,6 @@ import { getOrphanParents, guessPerfectParent } from '../utils/room';
 import { roomToParentsAtom } from '../state/room/roomToParents';
 import { mDirectAtom } from '../state/mDirectList';
 import { useSelectedSpace } from './router/useSelectedSpace';
-import { settingsAtom } from '../state/settings';
 import { useSetting } from '../state/hooks/settings';
 import { useClient } from './useClient';
 import { getJoinRoomStateId } from '../../client/storage/collections';
@@ -23,7 +22,7 @@ export const useRoomNavigate = () => {
   const roomToParents = useAtomValue(roomToParentsAtom);
   const mDirects = useAtomValue(mDirectAtom);
   const spaceSelectedId = useSelectedSpace();
-  const [developerTools] = useSetting(settingsAtom, 'developerTools');
+  const [developerTools] = useSetting('developerTools');
 
   const navigateSpace = useCallback(
     (roomId: string) => {

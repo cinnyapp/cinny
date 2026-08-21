@@ -7,7 +7,7 @@ import { useParsedLoginFlows } from '../../../hooks/useParsedLoginFlows';
 import { PasswordLoginForm } from './PasswordLoginForm';
 import { SSOLogin } from '../SSOLogin';
 import { TokenLogin } from './TokenLogin';
-import { OrDivider } from '../OrDivider';
+import { OrDivider } from '../../../components/OrDivider';
 import { getLoginPath, getRegisterPath, withSearchParam } from '../../pathUtils';
 import { usePathWithOrigin } from '../../../hooks/usePathWithOrigin';
 import { LoginPathSearchParams } from '../../paths';
@@ -90,7 +90,7 @@ export function Login() {
           <span data-spacing-node />
         </>
       )}
-      <Text align="Center">
+      <Text size="T300" align="Center">
         Do not have an account? <Link to={getRegisterPath(server)}>Register</Link>
       </Text>
     </Box>

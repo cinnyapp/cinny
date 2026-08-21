@@ -52,7 +52,6 @@ import { PageNav, PageNavHeader, PageNavContent } from '../../../components/page
 import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCategories';
 import { stopPropagation } from '../../../utils/keyboard';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import {
   getRoomNotificationMode,
   useRoomsNotificationPreferencesContext,
@@ -79,7 +78,7 @@ type HomeMenuProps = {
 };
 const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(({ requestClose }, ref) => {
   const orphanRooms = useHomeRooms();
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideActivity] = useSetting('hideActivity');
   const roomsNotifications = useRoomsNotifications(orphanRooms, roomToNotificationsAtom);
   const notifications = useRoomsTotalNotifications(roomsNotifications);
 

@@ -6,7 +6,6 @@ import { RoomAvatar } from '../room-avatar';
 import { nameInitials } from '../../utils/common';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
 import { InviteUserPrompt } from '../invite-user-prompt';
 import { useClient } from '../../hooks/useClient';
 import { useRoom } from '../../hooks/useRoom';
@@ -51,7 +50,7 @@ export const RoomIntro = as<
     'room_id' in event.content.predecessor &&
     event.content.predecessor.room_id;
 
-  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
+  const [hour24Clock] = useSetting('hour24Clock');
 
   return (
     <Box direction="Column" grow="Yes" gap="500" {...props} ref={ref}>

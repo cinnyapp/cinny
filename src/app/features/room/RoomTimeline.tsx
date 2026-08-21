@@ -23,8 +23,8 @@ import {
   RedactedContent,
 } from '../../components/message';
 import { getLatestEditEvent, getReplyId, getThreadId } from '../../utils/room';
-import { useSetting } from '../../state/hooks/settings';
-import { MessageLayout, settingsAtom } from '../../state/settings';
+import { useSettings } from '../../state/hooks/settings';
+import { MessageLayout } from '../../state/settings';
 import { Reactions, Message, ThreadEvents } from './message';
 import { RoomIntro } from '../../components/room-intro';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
@@ -89,20 +89,22 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   const roomId = useRoom();
   const encryptedRooms = useObservableValue(ct.encryptedRooms);
 
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
-  const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
-  const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
-  const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
-  const direct = useIsDirectRoom();
-  const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
-  const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
-  const [encUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
-  const showUrlPreview = encryptedRooms.has(roomId) ? encUrlPreview : urlPreview;
-  const [showHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
-  const [showDeveloperTools] = useSetting(settingsAtom, 'developerTools');
+  const {
+    hideActivity,
+    messageLayout,
+    messageSpacing,
+    legacyUsernameColor,
+    mediaAutoLoad,
+    urlPreview,
+    encUrlPreview,
+    showHiddenEvents,
+    developerTools,
+    hour24Clock,
+    dateFormatString,
+  } = useSettings();
 
-  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
-  const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
+  const direct = useIsDirectRoom();
+  const showUrlPreview = encryptedRooms.has(roomId) ? encUrlPreview : urlPreview;
 
   const ignoredUsersList = useIgnoredUsers();
   const ignoredUsersSet = useMemo(() => new Set(ignoredUsersList), [ignoredUsersList]);
@@ -415,7 +417,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
         onEditId={handleEdit}
         redacted={redacted.has(event.event_id)}
         hideReadReceipts={hideActivity}
-        showDeveloperTools={showDeveloperTools}
+        showDeveloperTools={developerTools}
         memberPowerTag={getMemberPowerTag(event.sender)}
         accessibleTagColors={accessiblePowerTagColors}
         legacyUsernameColor={legacyUsernameColor || direct}

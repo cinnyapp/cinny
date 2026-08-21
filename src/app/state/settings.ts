@@ -1,6 +1,7 @@
-import { atom } from 'jotai';
+import { WritableAtom } from 'jotai';
+import { atomWithLocalStorage } from './utils/atomWithLocalStorage';
+import { getLocalStorageItem, setLocalStorageItem } from '../../client/localStorage';
 
-const STORAGE_KEY = 'settings';
 export type DateFormat =
   | 'D MMM YYYY'
   | 'DD/MM/YYYY'
@@ -83,24 +84,31 @@ const defaultSettings: Settings = {
   developerTools: false,
 };
 
-export const getSettings = () => {
-  const settings = localStorage.getItem(STORAGE_KEY);
-  if (settings === null) return defaultSettings;
-  return {
-    ...defaultSettings,
-    ...(JSON.parse(settings) as Settings),
-  };
+const STORAGE_KEY = 'settings';
+const getStoreKey = (userId: string): string => `${STORAGE_KEY}${userId}`;
+
+// export const settingsAtom = atomWithLocalStorage<Settings>(
+//   STORAGE_KEY,
+//   (key) => getLocalStorageItem<Settings>(key, defaultSettings),
+//   (key, settings) => {
+//     setLocalStorageItem(key, settings);
+//   }
+// );
+
+export type SettingsAtom = WritableAtom<Settings, [Settings], void>;
+
+export const makeSettingsAtom = (userId: string): SettingsAtom => {
+  const settingsAtom = atomWithLocalStorage<Settings>(
+    getStoreKey(userId),
+    (key) => getLocalStorageItem<Settings>(key, defaultSettings),
+    (key, settings) => {
+      setLocalStorageItem(key, settings);
+    }
+  );
+
+  return settingsAtom;
 };
 
-export const setSettings = (settings: Settings) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+export const clearSettingsStore = (userId: string) => {
+  localStorage.removeItem(getStoreKey(userId));
 };
-
-const baseSettings = atom<Settings>(getSettings());
-export const settingsAtom = atom<Settings, [Settings], undefined>(
-  (get) => get(baseSettings),
-  (get, set, update) => {
-    set(baseSettings, update);
-    setSettings(update);
-  }
-);

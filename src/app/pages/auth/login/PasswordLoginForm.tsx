@@ -18,7 +18,8 @@ import {
   config,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSetAtom } from 'jotai';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../../utils/matrix';
 import { EMAIL_REGEX } from '../../../utils/regex';
 import { useAutoDiscoveryInfo } from '../../../hooks/useAutoDiscoveryInfo';
@@ -28,9 +29,11 @@ import { useClientConfig } from '../../../hooks/useClientConfig';
 import { LoginError, factoryGetBaseUrl, login, useLoginComplete } from './loginUtil';
 import { PasswordInput } from '../../../components/password-input';
 import { FieldError } from '../FiledError';
-import { getResetPasswordPath } from '../../pathUtils';
+import { getHomePath, getResetPasswordPath } from '../../pathUtils';
 import { stopPropagation } from '../../../utils/keyboard';
 import { getInitialDeviceDisplayName } from '../../../utils/user-agent';
+import { sessionUserIdAtom } from '../../../state/sessions';
+import { userHasSession } from '../../../../client/sessions';
 
 function UsernameHint({ server }: { server: string }) {
   const [anchor, setAnchor] = useState<RectCords>();
@@ -108,6 +111,9 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
   const server = useAuthServer();
   const clientConfig = useClientConfig();
 
+  const navigate = useNavigate();
+  const setSessionUserId = useSetAtom(sessionUserIdAtom);
+
   const serverDiscovery = useAutoDiscoveryInfo();
   const baseUrl = serverDiscovery['m.homeserver'].base_url;
 
@@ -115,9 +121,20 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
   const [loginError, customLoginResponse] =
     loginState.status === AsyncStatus.Success ? loginState.data : [];
 
-  useLoginComplete(customLoginResponse);
+  const handleLoginComplete = useLoginComplete();
+
+  const openExisting = (userId: string) => {
+    setSessionUserId(userId);
+    navigate(getHomePath(), { replace: true });
+  };
 
   const handleUsernameLogin = (username: string, password: string) => {
+    const userId = `@${username}:${server}`;
+    if (userHasSession(userId)) {
+      openExisting(userId);
+      return;
+    }
+
     startLogin(baseUrl, {
       type: 'm.login.password',
       identifier: {
@@ -126,10 +143,17 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
       },
       password,
       initial_device_display_name: getInitialDeviceDisplayName(),
+    }).then(([, data]) => {
+      if (data) handleLoginComplete(data);
     });
   };
 
   const handleMxIdLogin = async (mxId: string, password: string) => {
+    if (userHasSession(mxId)) {
+      openExisting(mxId);
+      return;
+    }
+
     const mxIdServer = getMxIdServer(mxId);
     const mxIdUsername = getMxIdLocalPart(mxId);
     if (!mxIdServer || !mxIdUsername) return;
@@ -144,6 +168,8 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
       },
       password,
       initial_device_display_name: getInitialDeviceDisplayName(),
+    }).then(([, data]) => {
+      if (data) handleLoginComplete(data);
     });
   };
   const handleEmailLogin = (email: string, password: string) => {
@@ -156,6 +182,8 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
       },
       password,
       initial_device_display_name: getInitialDeviceDisplayName(),
+    }).then(([, data]) => {
+      if (data) handleLoginComplete(data);
     });
   };
 

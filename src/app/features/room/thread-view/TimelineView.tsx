@@ -21,8 +21,8 @@ import {
   RedactedContent,
 } from '../../../components/message';
 import { fallbackReply, getLatestEditEvent, getReplyId } from '../../../utils/room';
-import { useSetting } from '../../../state/hooks/settings';
-import { MessageLayout, settingsAtom } from '../../../state/settings';
+import { useSettings } from '../../../state/hooks/settings';
+import { MessageLayout } from '../../../state/settings';
 import { Reactions, Message } from '../message';
 import * as css from './styles.css';
 import { usePowerLevelsContext } from '../../../hooks/usePowerLevels';
@@ -86,19 +86,21 @@ export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewPro
   const encryptedRooms = useObservableValue(ct.encryptedRooms);
   const editor = useEditor();
 
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
-  const [messageLayout] = useSetting(settingsAtom, 'messageLayout');
-  const [messageSpacing] = useSetting(settingsAtom, 'messageSpacing');
-  const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
-  const direct = useIsDirectRoom();
-  const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
-  const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
-  const [encUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
-  const showUrlPreview = encryptedRooms.has(roomId) ? encUrlPreview : urlPreview;
-  const [showDeveloperTools] = useSetting(settingsAtom, 'developerTools');
+  const {
+    hideActivity,
+    messageLayout,
+    messageSpacing,
+    legacyUsernameColor,
+    mediaAutoLoad,
+    urlPreview,
+    encUrlPreview,
+    developerTools,
+    hour24Clock,
+    dateFormatString,
+  } = useSettings();
 
-  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
-  const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
+  const direct = useIsDirectRoom();
+  const showUrlPreview = encryptedRooms.has(roomId) ? encUrlPreview : urlPreview;
 
   const ignoredUsersList = useIgnoredUsers();
   const ignoredUsersSet = useMemo(() => new Set(ignoredUsersList), [ignoredUsersList]);
@@ -321,7 +323,7 @@ export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewPro
         onEditId={handleEdit}
         redacted={redacted.has(event.event_id)}
         hideReadReceipts={hideActivity}
-        showDeveloperTools={showDeveloperTools}
+        showDeveloperTools={developerTools}
         memberPowerTag={getMemberPowerTag(event.sender)}
         accessibleTagColors={accessiblePowerTagColors}
         legacyUsernameColor={legacyUsernameColor || direct}

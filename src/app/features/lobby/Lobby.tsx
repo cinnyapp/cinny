@@ -21,7 +21,6 @@ import { spaceRoomsAtom } from '../../state/spaceRooms';
 import { MembersDrawer } from '../room/MembersDrawer';
 import { useSetting } from '../../state/hooks/settings';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
-import { settingsAtom } from '../../state/settings';
 import { LobbyHeader } from './LobbyHeader';
 import { LobbyHero } from './LobbyHero';
 import { ScrollTopContainer } from '../../components/scroll-top-container';
@@ -174,7 +173,7 @@ export function Lobby() {
   const heroSectionRef = useRef<HTMLDivElement>(null);
   const [heroSectionHeight, setHeroSectionHeight] = useState<number>();
   const setSpaceRooms = useSetAtom(spaceRoomsAtom);
-  const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
+  const [isDrawer] = useSetting('isPeopleDrawer');
   const screenSize = useScreenSizeContext();
   const [onTop, setOnTop] = useState(true);
   const [closedCategories, setClosedCategories] = useAtom(useClosedLobbyCategoriesAtom());

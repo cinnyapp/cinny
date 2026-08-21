@@ -47,6 +47,7 @@ import {
   createJoinRoomLatestEventCollection,
   prepareJoinRoomLatestEventStore,
 } from './collections';
+import { getSessionStoreName, Session } from '../sessions';
 
 export * from './utils';
 
@@ -78,20 +79,18 @@ export interface Storage {
   presence: PresenceCollection;
 }
 
-const getDBName = (userId: string): string => `client${userId}`;
-
 // create a reference to opened database close callback.
 // used in clearing cache if client failed to initilize.
 let disconnectStorageRef: (() => void) | undefined;
 
 export const createStorage = async (
-  userId: string
+  session: Session
 ): Promise<{
   storage: Storage;
   deleteStorage: () => Promise<void>;
   disconnectStorage: () => void;
 }> => {
-  const dbName = getDBName(userId);
+  const dbName = getSessionStoreName(session).client;
 
   // TODO: handle all openDB callbacks.
   const idb = await openDB(dbName, DATABASE_VERSION, {
@@ -165,8 +164,8 @@ export const createStorage = async (
   return { storage, deleteStorage, disconnectStorage };
 };
 
-export const deleteClientStorage = async (userId: string) => {
+export const deleteClientStorage = async (session: Session) => {
   disconnectStorageRef?.();
-  const dbName = getDBName(userId);
+  const dbName = getSessionStoreName(session).client;
   await deleteDB(dbName);
 };

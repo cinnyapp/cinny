@@ -17,7 +17,6 @@ import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
 import { useDirectRooms } from '../direct/useDirectRooms';
 import { markAsRead } from '../../../utils/notifications';
 import { stopPropagation } from '../../../utils/keyboard';
-import { settingsAtom } from '../../../state/settings';
 import { useSetting } from '../../../state/hooks/settings';
 import {
   TotalNotifications,
@@ -39,7 +38,7 @@ type DirectMenuProps = {
 };
 const DirectMenu = forwardRef<HTMLDivElement, DirectMenuProps>(
   ({ directRooms, roomToNotifications, notifications, requestClose }, ref) => {
-    const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+    const [hideActivity] = useSetting('hideActivity');
 
     const handleMarkAsRead = () => {
       directRooms.forEach((rId) => {

@@ -28,7 +28,6 @@ import { useRoom } from '../../../hooks/useRoom';
 import { getToday, getYesterday, timeDayMonthYear, timeHourMinute } from '../../../utils/time';
 import { DatePicker, TimePicker } from '../../../components/time-date';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import { useClient } from '../../../hooks/useClient';
 
 type JumpToTimeProps = {
@@ -46,7 +45,7 @@ export function JumpToTime({ onCancel, onSubmit }: JumpToTimeProps) {
     ct.state.join.create.read.find((e) => e.roomId === roomId)?.event.origin_server_ts ?? 0;
   const [ts, setTs] = useState(() => Date.now());
 
-  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
+  const [hour24Clock] = useSetting('hour24Clock');
 
   const [timePickerCords, setTimePickerCords] = useState<RectCords>();
   const [datePickerCords, setDatePickerCords] = useState<RectCords>();

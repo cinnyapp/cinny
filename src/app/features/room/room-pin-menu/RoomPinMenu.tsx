@@ -67,7 +67,6 @@ import {
 import { RenderMatrixEvent, useMatrixEventRenderer } from '../../../hooks/useMatrixEventRenderer';
 import { RenderMessageContent } from '../../../components/RenderMessageContent';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import * as customHtmlCss from '../../../styles/CustomHtml.css';
 import { EncryptedContent } from '../message';
 import { Image } from '../../../components/media';
@@ -272,14 +271,14 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(({ reque
   const pinnedEvents = useRoomPinnedEvents(roomId);
   const sortedPinnedEvent = useMemo(() => Array.from(pinnedEvents).reverse(), [pinnedEvents]);
   const useAuthentication = useMediaAuthentication();
-  const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
-  const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
+  const [mediaAutoLoad] = useSetting('mediaAutoLoad');
+  const [urlPreview] = useSetting('urlPreview');
 
   const direct = useIsDirectRoom();
-  const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
+  const [legacyUsernameColor] = useSetting('legacyUsernameColor');
 
-  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
-  const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
+  const [hour24Clock] = useSetting('hour24Clock');
+  const [dateFormatString] = useSetting('dateFormatString');
 
   const { navigateRoom } = useRoomNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);

@@ -46,7 +46,6 @@ import {
   UploadBoardImperativeHandlers,
 } from '../../components/upload-board';
 import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
 import { CommandAutocomplete } from './CommandAutocomplete';
 import { useCommands } from '../../hooks/useCommands';
 import { mobileOrTablet } from '../../utils/user-agent';
@@ -81,9 +80,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
   ({ editor, fileDropContainerRef, threadId }, ref) => {
     const roomId = useRoom();
 
-    const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
-    const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
-    const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
+    const [enterForNewline] = useSetting('enterForNewline');
+    const [hideActivity] = useSetting('hideActivity');
+    const [legacyUsernameColor] = useSetting('legacyUsernameColor');
     const [ping, setPing] = useState(true);
 
     const direct = useIsDirectRoom();
@@ -129,7 +128,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
     const imagePackRooms: string[] = useImagePackRooms(roomId);
 
-    const [toolbar, setToolbar] = useSetting(settingsAtom, 'editorToolbar');
+    const [toolbar, setToolbar] = useSetting('editorToolbar');
     const [autocompleteQuery, setAutocompleteQuery] =
       useState<AutocompleteQuery<AutocompletePrefix>>();
 

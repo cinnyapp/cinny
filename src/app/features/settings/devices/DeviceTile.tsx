@@ -28,7 +28,6 @@ import { SequenceCardStyle } from '../styles.css';
 import { LogoutDialog } from '../../../components/LogoutDialog';
 import { stopPropagation } from '../../../utils/keyboard';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import { useClient } from '../../../hooks/useClient';
 import { useAlive } from '../../../hooks/useAlive';
 
@@ -45,8 +44,8 @@ export function DeviceTilePlaceholder() {
 }
 
 function DeviceActiveTime({ ts }: { ts: number }) {
-  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
-  const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
+  const [hour24Clock] = useSetting('hour24Clock');
+  const [dateFormatString] = useSetting('dateFormatString');
 
   return (
     <Text className={BreakWord} size="T200">

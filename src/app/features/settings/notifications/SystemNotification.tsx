@@ -6,7 +6,6 @@ import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import { getNotificationState, usePermissionState } from '../../../hooks/usePermission';
 import { useEmailNotifications } from '../../../hooks/useEmailNotifications';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
@@ -95,11 +94,8 @@ function EmailNotification() {
 
 export function SystemNotification() {
   const notifPermission = usePermissionState('notifications', getNotificationState());
-  const [showNotifications, setShowNotifications] = useSetting(settingsAtom, 'showNotifications');
-  const [isNotificationSounds, setIsNotificationSounds] = useSetting(
-    settingsAtom,
-    'isNotificationSounds'
-  );
+  const [showNotifications, setShowNotifications] = useSetting('showNotifications');
+  const [isNotificationSounds, setIsNotificationSounds] = useSetting('isNotificationSounds');
 
   const requestNotificationPermission = () => {
     window.Notification.requestPermission();

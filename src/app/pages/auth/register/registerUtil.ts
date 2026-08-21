@@ -4,8 +4,9 @@ import {
   PostRegisterOK,
 } from 'neurone/lib/api/matrix/client/v3/register';
 import { parseMatrixResp } from 'neurone/lib/matrix-request';
-import { useEffect } from 'react';
+import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSetAtom } from 'jotai';
 import { LoginPathSearchParams } from '../../paths';
 import { ErrorCode } from '../../../cs-errorcode';
 import {
@@ -14,9 +15,9 @@ import {
 } from '../../afterLoginRedirectPath';
 import { getHomePath, getLoginPath, withSearchParam } from '../../pathUtils';
 import { getMxIdLocalPart, getMxIdServer } from '../../../utils/matrix';
-import { setFallbackSession } from '../../../state/sessions';
 import { AuthResponse } from '../../../utils/matrix-uia';
 import { getJSONRequest } from '../../../../client/request';
+import { sessionsAtom, sessionUserIdAtom } from '../../../state/sessions';
 
 export enum RegisterError {
   UserTaken = 'UserTaken',
@@ -136,11 +137,13 @@ export const register = async (
   ];
 };
 
-export const useRegisterComplete = (data?: CustomRegisterResponse) => {
+export const useRegisterComplete = () => {
   const navigate = useNavigate();
+  const setSession = useSetAtom(sessionsAtom);
+  const setSessionUserId = useSetAtom(sessionUserIdAtom);
 
-  useEffect(() => {
-    if (data) {
+  const handleRegisterComplete = useCallback(
+    (data: CustomRegisterResponse) => {
       const { response, baseUrl } = data;
 
       const userId = response.user_id;
@@ -148,7 +151,19 @@ export const useRegisterComplete = (data?: CustomRegisterResponse) => {
       const deviceId = response.device_id;
 
       if (accessToken && deviceId) {
-        setFallbackSession(accessToken, deviceId, userId, baseUrl);
+        setSessionUserId(userId);
+        setSession({
+          type: 'PUT',
+          session: {
+            accessToken,
+            deviceId,
+            userId,
+            baseUrl,
+            expiresInMs: response.expires_in_ms,
+            refreshToken: response.refresh_token,
+          },
+        });
+
         const afterLoginRedirectPath = getAfterLoginRedirectPath();
         deleteAfterLoginRedirectPath();
         navigate(afterLoginRedirectPath ?? getHomePath(), { replace: true });
@@ -162,6 +177,9 @@ export const useRegisterComplete = (data?: CustomRegisterResponse) => {
           { replace: true }
         );
       }
-    }
-  }, [data, navigate]);
+    },
+    [navigate, setSession, setSessionUserId]
+  );
+
+  return handleRegisterComplete;
 };

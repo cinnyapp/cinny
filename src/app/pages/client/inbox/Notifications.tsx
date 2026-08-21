@@ -64,7 +64,6 @@ import {
 } from '../../../plugins/react-custom-html-parser';
 import { RenderMessageContent } from '../../../components/RenderMessageContent';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import { Image } from '../../../components/media';
 import { ImageViewer } from '../../../components/image-viewer';
 import { GetContentCallback, MessageEvent, StateEvent } from '../../../../types/matrix/room';
@@ -561,12 +560,12 @@ const DEFAULT_REFRESH_MS = 7000;
 
 export function Notifications() {
   const mx = useMatrixClient();
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
-  const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
-  const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
-  const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
-  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
-  const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
+  const [hideActivity] = useSetting('hideActivity');
+  const [mediaAutoLoad] = useSetting('mediaAutoLoad');
+  const [urlPreview] = useSetting('urlPreview');
+  const [legacyUsernameColor] = useSetting('legacyUsernameColor');
+  const [hour24Clock] = useSetting('hour24Clock');
+  const [dateFormatString] = useSetting('dateFormatString');
   const screenSize = useScreenSizeContext();
   const mDirects = useAtomValue(mDirectAtom);
 

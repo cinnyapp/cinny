@@ -49,18 +49,19 @@ export function TokenLogin({ token }: TokenLoginProps) {
 
   const [loginState, startLogin] = useAsyncCallback(useCallback(login, []));
 
+  const handleLoginComplete = useLoginComplete();
+
   useEffect(() => {
     startLogin(baseUrl, {
       type: 'm.login.token',
       token,
       initial_device_display_name: getInitialDeviceDisplayName(),
+    }).then(([, data]) => {
+      if (data) handleLoginComplete(data);
     });
-  }, [baseUrl, token, startLogin]);
+  }, [baseUrl, token, startLogin, handleLoginComplete]);
 
-  const [loginError, customLoginResponse] =
-    loginState.status === AsyncStatus.Success ? loginState.data : [];
-
-  useLoginComplete(customLoginResponse);
+  const [loginError] = loginState.status === AsyncStatus.Success ? loginState.data : [];
 
   return (
     <>

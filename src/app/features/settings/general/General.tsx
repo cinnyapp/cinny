@@ -32,7 +32,7 @@ import FocusTrap from 'focus-trap-react';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { SequenceCard } from '../../../components/sequence-card';
 import { useSetting } from '../../../state/hooks/settings';
-import { DateFormat, MessageLayout, MessageSpacing, settingsAtom } from '../../../state/settings';
+import { DateFormat, MessageLayout, MessageSpacing } from '../../../state/settings';
 import { SettingTile } from '../../../components/setting-tile';
 import { KeySymbol } from '../../../utils/key-symbol';
 import { isMacOS } from '../../../utils/user-agent';
@@ -80,7 +80,7 @@ const ThemeSelector = as<'div', ThemeSelectorProps>(
 function SelectTheme({ disabled }: { disabled?: boolean }) {
   const themes = useThemes();
   const themeNames = useThemeNames();
-  const [themeId, setThemeId] = useSetting(settingsAtom, 'themeId');
+  const [themeId, setThemeId] = useSetting('themeId');
   const [menuCords, setMenuCords] = useState<RectCords>();
   const selectedTheme = themes.find((theme) => theme.id === themeId) ?? LightTheme;
 
@@ -142,8 +142,8 @@ function SystemThemePreferences() {
   const themeKind = useSystemThemeKind();
   const themeNames = useThemeNames();
   const themes = useThemes();
-  const [lightThemeId, setLightThemeId] = useSetting(settingsAtom, 'lightThemeId');
-  const [darkThemeId, setDarkThemeId] = useSetting(settingsAtom, 'darkThemeId');
+  const [lightThemeId, setLightThemeId] = useSetting('lightThemeId');
+  const [darkThemeId, setDarkThemeId] = useSetting('darkThemeId');
 
   const lightThemes = themes.filter((theme) => theme.kind === ThemeKind.Light);
   const darkThemes = themes.filter((theme) => theme.kind === ThemeKind.Dark);
@@ -260,7 +260,7 @@ function SystemThemePreferences() {
 }
 
 function PageZoomInput() {
-  const [pageZoom, setPageZoom] = useSetting(settingsAtom, 'pageZoom');
+  const [pageZoom, setPageZoom] = useSetting('pageZoom');
   const [currentZoom, setCurrentZoom] = useState(`${pageZoom}`);
 
   const handleZoomChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
@@ -304,9 +304,9 @@ function PageZoomInput() {
 }
 
 function Appearance() {
-  const [systemTheme, setSystemTheme] = useSetting(settingsAtom, 'useSystemTheme');
-  const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
-  const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
+  const [systemTheme, setSystemTheme] = useSetting('useSystemTheme');
+  const [monochromeMode, setMonochromeMode] = useSetting('monochromeMode');
+  const [twitterEmoji, setTwitterEmoji] = useSetting('twitterEmoji');
 
   return (
     <Box direction="Column" gap="100">
@@ -662,7 +662,7 @@ function PresetDateFormat({ value, onChange }: PresetDateFormatProps) {
 }
 
 function SelectDateFormat() {
-  const [dateFormatString, setDateFormatString] = useSetting(settingsAtom, 'dateFormatString');
+  const [dateFormatString, setDateFormatString] = useSetting('dateFormatString');
   const [selectedDateFormat, setSelectedDateFormat] = useState(dateFormatString);
   const customDateFormat = selectedDateFormat === '';
 
@@ -688,7 +688,7 @@ function SelectDateFormat() {
 }
 
 function DateAndTime() {
-  const [hour24Clock, setHour24Clock] = useSetting(settingsAtom, 'hour24Clock');
+  const [hour24Clock, setHour24Clock] = useSetting('hour24Clock');
 
   return (
     <Box direction="Column" gap="100">
@@ -708,9 +708,9 @@ function DateAndTime() {
 }
 
 function Editor() {
-  const [enterForNewline, setEnterForNewline] = useSetting(settingsAtom, 'enterForNewline');
-  const [isMarkdown, setIsMarkdown] = useSetting(settingsAtom, 'isMarkdown');
-  const [hideActivity, setHideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [enterForNewline, setEnterForNewline] = useSetting('enterForNewline');
+  const [isMarkdown, setIsMarkdown] = useSetting('isMarkdown');
+  const [hideActivity, setHideActivity] = useSetting('hideActivity');
 
   return (
     <Box direction="Column" gap="100">
@@ -743,7 +743,7 @@ function Editor() {
 
 function SelectMessageLayout() {
   const [menuCords, setMenuCords] = useState<RectCords>();
-  const [messageLayout, setMessageLayout] = useSetting(settingsAtom, 'messageLayout');
+  const [messageLayout, setMessageLayout] = useSetting('messageLayout');
   const messageLayoutItems = useMessageLayoutItems();
 
   const handleMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
@@ -812,7 +812,7 @@ function SelectMessageLayout() {
 
 function SelectMessageSpacing() {
   const [menuCords, setMenuCords] = useState<RectCords>();
-  const [messageSpacing, setMessageSpacing] = useSetting(settingsAtom, 'messageSpacing');
+  const [messageSpacing, setMessageSpacing] = useSetting('messageSpacing');
   const messageSpacingItems = useMessageSpacingItems();
 
   const handleMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
@@ -880,22 +880,13 @@ function SelectMessageSpacing() {
 }
 
 function Messages() {
-  const [legacyUsernameColor, setLegacyUsernameColor] = useSetting(
-    settingsAtom,
-    'legacyUsernameColor'
-  );
-  const [hideMembershipEvents, setHideMembershipEvents] = useSetting(
-    settingsAtom,
-    'hideMembershipEvents'
-  );
-  const [hideNickAvatarEvents, setHideNickAvatarEvents] = useSetting(
-    settingsAtom,
-    'hideNickAvatarEvents'
-  );
-  const [mediaAutoLoad, setMediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
-  const [urlPreview, setUrlPreview] = useSetting(settingsAtom, 'urlPreview');
-  const [encUrlPreview, setEncUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
-  const [showHiddenEvents, setShowHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
+  const [legacyUsernameColor, setLegacyUsernameColor] = useSetting('legacyUsernameColor');
+  const [hideMembershipEvents, setHideMembershipEvents] = useSetting('hideMembershipEvents');
+  const [hideNickAvatarEvents, setHideNickAvatarEvents] = useSetting('hideNickAvatarEvents');
+  const [mediaAutoLoad, setMediaAutoLoad] = useSetting('mediaAutoLoad');
+  const [urlPreview, setUrlPreview] = useSetting('urlPreview');
+  const [encUrlPreview, setEncUrlPreview] = useSetting('encUrlPreview');
+  const [showHiddenEvents, setShowHiddenEvents] = useSetting('showHiddenEvents');
 
   return (
     <Box direction="Column" gap="100">

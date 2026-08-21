@@ -1,11 +1,8 @@
 import { WritableAtom, atom } from 'jotai';
 import produce from 'immer';
 import { Path } from 'react-router-dom';
-import {
-  atomWithLocalStorage,
-  getLocalStorageItem,
-  setLocalStorageItem,
-} from './utils/atomWithLocalStorage';
+import { atomWithLocalStorage } from './utils/atomWithLocalStorage';
+import { getLocalStorageItem, setLocalStorageItem } from '../../client/localStorage';
 
 const NAV_TO_ACTIVE_PATH = 'navToActivePath';
 

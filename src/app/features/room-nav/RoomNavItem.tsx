@@ -34,7 +34,6 @@ import { getMatrixToRoom } from '../../plugins/matrix-to';
 import { getViaServers } from '../../plugins/via-servers';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
 import { useOpenRoomSettings } from '../../state/hooks/roomSettings';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import {
@@ -61,7 +60,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
   ({ roomId, requestClose, notificationMode, notifications }, ref) => {
     const ct = useClient();
     const { userId } = ct.session;
-    const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+    const [hideActivity] = useSetting('hideActivity');
     const powerLevelState = usePowerLevelsState(roomId);
     const powerLevels = usePowerLevels(powerLevelState.value);
     const creators = useRoomCreators(roomId);

@@ -93,12 +93,82 @@ const useSettingsMenuItems = (): SettingsMenuItem[] =>
     []
   );
 
+type NavigationListProps = {
+  activePage?: SettingsPages;
+  setActivePage: (page: SettingsPages) => void;
+};
+function NavigationList({ activePage, setActivePage }: NavigationListProps) {
+  const menuItems = useSettingsMenuItems();
+
+  return (
+    <div style={{ flexGrow: 1 }}>
+      {menuItems.map((item) => (
+        <MenuItem
+          key={item.name}
+          variant="Background"
+          radii="400"
+          aria-pressed={activePage === item.page}
+          before={<Icon src={item.icon} size="100" filled={activePage === item.page} />}
+          onClick={() => setActivePage(item.page)}
+        >
+          <Text
+            style={{
+              fontWeight: activePage === item.page ? config.fontWeight.W600 : undefined,
+            }}
+            size="T300"
+            truncate
+          >
+            {item.name}
+          </Text>
+        </MenuItem>
+      ))}
+    </div>
+  );
+}
+
+function LogoutButton() {
+  return (
+    <UseStateProvider initial={false}>
+      {(logout, setLogout) => (
+        <>
+          <Button
+            size="300"
+            variant="Critical"
+            fill="None"
+            radii="Pill"
+            before={<Icon src={Icons.Power} size="100" />}
+            onClick={() => setLogout(true)}
+          >
+            <Text size="B400">Logout</Text>
+          </Button>
+          {logout && (
+            <Overlay open backdrop={<OverlayBackdrop />}>
+              <OverlayCenter>
+                <FocusTrap
+                  focusTrapOptions={{
+                    onDeactivate: () => setLogout(false),
+                    clickOutsideDeactivates: true,
+                    escapeDeactivates: stopPropagation,
+                  }}
+                >
+                  <LogoutDialog handleClose={() => setLogout(false)} />
+                </FocusTrap>
+              </OverlayCenter>
+            </Overlay>
+          )}
+        </>
+      )}
+    </UseStateProvider>
+  );
+}
+
 type SettingsProps = {
   initialPage?: SettingsPages;
   requestClose: () => void;
 };
 export function Settings({ initialPage, requestClose }: SettingsProps) {
   const ct = useClient();
+
   const useAuthentication = useMediaAuthentication();
   const { userId } = ct.session;
   const profile = useUserProfile(userId);
@@ -116,7 +186,6 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
     if (initialPage) return initialPage;
     return screenSize === ScreenSize.Mobile ? undefined : SettingsPages.GeneralPage;
   });
-  const menuItems = useSettingsMenuItems();
 
   const handlePageRequestClose = () => {
     if (screenSize === ScreenSize.Mobile) {
@@ -126,10 +195,12 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
     requestClose();
   };
 
+  const hideSidebar = screenSize === ScreenSize.Mobile && activePage !== undefined;
+
   return (
     <PageRoot
       nav={
-        screenSize === ScreenSize.Mobile && activePage !== undefined ? undefined : (
+        hideSidebar ? undefined : (
           <PageNav size="300">
             <PageNavHeader outlined={false}>
               <Box grow="Yes" gap="200">
@@ -154,61 +225,10 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
             </PageNavHeader>
             <Box grow="Yes" direction="Column">
               <PageNavContent>
-                <div style={{ flexGrow: 1 }}>
-                  {menuItems.map((item) => (
-                    <MenuItem
-                      key={item.name}
-                      variant="Background"
-                      radii="400"
-                      aria-pressed={activePage === item.page}
-                      before={<Icon src={item.icon} size="100" filled={activePage === item.page} />}
-                      onClick={() => setActivePage(item.page)}
-                    >
-                      <Text
-                        style={{
-                          fontWeight: activePage === item.page ? config.fontWeight.W600 : undefined,
-                        }}
-                        size="T300"
-                        truncate
-                      >
-                        {item.name}
-                      </Text>
-                    </MenuItem>
-                  ))}
-                </div>
+                <NavigationList activePage={activePage} setActivePage={setActivePage} />
               </PageNavContent>
-              <Box style={{ padding: config.space.S200 }} shrink="No" direction="Column">
-                <UseStateProvider initial={false}>
-                  {(logout, setLogout) => (
-                    <>
-                      <Button
-                        size="300"
-                        variant="Critical"
-                        fill="None"
-                        radii="Pill"
-                        before={<Icon src={Icons.Power} size="100" />}
-                        onClick={() => setLogout(true)}
-                      >
-                        <Text size="B400">Logout</Text>
-                      </Button>
-                      {logout && (
-                        <Overlay open backdrop={<OverlayBackdrop />}>
-                          <OverlayCenter>
-                            <FocusTrap
-                              focusTrapOptions={{
-                                onDeactivate: () => setLogout(false),
-                                clickOutsideDeactivates: true,
-                                escapeDeactivates: stopPropagation,
-                              }}
-                            >
-                              <LogoutDialog handleClose={() => setLogout(false)} />
-                            </FocusTrap>
-                          </OverlayCenter>
-                        </Overlay>
-                      )}
-                    </>
-                  )}
-                </UseStateProvider>
+              <Box style={{ padding: config.space.S200 }} shrink="No" direction="Column" gap="100">
+                <LogoutButton />
               </Box>
             </Box>
           </PageNav>

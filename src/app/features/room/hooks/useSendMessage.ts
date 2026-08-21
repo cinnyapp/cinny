@@ -11,7 +11,6 @@ import {
   trimCommand,
   trimCustomHtml,
 } from '../../../components/editor';
-import { settingsAtom } from '../../../state/settings';
 import { useSetting } from '../../../state/hooks/settings';
 import { MessageEvent } from '../../../../types/matrix/room';
 import { Command, CommandRecord, SHRUG, TABLEFLIP, UNFLIP } from '../../../hooks/useCommands';
@@ -88,7 +87,7 @@ export const useSendMessage = (
 ): SendMessageCallback => {
   const ct = useClient();
   const roomId = useRoom();
-  const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
+  const [isMarkdown] = useSetting('isMarkdown');
 
   const sendLocalMessage = useSendLocalMessage();
 

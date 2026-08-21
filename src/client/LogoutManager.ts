@@ -40,7 +40,6 @@ export class LogoutManager implements Disposable {
 
   private async clearStoresAndRefresh(): Promise<void> {
     await this.deleteStorage();
-    window.localStorage.clear();
     window.location.reload();
   }
 

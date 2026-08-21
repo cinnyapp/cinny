@@ -1,10 +1,7 @@
 import { WritableAtom, atom } from 'jotai';
 import produce from 'immer';
-import {
-  atomWithLocalStorage,
-  getLocalStorageItem,
-  setLocalStorageItem,
-} from './utils/atomWithLocalStorage';
+import { atomWithLocalStorage } from './utils/atomWithLocalStorage';
+import { getLocalStorageItem, setLocalStorageItem } from '../../client/localStorage';
 
 const CLOSED_NAV_CATEGORY = 'closedNavCategories';
 
@@ -24,8 +21,10 @@ export type ClosedNavCategoriesAtom = WritableAtom<
   undefined
 >;
 
+const getStoreKey = (userId: string) => `${CLOSED_NAV_CATEGORY}${userId}`;
+
 export const makeClosedNavCategoriesAtom = (userId: string): ClosedNavCategoriesAtom => {
-  const storeKey = `${CLOSED_NAV_CATEGORY}${userId}`;
+  const storeKey = getStoreKey(userId);
 
   const baseClosedNavCategoriesAtom = atomWithLocalStorage<Set<string>>(
     storeKey,
@@ -66,3 +65,7 @@ export const makeClosedNavCategoriesAtom = (userId: string): ClosedNavCategories
 };
 
 export const makeNavCategoryId = (...args: string[]): string => args.join('|');
+
+export const clearClosedNavCategoriesStore = (userId: string) => {
+  localStorage.removeItem(getStoreKey(userId));
+};

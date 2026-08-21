@@ -2,7 +2,6 @@ import { atom, useSetAtom } from 'jotai';
 import { useEffect } from 'react';
 import { roomTypingEphemeral } from 'neurone/lib/utils/sync/v3/join';
 import { useSetting } from './hooks/settings';
-import { settingsAtom } from './settings';
 import { ClientContext } from '../../client/context';
 
 export type IRoomIdToTypingMembers = Map<string, string[]>;
@@ -14,7 +13,7 @@ export const useBindRoomIdToTypingMembersAtom = (
   typingMembersAtom: typeof roomIdToTypingMembersAtom
 ) => {
   const setTypingMembers = useSetAtom(typingMembersAtom);
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideActivity] = useSetting('hideActivity');
 
   useEffect(() => {
     const unsubscribe = ct.sync.observable.subscribe((syncValue) => {

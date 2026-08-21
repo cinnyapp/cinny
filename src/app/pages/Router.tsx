@@ -9,7 +9,7 @@ import {
 } from 'react-router-dom';
 
 import { ClientConfig } from '../hooks/useClientConfig';
-import { AuthLayout, Login, Register, ResetPassword } from './auth';
+import { AuthRoot, Login, Register, ResetPassword } from './auth';
 import {
   DIRECT_PATH,
   EXPLORE_PATH,
@@ -30,22 +30,13 @@ import {
   _SERVER_PATH,
   CREATE_PATH,
 } from './paths';
-import {
-  getAppPathFromHref,
-  getExploreFeaturedPath,
-  getHomePath,
-  getInboxNotificationsPath,
-  getLoginPath,
-  getOriginBaseUrl,
-  getSpaceLobbyPath,
-} from './pathUtils';
+import { getExploreFeaturedPath, getInboxNotificationsPath, getSpaceLobbyPath } from './pathUtils';
 import { ClientBindAtoms, ClientLayout, ClientRoot } from './client';
 import { Home, HomeRouteRoomProvider, HomeSearch } from './client/home';
 import { Direct, DirectCreate, DirectRouteRoomProvider } from './client/direct';
 import { RouteSpaceProvider, Space, SpaceRouteRoomProvider, SpaceSearch } from './client/space';
 import { Explore, FeaturedRooms, PublicRooms } from './client/explore';
 import { Notifications, Inbox, Invites } from './client/inbox';
-import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
 import { Room } from '../features/room';
 import { Lobby } from '../features/lobby';
 import { WelcomePage } from './client/WelcomePage';
@@ -55,7 +46,7 @@ import { ScreenSize } from '../hooks/useScreenSize';
 import { MobileFriendlyPageNav, MobileFriendlyClientNav } from './MobileFriendly';
 import { ClientInitStorageAtom } from './client/ClientInitStorageAtom';
 import { ClientNonUIFeatures } from './client/ClientNonUIFeatures';
-import { AuthRouteThemeManager, UnAuthRouteThemeManager } from './ThemeManager';
+import { AuthRouteThemeManager } from './ThemeManager';
 import { ReceiveSelfDeviceVerification } from '../components/DeviceVerification';
 import { RoomSettingsRenderer } from '../features/room-settings';
 import { ClientRoomsNotificationPreferences } from './client/ClientRoomsNotificationPreferences';
@@ -66,9 +57,9 @@ import { HomeCreateRoom } from './client/home/CreateRoom';
 import { Create } from './client/create';
 import { CreateSpaceModalRenderer } from '../features/create-space';
 import { SearchModalRenderer } from '../features/search';
-import { getFallbackSession } from '../state/sessions';
 import { CallStatusRenderer } from '../features/call-status';
 import { CallEmbedProvider } from '../components/CallEmbedProvider';
+import { AccountSelector, ClientAccountSelector } from './AccountSelector';
 
 export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize) => {
   const { hashRouter } = clientConfig;
@@ -76,217 +67,185 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
 
   const routes = createRoutesFromElements(
     <Route>
-      <Route
-        index
-        loader={() => {
-          if (getFallbackSession()) return redirect(getHomePath());
-          const afterLoginPath = getAppPathFromHref(getOriginBaseUrl(), window.location.href);
-          if (afterLoginPath) setAfterLoginRedirectPath(afterLoginPath);
-          return redirect(getLoginPath());
-        }}
-      />
-      <Route
-        loader={() => {
-          if (getFallbackSession()) {
-            return redirect(getHomePath());
-          }
-
-          return null;
-        }}
-        element={
-          <>
-            <AuthLayout />
-            <UnAuthRouteThemeManager />
-          </>
-        }
-      >
+      <Route index element={<AccountSelector />} />
+      <Route element={<AuthRoot />}>
         <Route path={LOGIN_PATH} element={<Login />} />
         <Route path={REGISTER_PATH} element={<Register />} />
         <Route path={RESET_PASSWORD_PATH} element={<ResetPassword />} />
       </Route>
 
-      <Route
-        loader={() => {
-          const session = getFallbackSession();
-          if (!session) {
-            const afterLoginPath = getAppPathFromHref(
-              getOriginBaseUrl(hashRouter),
-              window.location.href
-            );
-            if (afterLoginPath) setAfterLoginRedirectPath(afterLoginPath);
-            return redirect(getLoginPath());
-          }
-          return null;
-        }}
-        element={
-          <AuthRouteThemeManager>
-            <ClientRoot>
-              <ClientInitStorageAtom>
-                <ClientRoomsNotificationPreferences>
-                  <ClientBindAtoms />
-                  <ClientNonUIFeatures />
-                  <ClientLayout
-                    nav={
-                      <MobileFriendlyClientNav>
-                        <SidebarNav />
-                      </MobileFriendlyClientNav>
-                    }
-                  >
-                    <Outlet />
-                  </ClientLayout>
-                  <SearchModalRenderer />
-                  <UserRoomProfileRenderer />
-                  <CreateRoomModalRenderer />
-                  <CreateSpaceModalRenderer />
-                  <RoomSettingsRenderer />
-                  <SpaceSettingsRenderer />
-                  <ReceiveSelfDeviceVerification />
-                </ClientRoomsNotificationPreferences>
-              </ClientInitStorageAtom>
-            </ClientRoot>
-          </AuthRouteThemeManager>
-        }
-      >
+      <Route element={<ClientAccountSelector />}>
         <Route
-          path={HOME_PATH}
           element={
-            <PageRoot
-              nav={
-                <MobileFriendlyPageNav path={HOME_PATH}>
-                  <Home />
-                </MobileFriendlyPageNav>
-              }
-            >
-              <Outlet />
-            </PageRoot>
+            <ClientInitStorageAtom>
+              <AuthRouteThemeManager>
+                <ClientRoot>
+                  <ClientRoomsNotificationPreferences>
+                    <ClientBindAtoms />
+                    <ClientNonUIFeatures />
+                    <ClientLayout
+                      nav={
+                        <MobileFriendlyClientNav>
+                          <SidebarNav />
+                        </MobileFriendlyClientNav>
+                      }
+                    >
+                      <Outlet />
+                    </ClientLayout>
+                    <SearchModalRenderer />
+                    <UserRoomProfileRenderer />
+                    <CreateRoomModalRenderer />
+                    <CreateSpaceModalRenderer />
+                    <RoomSettingsRenderer />
+                    <SpaceSettingsRenderer />
+                    <ReceiveSelfDeviceVerification />
+                  </ClientRoomsNotificationPreferences>
+                </ClientRoot>
+              </AuthRouteThemeManager>
+            </ClientInitStorageAtom>
           }
         >
-          {mobile ? null : <Route index element={<WelcomePage />} />}
-          <Route path={_CREATE_PATH} element={<HomeCreateRoom />} />
-          <Route path={_JOIN_PATH} element={<p>join</p>} />
-          {/* <Route path={_SEARCH_PATH} element={<HomeSearch />} /> */}
           <Route
-            path={_ROOM_PATH}
+            path={HOME_PATH}
             element={
-              <HomeRouteRoomProvider>
-                <Room />
-              </HomeRouteRoomProvider>
-            }
-          />
-        </Route>
-        <Route
-          path={DIRECT_PATH}
-          element={
-            <PageRoot
-              nav={
-                <MobileFriendlyPageNav path={DIRECT_PATH}>
-                  <Direct />
-                </MobileFriendlyPageNav>
-              }
-            >
-              <Outlet />
-            </PageRoot>
-          }
-        >
-          {mobile ? null : <Route index element={<WelcomePage />} />}
-          <Route path={_CREATE_PATH} element={<DirectCreate />} />
-          <Route
-            path={_ROOM_PATH}
-            element={
-              <DirectRouteRoomProvider>
-                <Room />
-              </DirectRouteRoomProvider>
-            }
-          />
-        </Route>
-        <Route
-          path={SPACE_PATH}
-          element={
-            <RouteSpaceProvider>
               <PageRoot
                 nav={
-                  <MobileFriendlyPageNav path={SPACE_PATH}>
-                    <Space />
+                  <MobileFriendlyPageNav path={HOME_PATH}>
+                    <Home />
                   </MobileFriendlyPageNav>
                 }
               >
                 <Outlet />
               </PageRoot>
-            </RouteSpaceProvider>
-          }
-        >
-          {mobile ? null : (
-            <Route
-              index
-              loader={({ params }) => {
-                const { spaceIdOrAlias } = params;
-                if (spaceIdOrAlias) {
-                  return redirect(getSpaceLobbyPath(spaceIdOrAlias));
-                }
-                return null;
-              }}
-              element={<WelcomePage />}
-            />
-          )}
-          <Route path={_LOBBY_PATH} element={<Lobby />} />
-          {/*<Route path={_SEARCH_PATH} element={<SpaceSearch />} /> */}
-          <Route
-            path={_ROOM_PATH}
-            element={
-              <SpaceRouteRoomProvider>
-                <Room />
-              </SpaceRouteRoomProvider>
             }
-          />
-        </Route>
-        <Route
-          path={EXPLORE_PATH}
-          element={
-            <PageRoot
-              nav={
-                <MobileFriendlyPageNav path={EXPLORE_PATH}>
-                  <Explore />
-                </MobileFriendlyPageNav>
-              }
-            >
-              <Outlet />
-            </PageRoot>
-          }
-        >
-          {mobile ? null : (
+          >
+            {mobile ? null : <Route index element={<WelcomePage />} />}
+            <Route path={_CREATE_PATH} element={<HomeCreateRoom />} />
+            <Route path={_JOIN_PATH} element={<p>join</p>} />
+            {/* <Route path={_SEARCH_PATH} element={<HomeSearch />} /> */}
             <Route
-              index
-              loader={() => redirect(getExploreFeaturedPath())}
-              element={<WelcomePage />}
-            />
-          )}
-          <Route path={_FEATURED_PATH} element={<FeaturedRooms />} />
-          <Route path={_SERVER_PATH} element={<PublicRooms />} />
-        </Route>
-        <Route path={CREATE_PATH} element={<Create />} />
-        <Route
-          path={INBOX_PATH}
-          element={
-            <PageRoot
-              nav={
-                <MobileFriendlyPageNav path={INBOX_PATH}>
-                  <Inbox />
-                </MobileFriendlyPageNav>
+              path={_ROOM_PATH}
+              element={
+                <HomeRouteRoomProvider>
+                  <Room />
+                </HomeRouteRoomProvider>
               }
-            >
-              <Outlet />
-            </PageRoot>
-          }
-        >
-          {mobile ? null : (
-            <Route
-              index
-              loader={() => redirect(getInboxNotificationsPath())}
-              element={<WelcomePage />}
             />
-          )}
-          <Route path={_NOTIFICATIONS_PATH} element={<Notifications />} />
-          <Route path={_INVITES_PATH} element={<Invites />} />
+          </Route>
+          <Route
+            path={DIRECT_PATH}
+            element={
+              <PageRoot
+                nav={
+                  <MobileFriendlyPageNav path={DIRECT_PATH}>
+                    <Direct />
+                  </MobileFriendlyPageNav>
+                }
+              >
+                <Outlet />
+              </PageRoot>
+            }
+          >
+            {mobile ? null : <Route index element={<WelcomePage />} />}
+            <Route path={_CREATE_PATH} element={<DirectCreate />} />
+            <Route
+              path={_ROOM_PATH}
+              element={
+                <DirectRouteRoomProvider>
+                  <Room />
+                </DirectRouteRoomProvider>
+              }
+            />
+          </Route>
+          <Route
+            path={SPACE_PATH}
+            element={
+              <RouteSpaceProvider>
+                <PageRoot
+                  nav={
+                    <MobileFriendlyPageNav path={SPACE_PATH}>
+                      <Space />
+                    </MobileFriendlyPageNav>
+                  }
+                >
+                  <Outlet />
+                </PageRoot>
+              </RouteSpaceProvider>
+            }
+          >
+            {mobile ? null : (
+              <Route
+                index
+                loader={({ params }) => {
+                  const { spaceIdOrAlias } = params;
+                  if (spaceIdOrAlias) {
+                    return redirect(getSpaceLobbyPath(spaceIdOrAlias));
+                  }
+                  return null;
+                }}
+                element={<WelcomePage />}
+              />
+            )}
+            <Route path={_LOBBY_PATH} element={<Lobby />} />
+            {/*<Route path={_SEARCH_PATH} element={<SpaceSearch />} /> */}
+            <Route
+              path={_ROOM_PATH}
+              element={
+                <SpaceRouteRoomProvider>
+                  <Room />
+                </SpaceRouteRoomProvider>
+              }
+            />
+          </Route>
+          <Route
+            path={EXPLORE_PATH}
+            element={
+              <PageRoot
+                nav={
+                  <MobileFriendlyPageNav path={EXPLORE_PATH}>
+                    <Explore />
+                  </MobileFriendlyPageNav>
+                }
+              >
+                <Outlet />
+              </PageRoot>
+            }
+          >
+            {mobile ? null : (
+              <Route
+                index
+                loader={() => redirect(getExploreFeaturedPath())}
+                element={<WelcomePage />}
+              />
+            )}
+            <Route path={_FEATURED_PATH} element={<FeaturedRooms />} />
+            <Route path={_SERVER_PATH} element={<PublicRooms />} />
+          </Route>
+          <Route path={CREATE_PATH} element={<Create />} />
+          <Route
+            path={INBOX_PATH}
+            element={
+              <PageRoot
+                nav={
+                  <MobileFriendlyPageNav path={INBOX_PATH}>
+                    <Inbox />
+                  </MobileFriendlyPageNav>
+                }
+              >
+                <Outlet />
+              </PageRoot>
+            }
+          >
+            {mobile ? null : (
+              <Route
+                index
+                loader={() => redirect(getInboxNotificationsPath())}
+                element={<WelcomePage />}
+              />
+            )}
+            <Route path={_NOTIFICATIONS_PATH} element={<Notifications />} />
+            <Route path={_INVITES_PATH} element={<Invites />} />
+          </Route>
         </Route>
       </Route>
       <Route path="/*" element={<p>Page not found</p>} />

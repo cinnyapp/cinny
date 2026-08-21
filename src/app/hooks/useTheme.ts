@@ -2,7 +2,6 @@ import { lightTheme } from 'folds';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { onDarkFontWeight, onLightFontWeight } from '../../config.css';
 import { butterTheme, darkTheme, silverTheme } from '../../colors.css';
-import { settingsAtom } from '../state/settings';
 import { useSetting } from '../state/hooks/settings';
 
 export enum ThemeKind {
@@ -78,10 +77,10 @@ export const useSystemThemeKind = (): ThemeKind => {
 export const useActiveTheme = (): Theme => {
   const systemThemeKind = useSystemThemeKind();
   const themes = useThemes();
-  const [systemTheme] = useSetting(settingsAtom, 'useSystemTheme');
-  const [themeId] = useSetting(settingsAtom, 'themeId');
-  const [lightThemeId] = useSetting(settingsAtom, 'lightThemeId');
-  const [darkThemeId] = useSetting(settingsAtom, 'darkThemeId');
+  const [systemTheme] = useSetting('useSystemTheme');
+  const [themeId] = useSetting('themeId');
+  const [lightThemeId] = useSetting('lightThemeId');
+  const [darkThemeId] = useSetting('darkThemeId');
 
   if (!systemTheme) {
     const selectedTheme = themes.find((theme) => theme.id === themeId) ?? LightTheme;

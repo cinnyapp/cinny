@@ -23,7 +23,7 @@ import {
 } from './storage/collections';
 import { Storage } from './storage';
 import { SyncContext, SyncValue } from './sync';
-import { Session } from '../app/state/sessions';
+import { Session } from './sessions';
 import { JoinRule, SpaceChildContent, StateEventType } from '../types/matrix/room';
 import { GetTxnId } from './txn';
 import { Timeline } from './room';

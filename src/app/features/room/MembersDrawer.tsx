@@ -35,7 +35,6 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { TypingIndicator } from '../../components/typing-indicator';
 import { getMemberSearchStr } from '../../utils/room';
 import { useSetSetting, useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
 import { millify } from '../../plugins/millify';
 import { ScrollTopContainer } from '../../components/scroll-top-container';
 import { UserAvatar } from '../../components/user-avatar';
@@ -69,7 +68,7 @@ type MemberDrawerHeaderProps = {
   memberCount: number;
 };
 function MemberDrawerHeader({ memberCount }: MemberDrawerHeaderProps) {
-  const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
+  const setPeopleDrawer = useSetSetting('isPeopleDrawer');
 
   return (
     <Header className={css.MembersDrawerHeader} variant="Background" size="600">
@@ -216,7 +215,7 @@ export function MembersDrawer() {
 
   const membershipFilterMenu = useMembershipFilterMenu(membersAPI.getMembership);
   const sortFilterMenu = useMemberSortMenu(membersAPI.getName);
-  const [sortFilterIndex, setSortFilterIndex] = useSetting(settingsAtom, 'memberSortFilterIndex');
+  const [sortFilterIndex, setSortFilterIndex] = useSetting('memberSortFilterIndex');
   const [membershipFilterIndex, setMembershipFilterIndex] = useState(0);
 
   const membershipFilter = useMembershipFilter(membershipFilterIndex, membershipFilterMenu);

@@ -1,10 +1,7 @@
 import { WritableAtom, atom } from 'jotai';
 import produce from 'immer';
-import {
-  atomWithLocalStorage,
-  getLocalStorageItem,
-  setLocalStorageItem,
-} from './utils/atomWithLocalStorage';
+import { atomWithLocalStorage } from './utils/atomWithLocalStorage';
+import { getLocalStorageItem, setLocalStorageItem } from '../../client/localStorage';
 
 const OPENED_SIDEBAR_FOLDER = 'openedSidebarFolder';
 
@@ -24,8 +21,10 @@ export type OpenedSidebarFolderAtom = WritableAtom<
   undefined
 >;
 
+const getStoreKey = (userId: string) => `${OPENED_SIDEBAR_FOLDER}${userId}`;
+
 export const makeOpenedSidebarFolderAtom = (userId: string): OpenedSidebarFolderAtom => {
-  const storeKey = `${OPENED_SIDEBAR_FOLDER}${userId}`;
+  const storeKey = getStoreKey(userId);
 
   const baseOpenedSidebarFolderAtom = atomWithLocalStorage<Set<string>>(
     storeKey,
@@ -63,4 +62,8 @@ export const makeOpenedSidebarFolderAtom = (userId: string): OpenedSidebarFolder
   );
 
   return openedSidebarFolderAtom;
+};
+
+export const clearOpenedSidebarFolderStore = (userId: string) => {
+  localStorage.removeItem(getStoreKey(userId));
 };

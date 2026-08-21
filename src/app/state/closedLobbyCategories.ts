@@ -1,10 +1,7 @@
 import { WritableAtom, atom } from 'jotai';
 import produce from 'immer';
-import {
-  atomWithLocalStorage,
-  getLocalStorageItem,
-  setLocalStorageItem,
-} from './utils/atomWithLocalStorage';
+import { atomWithLocalStorage } from './utils/atomWithLocalStorage';
+import { getLocalStorageItem, setLocalStorageItem } from '../../client/localStorage';
 
 const CLOSED_LOBBY_CATEGORY = 'closedLobbyCategories';
 
@@ -24,8 +21,10 @@ export type ClosedLobbyCategoriesAtom = WritableAtom<
   undefined
 >;
 
+const getStoreKey = (userId: string) => `${CLOSED_LOBBY_CATEGORY}${userId}`;
+
 export const makeClosedLobbyCategoriesAtom = (userId: string): ClosedLobbyCategoriesAtom => {
-  const storeKey = `${CLOSED_LOBBY_CATEGORY}${userId}`;
+  const storeKey = getStoreKey(userId);
 
   const baseClosedLobbyCategoriesAtom = atomWithLocalStorage<Set<string>>(
     storeKey,
@@ -66,3 +65,7 @@ export const makeClosedLobbyCategoriesAtom = (userId: string): ClosedLobbyCatego
 };
 
 export const makeLobbyCategoryId = (...args: string[]): string => args.join('|');
+
+export const clearClosedLobbyCategoriesStore = (userId: string) => {
+  localStorage.removeItem(getStoreKey(userId));
+};

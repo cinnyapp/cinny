@@ -26,7 +26,6 @@ import { ImageViewer } from '../image-viewer';
 import { stopPropagation } from '../../utils/keyboard';
 import { LINKIFY_OPTS } from '../../plugins/react-custom-html-parser';
 import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
 import { UserBiography, UserPronoun } from '../../hooks/useUserProfile';
 import { RoomTopicViewer } from '../room-topic-viewer';
 
@@ -141,7 +140,7 @@ export function UserHeroAvatar({ userId, avatarUrl, presence }: UserHeroAvatarPr
 }
 
 export function UserTimezone({ timezone }: { timezone: string }) {
-  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
+  const [hour24Clock] = useSetting('hour24Clock');
 
   let time: string | undefined;
   let offset: string | undefined;

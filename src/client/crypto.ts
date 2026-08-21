@@ -2,13 +2,10 @@ import { deleteDB } from 'idb';
 import { Machine, OutgoingRequestSender } from 'neurone/lib/crypto/machine';
 import { MatrixRequest } from 'neurone/lib/matrix-request';
 import { MatrixRequestRetrier, sleep } from 'neurone/lib/utils';
-import { Session } from '../app/state/sessions';
-
-const getCryptoStoreName = (userId: string): string => `crypto${userId}`;
+import { FALLBACK_SYNC_STORE_NAME_FULL, getSessionStoreName, Session } from './sessions';
 
 // the matrix-crypto-sdk add postfix to storeName
-const getCryptoDBName = (userId: string): string =>
-  `${getCryptoStoreName(userId)}::matrix-sdk-crypto`;
+const getCryptoDBName = (storeName: string): string => `${storeName}::matrix-sdk-crypto`;
 
 let closeMachineRef: (() => void) | undefined;
 
@@ -20,7 +17,7 @@ export const initializeCrypto = async (
   deleteCryptoStorage: () => Promise<void>;
   closeMachine: () => void;
 }> => {
-  const storeName = getCryptoStoreName(session.userId);
+  const storeName = getSessionStoreName(session).crypto;
 
   const { olmMachine, closeMachine: closeMachineInner } = await Machine.init(
     session.userId,
@@ -43,13 +40,22 @@ export const initializeCrypto = async (
 
   const deleteCryptoStorage = async () => {
     closeMachine();
-    await deleteDB(getCryptoDBName(session.userId));
+    await deleteDB(getCryptoDBName(storeName));
   };
 
   return { machine, deleteCryptoStorage, closeMachine };
 };
 
-export const deleteClientCryptoStorage = async (userId: string): Promise<void> => {
+export const deleteClientCryptoStorage = async (session: Session): Promise<void> => {
   closeMachineRef?.();
-  await deleteDB(getCryptoDBName(userId));
+  await deleteDB(getSessionStoreName(session).crypto);
+
+  if (session.fallbackSdkStores) {
+    try {
+      // migration code from matrix-js-sdk
+      await deleteDB(FALLBACK_SYNC_STORE_NAME_FULL);
+    } catch (e) {
+      console.log(e);
+    }
+  }
 };

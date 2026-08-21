@@ -29,7 +29,6 @@ import { UseStateProvider } from '../../components/UseStateProvider';
 import { RoomTopicViewer } from '../../components/room-topic-viewer';
 import { useRoom } from '../../hooks/useRoom';
 import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import { getHomeSearchPath, getSpaceSearchPath, withSearchParam } from '../../pages/pathUtils';
 import { _SearchPathSearchParams } from '../../pages/paths';
@@ -78,7 +77,7 @@ type RoomMenuProps = {
 const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ requestClose }, ref) => {
   const ct = useClient();
   const roomId = useRoom();
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideActivity] = useSetting('hideActivity');
 
   const roomNotifications = useRoomNotifications(roomId, roomToNotificationsAtom);
   const notifications = useRoomTotalNotifications(roomNotifications);
@@ -287,7 +286,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
       })
     : undefined;
 
-  const [peopleDrawer, setPeopleDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
+  const [peopleDrawer, setPeopleDrawer] = useSetting('isPeopleDrawer');
 
   const handleSearchClick = () => {
     const searchParams: _SearchPathSearchParams = {

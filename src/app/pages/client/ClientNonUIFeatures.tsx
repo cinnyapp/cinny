@@ -1,9 +1,8 @@
 import React from 'react';
 import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
 
 function SystemEmojiFeature() {
-  const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
+  const [twitterEmoji] = useSetting('twitterEmoji');
 
   if (twitterEmoji) {
     document.documentElement.style.setProperty('--font-emoji', 'Twemoji');
@@ -15,7 +14,7 @@ function SystemEmojiFeature() {
 }
 
 function PageZoomFeature() {
-  const [pageZoom] = useSetting(settingsAtom, 'pageZoom');
+  const [pageZoom] = useSetting('pageZoom');
 
   if (pageZoom === 100) {
     document.documentElement.style.removeProperty('font-size');

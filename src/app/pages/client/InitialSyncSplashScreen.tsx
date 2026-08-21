@@ -121,7 +121,7 @@ export function InitialSyncSplashScreen({ children }: { children: ReactNode }) {
   if (initialSync) {
     return (
       <>
-        <ClientRootOptions userId={ct.session.userId} />
+        <ClientRootOptions ct={ct} />
         <InitialSyncProgressScreen sync={ct.sync} progressObservable={initialSync.progress} />;
       </>
     );

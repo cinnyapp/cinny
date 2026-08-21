@@ -5,7 +5,7 @@ import { useAuthServer } from '../../../hooks/useAuthServer';
 import { RegisterFlowStatus, useAuthFlows } from '../../../hooks/useAuthFlows';
 import { useParsedLoginFlows } from '../../../hooks/useParsedLoginFlows';
 import { PasswordRegisterForm, SUPPORTED_REGISTER_STAGES } from '../register/PasswordRegisterForm';
-import { OrDivider } from '../OrDivider';
+import { OrDivider } from '../../../components/OrDivider';
 import { SSOLogin } from '../SSOLogin';
 import { SupportedUIAFlowsLoader } from '../../../components/SupportedUIAFlowsLoader';
 import { getLoginPath } from '../../pathUtils';
@@ -89,7 +89,7 @@ export function Register() {
           <span data-spacing-node />
         </>
       )}
-      <Text align="Center">
+      <Text size="T300" align="Center">
         Already have an account? <Link to={getLoginPath(server)}>Login</Link>
       </Text>
     </Box>

@@ -8,7 +8,6 @@ import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import {
   AccountDataEditor,
   AccountDataSubmitCallback,
@@ -22,7 +21,7 @@ type DeveloperToolsProps = {
 };
 export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
   const ct = useClient();
-  const [developerTools, setDeveloperTools] = useSetting(settingsAtom, 'developerTools');
+  const [developerTools, setDeveloperTools] = useSetting('developerTools');
 
   const [expand, setExpend] = useState(false);
   const [editAccountData, setEditAccountData] = useState<AccountDataEvent | null>();

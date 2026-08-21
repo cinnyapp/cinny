@@ -6,7 +6,6 @@ import { RoomView } from './RoomView';
 import { MembersDrawer } from './MembersDrawer';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
 import {
   PowerLevelsContextProvider,
   usePowerLevels,
@@ -39,8 +38,8 @@ export function Room() {
   const threadTimeline = activeThreadId ? threads?.get(activeThreadId) : undefined;
   const threadFocusRef = useRef<boolean>(false);
 
-  const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [isDrawer] = useSetting('isPeopleDrawer');
+  const [hideActivity] = useSetting('hideActivity');
   const screenSize = useScreenSizeContext();
   const powerLevelStateResult = usePowerLevelsState(roomId);
   const powerLevels = usePowerLevels(powerLevelStateResult.value);

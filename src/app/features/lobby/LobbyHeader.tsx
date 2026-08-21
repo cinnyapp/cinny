@@ -19,7 +19,6 @@ import {
 import FocusTrap from 'focus-trap-react';
 import { PageHeader } from '../../components/page';
 import { useSetSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
 import { useSpace } from '../../hooks/useSpace';
 import { RoomAvatar } from '../../components/room-avatar';
 import { nameInitials } from '../../utils/common';
@@ -145,7 +144,7 @@ export function LobbyHeader({ showProfile, powerLevels }: LobbyHeaderProps) {
   const ct = useClient();
   const useAuthentication = useMediaAuthentication();
   const spaceId = useSpace();
-  const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
+  const setPeopleDrawer = useSetSetting('isPeopleDrawer');
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const screenSize = useScreenSizeContext();
 

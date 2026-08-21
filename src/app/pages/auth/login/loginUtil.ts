@@ -1,8 +1,10 @@
 import to from 'await-to-js';
-import { useEffect } from 'react';
+import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { postLogin, PostLoginBody, PostLoginOK } from 'neurone/lib/api/matrix/client/v3/login';
 import { parseMatrixResp } from 'neurone/lib/matrix-request';
+import { useSetAtom } from 'jotai';
+import { postLogout } from 'neurone/lib/api/matrix/client/v3/logout';
 import { ClientConfig, clientAllowedServer } from '../../../hooks/useClientConfig';
 import { autoDiscovery, specVersions } from '../../../cs-api';
 import { ErrorCode } from '../../../cs-errorcode';
@@ -11,8 +13,9 @@ import {
   getAfterLoginRedirectPath,
 } from '../../afterLoginRedirectPath';
 import { getHomePath } from '../../pathUtils';
-import { setFallbackSession } from '../../../state/sessions';
-import { getJSONRequest } from '../../../../client/request';
+import { getAuthJSONRequest, getJSONRequest } from '../../../../client/request';
+import { sessionsAtom, sessionUserIdAtom } from '../../../state/sessions';
+import { userHasSession } from '../../../../client/sessions';
 
 export enum GetBaseUrlError {
   NotAllow = 'NotAllow',
@@ -106,16 +109,43 @@ export const login = async (
   ];
 };
 
-export const useLoginComplete = (data?: CustomLoginResponse) => {
+export const useLoginComplete = () => {
   const navigate = useNavigate();
+  const setSession = useSetAtom(sessionsAtom);
+  const setSessionUserId = useSetAtom(sessionUserIdAtom);
 
-  useEffect(() => {
-    if (data) {
+  const handleLoginComplete = useCallback(
+    (data: CustomLoginResponse) => {
       const { response: loginRes, baseUrl: loginBaseUrl } = data;
-      setFallbackSession(loginRes.access_token, loginRes.device_id, loginRes.user_id, loginBaseUrl);
+
+      setSessionUserId(loginRes.user_id);
+
+      if (userHasSession(loginRes.user_id)) {
+        // user login with session that already exists.
+        // this could happen if user login via SSO or OAuth.
+        // open existing session and logout this request.
+        const request = getAuthJSONRequest(loginBaseUrl, loginRes.access_token);
+        request(postLogout({}));
+      } else {
+        setSession({
+          type: 'PUT',
+          session: {
+            accessToken: loginRes.access_token,
+            deviceId: loginRes.device_id,
+            userId: loginRes.user_id,
+            baseUrl: loginBaseUrl,
+            expiresInMs: loginRes.expires_in_ms,
+            refreshToken: loginRes.refresh_token,
+          },
+        });
+      }
+
       const afterLoginRedirectUrl = getAfterLoginRedirectPath();
       deleteAfterLoginRedirectPath();
       navigate(afterLoginRedirectUrl ?? getHomePath(), { replace: true });
-    }
-  }, [data, navigate]);
+    },
+    [navigate, setSession, setSessionUserId]
+  );
+
+  return handleLoginComplete;
 };

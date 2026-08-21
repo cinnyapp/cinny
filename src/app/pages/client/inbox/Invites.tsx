@@ -49,10 +49,9 @@ import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { getIgnoredUsersContent, useIgnoredUsers } from '../../../hooks/useIgnoredUsers';
 import { useReportRoomSupported } from '../../../hooks/useReportRoomSupported';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import { InviteData, useInviteRooms } from '../../../hooks/storage/useInviteRooms';
 import { useClient } from '../../../hooks/useClient';
-import { getJoinRoomMemberId, JoinRoomMemberObject } from '../../../../client/storage/collections';
+import { getJoinRoomMemberId } from '../../../../client/storage/collections';
 import { useObservableValuePromise } from '../../../hooks/useObservableValue';
 import { Membership } from '../../../../types/matrix/room';
 import { AccountDataType } from '../../../../types/matrix/accountData';
@@ -708,8 +707,8 @@ export function Invites() {
   );
   const screenSize = useScreenSizeContext();
 
-  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
-  const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
+  const [hour24Clock] = useSetting('hour24Clock');
+  const [dateFormatString] = useSetting('dateFormatString');
 
   const handleNavigate = (roomId: string, space: boolean) => {
     if (space) {

@@ -8,7 +8,6 @@ import { RoomTombstone } from './RoomTombstone';
 import { RoomInput } from './RoomInput';
 import { RoomViewFollowing } from './RoomViewFollowing';
 import { Page } from '../../components/page';
-import { settingsAtom } from '../../state/settings';
 import { useSetting } from '../../state/hooks/settings';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
@@ -29,7 +28,7 @@ export function RoomView({ eventId, timeline, threadFocusRef }: RoomViewProps) {
   const roomInputRef = useRef<HTMLDivElement>(null);
   const roomViewRef = useRef<HTMLDivElement>(null);
 
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideActivity] = useSetting('hideActivity');
 
   const roomId = useRoom();
   const editor = useEditor();

@@ -197,13 +197,13 @@ export function PasswordRegisterForm({
     Error,
     [PostRegisterBody]
   >(useCallback(async (registerReqData) => register(baseUrl, registerReqData), [baseUrl]));
-  const [ongoingAuthData, registerError, customRegisterResp] =
+  const [ongoingAuthData, registerError] =
     registerState.status === AsyncStatus.Success ? registerState.data : [];
 
   const registerRequestError =
     registerState.status === AsyncStatus.Error ? registerState.error : undefined;
 
-  useRegisterComplete(customRegisterResp);
+  const handleRegisterComplete = useRegisterComplete();
 
   const handleSubmit: ChangeEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();
@@ -250,6 +250,9 @@ export function PasswordRegisterForm({
         session: authData.session,
       },
       initial_device_display_name: getInitialDeviceDisplayName(),
+    }).then((result) => {
+      const [, , data] = result;
+      if (data) handleRegisterComplete(data);
     });
   };
 

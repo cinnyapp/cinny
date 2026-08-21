@@ -8,29 +8,22 @@ import { SpecVersions } from './SpecVersions';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { SyncStatus } from './SyncStatus';
 import { AuthMetadataProvider } from '../../hooks/useAuthMetadata';
-import { getFallbackSession } from '../../state/sessions';
-import { initializeClient } from '../../../client/initialize';
-import { ClientContext } from '../../../client/context';
+import { initializeClient, InitializeClientResult } from '../../../client/initialize';
 import { ClientContextProvider } from '../../hooks/useClient';
 import { InitialSyncSplashScreen } from './InitialSyncSplashScreen';
 import { AutoDiscovery } from './AutoDiscovery';
 import { ClientRootOptions } from './ClientRootOptions';
 import { FlickerText } from '../../styles/Animations.css';
+import { useSession } from '../../hooks/useSessions';
 
 type ClientRootProps = {
   children: ReactNode;
 };
 export function ClientRoot({ children }: ClientRootProps) {
-  const { baseUrl, userId } = getFallbackSession() ?? {};
+  const session = useSession();
 
-  const [initState, initialize] = useAsyncCallback<ClientContext, Error, []>(
-    useCallback(() => {
-      const session = getFallbackSession();
-      if (!session) {
-        throw new Error('No session Found!');
-      }
-      return initializeClient(session);
-    }, [])
+  const [initState, initialize] = useAsyncCallback<InitializeClientResult, Error, []>(
+    useCallback(() => initializeClient(session), [session])
   );
 
   useEffect(() => {
@@ -40,16 +33,18 @@ export function ClientRoot({ children }: ClientRootProps) {
   }, [initState, initialize]);
 
   useEffect(() => {
-    if (initState.status === AsyncStatus.Success) {
-      const ct = initState.data;
-      ct.sync.controller.start();
-    }
+    const { ct, dispose } = initState.status === AsyncStatus.Success ? initState.data : {};
+    ct?.sync.controller.start();
+
+    return () => {
+      dispose?.();
+    };
   }, [initState]);
 
   return (
-    <AutoDiscovery userId={userId!} baseUrl={baseUrl!}>
-      {initState.status !== AsyncStatus.Success && <ClientRootOptions userId={userId!} />}
-      <SpecVersions baseUrl={baseUrl!}>
+    <AutoDiscovery userId={session.userId} baseUrl={session.baseUrl}>
+      {initState.status !== AsyncStatus.Success && <ClientRootOptions />}
+      <SpecVersions baseUrl={session.baseUrl}>
         {initState.status === AsyncStatus.Error && (
           <SplashScreen>
             <Box
@@ -98,7 +93,7 @@ export function ClientRoot({ children }: ClientRootProps) {
           />
         )}
         {initState.status === AsyncStatus.Success && (
-          <ClientContextProvider value={initState.data}>
+          <ClientContextProvider value={initState.data.ct}>
             <InitialSyncSplashScreen>
               <SyncStatus />
               <ServerConfigsLoader>

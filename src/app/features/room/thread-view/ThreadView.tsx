@@ -10,7 +10,6 @@ import { useEditor } from '../../../components/editor';
 import { RoomInput } from '../RoomInput';
 import { TimelineView } from './TimelineView';
 import { useEditorAutoFocus, useThreadFocus } from '../hooks/useEditorAutoFocus';
-import { settingsAtom } from '../../../state/settings';
 import { useSetting } from '../../../state/hooks/settings';
 import { FollowingMembersPlaceholder } from '../components';
 import { ThreadViewFollowing } from './ThreadViewFollowing';
@@ -27,7 +26,7 @@ export function ThreadView({ threadTimeline, threadFocusRef, requestClose }: Thr
   const editor = useEditor();
   const threadInputRef = useRef<HTMLDivElement>(null);
   const threadViewRef = useRef<HTMLDivElement>(null);
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideActivity] = useSetting('hideActivity');
 
   useThreadFocus(threadTimeline.threadId, threadFocusRef, threadViewRef);
   useEditorAutoFocus(editor, threadFocusRef, true);

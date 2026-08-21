@@ -9,39 +9,45 @@ import {
   useSystemThemeKind,
 } from '../hooks/useTheme';
 import { useSetting } from '../state/hooks/settings';
-import { settingsAtom } from '../state/settings';
+import { ContainerColor } from '../styles/ContainerColor.css';
 
-export function UnAuthRouteThemeManager() {
+export const useUnauthThemeManager = () => {
   const systemThemeKind = useSystemThemeKind();
 
   useEffect(() => {
-    document.body.className = '';
-    document.body.classList.add(configClass, varsClass);
+    document.documentElement.className = '';
+    document.documentElement.classList.add(
+      configClass,
+      varsClass,
+      ...ContainerColor({ variant: 'Background' }).split(' ')
+    );
     if (systemThemeKind === ThemeKind.Dark) {
-      document.body.classList.add(...DarkTheme.classNames);
+      document.documentElement.classList.add(...DarkTheme.classNames);
     }
     if (systemThemeKind === ThemeKind.Light) {
-      document.body.classList.add(...LightTheme.classNames);
+      document.documentElement.classList.add(...LightTheme.classNames);
     }
   }, [systemThemeKind]);
-
-  return null;
-}
+};
 
 export function AuthRouteThemeManager({ children }: { children: ReactNode }) {
   const activeTheme = useActiveTheme();
-  const [monochromeMode] = useSetting(settingsAtom, 'monochromeMode');
+  const [monochromeMode] = useSetting('monochromeMode');
 
   useEffect(() => {
-    document.body.className = '';
-    document.body.classList.add(configClass, varsClass);
+    document.documentElement.className = '';
+    document.documentElement.classList.add(
+      configClass,
+      varsClass,
+      ...ContainerColor({ variant: 'Background' }).split(' ')
+    );
 
-    document.body.classList.add(...activeTheme.classNames);
+    document.documentElement.classList.add(...activeTheme.classNames);
 
     if (monochromeMode) {
-      document.body.style.filter = 'grayscale(1)';
+      document.documentElement.style.filter = 'grayscale(1)';
     } else {
-      document.body.style.filter = '';
+      document.documentElement.style.filter = '';
     }
   }, [activeTheme, monochromeMode]);
 

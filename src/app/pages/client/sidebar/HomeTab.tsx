@@ -18,7 +18,6 @@ import { useHomeRooms } from '../home/useHomeRooms';
 import { markAsRead } from '../../../utils/notifications';
 import { stopPropagation } from '../../../utils/keyboard';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import {
   TotalNotifications,
   useRoomsNotifications,
@@ -39,7 +38,7 @@ type HomeMenuProps = {
 };
 const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(
   ({ homeRooms, roomToNotifications, notifications, requestClose }, ref) => {
-    const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+    const [hideActivity] = useSetting('hideActivity');
 
     const handleMarkAsRead = () => {
       homeRooms.forEach((rId) => {
