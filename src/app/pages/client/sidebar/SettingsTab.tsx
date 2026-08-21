@@ -122,12 +122,12 @@ function AccountSwitcher({ cords, requestClose }: AccountSwitcherProps) {
           <Menu style={{ maxWidth: toRem(250), width: '100vw' }}>
             {sessions.length > 0 && (
               <>
-                <Scroll style={{ maxHeight: toRem(300) }} size="300" hideTrack>
+                <Scroll style={{ maxHeight: toRem(300) }} size="0" hideTrack>
                   <Box
                     direction="Column"
                     gap="0"
                     style={{
-                      padding: `${config.space.S200} 0 ${config.space.S200} ${config.space.S200}`,
+                      padding: config.space.S100,
                     }}
                   >
                     {sessions.map((session) => (
