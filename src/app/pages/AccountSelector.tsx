@@ -72,6 +72,7 @@ function AccountCard({ session }: { session: Session }) {
       direction="Column"
       style={{ padding: `${config.space.S300} ${config.space.S400}` }}
       variant="SurfaceVariant"
+      alignItems="Stretch"
       as="button"
       type="button"
       onClick={handleClick}
