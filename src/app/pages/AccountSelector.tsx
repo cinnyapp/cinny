@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Avatar, Box, Button, config, Icon, Icons, Text } from 'folds';
+import { Avatar, Badge, Box, Button, config, Icon, Icons, Text } from 'folds';
 import { Link, Navigate, Outlet, useNavigate } from 'react-router-dom';
 import { useAtom, useAtomValue } from 'jotai';
 import { AuthLayout, AuthLogo } from '../components/auth-layout';
@@ -23,7 +23,7 @@ import {
   getAfterLoginRedirectPath,
   setAfterLoginRedirectPath,
 } from './afterLoginRedirectPath';
-import { Session, setLastActiveUserId } from '../../client/sessions';
+import { getLastActiveUserId, Session, setLastActiveUserId } from '../../client/sessions';
 import { OrDivider } from '../components/OrDivider';
 import { getAuthJSONRequest } from '../../client/request';
 import { useUserProfileRequest } from '../hooks/useUserProfile';
@@ -35,6 +35,7 @@ function AccountCard({ session }: { session: Session }) {
   const { userId } = session;
   const navigate = useNavigate();
   const [sessionUserId, setSessionUserId] = useAtom(sessionUserIdAtom);
+  const lastUserId = getLastActiveUserId();
 
   const request = useMemo(
     () => getAuthJSONRequest(session.baseUrl, session.accessToken),
@@ -90,6 +91,13 @@ function AccountCard({ session }: { session: Session }) {
             <Text truncate>
               <b>{displayName}</b>
             </Text>
+            {lastUserId === userId && (
+              <Badge variant="Primary" fill="Soft" outlined radii="300">
+                <Text as="span" size="L400">
+                  Last used
+                </Text>
+              </Badge>
+            )}
           </Box>
           <Box gap="200" justifyContent="SpaceBetween">
             <Text size="T200" truncate>
