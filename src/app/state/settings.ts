@@ -87,20 +87,22 @@ const defaultSettings: Settings = {
 const STORAGE_KEY = 'settings';
 const getStoreKey = (userId: string): string => `${STORAGE_KEY}${userId}`;
 
-// export const settingsAtom = atomWithLocalStorage<Settings>(
-//   STORAGE_KEY,
-//   (key) => getLocalStorageItem<Settings>(key, defaultSettings),
-//   (key, settings) => {
-//     setLocalStorageItem(key, settings);
-//   }
-// );
-
 export type SettingsAtom = WritableAtom<Settings, [Settings], void>;
 
 export const makeSettingsAtom = (userId: string): SettingsAtom => {
   const settingsAtom = atomWithLocalStorage<Settings>(
     getStoreKey(userId),
-    (key) => getLocalStorageItem<Settings>(key, defaultSettings),
+    (key) => {
+      // migrate from settings item without username postfix
+      const migrateSettings = getLocalStorageItem<Settings>(STORAGE_KEY, defaultSettings);
+      if (migrateSettings !== defaultSettings) {
+        setLocalStorageItem(key, migrateSettings);
+        localStorage.removeItem(STORAGE_KEY);
+      }
+      // end of migration
+
+      return getLocalStorageItem<Settings>(key, migrateSettings);
+    },
     (key, settings) => {
       setLocalStorageItem(key, settings);
     }
