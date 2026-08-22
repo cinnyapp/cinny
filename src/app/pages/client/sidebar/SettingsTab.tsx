@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useState } from 'react';
+import React, { MouseEventHandler, useMemo, useState } from 'react';
 import {
   Avatar,
   Box,
@@ -23,7 +23,7 @@ import { getMxIdLocalPart, getMxIdServer } from '../../../utils/matrix';
 import { nameInitials } from '../../../utils/common';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { Settings } from '../../../features/settings';
-import { useUserProfile } from '../../../hooks/useUserProfile';
+import { useUserProfile, useUserProfileRequest } from '../../../hooks/useUserProfile';
 import { Modal500 } from '../../../components/Modal500';
 import { useClient } from '../../../hooks/useClient';
 import { mxcToHttp } from '../../../../client/mxcToHttp';
@@ -32,6 +32,7 @@ import { stopPropagation } from '../../../utils/keyboard';
 import { useSession, useSessions } from '../../../hooks/useSessions';
 import { sessionUserIdAtom } from '../../../state/sessions';
 import { Session } from '../../../../client/sessions';
+import { getAuthJSONRequest } from '../../../../client/request';
 
 type AccountTileProps = {
   session: Session;
@@ -44,7 +45,11 @@ function AccountTile({ session }: AccountTileProps) {
 
   const setSessionUserId = useSetAtom(sessionUserIdAtom);
 
-  const profile = useUserProfile(userId);
+  const request = useMemo(
+    () => getAuthJSONRequest(session.baseUrl, session.accessToken),
+    [session]
+  );
+  const profile = useUserProfileRequest(userId, request);
 
   const username = getMxIdLocalPart(userId) ?? userId;
   const server = getMxIdServer(userId) ?? userId;

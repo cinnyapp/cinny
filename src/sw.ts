@@ -16,7 +16,7 @@ const getRequestId = () => {
 
 const pendingSessionRequests = new Map<number, (sessionInfo: SessionInfo | undefined) => void>();
 
-async function requestSession(clientId: string): Promise<SessionInfo | undefined> {
+async function requestSession(clientId: string, origin: string): Promise<SessionInfo | undefined> {
   const client = await self.clients.get(clientId);
   if (!client) return undefined;
 
@@ -24,7 +24,7 @@ async function requestSession(clientId: string): Promise<SessionInfo | undefined
 
   const sessionPromise = new Promise<SessionInfo | undefined>((resolve) => {
     pendingSessionRequests.set(id, resolve);
-    client.postMessage({ type: 'session-request', id });
+    client.postMessage({ type: 'session-request', id, origin });
   });
 
   const timeout = new Promise<undefined>((resolve) => {
@@ -101,7 +101,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   if (!clientId) return;
 
   event.respondWith(
-    requestSession(clientId).then((s) => {
+    requestSession(clientId, new URL(url).origin).then((s) => {
       if (s && validMediaRequest(url, s.baseUrl)) {
         return fetch(url, fetchConfig(s.accessToken));
       }

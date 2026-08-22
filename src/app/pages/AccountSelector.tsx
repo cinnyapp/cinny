@@ -121,7 +121,7 @@ export function AccountSelector() {
   const navigate = useNavigate();
 
   const sessions = useSessions();
-  useSessionRequest(sessions[0]);
+  useSessionRequest(sessions);
 
   if (sessions.length === 0) {
     return <Navigate to={getLoginPath()} replace />;
@@ -186,7 +186,7 @@ export function ClientAccountSelector() {
   const sessions = useSessions();
   const session = useMemo(() => sessions.find((s) => userId === s.userId), [userId, sessions]);
 
-  useSessionRequest(session ?? sessions[0]);
+  useSessionRequest(sessions, userId);
   useSingleSessionTab(session?.userId);
 
   const handleVisibility = useCallback(

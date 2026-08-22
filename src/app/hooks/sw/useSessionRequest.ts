@@ -8,12 +8,19 @@ const getServiceWorker = () => {
   return undefined;
 };
 
-export const useSessionRequest = (session?: Session) => {
+export const useSessionRequest = (sessions: Session[], userId?: string) => {
   useEffect(() => {
-    const handleSWMessages = (ev: MessageEvent<any>) => {
-      if (!session) return;
+    const userSession = sessions.find((s) => s.userId === userId);
 
-      const { type, id } = ev.data ?? {};
+    const handleSWMessages = (ev: MessageEvent<any>) => {
+      const { type, id, origin } = ev.data ?? {};
+
+      const session =
+        userSession && userSession.baseUrl.startsWith(origin)
+          ? userSession
+          : sessions.find((s) => s.baseUrl.startsWith(origin));
+
+      if (!session) return;
 
       if (type === 'session-request') {
         getServiceWorker()?.controller?.postMessage({
@@ -30,5 +37,5 @@ export const useSessionRequest = (session?: Session) => {
     return () => {
       getServiceWorker()?.removeEventListener('message', handleSWMessages);
     };
-  }, [session]);
+  }, [sessions, userId]);
 };
