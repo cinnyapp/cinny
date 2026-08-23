@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 import { as, Box, color, config, Icon, Icons, Text } from 'folds';
 import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import {
@@ -53,7 +53,13 @@ export function EncryptedMessageEvent({
   reply,
   children,
 }: EncryptedMessageEventProps) {
-  const encryptedEvent = decryptionManager.decryptableMessageEvent(roomId, event);
+  // Memoize the result because it can return new EncryptedEvent
+  // on every call if event content is missing sessionId.
+  // It can cause infinite re-renders in pair with `decryption`
+  const encryptedEvent = useMemo(
+    () => decryptionManager.decryptableMessageEvent(roomId, event),
+    [roomId, event, decryptionManager]
+  );
   if (encryptedEvent.decryption.read instanceof EventDecryptionIdle) {
     encryptedEvent.decrypt();
   }
