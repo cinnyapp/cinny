@@ -618,6 +618,11 @@ export const createRoomToAliasObservable = (
       const roomToAlias = new Map<string, string>();
 
       const addAlias = (obj: RoomStateObject) => {
+        if (state.join.tombstone.read.some((ev) => ev.roomId === obj.roomId)) {
+          // skip tombstone rooms to prevent multiple rooms having same alias.
+          // duplicate aliases cause problem finding correct roomId from alias.
+          return;
+        }
         const { content, state_key: stateKey } = obj.event;
         if (
           stateKey === '' &&
@@ -640,6 +645,7 @@ export const createRoomToAliasObservable = (
       state.invite.canonicalAlias,
       state.knock.canonicalAlias,
       state.leave.canonicalAlias,
+      state.join.tombstone,
     ]);
 
   disposer.collect(roomToAliasObservable);

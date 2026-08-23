@@ -13,10 +13,7 @@ export const useSelectedSpace = (): string | undefined => {
   if (!spaceIdOrAlias) return undefined;
 
   const spaceId = isRoomAlias(spaceIdOrAlias)
-    ? ct.rooms.join.read.find(
-        (roomId) =>
-          roomToAlias.get(roomId) === spaceIdOrAlias && !ct.roomToReplacement.read.has(roomId)
-      )
+    ? ct.rooms.join.read.find((roomId) => roomToAlias.get(roomId) === spaceIdOrAlias)
     : spaceIdOrAlias;
 
   return spaceId;
