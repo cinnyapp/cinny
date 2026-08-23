@@ -207,7 +207,7 @@ export function Reply({
             {(contentEvent) => (
               <RenderReplyContent
                 displayName={getMemberName(event.sender)}
-                eventType={event.type}
+                eventType={contentEvent.type}
                 edited={!!editedEvent}
                 content={rContent.newContent(contentEvent.content) ?? contentEvent.content}
                 htmlReactParserOptions={htmlReactParserOptions}
