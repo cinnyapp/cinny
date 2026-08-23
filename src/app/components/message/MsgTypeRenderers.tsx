@@ -311,7 +311,7 @@ type MVideoProps = {
 };
 export function MVideo({ content, mediaAutoLoad, outlined }: MVideoProps) {
   const videoInfo = rContent.info(content);
-  const mxcUrl = rEncryptedFile.url(rContent.file) ?? rContent.url(content);
+  const mxcUrl = rEncryptedFile.url(rContent.file(content)) ?? rContent.url(content);
   const safeMimeType = getBlobSafeMimeType(rInfo.mimetype(videoInfo) ?? '');
 
   if (!videoInfo || !safeMimeType.startsWith('video') || typeof mxcUrl !== 'string') {
