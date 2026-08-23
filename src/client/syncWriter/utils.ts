@@ -190,7 +190,6 @@ export const writeJoinRoomLatestEvent = async (
 
   await ct.storage.joinRoomLatestEvent.write.putMultiple(roomLatestEventObjects);
 };
-
 export const writeReadReceipt = async (
   ct: ClientContext,
   joinRooms: string[],
@@ -202,16 +201,65 @@ export const writeReadReceipt = async (
 
     if (!event) return [];
 
-    const objects: ReadReceiptObject[] = [];
+    type LatestReceipt = {
+      eventId: string;
+      userId: string;
+      receiptType: ReceiptType;
+      receipt: Receipt;
+    };
 
-    const collectReceipt = (
+    // One latest receipt per user + thread.
+    const latestReceipts = new Map<string, LatestReceipt>();
+
+    const collectLatestReceipt = (
       eventId: string,
       userId: string,
       receiptType: ReceiptType,
       receipt: Receipt
     ) => {
       const threadId = receipt.thread_id ?? ThreadId.Main;
-      const obj: ReadReceiptObject = {
+      const key = `${userId}:${threadId}`;
+      const existing = latestReceipts.get(key);
+
+      const receiptTs = receipt.ts ?? 0;
+      const existingTs = existing?.receipt.ts ?? 0;
+
+      if (!existing || receiptTs > existingTs) {
+        latestReceipts.set(key, {
+          eventId,
+          userId,
+          receiptType,
+          receipt,
+        });
+      }
+    };
+
+    Object.keys(event.content).forEach((eventId) => {
+      const receiptContent = event.content[eventId];
+
+      // Collect public receipts.
+      const userToPublic = receiptContent['m.read'];
+
+      if (userToPublic) {
+        Object.keys(userToPublic).forEach((userId) => {
+          collectLatestReceipt(eventId, userId, 'm.read', userToPublic[userId]);
+        });
+      }
+
+      // Collect private receipts.
+      const userToPrivate = receiptContent['m.read.private'];
+
+      if (userToPrivate) {
+        Object.keys(userToPrivate).forEach((userId) => {
+          collectLatestReceipt(eventId, userId, 'm.read.private', userToPrivate[userId]);
+        });
+      }
+    });
+
+    return Array.from(latestReceipts.values()).map(({ eventId, userId, receiptType, receipt }) => {
+      const threadId = receipt.thread_id ?? ThreadId.Main;
+
+      return {
         id: getReadReceiptId(roomId, userId, threadId),
         roomId,
         userId,
@@ -220,59 +268,7 @@ export const writeReadReceipt = async (
         ts: receipt.ts ?? 0,
         threadId,
       };
-      objects.push(obj);
-    };
-
-    const threadIdToMyPrivateReceipt: Record<
-      string,
-      {
-        eventId: string;
-        receipt: Receipt;
-      }
-    > = {};
-
-    const eventIds = Object.keys(event.content);
-    eventIds.forEach((eventId) => {
-      const receiptContent = event.content[eventId];
-      const userToPrivate = receiptContent['m.read.private'];
-      const receipt = userToPrivate?.[ct.session.userId];
-      if (!receipt) return;
-      const threadId = receipt.thread_id ?? ThreadId.Main;
-      const existing = threadIdToMyPrivateReceipt[threadId];
-      if (!existing || (receipt.ts ?? 0) > (existing.receipt.ts ?? 0)) {
-        threadIdToMyPrivateReceipt[threadId] = { eventId, receipt };
-      }
     });
-    eventIds.forEach((eventId) => {
-      const receiptContent = event.content[eventId];
-      const userToPublic = receiptContent['m.read'];
-
-      if (userToPublic) {
-        Object.keys(userToPublic).forEach((userId) => {
-          const receipt = userToPublic[userId];
-          if (userId === ct.session.userId) {
-            // use latest receipt between private/public
-            const threadId = receipt.thread_id ?? ThreadId.Main;
-            const privateReceipt =
-              threadId in threadIdToMyPrivateReceipt
-                ? threadIdToMyPrivateReceipt[threadId]
-                : undefined;
-            if (privateReceipt && (privateReceipt.receipt.ts ?? 0) >= (receipt.ts ?? 0)) {
-              collectReceipt(
-                privateReceipt.eventId,
-                userId,
-                'm.read.private',
-                privateReceipt.receipt
-              );
-              return;
-            }
-          }
-          collectReceipt(eventId, userId, 'm.read', receipt);
-        });
-      }
-    });
-
-    return objects;
   });
 
   await ct.storage.readReceipt.write.putMultiple(readReceiptObjects);
