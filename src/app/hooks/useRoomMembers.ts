@@ -3,7 +3,7 @@ import { PendingObservableResult } from 'neurone/lib/utils/observable';
 import { RoomMembership } from 'neurone/lib/api/types';
 import { useClient } from './useClient';
 import { useObservableValuePromise } from './useObservableValue';
-import { JoinRoomMemberObject } from '../../client/storage/collections';
+import { getJoinRoomMemberId, JoinRoomMemberObject } from '../../client/storage/collections';
 import { getMxIdLocalPart } from '../utils/matrix';
 import {
   roomMemberContentAvatarUrl,
@@ -23,14 +23,9 @@ export type RoomMembersAPI = {
   memberEventsResult: PendingObservableResult<JoinRoomMemberObject[]>;
 };
 
-export const useCreateRoomMembersAPI = (roomId: string): RoomMembersAPI => {
-  const ct = useClient();
-  const memberEventsPromise = useMemo(
-    () => ct.storage.joinRoomMember.observableRead.queryIndex('roomId', roomId),
-    [ct, roomId]
-  );
-
-  const memberEventsResult = useObservableValuePromise(memberEventsPromise);
+const useMemberEvents = (
+  memberEventsResult: PendingObservableResult<JoinRoomMemberObject[]>
+): RoomMembersAPI => {
   const memberEvents = memberEventsResult.value;
 
   const userIdToMemberEvent = useMemo(() => {
@@ -92,6 +87,18 @@ export const useCreateRoomMembersAPI = (roomId: string): RoomMembersAPI => {
   return api;
 };
 
+export const useCreateRoomMembersAPI = (roomId: string): RoomMembersAPI => {
+  const ct = useClient();
+  const memberEventsPromise = useMemo(
+    () => ct.storage.joinRoomMember.observableRead.queryIndex('roomId', roomId),
+    [ct, roomId]
+  );
+
+  const memberEventsResult = useObservableValuePromise(memberEventsPromise);
+
+  return useMemberEvents(memberEventsResult);
+};
+
 const RoomMembersAPIContext = createContext<RoomMembersAPI | null>(null);
 export const RoomMembersAPIProvider = RoomMembersAPIContext.Provider;
 
@@ -102,4 +109,28 @@ export const useRoomMembersAPI = (): RoomMembersAPI => {
   }
 
   return api;
+};
+
+export const useRoomMembers = (roomId: string, users: string[]) => {
+  const ct = useClient();
+  const memberEventsPromise = useMemo(
+    () =>
+      ct.storage.joinRoomMember.observableRead.getMultiple(
+        users.map((userId) => getJoinRoomMemberId(roomId, userId))
+      ),
+    [ct, roomId, users]
+  );
+
+  const memberEventsResult = useObservableValuePromise(memberEventsPromise);
+
+  const memberEvents = useMemo(() => {
+    if (memberEventsResult.value) {
+      return {
+        value: memberEventsResult.value.filter((i) => i !== undefined),
+      };
+    }
+    return memberEventsResult;
+  }, [memberEventsResult]);
+
+  return useMemberEvents(memberEvents);
 };

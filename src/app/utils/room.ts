@@ -463,11 +463,11 @@ export const getReactionGroups = (
 export const getLatestEditEvent = (
   sender: string,
   events: MessageEventWithoutRoomId[],
-  redacted: Set<string>
+  redacted: Set<string> | undefined
 ): MessageEventWithoutRoomId | undefined => {
   let event: MessageEventWithoutRoomId | undefined;
   events.forEach((e) => {
-    if (redacted.has(e.event_id) || sender !== e.sender) return;
+    if (redacted?.has(e.event_id) || sender !== e.sender) return;
     if (!event) {
       event = e;
       return;
