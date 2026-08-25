@@ -11,8 +11,8 @@ export const useThreadParticipants = (timeline: ThreadTimeline): string[] => {
       u.add(m.sender);
     });
 
-    if (meta?.latestReplyEvent) {
-      u.add(meta.latestReplyEvent?.sender);
+    if (meta?.latestReplyEvent?.sender) {
+      u.add(meta.latestReplyEvent.sender);
     }
     return Array.from(u);
   }, [meta, messageBatch]);

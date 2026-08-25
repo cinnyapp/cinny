@@ -119,14 +119,22 @@ export function ThreadSelector({
           </Text>
         ) : (
           <Text size="T200" truncate>
-            <span>Last reply by </span>
-            <b>{getMemberName(latestReplyEvent.sender)}</b>
-            <span> at </span>
-            <Time
-              hour24Clock={hour24Clock}
-              dateFormatString={dateFormatString}
-              ts={latestReplyEvent.origin_server_ts}
-            />
+            {/* https://forgejo.ellis.link/continuwuation/continuwuity/issues/2167 */}
+            {latestReplyEvent.sender ? (
+              <>
+                <span>Last reply by </span>
+
+                <b>{getMemberName(latestReplyEvent.sender)}</b>
+                <span> at </span>
+                <Time
+                  hour24Clock={hour24Clock}
+                  dateFormatString={dateFormatString}
+                  ts={latestReplyEvent.origin_server_ts}
+                />
+              </>
+            ) : (
+              <span>View Thread</span>
+            )}
           </Text>
         )}
         <Icon size="100" src={Icons.ChevronRight} />
