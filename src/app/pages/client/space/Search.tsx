@@ -8,22 +8,22 @@ import { useRecursiveChildRoomScopeFactory, useSpaceChildren } from '../../../st
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { mDirectAtom } from '../../../state/mDirectList';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../../components/BackRouteHandler';
+import { useClient } from '../../../hooks/useClient';
 
 export function SpaceSearch() {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const space = useSpace();
+  const spaceId = useSpace();
   const screenSize = useScreenSizeContext();
 
   const mDirects = useAtomValue(mDirectAtom);
   const roomToParents = useAtomValue(roomToParentsAtom);
   const rooms = useSpaceChildren(
     allRoomsAtom,
-    space.roomId,
-    useRecursiveChildRoomScopeFactory(mx, mDirects, roomToParents)
+    spaceId,
+    useRecursiveChildRoomScopeFactory(ct, mDirects, roomToParents)
   );
 
   return (
@@ -55,7 +55,11 @@ export function SpaceSearch() {
           <PageContent>
             <PageContentCenter>
               <MessageSearch
-                defaultRoomsFilterName={space.name}
+                defaultRoomsFilterName={
+                  ct.roomToName.read.get(spaceId) ??
+                  ct.roomToAlias.read.get(spaceId) ??
+                  'Unknown Space'
+                }
                 allowGlobal
                 rooms={rooms}
                 scrollRef={scrollRef}

@@ -122,7 +122,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
             {mobile ? null : <Route index element={<WelcomePage />} />}
             <Route path={_CREATE_PATH} element={<HomeCreateRoom />} />
             <Route path={_JOIN_PATH} element={<p>join</p>} />
-            {/* <Route path={_SEARCH_PATH} element={<HomeSearch />} /> */}
+            <Route path={_SEARCH_PATH} element={<HomeSearch />} />
             <Route
               path={_ROOM_PATH}
               element={
@@ -187,7 +187,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
               />
             )}
             <Route path={_LOBBY_PATH} element={<Lobby />} />
-            {/*<Route path={_SEARCH_PATH} element={<SpaceSearch />} /> */}
+            <Route path={_SEARCH_PATH} element={<SpaceSearch />} />
             <Route
               path={_ROOM_PATH}
               element={

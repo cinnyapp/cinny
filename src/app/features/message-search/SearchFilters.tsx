@@ -25,11 +25,9 @@ import {
   Badge,
   RectCords,
 } from 'folds';
-import { SearchOrderBy } from 'matrix-js-sdk';
 import FocusTrap from 'focus-trap-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { getRoomIconSrc } from '../../utils/room';
+import { SearchEventOrder } from 'neurone/lib/api/types';
 import { factoryRoomIdByAtoZ } from '../../utils/sort';
 import {
   SearchItemStrGetter,
@@ -39,16 +37,19 @@ import {
 import { DebounceOptions, useDebounce } from '../../hooks/useDebounce';
 import { VirtualTile } from '../../components/virtualizer';
 import { stopPropagation } from '../../utils/keyboard';
+import { GetRoomNameCallback } from '../../hooks/storage/useGetRoomName';
+import { useClient } from '../../hooks/useClient';
+import { RoomIcon } from '../../components/room-avatar';
 
 type OrderButtonProps = {
-  order?: string;
-  onChange: (order?: string) => void;
+  order?: SearchEventOrder;
+  onChange: (order?: SearchEventOrder) => void;
 };
 function OrderButton({ order, onChange }: OrderButtonProps) {
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
-  const rankOrder = order === SearchOrderBy.Rank;
+  const rankOrder = order === 'rank';
 
-  const setOrder = (o?: string) => {
+  const setOrder = (o?: SearchEventOrder) => {
     setMenuAnchor(undefined);
     onChange(o);
   };
@@ -86,7 +87,7 @@ function OrderButton({ order, onChange }: OrderButtonProps) {
                 <Text size="T300">Recent</Text>
               </MenuItem>
               <MenuItem
-                onClick={() => setOrder(SearchOrderBy.Rank)}
+                onClick={() => setOrder('rank')}
                 variant="Surface"
                 size="300"
                 radii="300"
@@ -125,16 +126,22 @@ type SelectRoomButtonProps = {
   roomList: string[];
   selectedRooms?: string[];
   onChange: (rooms?: string[]) => void;
+  getRoomName: GetRoomNameCallback;
 };
-function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButtonProps) {
-  const mx = useMatrixClient();
+function SelectRoomButton({
+  roomList,
+  selectedRooms,
+  onChange,
+  getRoomName,
+}: SelectRoomButtonProps) {
+  const ct = useClient();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const [localSelected, setLocalSelected] = useState(selectedRooms);
 
   const getRoomNameStr: SearchItemStrGetter<string> = useCallback(
-    (rId) => mx.getRoom(rId)?.name ?? rId,
-    [mx]
+    (rId) => getRoomName(rId) ?? 'Unknown',
+    [getRoomName]
   );
 
   const [searchResult, _searchRoom, resetSearch] = useAsyncSearch(
@@ -142,7 +149,7 @@ function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButto
     getRoomNameStr,
     SEARCH_OPTS
   );
-  const rooms = Array.from(searchResult?.items ?? roomList).sort(factoryRoomIdByAtoZ(mx));
+  const rooms = Array.from(searchResult?.items ?? roomList).sort(factoryRoomIdByAtoZ(getRoomName));
 
   const virtualizer = useVirtualizer({
     count: rooms.length,
@@ -253,8 +260,6 @@ function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButto
                   >
                     {vItems.map((vItem) => {
                       const roomId = rooms[vItem.index];
-                      const room = mx.getRoom(roomId);
-                      if (!room) return null;
                       const selected = localSelected?.includes(roomId);
 
                       return (
@@ -272,14 +277,16 @@ function SelectRoomButton({ roomList, selectedRooms, onChange }: SelectRoomButto
                             radii="300"
                             aria-pressed={selected}
                             before={
-                              <Icon
+                              <RoomIcon
                                 size="50"
-                                src={getRoomIconSrc(Icons, room.getType(), room.getJoinRule())}
+                                roomType={ct.roomToType.read.get(roomId)}
+                                joinRule={ct.roomToJoinRule.read.get(roomId)}
+                                filled
                               />
                             }
                           >
                             <Text truncate size="T300">
-                              {room.name}
+                              {getRoomName(roomId) ?? 'Unknown'}
                             </Text>
                           </MenuItem>
                         </VirtualTile>
@@ -333,8 +340,9 @@ type SearchFiltersProps = {
   onSelectedRoomsChange: (selectedRooms?: string[]) => void;
   global?: boolean;
   onGlobalChange: (global?: boolean) => void;
-  order?: string;
-  onOrderChange: (order?: string) => void;
+  order?: SearchEventOrder;
+  onOrderChange: (order?: SearchEventOrder) => void;
+  getRoomName: GetRoomNameCallback;
 };
 export function SearchFilters({
   defaultRoomsFilterName,
@@ -346,8 +354,9 @@ export function SearchFilters({
   order,
   onGlobalChange,
   onOrderChange,
+  getRoomName,
 }: SearchFiltersProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
 
   return (
     <Box direction="Column" gap="100">
@@ -379,29 +388,30 @@ export function SearchFilters({
           variant="Surface"
           size="300"
         />
-        {selectedRooms?.map((roomId) => {
-          const room = mx.getRoom(roomId);
-          if (!room) return null;
-
-          return (
-            <Chip
-              key={roomId}
-              variant="Success"
-              onClick={() => onSelectedRoomsChange(selectedRooms.filter((rId) => rId !== roomId))}
-              radii="Pill"
-              before={
-                <Icon size="50" src={getRoomIconSrc(Icons, room.getType(), room.getJoinRule())} />
-              }
-              after={<Icon size="50" src={Icons.Cross} />}
-            >
-              <Text size="T200">{room.name}</Text>
-            </Chip>
-          );
-        })}
+        {selectedRooms?.map((roomId) => (
+          <Chip
+            key={roomId}
+            variant="Success"
+            onClick={() => onSelectedRoomsChange(selectedRooms.filter((rId) => rId !== roomId))}
+            radii="Pill"
+            before={
+              <RoomIcon
+                size="50"
+                roomType={ct.roomToType.read.get(roomId)}
+                joinRule={ct.roomToJoinRule.read.get(roomId)}
+                filled
+              />
+            }
+            after={<Icon size="50" src={Icons.Cross} />}
+          >
+            <Text size="T200">{getRoomName(roomId)}</Text>
+          </Chip>
+        ))}
         <SelectRoomButton
           roomList={roomList}
           selectedRooms={selectedRooms}
           onChange={onSelectedRoomsChange}
+          getRoomName={getRoomName}
         />
         <Box grow="Yes" data-spacing-node />
         <OrderButton order={order} onChange={onOrderChange} />

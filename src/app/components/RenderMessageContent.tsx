@@ -55,7 +55,7 @@ export function RenderMessageContent({
   }
 
   if (eventType !== MessageEvent.RoomMessage) {
-    return <UnsupportedContent />;
+    return <UnsupportedContent eventType={eventType} />;
   }
 
   const renderCaption = () => {

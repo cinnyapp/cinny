@@ -19,7 +19,8 @@ import { useMediaAuthentication } from './useMediaAuthentication';
 export const useMessageParserOptions = (
   roomId: string,
   getRoomName: GetRoomNameCallback,
-  getMemberName: GetRoomMemberNameCallback
+  getMemberName: GetRoomMemberNameCallback,
+  highlightRegex?: RegExp
 ) => {
   const ct = useClient();
   const useAuthentication = useMediaAuthentication();
@@ -49,6 +50,7 @@ export const useMessageParserOptions = (
       getReactCustomHtmlParser(ct, roomId, {
         linkifyOpts,
         useAuthentication,
+        highlightRegex,
         handleSpoilerClick: spoilerClickHandler,
         handleMentionClick: mentionClickHandler,
         getMemberName,
@@ -58,6 +60,7 @@ export const useMessageParserOptions = (
       ct,
       roomId,
       linkifyOpts,
+      highlightRegex,
       spoilerClickHandler,
       mentionClickHandler,
       useAuthentication,

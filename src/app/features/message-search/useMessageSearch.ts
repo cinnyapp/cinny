@@ -1,18 +1,18 @@
-import {
-  IEventWithRoomId,
-  IResultContext,
-  ISearchRequestBody,
-  ISearchResponse,
-  ISearchResult,
-  SearchOrderBy,
-} from 'matrix-js-sdk';
 import { useCallback } from 'react';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import {
+  ClientEvent,
+  SearchEventContext,
+  SearchEventOrder,
+  SearchResult,
+} from 'neurone/lib/api/types';
+import { postSearch, PostSearchBody, PostSearchOK } from 'neurone/lib/api/matrix/client/v3/search';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
+import { useClient } from '../../hooks/useClient';
 
 export type ResultItem = {
   rank: number;
-  event: IEventWithRoomId;
-  context: IResultContext;
+  event: ClientEvent;
+  context: SearchEventContext;
 };
 
 export type ResultGroup = {
@@ -20,21 +20,24 @@ export type ResultGroup = {
   items: ResultItem[];
 };
 
-export type SearchResult = {
+export type MessageSearchResult = {
   nextToken?: string;
   highlights: string[];
   groups: ResultGroup[];
 };
 
-const groupSearchResult = (results: ISearchResult[]): ResultGroup[] => {
+const groupSearchResult = (results: SearchResult[]): ResultGroup[] => {
   const groups: ResultGroup[] = [];
 
   results.forEach((item) => {
-    const roomId = item.result.room_id;
+    const { rank, result, context } = item;
+    if (!result || typeof rank !== 'number' || !context) return;
+
+    const roomId = result.room_id;
     const resultItem: ResultItem = {
-      rank: item.rank,
-      event: item.result,
-      context: item.context,
+      rank,
+      event: result,
+      context,
     };
 
     const lastAddedGroup: ResultGroup | undefined = groups[groups.length - 1];
@@ -51,10 +54,10 @@ const groupSearchResult = (results: ISearchResult[]): ResultGroup[] => {
   return groups;
 };
 
-const parseSearchResult = (result: ISearchResponse): SearchResult => {
+const parseSearchResult = (result: PostSearchOK): MessageSearchResult => {
   const roomEvents = result.search_categories.room_events;
 
-  const searchResult: SearchResult = {
+  const searchResult: MessageSearchResult = {
     nextToken: roomEvents?.next_batch,
     highlights: roomEvents?.highlights ?? [],
     groups: groupSearchResult(roomEvents?.results ?? []),
@@ -65,12 +68,12 @@ const parseSearchResult = (result: ISearchResponse): SearchResult => {
 
 export type MessageSearchParams = {
   term?: string;
-  order?: string;
+  order?: SearchEventOrder;
   rooms?: string[];
   senders?: string[];
 };
 export const useMessageSearch = (params: MessageSearchParams) => {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const { term, order, rooms, senders } = params;
 
   const searchMessages = useCallback(
@@ -82,7 +85,7 @@ export const useMessageSearch = (params: MessageSearchParams) => {
         };
       const limit = 20;
 
-      const requestBody: ISearchRequestBody = {
+      const requestBody: PostSearchBody = {
         search_categories: {
           room_events: {
             event_context: {
@@ -96,19 +99,28 @@ export const useMessageSearch = (params: MessageSearchParams) => {
               senders,
             },
             include_state: false,
-            order_by: order as SearchOrderBy.Recent,
+            order_by: order,
             search_term: term,
           },
         },
       };
 
-      const r = await mx.search({
-        body: requestBody,
-        next_batch: nextBatch === '' ? undefined : nextBatch,
-      });
-      return parseSearchResult(r);
+      const resp = await ct.requestAuthJSON(
+        postSearch({
+          searchParams: { next_batch: nextBatch === '' ? undefined : nextBatch },
+          body: requestBody,
+        })
+      );
+
+      const [err, result] = await parseMatrixResp<PostSearchOK>(resp);
+
+      if (err) {
+        throw new Error(err.data.error ?? err.data.errcode);
+      }
+
+      return parseSearchResult(result);
     },
-    [mx, term, order, rooms, senders]
+    [ct, term, order, rooms, senders]
   );
 
   return searchMessages;
