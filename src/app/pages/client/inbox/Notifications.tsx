@@ -100,6 +100,7 @@ import { MessageContent } from '../../../components/MessageContent';
 import { getLatestEditEvent } from '../../../utils/room';
 import { RenderMessageContent } from '../../../components/RenderMessageContent';
 import { rContent } from '../../../../client/reader';
+import { redacted } from '../../../../client/room/relations';
 
 type RoomNotificationsGroup = {
   roomId: string;
@@ -282,7 +283,7 @@ function RoomNotifications({
   const membersAPI = useRoomMembersAPI();
   const useAuthentication = useMediaAuthentication();
 
-  const redacted = useObservableValueOptionally(timeline?.relations.redacted);
+  const redactedSet = useObservableValueOptionally(timeline?.relations.redacted);
   const edits = useObservableValueOptionally(timeline?.relations.edits.eventToRelations);
 
   const creators = useRoomCreators(roomId);
@@ -326,7 +327,7 @@ function RoomNotifications({
         const usernameColor = legacyUsernameColor ? colorMXID(event.sender) : tagColor;
 
         const editEvents = edits?.get(event.event_id);
-        const editedEvent = getLatestEditEvent(event, editEvents, redacted);
+        const editedEvent = getLatestEditEvent(event, editEvents, redactedSet);
 
         return (
           <SequenceCard
@@ -384,7 +385,7 @@ function RoomNotifications({
                   </Chip>
                 </Box>
               </Box>
-              {redacted?.has(event.event_id) ? (
+              {redactedSet?.has(event.event_id) || redacted(event) ? (
                 <RedactedContent />
               ) : (
                 <MessageContent

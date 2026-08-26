@@ -76,6 +76,7 @@ import { MessageContent } from '../../../components/MessageContent';
 import { RenderMessageContent } from '../../../components/RenderMessageContent';
 import { rContent } from '../../../../client/reader';
 import { mxcToHttp } from '../../../../client/mxcToHttp';
+import { redacted } from '../../../../client/room/relations';
 
 type PinnedMessageProps = {
   pinnedEvents: string[];
@@ -177,7 +178,7 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(({ reque
 
   const roomToTimeline = useObservableValue(ct.roomToTimeline);
   const timeline = roomToTimeline.get(roomId);
-  const redacted = useObservableValueOptionally(timeline?.relations.redacted);
+  const redactedSet = useObservableValueOptionally(timeline?.relations.redacted);
   const edits = useObservableValueOptionally(timeline?.relations.edits.eventToRelations);
 
   const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(roomId);
@@ -286,7 +287,11 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(({ reque
                                 legacyUsernameColor || direct ? colorMXID(event.sender) : tagColor;
 
                               const editEvents = edits?.get(event.event_id);
-                              const editedEvent = getLatestEditEvent(event, editEvents, redacted);
+                              const editedEvent = getLatestEditEvent(
+                                event,
+                                editEvents,
+                                redactedSet
+                              );
 
                               return (
                                 <ModernLayout
@@ -344,7 +349,7 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(({ reque
                                       {renderOptions()}
                                     </Box>
                                   </Box>
-                                  {redacted?.has(event.event_id) ? (
+                                  {redactedSet?.has(event.event_id) || redacted(event) ? (
                                     <RedactedContent />
                                   ) : (
                                     <MessageContent

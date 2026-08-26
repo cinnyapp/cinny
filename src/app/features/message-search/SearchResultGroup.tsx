@@ -53,6 +53,7 @@ import { useObservableValueOptionally } from '../../hooks/useObservableValue';
 import { useMessageParserOptions } from '../../hooks/useMessageParserOptions';
 import { MessageContent } from '../../components/MessageContent';
 import { rContent } from '../../../client/reader';
+import { redacted } from '../../../client/room/relations';
 
 type SearchGroupMessagesProps = {
   roomId: string;
@@ -85,7 +86,7 @@ export function SearchGroupMessages({
   const useAuthentication = useMediaAuthentication();
   const highlightRegex = useMemo(() => makeHighlightRegex(highlights), [highlights]);
 
-  const redacted = useObservableValueOptionally(timeline?.relations.redacted);
+  const redactedSet = useObservableValueOptionally(timeline?.relations.redacted);
   const edits = useObservableValueOptionally(timeline?.relations.edits.eventToRelations);
 
   const creators = useRoomCreators(roomId);
@@ -130,7 +131,7 @@ export function SearchGroupMessages({
         const usernameColor = legacyUsernameColor ? colorMXID(event.sender) : tagColor;
 
         const editEvents = edits?.get(event.event_id);
-        const editedEvent = getLatestEditEvent(event, editEvents, redacted);
+        const editedEvent = getLatestEditEvent(event, editEvents, redactedSet);
 
         return (
           <SequenceCard
@@ -188,7 +189,7 @@ export function SearchGroupMessages({
                   </Chip>
                 </Box>
               </Box>
-              {redacted?.has(event.event_id) ? (
+              {redactedSet?.has(event.event_id) || redacted(event) ? (
                 <RedactedContent />
               ) : (
                 <MessageContent
