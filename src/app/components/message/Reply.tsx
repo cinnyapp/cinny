@@ -21,7 +21,6 @@ import { RedactedContent } from './MsgTypeRenderers';
 import { HoverUnderline } from '../../styles/Text.css';
 import { useObservableValueOptionally } from '../../hooks/useObservableValue';
 import { getLatestEditEvent } from '../../utils/room';
-import { replaced } from '../../../client/room/relations';
 import { MessageContent } from '../MessageContent';
 import { useClient } from '../../hooks/useClient';
 
@@ -180,17 +179,9 @@ export function Reply({
     redactedEvents?.has(eventId) || !!rUnsigned.redactedBecause(replyEvent?.unsigned);
 
   const renderEventContent = (event: ClientEventWithoutRoomId) => {
-    const aggregatedEdit = replaced(event);
     const editEvents = edits?.get(eventId);
 
-    const editedEvent =
-      editEvents && redactedEvents
-        ? getLatestEditEvent(
-            event.sender,
-            aggregatedEdit ? [aggregatedEdit, ...editEvents] : editEvents,
-            redactedEvents
-          )
-        : undefined;
+    const editedEvent = getLatestEditEvent(event, editEvents, redactedEvents);
 
     return (
       <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }} as="div">

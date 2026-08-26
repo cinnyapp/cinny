@@ -26,7 +26,7 @@ const useFetchEvent = (roomId: string, eventId: string) => {
  *
  * @param room
  * @param eventId
- * @returns `MatrixEvent`, `undefined` means loading, `null` means failure
+ * @returns `MessageEvent`, `undefined` means loading, `null` means failure
  */
 export const useRoomEvent = (
   roomId: string,

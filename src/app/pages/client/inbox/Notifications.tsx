@@ -326,7 +326,7 @@ function RoomNotifications({
         const usernameColor = legacyUsernameColor ? colorMXID(event.sender) : tagColor;
 
         const editEvents = edits?.get(event.event_id);
-        const editedEvent = editEvents && getLatestEditEvent(event.sender, editEvents, redacted);
+        const editedEvent = getLatestEditEvent(event, editEvents, redacted);
 
         return (
           <SequenceCard

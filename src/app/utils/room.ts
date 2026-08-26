@@ -28,6 +28,7 @@ import { JoinRoomMemberObject } from '../../client/storage/collections';
 import { MentionsContent, ReactionContent } from '../../types/matrix/common';
 import { ClientContext } from '../../client/context';
 import { rContent, rInReplyTo, rRelatesTo } from '../../client/reader';
+import { replaced } from '../../client/room/relations';
 
 export const getStateEvent = (
   room: Room,
@@ -461,23 +462,27 @@ export const getReactionGroups = (
 };
 
 export const getLatestEditEvent = (
-  sender: string,
-  events: MessageEventWithoutRoomId[],
-  redacted: Set<string> | undefined
+  event: MessageEventWithoutRoomId,
+  events?: MessageEventWithoutRoomId[],
+  redacted?: Set<string>
 ): MessageEventWithoutRoomId | undefined => {
-  let event: MessageEventWithoutRoomId | undefined;
-  events.forEach((e) => {
-    if (redacted?.has(e.event_id) || sender !== e.sender) return;
-    if (!event) {
-      event = e;
+  let replacement: MessageEventWithoutRoomId | undefined;
+  const pickLatest = (e: MessageEventWithoutRoomId) => {
+    if (redacted?.has(e.event_id) || event.sender !== e.sender) return;
+    if (!replacement) {
+      replacement = e;
       return;
     }
-    if (event.origin_server_ts < e.origin_server_ts) {
-      event = e;
+    if (replacement.origin_server_ts < e.origin_server_ts) {
+      replacement = e;
     }
-  });
+  };
 
-  return event;
+  const aggregated = replaced(event);
+  if (aggregated) pickLatest(aggregated);
+  events?.forEach(pickLatest);
+
+  return replacement;
 };
 
 export const getReplyId = (content: object): string | undefined =>

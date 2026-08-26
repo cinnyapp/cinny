@@ -189,3 +189,7 @@ export type RoomCanonicalAliasContent = {
   alias?: string;
   alt_aliases?: string[];
 };
+
+export type RoomPinnedEventsContent = {
+  pinned: string[];
+};

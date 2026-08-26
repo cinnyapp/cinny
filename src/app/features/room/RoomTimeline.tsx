@@ -345,7 +345,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   const renderMatrixEvent = (event: MessageEventWithoutRoomId, item: number, collapse: boolean) => {
     const reactionEvents = reactions.get(event.event_id)?.filter((r) => !redacted.has(r.event_id));
     const editEvents = edits.get(event.event_id);
-    const editedEvent = editEvents && getLatestEditEvent(event.sender, editEvents, redacted);
+    const editedEvent = getLatestEditEvent(event, editEvents, redacted);
     const highlighted = focusItem?.index === item && focusItem.highlight;
 
     const reactionJSX = reactionEvents && reactionEvents?.length > 0 && (
