@@ -55,7 +55,8 @@ export const initializeClient = async (session: Session): Promise<InitializeClie
     session,
     requestAuthJSON
   );
-  await machine.outgoingRequests.processAll();
+  // awaiting on this request can slow down the loading perf if server is busy.
+  machine.outgoingRequests.processAll();
 
   const state = await createStateContext(storage, disposer);
 
