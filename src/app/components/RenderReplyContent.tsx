@@ -13,6 +13,7 @@ import {
   ReplyMNotice,
   ReplyMText,
   ReplyMLocation,
+  EmptyContent,
 } from './message';
 import { MsgType } from '../../types/matrix/common';
 import { rContent } from '../../client/reader';
@@ -122,6 +123,10 @@ export function RenderReplyContent({
 
   if (msgType === MsgType.Location) {
     return <ReplyMLocation content={content} />;
+  }
+
+  if (Object.keys(content).length === 0) {
+    return <EmptyContent size="T300" />;
   }
 
   return (

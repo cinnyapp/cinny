@@ -3,6 +3,7 @@ import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts } from 'linkifyjs';
 import { config } from 'folds';
 import {
+  EmptyContent,
   MAudio,
   MEmote,
   MFile,
@@ -162,6 +163,10 @@ export function RenderMessageContent({
 
   if (msgType === MsgType.Location) {
     return <MLocation content={content} />;
+  }
+
+  if (Object.keys(content).length === 0) {
+    return <EmptyContent />;
   }
 
   return (

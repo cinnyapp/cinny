@@ -16,6 +16,7 @@ import {
   UnsupportedMessageEventType,
   MessageUnsupportedContent,
   VideoContent,
+  MessageEmptyContent,
 } from './content';
 import { FALLBACK_MIMETYPE, getBlobSafeMimeType } from '../../utils/mimeTypes';
 import { parseGeoUri, scaleYDimension } from '../../utils/common';
@@ -66,6 +67,14 @@ export function BrokenContent({ size }: TextProps) {
   return (
     <Text size={size}>
       <MessageBrokenContent />
+    </Text>
+  );
+}
+
+export function EmptyContent({ size }: TextProps) {
+  return (
+    <Text size={size}>
+      <MessageEmptyContent />
     </Text>
   );
 }
