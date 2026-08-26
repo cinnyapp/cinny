@@ -70,12 +70,16 @@ export class RelationsProcessor implements Disposable {
         editEvents.push(event);
       }
 
+      // Handle reactions events
+      if (event.type === MessageEvent.Reaction) {
+        if (relation(event)) {
+          reactionEvents.push(event);
+        }
+        return;
+      }
+
       // Handle relation events
       if (relation(event)) {
-        if (event.type === MessageEvent.Reaction) {
-          reactionEvents.push(event);
-          return;
-        }
         if (replacement(event)) {
           editEvents.push(event);
           return;
