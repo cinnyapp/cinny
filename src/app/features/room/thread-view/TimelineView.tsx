@@ -72,6 +72,7 @@ import { OutboxView } from '../OutboxView';
 import { useUserReadReceipt } from '../../../hooks/useReadReceipt';
 import { useMessageParserOptions } from '../../../hooks/useMessageParserOptions';
 import { MessageContent } from '../../../components/MessageContent';
+import { MessageEditor } from '../message/MessageEditor';
 
 type TimelineViewProps = {
   threadTimeline: ThreadTimeline;
@@ -339,20 +340,30 @@ export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewPro
             roomId={roomId}
             decryptionManager={ct.decryption}
           >
-            {(contentEvent) => (
-              <RenderMessageContent
-                displayName={membersAPI.getName(event.sender)}
-                eventType={contentEvent.type}
-                ts={event.origin_server_ts}
-                edited={!!editedEvent}
-                content={rContent.newContent(contentEvent.content) ?? contentEvent.content}
-                mediaAutoLoad={mediaAutoLoad}
-                urlPreview={showUrlPreview}
-                htmlReactParserOptions={htmlReactParserOptions}
-                linkifyOpts={linkifyOpts}
-                outlineAttachment={messageLayout === MessageLayout.Bubble}
-              />
-            )}
+            {(contentEvent) =>
+              editId === event.event_id ? (
+                <MessageEditor
+                  style={{ maxWidth: '100%', width: '100vw' }}
+                  roomId={roomId}
+                  event={contentEvent}
+                  imagePackRooms={imagePackRooms}
+                  onCancel={handleEdit}
+                />
+              ) : (
+                <RenderMessageContent
+                  displayName={membersAPI.getName(event.sender)}
+                  eventType={contentEvent.type}
+                  ts={event.origin_server_ts}
+                  edited={!!editedEvent}
+                  content={rContent.newContent(contentEvent.content) ?? contentEvent.content}
+                  mediaAutoLoad={mediaAutoLoad}
+                  urlPreview={showUrlPreview}
+                  htmlReactParserOptions={htmlReactParserOptions}
+                  linkifyOpts={linkifyOpts}
+                  outlineAttachment={messageLayout === MessageLayout.Bubble}
+                />
+              )
+            }
           </MessageContent>
         )}
         {reactionJSX}

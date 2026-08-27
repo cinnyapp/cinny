@@ -61,7 +61,6 @@ import { TextViewer } from '../../../components/text-viewer';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { EmojiBoard } from '../../../components/emoji-board';
 import { ReactionViewer } from '../reaction-viewer';
-import { MessageEditor } from './MessageEditor';
 import { UserAvatar } from '../../../components/user-avatar';
 import { copyToClipboard } from '../../../utils/dom';
 import { stopPropagation } from '../../../utils/keyboard';
@@ -890,7 +889,6 @@ export const Message = as<'div', MessageProps>(
     ref
   ) => {
     const ct = useClient();
-    const roomId = useRoom();
     const senderId = event.sender;
 
     const [hover, setHover] = useState(false);
@@ -901,25 +899,6 @@ export const Message = as<'div', MessageProps>(
 
     const senderDisplayName = membersAPI.getName(senderId);
     const senderAvatarMxc = membersAPI.getAvatar(senderId);
-
-    const msgContentJSX = (
-      <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
-        {edit && onEditId ? (
-          <MessageEditor
-            style={{
-              maxWidth: '100%',
-              width: '100vw',
-            }}
-            roomId={roomId}
-            event={event}
-            imagePackRooms={imagePackRooms}
-            onCancel={() => onEditId()}
-          />
-        ) : (
-          children
-        )}
-      </Box>
-    );
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
       if (evt.altKey || !window.getSelection()?.isCollapsed || edit) return;
@@ -1241,7 +1220,9 @@ export const Message = as<'div', MessageProps>(
           messageLayout={messageLayout}
           onContextMenu={handleContextMenu}
         >
-          {msgContentJSX}
+          <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
+            {children}
+          </Box>
         </RenderMessageLayout>
       </MessageBase>
     );
