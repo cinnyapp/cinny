@@ -19,10 +19,17 @@ export const useRoomHeroes = (
 ): [GetRoomHeroesCallback, PendingObservableResult<RoomToHeroMembers>] => {
   const ct = useClient();
   const roomToSummary = useObservableValue(ct.roomToSummary);
+  const directRoomToUser = useObservableValue(ct.directRoomToUser);
 
   const getHeroes: GetRoomHeroesCallback = useCallback(
-    (roomId) => roomToSummary.get(roomId)?.['m.heroes'] ?? [],
-    [roomToSummary]
+    (roomId): string[] => {
+      const heroes = roomToSummary.get(roomId)?.['m.heroes'];
+      if (heroes && heroes.length > 0) return heroes;
+
+      const dmUserId = directRoomToUser.get(roomId);
+      return dmUserId ? [dmUserId] : [];
+    },
+    [roomToSummary, directRoomToUser]
   );
 
   const membersResult = useObservableValuePromise(
