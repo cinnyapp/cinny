@@ -70,6 +70,7 @@ import {
 import { roomToNotificationsAtom } from '../../state/room/roomToNotifications';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { RoomSettingsPage } from '../../state/roomSettings';
+import { RoomAccessIndicator } from '../../components/RoomAccessIndicator';
 
 type RoomMenuProps = {
   requestClose: () => void;
@@ -352,9 +353,12 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
             </Avatar>
           )}
           <Box direction="Column">
-            <Text size={topic ? 'H5' : 'H3'} truncate>
-              {name}
-            </Text>
+            <Box grow="Yes" alignItems="Center" gap="200">
+              <Text size={topic ? 'H5' : 'H3'} truncate>
+                {name}
+              </Text>
+              <RoomAccessIndicator roomId={roomId} />
+            </Box>
             {topic && (
               <UseStateProvider initial={false}>
                 {(viewTopic, setViewTopic) => (

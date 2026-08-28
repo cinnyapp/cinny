@@ -92,6 +92,7 @@ import { getJoinRoomStateId } from '../../../../client/storage/collections';
 import { useAllJoinedRoomsSet } from '../../../hooks/useGetRoom';
 import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
 import { useRoomsUnread } from '../../../state/hooks/unread';
+import { RoomAccessIndicator } from '../../../components/RoomAccessIndicator';
 
 type SpaceMenuProps = {
   requestClose: () => void;
@@ -239,11 +240,8 @@ type SpaceHeaderProps = {
   spaceName: string;
 };
 function SpaceHeader({ spaceName }: SpaceHeaderProps) {
-  const ct = useClient();
   const spaceId = useSpace();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
-  const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
-  const joinRule = roomToJoinRule.get(spaceId);
 
   const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
     const cords = evt.currentTarget.getBoundingClientRect();
@@ -257,11 +255,11 @@ function SpaceHeader({ spaceName }: SpaceHeaderProps) {
     <>
       <PageNavHeader>
         <Box alignItems="Center" grow="Yes" gap="300">
-          <Box grow="Yes" alignItems="Center" gap="100">
+          <Box grow="Yes" alignItems="Center" gap="200">
             <Text size="H4" truncate>
               {spaceName}
             </Text>
-            {joinRule !== 'public' && <Icon src={Icons.Lock} size="50" />}
+            <RoomAccessIndicator roomId={spaceId} />
           </Box>
           <Box shrink="No">
             <IconButton aria-pressed={!!menuAnchor} variant="Background" onClick={handleOpenMenu}>
