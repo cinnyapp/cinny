@@ -50,7 +50,7 @@ import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { makeNavCategoryId } from '../../../state/closedNavCategories';
 import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
-import { useSpaceJoinedHierarchy } from '../../../hooks/useSpaceHierarchy';
+import { useJoinedHierarchyItems, useSpaceJoinedHierarchy } from '../../../hooks/useSpaceHierarchy';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
 import { usePowerLevels, usePowerLevelsState } from '../../../hooks/usePowerLevels';
@@ -400,7 +400,10 @@ export function Space() {
 
   const hierarchy = useSpaceJoinedHierarchy(spaceId);
 
-  const rooms = useMemo(() => hierarchy.map((item) => item.roomId), [hierarchy]);
+  const rooms = useMemo(
+    () => hierarchy.flatMap((item) => item.childItems.map((c) => c.roomId)),
+    [hierarchy]
+  );
 
   const getRoomHeroes = useRoomHeroes();
   const getRoomName = useGetRoomName(getRoomHeroes);
@@ -410,8 +413,18 @@ export function Space() {
   const roomToNotifications = useRoomsNotifications(rooms, roomToNotificationsAtom);
   const unreadRooms = useRoomsUnread(rooms, unreadRoomsAtom);
 
+  const hierarchyItems = useJoinedHierarchyItems(
+    spaceId,
+    hierarchy,
+    rooms,
+    roomToNotifications,
+    unreadRooms,
+    closedCategories,
+    selectedRoomId
+  );
+
   const virtualizer = useVirtualizer({
-    count: hierarchy.length,
+    count: hierarchyItems.length,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => 0,
     overscan: 10,
@@ -473,7 +486,7 @@ export function Space() {
             }}
           >
             {virtualizer.getVirtualItems().map((vItem) => {
-              const item = hierarchy[vItem.index] ?? {};
+              const item = hierarchyItems[vItem.index] ?? {};
               if (!item) return null;
               const { roomId } = item;
 
@@ -501,7 +514,6 @@ export function Space() {
                 );
               }
 
-              // TODO: closedCategories.has(makeNavCategoryId(spaceId, parentId)
               const n = roomToNotifications.get(roomId);
               const notifications = n && getRoomTotalNotifications(n);
               return (

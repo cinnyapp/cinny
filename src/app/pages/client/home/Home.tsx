@@ -16,9 +16,9 @@ import {
   toRem,
 } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtom } from 'jotai';
 import FocusTrap from 'focus-trap-react';
-import { factoryRoomIdByAtoZ } from '../../../utils/sort';
+import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
 import {
   NavButton,
   NavCategory,
@@ -72,6 +72,7 @@ import { roomToNotificationsAtom } from '../../../state/room/roomToNotifications
 import { useGetRoomAvatar } from '../../../hooks/storage/useGetRoomAvatar';
 import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
 import { useRoomsUnread } from '../../../state/hooks/unread';
+import { useRoomsLatestEvent } from '../../../hooks/useRoomsLatestEvent';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -214,6 +215,7 @@ export function Home() {
   const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
   const roomToNotifications = useRoomsNotifications(rooms, roomToNotificationsAtom);
   const unreadRooms = useRoomsUnread(rooms, unreadRoomsAtom);
+  const roomToLatestEvent = useRoomsLatestEvent(rooms);
 
   const notificationPreferences = useRoomsNotificationPreferencesContext();
   const navigate = useNavigate();
@@ -226,19 +228,25 @@ export function Home() {
 
   const sortedRooms = useMemo(() => {
     if (closedCategories.has(DEFAULT_CATEGORY_ID)) {
-      // TODO: sort by activity
       return rooms
         .filter((roomId) => {
           if (roomId === selectedRoomId) return true;
           const notification = roomToNotifications.get(roomId);
-          if (!notification) return false;
           const total = getRoomTotalNotifications(notification);
-          return total.count > 0;
+          return total.count > 0 || unreadRooms.has(roomId);
         })
-        .sort(factoryRoomIdByAtoZ(getRoomName));
+        .sort(factoryRoomIdByActivity((rId) => roomToLatestEvent.get(rId)?.origin_server_ts));
     }
     return Array.from(rooms).sort(factoryRoomIdByAtoZ(getRoomName));
-  }, [getRoomName, rooms, closedCategories, roomToNotifications, selectedRoomId]);
+  }, [
+    getRoomName,
+    rooms,
+    closedCategories,
+    roomToNotifications,
+    unreadRooms,
+    roomToLatestEvent,
+    selectedRoomId,
+  ]);
 
   const virtualizer = useVirtualizer({
     count: sortedRooms.length,

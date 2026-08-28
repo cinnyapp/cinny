@@ -1,5 +1,5 @@
 import React, { MouseEventHandler, forwardRef, useMemo, useRef, useState } from 'react';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtom } from 'jotai';
 import {
   Avatar,
   Box,
@@ -18,8 +18,7 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import FocusTrap from 'focus-trap-react';
 import { useNavigate } from 'react-router-dom';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
+import { factoryRoomIdByActivity } from '../../../utils/sort';
 import {
   NavButton,
   NavCategory,
@@ -60,6 +59,7 @@ import { useObservableValue } from '../../../hooks/useObservableValue';
 import { useClient } from '../../../hooks/useClient';
 import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
 import { useRoomsUnread } from '../../../state/hooks/unread';
+import { useRoomsLatestEvent } from '../../../hooks/useRoomsLatestEvent';
 
 type DirectMenuProps = {
   requestClose: () => void;
@@ -190,6 +190,7 @@ export function Direct() {
   const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
   const roomToNotifications = useRoomsNotifications(directs, roomToNotificationsAtom);
   const unreadRooms = useRoomsUnread(directs, unreadRoomsAtom);
+  const roomToLatestEvent = useRoomsLatestEvent(directs);
 
   const notificationPreferences = useRoomsNotificationPreferencesContext();
   const navigate = useNavigate();
@@ -201,7 +202,6 @@ export function Direct() {
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
 
   const sortedDirects = useMemo(() => {
-    // TODO: sort by activity
     if (closedCategories.has(DEFAULT_CATEGORY_ID)) {
       return directs
         .filter((roomId) => {
@@ -209,12 +209,21 @@ export function Direct() {
           const notification = roomToNotifications.get(roomId);
           if (!notification) return false;
           const total = getRoomTotalNotifications(notification);
-          return total.count > 0;
+          return total.count > 0 || unreadRooms.has(roomId);
         })
-        .sort(factoryRoomIdByAtoZ(getRoomName));
+        .sort(factoryRoomIdByActivity((rId) => roomToLatestEvent.get(rId)?.origin_server_ts));
     }
-    return Array.from(directs).sort(factoryRoomIdByAtoZ(getRoomName));
-  }, [directs, closedCategories, roomToNotifications, selectedRoomId, getRoomName]);
+    return Array.from(directs).sort(
+      factoryRoomIdByActivity((rId) => roomToLatestEvent.get(rId)?.origin_server_ts)
+    );
+  }, [
+    directs,
+    closedCategories,
+    roomToNotifications,
+    unreadRooms,
+    roomToLatestEvent,
+    selectedRoomId,
+  ]);
 
   const virtualizer = useVirtualizer({
     count: sortedDirects.length,

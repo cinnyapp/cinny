@@ -6,13 +6,17 @@ import { getHierarchy, GetHierarchyOK } from 'neurone/lib/api/matrix/client/v1/r
 import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { SpaceChildContent } from '../../types/matrix/room';
 import { isRoomId } from '../utils/matrix';
-import { SortFunc, byOrderKey, byTsOldToNew } from '../utils/sort';
+import { SortFunc, byOrderKey, byTsOldToNew, factoryRoomIdByActivity } from '../utils/sort';
 import { ErrorCode } from '../cs-errorcode';
 import { useObservableValue } from './useObservableValue';
 import { useClient } from './useClient';
 import { useAllJoinedRoomsSet } from './useGetRoom';
 import { spaceRoomsAtom } from '../state/spaceRooms';
 import { rError } from '../../client/reader';
+import { useRoomsLatestEvent } from './useRoomsLatestEvent';
+import { RoomToNotifications } from '../state/room/roomToNotifications';
+import { makeNavCategoryId } from '../state/closedNavCategories';
+import { getRoomTotalNotifications } from '../state/hooks/roomNotifications';
 
 export type HierarchyItemSpace = {
   roomId: string;
@@ -157,9 +161,8 @@ const getSpaceJoinedHierarchy = (
   rootSpaceId: string,
   joinedRooms: Set<string>,
   roomToChildEvents: Map<string, StateEventWithoutRoomId<SpaceChildContent>[]>,
-  spaceRooms: Set<string>,
-  sortRoomItems: (parentId: string, items: HierarchyItem[]) => HierarchyItem[]
-): HierarchyItem[] => {
+  spaceRooms: Set<string>
+) => {
   const spaceItems: HierarchyItemSpace[] = getHierarchySpaces(
     rootSpaceId,
     roomToChildEvents,
@@ -167,7 +170,7 @@ const getSpaceJoinedHierarchy = (
     new Set()
   );
 
-  const hierarchy: HierarchyItem[] = spaceItems.flatMap((spaceItem) => {
+  const hierarchy = spaceItems.flatMap((spaceItem) => {
     const childEvents = roomToChildEvents.get(spaceItem.roomId);
 
     const childItems: HierarchyItemRoom[] = [];
@@ -187,36 +190,75 @@ const getSpaceJoinedHierarchy = (
     });
     if (childItems.length === 0) return [];
 
-    return [spaceItem, ...sortRoomItems(spaceItem.roomId, childItems)];
+    return {
+      spaceItem,
+      childItems,
+    };
   });
 
   return hierarchy;
 };
 
-export const useSpaceJoinedHierarchy = (spaceId: string): HierarchyItem[] => {
+export const useSpaceJoinedHierarchy = (spaceId: string) => {
   const ct = useClient();
   const roomToChildEvents = useObservableValue(ct.roomToChildEvents);
   const allJoinedRooms = useAllJoinedRoomsSet();
   const spaceRooms = useObservableValue(ct.spaceRooms);
 
-  const sortRoomItems = useCallback((sId: string, items: HierarchyItem[]) => {
-    items.sort(hierarchyItemTs).sort(hierarchyItemByOrder);
-    return items;
-  }, []);
-
   const hierarchy = useMemo(
-    () =>
-      getSpaceJoinedHierarchy(
-        spaceId,
-        allJoinedRooms,
-        roomToChildEvents,
-        spaceRooms,
-        sortRoomItems
-      ),
-    [spaceId, allJoinedRooms, roomToChildEvents, spaceRooms, sortRoomItems]
+    () => getSpaceJoinedHierarchy(spaceId, allJoinedRooms, roomToChildEvents, spaceRooms),
+    [spaceId, allJoinedRooms, roomToChildEvents, spaceRooms]
   );
 
   return hierarchy;
+};
+
+export const useJoinedHierarchyItems = (
+  spaceId: string,
+  hierarchy: ReturnType<typeof useSpaceJoinedHierarchy>,
+  rooms: string[],
+  roomToNotifications: RoomToNotifications,
+  unreadRooms: Set<string>,
+  closedCategories: Set<string>,
+  selectedRoomId: string | undefined
+) => {
+  const roomToLatestEvent = useRoomsLatestEvent(rooms);
+
+  const prepareItems = useCallback(
+    (sId: string, items: HierarchyItem[]) => {
+      if (closedCategories.has(makeNavCategoryId(spaceId, sId))) {
+        return items
+          .filter((item) => {
+            if (item.roomId === selectedRoomId) return true;
+            const notification = roomToNotifications.get(item.roomId);
+            if (!notification) return false;
+            const total = getRoomTotalNotifications(notification);
+            return total.count > 0 || unreadRooms.has(item.roomId);
+          })
+          .sort((h1, h2) =>
+            factoryRoomIdByActivity((rId) => roomToLatestEvent.get(rId)?.origin_server_ts)(
+              h1.roomId,
+              h2.roomId
+            )
+          );
+      }
+
+      items.sort(hierarchyItemTs).sort(hierarchyItemByOrder);
+      return items;
+    },
+    [roomToLatestEvent, closedCategories, spaceId, roomToNotifications, unreadRooms, selectedRoomId]
+  );
+
+  const hierarchyItems: HierarchyItem[] = useMemo(
+    () =>
+      hierarchy.flatMap((item) => [
+        item.spaceItem,
+        ...prepareItems(item.spaceItem.roomId, item.childItems),
+      ]),
+    [hierarchy, prepareItems]
+  );
+
+  return hierarchyItems;
 };
 
 // we will paginate until 5000 items
