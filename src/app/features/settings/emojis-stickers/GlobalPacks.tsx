@@ -58,12 +58,8 @@ function GlobalPackSelector({
 }) {
   const ct = useClient();
 
-  const imagePackRooms = useMemo(
-    () => packs.map((pack) => pack.address?.roomId).filter((rId) => typeof rId === 'string'),
-    [packs]
-  );
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(imagePackRooms);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
 
   const roomToPacks = useMemo(() => {
     const rToP = new Map<string, ImagePack[]>();

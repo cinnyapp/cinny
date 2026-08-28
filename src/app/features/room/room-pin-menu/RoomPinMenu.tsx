@@ -181,8 +181,9 @@ export const RoomPinMenu = forwardRef<HTMLDivElement, RoomPinMenuProps>(({ reque
   const redactedSet = useObservableValueOptionally(timeline?.relations.redacted);
   const edits = useObservableValueOptionally(timeline?.relations.edits.eventToRelations);
 
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(roomId);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+
   const membersAPI = useRoomMembersAPI();
   const { linkifyOpts, htmlReactParserOptions } = useMessageParserOptions(
     roomId,

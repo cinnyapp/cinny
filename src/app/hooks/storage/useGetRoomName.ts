@@ -1,19 +1,19 @@
 import { useCallback } from 'react';
+import { useAtomValue } from 'jotai';
 import { useClient } from '../useClient';
 import { useObservableValue } from '../useObservableValue';
-import { GetRoomHeroesCallback, RoomToHeroMembers } from './useRoomHeros';
+import { GetRoomHeroesCallback } from './useRoomHeros';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { roomMemberContentDisplayname } from '../../utils/room';
+import { roomToHeroMembersAtom } from '../../state/room/roomToHeroMembers';
 
 export type GetRoomNameCallback = (roomId: string) => string | undefined;
 
-export const useGetRoomName = (
-  getRoomHeroes: GetRoomHeroesCallback,
-  roomToHeroMembers: RoomToHeroMembers | undefined
-): GetRoomNameCallback => {
+export const useGetRoomName = (getRoomHeroes: GetRoomHeroesCallback): GetRoomNameCallback => {
   const ct = useClient();
   const roomToName = useObservableValue(ct.roomToName);
   const roomToAlias = useObservableValue(ct.roomToAlias);
+  const roomToHeroMembers = useAtomValue(roomToHeroMembersAtom);
 
   const getRoomName: GetRoomNameCallback = useCallback(
     (roomId: string) => {
@@ -25,7 +25,7 @@ export const useGetRoomName = (
 
       const members = roomToHeroMembers?.get(roomId);
 
-      const heroesName: string[] = getRoomHeroes(roomId).map((userId) => {
+      const heroNames: string[] = getRoomHeroes(roomId).map((userId) => {
         const member = members?.get(userId);
         if (!member) return getMxIdLocalPart(userId) ?? userId;
         const { content } = member;
@@ -34,9 +34,19 @@ export const useGetRoomName = (
         return username;
       });
 
-      if (heroesName) return heroesName.join(', ');
+      if (heroNames.length === 0) {
+        return undefined;
+      }
 
-      return undefined;
+      if (heroNames.length === 1) {
+        return heroNames[0];
+      }
+
+      if (heroNames.length === 2) {
+        return `${heroNames[0]} & ${heroNames[1]}`;
+      }
+
+      return `${heroNames.slice(0, -1).join(', ')} & ${heroNames.at(-1)}`;
     },
     [roomToName, roomToAlias, getRoomHeroes, roomToHeroMembers]
   );

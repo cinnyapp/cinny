@@ -72,7 +72,6 @@ import {
   parseSidebar,
   sidebarItemWithout,
   useSidebarItems,
-  useSidebarRooms,
 } from '../../../hooks/useSidebarItems';
 import { AccountDataType } from '../../../../types/matrix/accountData';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
@@ -667,11 +666,9 @@ export function SpaceTabs({ scrollRef }: SpaceTabsProps) {
   const [openedFolder, setOpenedFolder] = useAtom(useOpenedSidebarFolderAtom());
   const [draggingItem, setDraggingItem] = useState<SidebarDraggable>();
 
-  const sidebarRooms = useSidebarRooms(originalSidebarItems);
-  const [getRoomHeroes, roomToHeroResult] = useRoomHeroes(sidebarRooms);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroResult.value);
-
-  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroResult.value);
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
 
   useEffect(() => {
     localEchoSidebarItem(originalSidebarItems);

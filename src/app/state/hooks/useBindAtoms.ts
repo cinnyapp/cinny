@@ -8,12 +8,14 @@ import {
 } from '../room/roomToNotifications';
 import { ClientContext } from '../../../client/context';
 import { unreadRoomsAtom, useBindUnreadRoomsAtom } from '../room/roomToUnread';
+import { roomToHeroMembersAtom, useBindRoomToHeroMembers } from '../room/roomToHeroMembers';
 
 export const useBindAtoms = (ct: ClientContext) => {
   useBindMDirectAtom(ct, mDirectAtom);
   useBindAllRoomsAtom(ct, allRoomsAtom);
   useBindRoomToParentsAtom(ct, roomToParentsAtom);
   useBindRoomToNotificationsAtom(ct, roomToNotificationsAtom);
+  useBindRoomToHeroMembers(ct, roomToHeroMembersAtom);
   useBindUnreadRoomsAtom(ct, unreadRoomsAtom);
 
   useBindRoomIdToTypingMembersAtom(ct, roomIdToTypingMembersAtom);

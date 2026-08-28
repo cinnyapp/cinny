@@ -230,7 +230,6 @@ type MutualRoomsData = {
   directs: string[];
 };
 
-const EMPTY_LIST: string[] = [];
 export function MutualRoomsChip({ userId }: { userId: string }) {
   const ct = useClient();
   const mutualRoomsState = useMutualRooms(userId);
@@ -240,11 +239,9 @@ export function MutualRoomsChip({ userId }: { userId: string }) {
   const directs = useDirectRooms();
   const useAuthentication = useMediaAuthentication();
 
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(
-    mutualRoomsState.status === AsyncStatus.Success ? mutualRoomsState.data : EMPTY_LIST
-  );
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
-  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
 
   const [cords, setCords] = useState<RectCords>();
 

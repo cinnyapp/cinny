@@ -271,9 +271,10 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
   const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
 
   const pinnedEvents = useRoomPinnedEvents(roomId);
-  const [getRoomHeroes, roomToHeroMemberResult] = useRoomHeroes(roomId);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMemberResult.value);
-  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMemberResult.value);
+
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
 
   const avatarMxc = getRoomAvatar(roomId);
   const name = getRoomName(roomId) ?? 'Unknown';

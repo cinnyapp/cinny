@@ -108,8 +108,9 @@ export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewPro
 
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(roomId);
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(roomId);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
+
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
 
   const membersAPI = useRoomMembersAPI();
   const creatorsTag = useRoomCreatorsTag();

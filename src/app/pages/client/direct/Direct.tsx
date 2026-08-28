@@ -183,9 +183,10 @@ export function Direct() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const directs = useDirectRooms();
 
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(directs);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
-  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
+
   const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
   const roomToNotifications = useRoomsNotifications(directs, roomToNotificationsAtom);
   const unreadRooms = useRoomsUnread(directs, unreadRoomsAtom);

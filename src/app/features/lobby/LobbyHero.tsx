@@ -22,9 +22,9 @@ export function LobbyHero() {
   const useAuthentication = useMediaAuthentication();
   const spaceId = useSpace();
 
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(spaceId);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
-  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
   const topic = useRoomTopic(spaceId);
 
   const avatarMxc = getRoomAvatar(spaceId);

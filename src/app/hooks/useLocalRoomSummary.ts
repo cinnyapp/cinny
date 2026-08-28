@@ -18,9 +18,10 @@ export type LocalRoomSummary = {
 };
 export const useLocalRoomSummary = (roomId: string): LocalRoomSummary => {
   const ct = useClient();
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(roomId);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
-  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
   const roomTopic = useRoomTopic(roomId);
   const roomToAlias = useObservableValue(ct.roomToAlias);
   const roomToJoinRule = useObservableValue(ct.roomToJoinRule);

@@ -153,9 +153,9 @@ export function Search({ requestClose }: SearchProps) {
   const topActiveRooms = useTopActiveRooms(searchRoomType, rooms, directs, spaces);
   const targetRooms = useSearchTargetRooms(searchRoomType, rooms, directs, spaces);
 
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(directs);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
-  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
 
   const getTargetStr: SearchItemStrGetter<string> = useCallback(
     (roomId: string) => {

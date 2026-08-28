@@ -148,9 +148,9 @@ export function LobbyHeader({ showProfile, powerLevels }: LobbyHeaderProps) {
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const screenSize = useScreenSizeContext();
 
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(spaceId);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
-  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
 
   const avatarMxc = getRoomAvatar(spaceId);
   const avatarUrl = avatarMxc

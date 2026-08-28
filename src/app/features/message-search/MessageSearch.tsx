@@ -191,11 +191,10 @@ export function MessageSearch({
   }, [lastVItemIndex, lastGroupIndex, fetchNextPage, isFetchingNextPage, hasNextPage]);
 
   const roomToTimeline = useObservableValue(ct.roomToTimeline);
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(
-    searchPathSearchParams.global === 'true' ? allRooms : rooms
-  );
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
-  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
 
   return (
     <Box direction="Column" gap="700">

@@ -84,9 +84,9 @@ export function RoomMentionAutocomplete({
   const mDirects = useAtomValue(mDirectAtom);
   const rooms = useAtomValue(allRoomsAtom);
 
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(rooms);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
-  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
 
   const allRooms = useMemo(
     () => Array.from(rooms).sort(factoryRoomIdByAtoZ(getRoomName)),

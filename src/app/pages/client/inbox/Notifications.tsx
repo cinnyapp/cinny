@@ -596,15 +596,11 @@ export function Notifications() {
     }
   }, [timelineState, notificationTimeline, lastVItemIndex, loadTimeline]);
 
-  const notificationRooms = useMemo(
-    () => Array.from(new Set(notificationTimeline.groups.map((g) => g.roomId))),
-    [notificationTimeline]
-  );
-
   const roomToTimeline = useObservableValue(ct.roomToTimeline);
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(notificationRooms);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
-  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
 
   return (
     <Page>

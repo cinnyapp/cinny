@@ -191,9 +191,10 @@ type SpaceProfileProps = {
 function SpaceProfile({ roomId, suggested, closed, categoryId, handleClose }: SpaceProfileProps) {
   const ct = useClient();
   const useAuthentication = useMediaAuthentication();
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(roomId);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
-  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
 
   const name = getRoomName(roomId) ?? 'Unknown';
   const avatar = getRoomAvatar(roomId);

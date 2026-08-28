@@ -112,9 +112,10 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
 
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(roomId);
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(roomId);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
-  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
 
   const membersAPI = useRoomMembersAPI();
   const creatorsTag = useRoomCreatorsTag();

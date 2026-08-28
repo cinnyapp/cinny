@@ -401,9 +401,11 @@ export function Space() {
   const hierarchy = useSpaceJoinedHierarchy(spaceId);
 
   const rooms = useMemo(() => hierarchy.map((item) => item.roomId), [hierarchy]);
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(rooms);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
-  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
+
   const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
   const roomToNotifications = useRoomsNotifications(rooms, roomToNotificationsAtom);
   const unreadRooms = useRoomsUnread(rooms, unreadRoomsAtom);

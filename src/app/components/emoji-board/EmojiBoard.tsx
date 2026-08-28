@@ -379,8 +379,8 @@ export function EmojiBoard({
   addToRecentEmoji = true,
 }: EmojiBoardProps) {
   const ct = useClient();
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(imagePackRooms);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
 
   const emojiTab = tab === EmojiBoardTab.Emoji;
   const usage = emojiTab ? ImageUsage.Emoticon : ImageUsage.Sticker;

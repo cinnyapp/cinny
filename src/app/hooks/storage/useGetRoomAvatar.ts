@@ -1,17 +1,17 @@
 import { useCallback } from 'react';
+import { useAtomValue } from 'jotai';
 import { useClient } from '../useClient';
 import { useObservableValue } from '../useObservableValue';
-import { GetRoomHeroesCallback, RoomToHeroMembers } from './useRoomHeros';
+import { GetRoomHeroesCallback } from './useRoomHeros';
 import { roomMemberContentAvatarUrl } from '../../utils/room';
+import { roomToHeroMembersAtom } from '../../state/room/roomToHeroMembers';
 
 export type GetRoomAvatarCallback = (roomId: string) => string | undefined;
 
-export const useGetRoomAvatar = (
-  getRoomHeroes: GetRoomHeroesCallback,
-  roomToHeroMembers: RoomToHeroMembers | undefined
-): GetRoomAvatarCallback => {
+export const useGetRoomAvatar = (getRoomHeroes: GetRoomHeroesCallback): GetRoomAvatarCallback => {
   const ct = useClient();
   const roomToAvatar = useObservableValue(ct.roomToAvatar);
+  const roomToHeroMembers = useAtomValue(roomToHeroMembersAtom);
 
   const getRoomAvatar: GetRoomAvatarCallback = useCallback(
     (roomId: string) => {

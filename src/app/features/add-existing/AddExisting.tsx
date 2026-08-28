@@ -87,9 +87,9 @@ export function AddExistingModal({ parentId, space, requestClose }: AddExistingM
   const roomIdToParents = useAtomValue(roomToParentsAtom);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const [getRoomHeroes, roomToHeroMembersResult] = useRoomHeroes(ct.rooms.join.read);
-  const getRoomName = useGetRoomName(getRoomHeroes, roomToHeroMembersResult.value);
-  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes, roomToHeroMembersResult.value);
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
 
   const [selected, setSelected] = useState<string[]>([]);
 
