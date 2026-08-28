@@ -228,7 +228,7 @@ export function Home() {
 
   const sortedRooms = useMemo(() => {
     if (closedCategories.has(DEFAULT_CATEGORY_ID)) {
-      return rooms
+      return Array.from(rooms)
         .filter((roomId) => {
           if (roomId === selectedRoomId) return true;
           const notification = roomToNotifications.get(roomId);

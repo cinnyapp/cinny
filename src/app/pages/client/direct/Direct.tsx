@@ -203,7 +203,7 @@ export function Direct() {
 
   const sortedDirects = useMemo(() => {
     if (closedCategories.has(DEFAULT_CATEGORY_ID)) {
-      return directs
+      return Array.from(directs)
         .filter((roomId) => {
           if (roomId === selectedRoomId) return true;
           const notification = roomToNotifications.get(roomId);
