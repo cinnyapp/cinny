@@ -70,6 +70,8 @@ import { FileDropDialog } from './FileDropDialog';
 import { useUploadItemPicker } from './hooks/useUploadItemPicker';
 import { useUploadItems } from './hooks/useUploadItems';
 import { useUploadsAtom } from './hooks/useUploadsAtom';
+import { useObservableValue } from '../../hooks/useObservableValue';
+import { useClient } from '../../hooks/useClient';
 
 interface RoomInputProps {
   editor: Editor;
@@ -78,7 +80,9 @@ interface RoomInputProps {
 }
 export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
   ({ editor, fileDropContainerRef, threadId }, ref) => {
+    const ct = useClient();
     const roomId = useRoom();
+    const encryptedRooms = useObservableValue(ct.encryptedRooms);
 
     const [enterForNewline] = useSetting('enterForNewline');
     const [hideActivity] = useSetting('hideActivity');
@@ -305,7 +309,9 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         <CustomEditor
           editor={editor}
           initialValue={draft}
-          placeholder="Send a message..."
+          placeholder={
+            encryptedRooms.has(roomId) ? 'Send an encrypted message...' : 'Send a message...'
+          }
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
           onPaste={handlePaste}
