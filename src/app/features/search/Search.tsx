@@ -60,6 +60,7 @@ import { useGetRoomAvatar } from '../../hooks/storage/useGetRoomAvatar';
 import { getRoomTotalNotifications } from '../../state/hooks/roomNotifications';
 import { mxcToHttp } from '../../../client/mxcToHttp';
 import { useRoomsPowerLevels } from '../../hooks/usePowerLevels';
+import { useSetting } from '../../state/hooks/settings';
 
 enum SearchRoomType {
   Rooms = '#',
@@ -136,6 +137,7 @@ export function Search({ requestClose }: SearchProps) {
   const { navigateRoom, navigateSpace } = useRoomNavigate();
   const unreadRooms = useAtomValue(unreadRoomsAtom);
   const roomToNotifications = useAtomValue(roomToNotificationsAtom);
+  const [showAvatar] = useSetting('roomListShowAvatar');
 
   const [searchRoomType, setSearchRoomType] = useState<SearchRoomType>();
 
@@ -370,8 +372,8 @@ export function Search({ requestClose }: SearchProps) {
                             </Box>
                           }
                           before={
-                            <Avatar size="200" radii={dm ? '400' : '300'}>
-                              {dm || isSpace ? (
+                            <Avatar size="200" radii={isSpace ? '300' : '400'}>
+                              {showAvatar || dm || isSpace ? (
                                 <RoomAvatar
                                   roomId={roomId}
                                   src={

@@ -207,6 +207,8 @@ export function Home() {
   useNavToActivePathMapper('home');
   const scrollRef = useRef<HTMLDivElement>(null);
   const rooms = useHomeRooms();
+  const [sortByActivity] = useSetting('roomListByActivity');
+  const [showAvatar] = useSetting('roomListShowAvatar');
 
   const getRoomHeroes = useRoomHeroes();
   const getRoomName = useGetRoomName(getRoomHeroes);
@@ -237,6 +239,11 @@ export function Home() {
         })
         .sort(factoryRoomIdByActivity((rId) => roomToLatestEvent.get(rId)?.origin_server_ts));
     }
+    if (sortByActivity) {
+      return Array.from(rooms).sort(
+        factoryRoomIdByActivity((rId) => roomToLatestEvent.get(rId)?.origin_server_ts)
+      );
+    }
     return Array.from(rooms).sort(factoryRoomIdByAtoZ(getRoomName));
   }, [
     getRoomName,
@@ -246,6 +253,7 @@ export function Home() {
     unreadRooms,
     roomToLatestEvent,
     selectedRoomId,
+    sortByActivity,
   ]);
 
   const virtualizer = useVirtualizer({
@@ -371,6 +379,7 @@ export function Home() {
                         roomId={roomId}
                         roomName={getRoomName(roomId) ?? 'Unknown'}
                         avatarUrl={getRoomAvatar(roomId)}
+                        showAvatar={showAvatar}
                         selected={selected}
                         joinRule={roomToJoinRule.get(roomId)}
                         linkPath={getHomeRoomPath(ct.roomToAlias.read.get(roomId) ?? roomId)}

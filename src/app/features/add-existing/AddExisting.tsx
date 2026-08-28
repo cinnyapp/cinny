@@ -59,6 +59,7 @@ import { getJoinRoomStateId } from '../../../client/storage/collections';
 import { getPowerLevels } from '../../hooks/usePowerLevels';
 import { useGetRoomAvatar } from '../../hooks/storage/useGetRoomAvatar';
 import { mxcToHttp } from '../../../client/mxcToHttp';
+import { useSetting } from '../../state/hooks/settings';
 
 const SEARCH_OPTS: UseAsyncSearchOptions = {
   limit: 500,
@@ -79,6 +80,7 @@ export function AddExistingModal({ parentId, space, requestClose }: AddExistingM
   const ct = useClient();
   const useAuthentication = useMediaAuthentication();
   const alive = useAlive();
+  const [showAvatar] = useSetting('roomListShowAvatar');
 
   const mDirects = useAtomValue(mDirectAtom);
   const spaces = useSpaces(ct, allRoomsAtom);
@@ -271,6 +273,7 @@ export function AddExistingModal({ parentId, space, requestClose }: AddExistingM
                         const roomId = items[vItem.index];
                         const selectedItem = selected?.includes(roomId);
                         const dm = mDirects.has(roomId);
+                        const isSpace = ct.spaceRooms.read.has(roomId);
 
                         const roomName = getRoomName(roomId) ?? 'Unknown';
                         const roomAvatar = getRoomAvatar(roomId);
@@ -291,8 +294,8 @@ export function AddExistingModal({ parentId, space, requestClose }: AddExistingM
                               disabled={applyingChanges}
                               aria-pressed={selectedItem}
                               before={
-                                <Avatar size="200" radii={dm ? '400' : '300'}>
-                                  {dm || ct.spaceRooms.read.has(roomId) ? (
+                                <Avatar size="200" radii={isSpace ? '300' : '400'}>
+                                  {showAvatar || dm || isSpace ? (
                                     <RoomAvatar
                                       roomId={roomId}
                                       src={

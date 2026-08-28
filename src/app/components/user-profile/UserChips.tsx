@@ -41,6 +41,7 @@ import { useRoomHeroes } from '../../hooks/storage/useRoomHeros';
 import { useGetRoomName } from '../../hooks/storage/useGetRoomName';
 import { useGetRoomAvatar } from '../../hooks/storage/useGetRoomAvatar';
 import { mxcToHttp } from '../../../client/mxcToHttp';
+import { useSetting } from '../../state/hooks/settings';
 
 export function ServerChip({ server }: { server: string }) {
   const ct = useClient();
@@ -233,6 +234,7 @@ type MutualRoomsData = {
 export function MutualRoomsChip({ userId }: { userId: string }) {
   const ct = useClient();
   const mutualRoomsState = useMutualRooms(userId);
+  const [showAvatar] = useSetting('roomListShowAvatar');
 
   const { navigateRoom, navigateSpace } = useRoomNavigate();
   const closeUserRoomProfile = useCloseUserRoomProfile();
@@ -304,8 +306,8 @@ export function MutualRoomsChip({ userId }: { userId: string }) {
           closeUserRoomProfile();
         }}
         before={
-          <Avatar size="200" radii={dm ? '400' : '300'}>
-            {dm || space ? (
+          <Avatar size="200" radii={space ? '300' : '400'}>
+            {showAvatar || dm || space ? (
               <RoomAvatar
                 roomId={roomId}
                 src={

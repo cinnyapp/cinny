@@ -707,6 +707,33 @@ function DateAndTime() {
   );
 }
 
+function RoomList() {
+  const [roomListShowAvatar, setRoomListShowAvatar] = useSetting('roomListShowAvatar');
+  const [roomListByActivity, setRoomListByActivity] = useSetting('roomListByActivity');
+
+  return (
+    <Box direction="Column" gap="100">
+      <Text size="L400">Room List</Text>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Room Avatars"
+          after={
+            <Switch variant="Primary" value={roomListShowAvatar} onChange={setRoomListShowAvatar} />
+          }
+        />
+      </SequenceCard>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Sort by Activity"
+          after={
+            <Switch variant="Primary" value={roomListByActivity} onChange={setRoomListByActivity} />
+          }
+        />
+      </SequenceCard>
+    </Box>
+  );
+}
+
 function Editor() {
   const [enterForNewline, setEnterForNewline] = useSetting('enterForNewline');
   const [isMarkdown, setIsMarkdown] = useSetting('isMarkdown');
@@ -995,6 +1022,7 @@ export function General({ requestClose }: GeneralProps) {
             <Box direction="Column" gap="700">
               <Appearance />
               <DateAndTime />
+              <RoomList />
               <Editor />
               <Messages />
             </Box>

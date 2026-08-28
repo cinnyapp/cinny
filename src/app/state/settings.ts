@@ -27,6 +27,8 @@ export interface Settings {
   twitterEmoji: boolean;
   pageZoom: number;
   hideActivity: boolean;
+  roomListShowAvatar: boolean;
+  roomListByActivity: boolean;
 
   isPeopleDrawer: boolean;
   memberSortFilterIndex: number;
@@ -61,6 +63,8 @@ const defaultSettings: Settings = {
   twitterEmoji: false,
   pageZoom: 100,
   hideActivity: false,
+  roomListShowAvatar: false,
+  roomListByActivity: false,
 
   isPeopleDrawer: true,
   memberSortFilterIndex: 0,

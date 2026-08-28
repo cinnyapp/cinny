@@ -21,6 +21,7 @@ import { useGetRoomName } from '../../../hooks/storage/useGetRoomName';
 import { useGetRoomAvatar } from '../../../hooks/storage/useGetRoomAvatar';
 import { mxcToHttp } from '../../../../client/mxcToHttp';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+import { useSetting } from '../../../state/hooks/settings';
 
 type MentionAutoCompleteHandler = (roomAliasOrId: string, name: string) => void;
 
@@ -83,6 +84,7 @@ export function RoomMentionAutocomplete({
   const useAuthentication = useMediaAuthentication();
   const mDirects = useAtomValue(mDirectAtom);
   const rooms = useAtomValue(allRoomsAtom);
+  const [showAvatar] = useSetting('roomListShowAvatar');
 
   const getRoomHeroes = useRoomHeroes();
   const getRoomName = useGetRoomName(getRoomHeroes);
@@ -151,6 +153,7 @@ export function RoomMentionAutocomplete({
       ) : (
         autoCompleteRoomIds.map((rId) => {
           const dm = mDirects.has(rId);
+          const isSpace = ct.spaceRooms.read.has(rId);
           const name = getRoomName(rId) ?? 'Unknown';
           const alias = ct.roomToAlias.read.get(rId);
           const avatarMxc = getRoomAvatar(rId);
@@ -179,8 +182,8 @@ export function RoomMentionAutocomplete({
                 </Text>
               }
               before={
-                <Avatar size="200">
-                  {dm ? (
+                <Avatar size="200" radii={isSpace ? '300' : '400'}>
+                  {showAvatar || dm || isSpace ? (
                     <RoomAvatar
                       roomId={rId}
                       src={avatar}

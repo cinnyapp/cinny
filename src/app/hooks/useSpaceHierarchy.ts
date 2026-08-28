@@ -17,6 +17,7 @@ import { useRoomsLatestEvent } from './useRoomsLatestEvent';
 import { RoomToNotifications } from '../state/room/roomToNotifications';
 import { makeNavCategoryId } from '../state/closedNavCategories';
 import { getRoomTotalNotifications } from '../state/hooks/roomNotifications';
+import { useSetting } from '../state/hooks/settings';
 
 export type HierarchyItemSpace = {
   roomId: string;
@@ -223,6 +224,7 @@ export const useJoinedHierarchyItems = (
   selectedRoomId: string | undefined
 ) => {
   const roomToLatestEvent = useRoomsLatestEvent(rooms);
+  const [sortByActivity] = useSetting('roomListByActivity');
 
   const prepareItems = useCallback(
     (sId: string, items: HierarchyItem[]) => {
@@ -243,10 +245,29 @@ export const useJoinedHierarchyItems = (
           );
       }
 
+      if (sortByActivity) {
+        items.sort((h1, h2) =>
+          factoryRoomIdByActivity((rId) => roomToLatestEvent.get(rId)?.origin_server_ts)(
+            h1.roomId,
+            h2.roomId
+          )
+        );
+        return items;
+      }
+
       items.sort(hierarchyItemTs).sort(hierarchyItemByOrder);
+
       return items;
     },
-    [roomToLatestEvent, closedCategories, spaceId, roomToNotifications, unreadRooms, selectedRoomId]
+    [
+      roomToLatestEvent,
+      closedCategories,
+      spaceId,
+      roomToNotifications,
+      unreadRooms,
+      selectedRoomId,
+      sortByActivity,
+    ]
   );
 
   const hierarchyItems: HierarchyItem[] = useMemo(

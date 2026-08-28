@@ -378,6 +378,9 @@ export function SpaceTombstone({ roomId, replacementRoomId }: SpaceTombstoneProp
 export function Space() {
   const ct = useClient();
   const spaceId = useSpace();
+
+  const [showAvatar] = useSetting('roomListShowAvatar');
+
   useNavToActivePathMapper(spaceId);
   const spaceRooms = useObservableValue(ct.spaceRooms);
   const roomToAlias = useObservableValue(ct.roomToAlias);
@@ -521,7 +524,7 @@ export function Space() {
                     roomName={getRoomName(roomId) ?? 'Unknown'}
                     avatarUrl={getRoomAvatar(roomId)}
                     selected={selectedRoomId === roomId}
-                    showAvatar={mDirects.has(roomId)}
+                    showAvatar={showAvatar || mDirects.has(roomId)}
                     joinRule={roomToJoinRule.get(roomId)}
                     linkPath={getToLink(roomId)}
                     notificationMode={getRoomNotificationMode(notificationPreferences, roomId)}
