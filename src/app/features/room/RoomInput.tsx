@@ -333,7 +333,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   </IconButton>
                   <Box grow="Yes" direction="Row" gap="200" alignItems="Center">
                     <Text size="T300" truncate>
-                      Quote{' '}
+                      Reply{' '}
                       <strong style={{ color: replyUsernameColor }}>
                         @{memberAPI.getName(replyDraft.userId)}
                       </strong>

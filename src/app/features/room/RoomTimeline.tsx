@@ -389,6 +389,25 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
       );
     }
 
+    const replyEventId = getReplyId(event.content);
+
+    const replyJSX =
+      !getThreadId(event) && replyEventId ? (
+        <Reply
+          roomId={roomId}
+          eventId={replyEventId}
+          onClick={handleOpenReply}
+          onUserClick={handleUserClick}
+          getMemberPowerTag={getMemberPowerTag}
+          accessibleTagColors={accessiblePowerTagColors}
+          legacyUsernameColor={legacyUsernameColor || direct}
+          getMemberName={membersAPI.getName}
+          timeline={timeline}
+          htmlReactParserOptions={htmlReactParserInlineOptions}
+          linkifyOpts={linkifyOpts}
+        />
+      ) : null;
+
     const threadTimeline = threads.get(event.event_id);
 
     return (
@@ -426,6 +445,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
         hour24Clock={hour24Clock}
         dateFormatString={dateFormatString}
       >
+        {replyJSX}
         {redacted.has(event.event_id) ? (
           <RedactedContent />
         ) : (
@@ -519,34 +539,9 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
     if (newDivider && dividerJSX) clearNewDivider();
     if (dayDivider && dividerJSX) clearDayDivider();
 
-    const replyEventId = getReplyId(event.content);
-
-    const replyJSX =
-      !getThreadId(event) && replyEventId ? (
-        <Reply
-          roomId={roomId}
-          eventId={replyEventId}
-          onClick={handleOpenReply}
-          onUserClick={handleUserClick}
-          onUsernameClick={handleUsernameClick}
-          getMemberPowerTag={getMemberPowerTag}
-          accessibleTagColors={accessiblePowerTagColors}
-          legacyUsernameColor={legacyUsernameColor || direct}
-          getMemberName={membersAPI.getName}
-          timeline={timeline}
-          htmlReactParserOptions={htmlReactParserInlineOptions}
-          linkifyOpts={linkifyOpts}
-          hour24Clock={hour24Clock}
-          dateFormatString={dateFormatString}
-          messageLayout={messageLayout}
-          messageSpacing={messageSpacing}
-        />
-      ) : null;
-
     return (
       <React.Fragment key={event.event_id}>
         {dividerJSX}
-        {replyJSX}
         {eventJSX}
       </React.Fragment>
     );
@@ -612,8 +607,6 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
                 legacyUsernameColor={legacyUsernameColor || direct}
                 mediaAutoLoad={mediaAutoLoad}
                 urlPreview={showUrlPreview}
-                hour24Clock={hour24Clock}
-                dateFormatString={dateFormatString}
                 htmlReactParserOptions={htmlReactParserOptions}
                 linkifyOpts={linkifyOpts}
               />

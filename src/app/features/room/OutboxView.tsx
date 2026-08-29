@@ -224,8 +224,6 @@ export function OutboxView({
   onUsernameClick,
   mediaAutoLoad,
   urlPreview,
-  hour24Clock,
-  dateFormatString,
   onReplyClick,
   htmlReactParserOptions,
   linkifyOpts,
@@ -242,8 +240,6 @@ export function OutboxView({
   onUsernameClick: MouseEventHandler<HTMLButtonElement>;
   mediaAutoLoad?: boolean;
   urlPreview?: boolean;
-  hour24Clock: boolean;
-  dateFormatString: string;
   onReplyClick?: () => void;
   htmlReactParserOptions: HTMLReactParserOptions;
   linkifyOpts: Opts;
@@ -287,6 +283,7 @@ export function OutboxView({
             roomId={roomId}
             eventId={replyEventId}
             onClick={onReplyClick}
+            onUserClick={onUserClick}
             getMemberPowerTag={getMemberPowerTag}
             accessibleTagColors={accessibleTagColors}
             legacyUsernameColor={legacyUsernameColor || direct}
@@ -294,10 +291,6 @@ export function OutboxView({
             timeline={timeline}
             htmlReactParserOptions={htmlReactParserOptions}
             linkifyOpts={linkifyOpts}
-            hour24Clock={hour24Clock}
-            dateFormatString={dateFormatString}
-            messageLayout={messageLayout}
-            messageSpacing={messageSpacing}
           />
         );
 
@@ -306,7 +299,6 @@ export function OutboxView({
             {dayDivider && (
               <ComboDivider ts={sender.localEvent.ts} messageSpacing={messageSpacing} />
             )}
-            {replyJSX}
             <MessageSending
               key={sender.localEvent.txnId}
               outbox={timeline.outbox}
@@ -322,6 +314,7 @@ export function OutboxView({
               accessibleTagColors={accessibleTagColors}
               legacyUsernameColor={legacyUsernameColor || direct}
             >
+              {replyJSX}
               <RenderMessageContent
                 displayName={membersAPI.getName(ct.session.userId)}
                 eventType={sender.localEvent.original.type}

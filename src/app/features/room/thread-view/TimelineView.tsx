@@ -289,6 +289,23 @@ export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewPro
     const editedEvent = getLatestEditEvent(event, editEvents, redacted);
     const highlighted = focusItem?.index === item && focusItem.highlight;
 
+    const replyEventId = fallbackReply(event.content) ? undefined : getReplyId(event.content);
+    const replyJSX = replyEventId ? (
+      <Reply
+        roomId={roomId}
+        eventId={replyEventId}
+        onClick={handleOpenReply}
+        onUserClick={handleUserClick}
+        getMemberPowerTag={getMemberPowerTag}
+        accessibleTagColors={accessiblePowerTagColors}
+        legacyUsernameColor={legacyUsernameColor || direct}
+        getMemberName={membersAPI.getName}
+        timeline={threadTimeline}
+        htmlReactParserOptions={htmlReactParserInlineOptions}
+        linkifyOpts={linkifyOpts}
+      />
+    ) : null;
+
     const reactionJSX = reactionEvents && reactionEvents?.length > 0 && (
       <Reactions
         style={{ marginTop: config.space.S200 }}
@@ -332,6 +349,7 @@ export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewPro
         hour24Clock={hour24Clock}
         dateFormatString={dateFormatString}
       >
+        {replyJSX}
         {redacted.has(event.event_id) ? (
           <RedactedContent />
         ) : (
@@ -411,32 +429,9 @@ export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewPro
     if (newDivider && dividerJSX) clearNewDivider();
     if (dayDivider && dividerJSX) clearDayDivider();
 
-    const replyEventId = fallbackReply(event.content) ? undefined : getReplyId(event.content);
-    const replyJSX = replyEventId ? (
-      <Reply
-        roomId={roomId}
-        eventId={replyEventId}
-        onClick={handleOpenReply}
-        onUserClick={handleUserClick}
-        onUsernameClick={handleUsernameClick}
-        getMemberPowerTag={getMemberPowerTag}
-        accessibleTagColors={accessiblePowerTagColors}
-        legacyUsernameColor={legacyUsernameColor || direct}
-        getMemberName={membersAPI.getName}
-        timeline={threadTimeline}
-        htmlReactParserOptions={htmlReactParserInlineOptions}
-        linkifyOpts={linkifyOpts}
-        hour24Clock={hour24Clock}
-        dateFormatString={dateFormatString}
-        messageLayout={messageLayout}
-        messageSpacing={messageSpacing}
-      />
-    ) : null;
-
     return (
       <React.Fragment key={event.event_id}>
         {dividerJSX}
-        {replyJSX}
         {eventJSX}
       </React.Fragment>
     );
@@ -522,8 +517,6 @@ export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewPro
                 legacyUsernameColor={legacyUsernameColor || direct}
                 mediaAutoLoad={mediaAutoLoad}
                 urlPreview={showUrlPreview}
-                hour24Clock={hour24Clock}
-                dateFormatString={dateFormatString}
                 htmlReactParserOptions={htmlReactParserOptions}
                 linkifyOpts={linkifyOpts}
               />

@@ -1,11 +1,10 @@
-import { Box, Text, color, config, toRem } from 'folds';
+import { Box, Icon, Icons, Text, color, config, toRem } from 'folds';
 import React, { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
 import { ClientEventWithoutRoomId } from 'neurone/lib/api/types';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts } from 'linkifyjs';
 import { LinePlaceholder } from './placeholder';
 import { randomNumberBetween } from '../../utils/common';
-import * as css from './Reply.css';
 import { MessageFailedContent } from './content';
 import { useRoomEvent } from '../../hooks/useRoomEvent';
 import colorMXID from '../../../util/colorMXID';
@@ -14,9 +13,6 @@ import { GetRoomMemberNameCallback } from '../../hooks/useRoomMembers';
 import { rContent, rUnsigned } from '../../../client/reader';
 import { TimelineView } from '../../../client/room';
 import { RenderReplyContent } from '../RenderReplyContent';
-import { Time } from './Time';
-import { BubbleLayout, CompactLayout, MessageBase, ModernLayout } from './layout';
-import { MessageLayout, MessageSpacing } from '../../state/settings';
 import { RedactedContent } from './MsgTypeRenderers';
 import { HoverUnderline } from '../../styles/Text.css';
 import { useObservableValueOptionally } from '../../hooks/useObservableValue';
@@ -26,20 +22,11 @@ import { useClient } from '../../hooks/useClient';
 
 type ReplyMessageProps = {
   username?: ReactNode;
-  time?: ReactNode;
-  messageLayout: MessageLayout;
+  usernameColor?: string;
   children: ReactNode;
   onClick?: () => void;
 };
-export function ReplyMessage({
-  username,
-  time,
-  messageLayout,
-  onClick,
-  children,
-}: ReplyMessageProps) {
-  const msgBarJSX = <div className={css.ReplyBar} />;
-
+export function ReplyMessage({ username, usernameColor, onClick, children }: ReplyMessageProps) {
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (!onClick) return;
 
@@ -71,52 +58,14 @@ export function ReplyMessage({
       }
     : {};
 
-  if (messageLayout === MessageLayout.Compact) {
-    return (
-      <CompactLayout before={msgBarJSX}>
-        <Box grow="Yes" direction="Column">
-          <Box alignItems="Baseline" shrink="No" gap="200">
-            <Box shrink="No" style={{ maxWidth: toRem(100) }}>
-              {username}
-            </Box>
-            <Box shrink="Yes" {...commonProps}>
-              {children}
-            </Box>
-            {time}
-          </Box>
-        </Box>
-      </CompactLayout>
-    );
-  }
-
-  if (messageLayout === MessageLayout.Bubble) {
-    return (
-      <BubbleLayout hideBubble before={msgBarJSX}>
-        <Box alignItems="Baseline" shrink="No" gap="200">
-          <Box shrink="No" style={{ maxWidth: toRem(100) }}>
-            {username}
-          </Box>
-          <Box shrink="Yes" {...commonProps}>
-            {children}
-          </Box>
-          {time}
-        </Box>
-      </BubbleLayout>
-    );
-  }
-
   return (
-    <ModernLayout before={msgBarJSX}>
-      <Box alignItems="Baseline" shrink="No" gap="200">
-        <Box shrink="No" style={{ maxWidth: toRem(100) }}>
-          {username}
-        </Box>
-        <Box shrink="Yes" {...commonProps}>
-          {children}
-        </Box>
-        {time}
+    <Box alignItems="Center" gap="100">
+      <Box shrink="No" gap="0" alignItems="Center" style={{ maxWidth: toRem(120) }}>
+        <Icon style={{ color: usernameColor }} size="100" src={Icons.ReplyArrow} filled />
+        {username}
       </Box>
-    </ModernLayout>
+      <Box {...commonProps}>{children}</Box>
+    </Box>
   );
 }
 
@@ -125,7 +74,6 @@ type ReplyProps = {
   eventId: string;
   onClick?: (replyId: string) => void;
   onUserClick?: MouseEventHandler<HTMLButtonElement>;
-  onUsernameClick?: MouseEventHandler<HTMLButtonElement>;
   getMemberPowerTag?: GetMemberPowerTag;
   accessibleTagColors?: Map<string, string>;
   legacyUsernameColor?: boolean;
@@ -133,10 +81,6 @@ type ReplyProps = {
   timeline?: TimelineView;
   htmlReactParserOptions: HTMLReactParserOptions;
   linkifyOpts: Opts;
-  hour24Clock: boolean;
-  messageLayout: MessageLayout;
-  dateFormatString: string;
-  messageSpacing: MessageSpacing;
 };
 
 export function Reply({
@@ -144,7 +88,6 @@ export function Reply({
   eventId,
   onClick,
   onUserClick,
-  onUsernameClick,
   getMemberPowerTag,
   accessibleTagColors,
   legacyUsernameColor,
@@ -152,10 +95,6 @@ export function Reply({
   timeline,
   htmlReactParserOptions,
   linkifyOpts,
-  hour24Clock,
-  dateFormatString,
-  messageLayout,
-  messageSpacing,
 }: ReplyProps) {
   const ct = useClient();
   const placeholderWidth = useMemo(() => randomNumberBetween(40, 400), []);
@@ -211,58 +150,47 @@ export function Reply({
     );
   };
 
+  const replyClick = onClick ? () => onClick(eventId) : undefined;
+
   return (
-    <MessageBase space={messageSpacing}>
-      <ReplyMessage
-        onClick={onClick ? () => onClick(eventId) : undefined}
-        messageLayout={messageLayout}
-        username={
-          sender && (
-            <Text
-              as="button"
-              onClick={onUsernameClick}
-              onContextMenu={onUserClick}
-              className={HoverUnderline}
-              style={{ color: usernameColor, cursor: 'pointer' }}
-              data-user-id={sender}
-              size="T300"
-              truncate
-            >
-              <b>{getMemberName(sender)}</b>
-            </Text>
-          )
-        }
-        time={
-          replyEvent && (
-            <Time
-              as="button"
-              className={HoverUnderline}
-              onClick={onClick ? () => onClick(eventId) : undefined}
-              ts={replyEvent.origin_server_ts}
-              dateFormatString={dateFormatString}
-              hour24Clock={hour24Clock}
-            />
-          )
-        }
-        data-event-id={eventId}
-      >
-        {replyEvent && renderEventContent(replyEvent)}
-        {replyEvent === null && (
-          <Text size="T300">
-            <MessageFailedContent />
+    <ReplyMessage
+      onClick={replyClick}
+      usernameColor={usernameColor}
+      username={
+        sender && (
+          <Text
+            as="button"
+            onClick={replyClick}
+            onContextMenu={onUserClick}
+            className={HoverUnderline}
+            style={{ color: usernameColor, cursor: 'pointer' }}
+            data-user-id={sender}
+            size="T300"
+            truncate
+          >
+            <b>{getMemberName(sender)}</b>
           </Text>
-        )}
-        {replyEvent === undefined && (
-          <LinePlaceholder
-            style={{
-              backgroundColor: color.SurfaceVariant.ContainerActive,
-              width: toRem(placeholderWidth),
-              maxWidth: '100%',
-              height: config.lineHeight.T300,
-            }}
-          />
-        )}
-      </ReplyMessage>
-    </MessageBase>
+        )
+      }
+      data-event-id={eventId}
+    >
+      {replyEvent && renderEventContent(replyEvent)}
+      {replyEvent === null && (
+        <Text size="T300">
+          <MessageFailedContent />
+        </Text>
+      )}
+      {replyEvent === undefined && (
+        <LinePlaceholder
+          style={{
+            backgroundColor: color.SurfaceVariant.ContainerActive,
+            width: toRem(placeholderWidth),
+            maxWidth: '100%',
+            margin: `${toRem(2)} 0`,
+            height: `calc(${config.lineHeight.T300} - ${toRem(4)})`,
+          }}
+        />
+      )}
+    </ReplyMessage>
   );
 }

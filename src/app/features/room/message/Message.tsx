@@ -937,8 +937,6 @@ export const Message = as<'div', MessageProps>(
       }, 100);
     };
 
-    // hide margin-top space between message and reply
-    const hasReply = !!getReplyId(event.content) && !fallbackReply(event.content);
     return (
       <MessageBase
         className={classNames(css.MessageBase, className, {
@@ -946,7 +944,7 @@ export const Message = as<'div', MessageProps>(
         })}
         tabIndex={0}
         space={messageSpacing}
-        collapse={collapse || hasReply}
+        collapse={collapse}
         highlight={highlight}
         selected={!!selected || !!menuAnchor || !!emojiBoardAnchor}
         {...props}
@@ -1002,7 +1000,7 @@ export const Message = as<'div', MessageProps>(
                   size="300"
                   radii="300"
                 >
-                  <Icon src={Icons.BlockQuote} size="100" />
+                  <Icon src={Icons.ReplyArrow} size="100" />
                 </IconButton>
                 {canThread && (
                   <IconButton
@@ -1076,7 +1074,7 @@ export const Message = as<'div', MessageProps>(
                           )}
                           <MenuItem
                             size="300"
-                            after={<Icon size="100" src={Icons.BlockQuote} />}
+                            after={<Icon size="100" src={Icons.ReplyArrow} />}
                             radii="300"
                             data-event-id={event.event_id}
                             data-sender-id={event.sender}
@@ -1091,7 +1089,7 @@ export const Message = as<'div', MessageProps>(
                               size="T300"
                               truncate
                             >
-                              Quote
+                              Reply
                             </Text>
                           </MenuItem>
                           {canThread && (
