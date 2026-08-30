@@ -26,6 +26,7 @@ import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '../../hooks/router/useInbox';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { useSelectedSpace } from '../../hooks/router/useSelectedSpace';
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -76,6 +77,28 @@ function FaviconUpdater() {
   return null;
 }
 
+function TitleUpdater() {
+  const mx = useMatrixClient();
+  const selectedSpace = useSelectedSpace();
+  const selectedRoom = useSelectedRoom();
+
+  useEffect(() => {
+    const space = selectedSpace ? mx.getRoom(selectedSpace) : undefined;
+    const room = selectedRoom ? mx.getRoom(selectedRoom) : undefined;
+
+    const spaceName = space?.name || space?.roomId;
+    const roomName = room?.name || room?.roomId;
+
+    const parts: string[] = [];
+    if (roomName) parts.push(roomName);
+    if (spaceName) parts.push(spaceName);
+    parts.push('Cinny');
+
+    document.title = parts.join(' – ');
+  }, [mx, selectedRoom, selectedSpace]);
+
+  return null;
+}
 function InviteNotifications() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const invites = useAtomValue(allInvitesAtom);
@@ -258,11 +281,21 @@ type ClientNonUIFeaturesProps = {
 };
 
 export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
+  const [showDynamicPageTitle] = useSetting(settingsAtom, 'showDynamicPageTitle');
+  const defaultTitleRef = useRef(document.title);
+
+  useEffect(() => {
+    if (!showDynamicPageTitle && document.title !== defaultTitleRef.current) {
+      document.title = defaultTitleRef.current;
+    }
+  }, [showDynamicPageTitle]);
+
   return (
     <>
       <SystemEmojiFeature />
       <PageZoomFeature />
       <FaviconUpdater />
+      {showDynamicPageTitle && <TitleUpdater />}
       <InviteNotifications />
       <MessageNotifications />
       {children}
