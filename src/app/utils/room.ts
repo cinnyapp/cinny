@@ -421,13 +421,14 @@ export const getEventReactions = (timelineSet: EventTimelineSet, eventId: string
 export type ReactionGroup = {
   key: string;
   users: Set<string>;
+  events: MessageEventWithoutRoomId<ReactionContent>[];
   shortcode?: string;
   firstTs: number;
 };
 export const getReactionGroups = (
   reactions: MessageEventWithoutRoomId<ReactionContent>[]
 ): Array<ReactionGroup> => {
-  const map = new Map<string, ReactionGroup>();
+  const groups = new Map<string, ReactionGroup>();
 
   reactions.forEach((event) => {
     const { key } = event.content['m.relates_to'];
@@ -435,17 +436,19 @@ export const getReactionGroups = (
     const { shortcode } = event.content;
     const ts = event.origin_server_ts;
 
-    const existing = map.get(key);
+    const existing = groups.get(key);
 
     if (!existing) {
-      map.set(key, {
+      groups.set(key, {
         key,
         users: new Set([userId]),
+        events: [event],
         shortcode,
         firstTs: ts,
       });
     } else {
       existing.users.add(userId);
+      existing.events.push(event);
 
       if (!existing.shortcode && shortcode) {
         existing.shortcode = shortcode;
@@ -458,7 +461,7 @@ export const getReactionGroups = (
     }
   });
 
-  return Array.from(map.values()).sort((a, b) => a.firstTs - b.firstTs);
+  return Array.from(groups.values()).sort((a, b) => a.firstTs - b.firstTs);
 };
 
 export const getLatestEditEvent = (

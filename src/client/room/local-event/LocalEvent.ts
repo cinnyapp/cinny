@@ -10,8 +10,8 @@ export class LocalMessage<TContent extends object = object> {
   }
 }
 
-export class LocalEvent {
-  public readonly original: LocalMessage;
+export class LocalEvent<TContent extends object = object> {
+  public readonly original: LocalMessage<TContent>;
 
   public readonly wire: LocalMessage;
 
@@ -19,7 +19,7 @@ export class LocalEvent {
 
   public readonly ts: number;
 
-  constructor(original: LocalMessage, wire: LocalMessage, txnId: string, ts: number) {
+  constructor(original: LocalMessage<TContent>, wire: LocalMessage, txnId: string, ts: number) {
     this.original = original;
     this.wire = wire;
     this.txnId = txnId;

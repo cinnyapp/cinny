@@ -4,45 +4,59 @@ import classNames from 'classnames';
 import * as css from './Reaction.css';
 import { getHexcodeForEmoji, getShortcodeFor } from '../../plugins/emoji';
 import { useRoomMembersAPI } from '../../hooks/useRoomMembers';
-import { ClientContext } from '../../../client/context';
 import { mxcToHttp } from '../../../client/mxcToHttp';
+import { useClient } from '../../hooks/useClient';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 export const Reaction = as<
   'button',
   {
-    ct: ClientContext;
     count: number;
+    adding?: boolean;
+    removing?: boolean;
     reaction: string;
-    useAuthentication?: boolean;
   }
->(({ className, ct, count, reaction, useAuthentication, ...props }, ref) => (
-  <Box
-    as="button"
-    className={classNames(css.Reaction, className)}
-    alignItems="Center"
-    shrink="No"
-    gap="200"
-    {...props}
-    ref={ref}
-  >
-    <Text className={css.ReactionText} as="span" size="T400">
-      {reaction.startsWith('mxc://') ? (
-        <img
-          className={css.ReactionImg}
-          src={mxcToHttp(ct.session.baseUrl, reaction, useAuthentication).url() ?? reaction}
-          alt={reaction}
-        />
-      ) : (
-        <Text as="span" size="Inherit" truncate>
-          {reaction}
-        </Text>
-      )}
-    </Text>
-    <Text as="span" size="T300">
-      {count}
-    </Text>
-  </Box>
-));
+>(({ className, count, adding, removing, reaction, ...props }, ref) => {
+  const ct = useClient();
+  const useAuthentication = useMediaAuthentication();
+
+  return (
+    <Box
+      as="button"
+      className={classNames(css.Reaction, className)}
+      alignItems="Center"
+      shrink="No"
+      gap="200"
+      {...props}
+      ref={ref}
+    >
+      <Text
+        className={classNames(css.ReactionText, { [css.ReactionChangeAnimation]: adding })}
+        as="span"
+        size="T400"
+      >
+        {reaction.startsWith('mxc://') ? (
+          <img
+            className={css.ReactionImg}
+            src={mxcToHttp(ct.session.baseUrl, reaction, useAuthentication).url() ?? reaction}
+            alt={reaction}
+          />
+        ) : (
+          <Text as="span" size="Inherit" truncate>
+            {reaction}
+          </Text>
+        )}
+      </Text>
+      <Text
+        className={classNames({ [css.ReactionChangeAnimation]: removing })}
+        as="span"
+        size="T300"
+      >
+        {count}
+      </Text>
+    </Box>
+  );
+});
 
 type ReactionTooltipMsgProps = {
   reaction: string;

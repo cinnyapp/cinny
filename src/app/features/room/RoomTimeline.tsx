@@ -75,6 +75,7 @@ import { useUserReadReceipt } from '../../hooks/useReadReceipt';
 import { useMessageParserOptions } from '../../hooks/useMessageParserOptions';
 import { MessageContent } from '../../components/MessageContent';
 import { MessageEditor } from './message/MessageEditor';
+import { useSendReaction } from './hooks/useSendReaction';
 
 type RoomTimelineProps = {
   eventId?: string;
@@ -312,9 +313,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   const handleUsernameClick = useUsernameClickHandler(editor);
   const [replyDraft, handleReplyClick] = useReplyClickHandler(editor);
 
-  const handleReactionToggle = useCallback((targetEventId: string) => {
-    console.log(targetEventId);
-  }, []);
+  const handleReactionToggle = useSendReaction();
 
   const handleEdit = useCallback(
     (editEvtId?: string) => {
@@ -353,10 +352,11 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
     const reactionJSX = reactionEvents && reactionEvents?.length > 0 && (
       <Reactions
         style={{ marginTop: config.space.S200 }}
+        roomId={roomId}
         reactions={reactionEvents}
         eventId={event.event_id}
         canSendReaction={canSendReaction}
-        onReactionToggle={handleReactionToggle}
+        canRedactReaction={canRedact || canDeleteOwn}
       />
     );
 

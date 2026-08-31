@@ -1,4 +1,4 @@
-import { createVar, style } from '@vanilla-extract/css';
+import { createVar, keyframes, style } from '@vanilla-extract/css';
 import { DefaultReset, FocusOutline, color, config, toRem } from 'folds';
 
 const Container = createVar();
@@ -48,6 +48,7 @@ export const Reaction = style([
       },
       '&[aria-disabled=true], &:disabled': {
         cursor: 'not-allowed',
+        backgroundColor: `${Container} !important`,
       },
     },
   },
@@ -63,6 +64,20 @@ export const ReactionText = style([
     lineHeight: toRem(20),
   },
 ]);
+const scaleAnimation = keyframes({
+  '0%': {
+    transform: 'scale(1)',
+  },
+  '50%': {
+    transform: 'scale(1.2)',
+  },
+  '100%': {
+    transform: 'scale(1)',
+  },
+});
+export const ReactionChangeAnimation = style({
+  animation: `${scaleAnimation} 1000ms ease-in-out infinite`,
+});
 
 export const ReactionImg = style([
   DefaultReset,

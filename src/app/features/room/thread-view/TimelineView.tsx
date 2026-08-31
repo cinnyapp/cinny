@@ -73,6 +73,7 @@ import { useUserReadReceipt } from '../../../hooks/useReadReceipt';
 import { useMessageParserOptions } from '../../../hooks/useMessageParserOptions';
 import { MessageContent } from '../../../components/MessageContent';
 import { MessageEditor } from '../message/MessageEditor';
+import { useSendReaction } from '../hooks/useSendReaction';
 
 type TimelineViewProps = {
   threadTimeline: ThreadTimeline;
@@ -265,9 +266,7 @@ export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewPro
   const handleUsernameClick = useUsernameClickHandler(editor);
   const [replyDraft, handleReplyClick] = useReplyClickHandler(editor, threadTimeline.threadId);
 
-  const handleReactionToggle = useCallback((targetEventId: string) => {
-    console.log(targetEventId);
-  }, []);
+  const handleReactionToggle = useSendReaction();
 
   const handleEdit = useCallback(
     (editEvtId?: string) => {
@@ -309,10 +308,11 @@ export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewPro
     const reactionJSX = reactionEvents && reactionEvents?.length > 0 && (
       <Reactions
         style={{ marginTop: config.space.S200 }}
+        roomId={roomId}
         reactions={reactionEvents}
         eventId={event.event_id}
         canSendReaction={canSendReaction}
-        onReactionToggle={handleReactionToggle}
+        canRedactReaction={canRedact || canDeleteOwn}
       />
     );
 

@@ -30,8 +30,8 @@ export type LocalEventSenderState =
   | EventSenderSuccess
   | EventSenderError;
 
-export class LocalEventSender {
-  public readonly localEvent: LocalEvent;
+export class LocalEventSender<TContent extends object = object> {
+  public readonly localEvent: LocalEvent<TContent>;
 
   private readonly request: MatrixRequest;
 
@@ -41,7 +41,7 @@ export class LocalEventSender {
 
   private sending = false;
 
-  constructor(localEvent: LocalEvent, request: MatrixRequest) {
+  constructor(localEvent: LocalEvent<TContent>, request: MatrixRequest) {
     this.localEvent = localEvent;
     this.request = request;
     this.state = new ObservableValue(new EventSenderIdle(this.send.bind(this)), this.publishKey);
