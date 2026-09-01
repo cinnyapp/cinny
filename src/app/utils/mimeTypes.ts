@@ -5,6 +5,7 @@ export const IMAGE_MIME_TYPES = [
   'image/apng',
   'image/webp',
   'image/avif',
+  'image/jxl',
 ];
 
 export const VIDEO_MIME_TYPES = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
