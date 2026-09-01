@@ -1,3 +1,4 @@
+import { IContent } from 'matrix-js-sdk';
 import { IImageInfo } from './common';
 
 export enum Membership {
@@ -86,6 +87,7 @@ export type RoomToParents = Map<string, Set<string>>;
 export type Unread = {
   total: number;
   highlight: number;
+  unreadMarker: boolean;
   from: Set<string> | null;
 };
 export type RoomToUnread = Map<string, Unread>;
@@ -93,6 +95,7 @@ export type UnreadInfo = {
   roomId: string;
   total: number;
   highlight: number;
+  unreadMarker: boolean;
 };
 
 export type MuteChanges = {
@@ -109,3 +112,7 @@ export type MemberPowerTag = {
   color?: string;
   icon?: MemberPowerTagIcon;
 };
+
+export interface IUnreadContent extends IContent {
+  unread?: boolean;
+}
