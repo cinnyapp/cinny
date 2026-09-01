@@ -112,7 +112,7 @@ export function ReactionTooltipMsg({ reaction, shortcode, users }: ReactionToolt
         </>
       )}
       <Text as="span" size="Inherit" priority="300">
-        {' reacted with '}
+        {names.length > 0 ? ' reacted with ' : 'Reacting with '}
       </Text>
       :<b>{label}</b>:
     </>
