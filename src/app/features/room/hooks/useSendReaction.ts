@@ -6,6 +6,7 @@ import { useClient } from '../../../hooks/useClient';
 import {
   EventSenderError,
   EventSenderIdle,
+  EventSenderSuccess,
   LocalEvent,
   LocalEventSender,
   LocalMessage,
@@ -61,7 +62,7 @@ export const useSendReaction = (
 
   useEffect(() => {
     const unsub = reactionSender?.state.subscribe((state) => {
-      if (state instanceof EventSenderError) {
+      if (state instanceof EventSenderError || state instanceof EventSenderIdle) {
         setReactionSender(undefined);
       }
     });
@@ -71,10 +72,13 @@ export const useSendReaction = (
   }, [reactionSender]);
 
   const sendingRel = reactionSender?.localEvent.original.content['m.relates_to'];
+  const senderRedacted =
+    reactionSender?.state.read instanceof EventSenderSuccess &&
+    redacted.has(reactionSender.state.read.eventId);
 
   return {
     reactionSender:
-      sendingRel && hasExistingReaction(sendingRel.event_id, sendingRel.key)
+      (sendingRel && hasExistingReaction(sendingRel.event_id, sendingRel.key)) || senderRedacted
         ? undefined
         : reactionSender,
     handleAddReaction,
