@@ -8,6 +8,7 @@ import React, {
   useState,
 } from 'react';
 import { ReactEditor } from 'slate-react';
+import { Editor } from 'slate';
 import { Box, Scroll, Text, config } from 'folds';
 import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { useVirtualPaginator } from '../../../hooks/useVirtualPaginator';
@@ -60,7 +61,6 @@ import {
   useUsernameClickHandler,
 } from '../hooks/useTimeline';
 import { rContent } from '../../../../client/reader';
-import { useEditor } from '../../../components/editor';
 import {
   TimelineFloat,
   JumpToLatestButton,
@@ -78,15 +78,15 @@ import { useSendReaction } from '../hooks/useSendReaction';
 type TimelineViewProps = {
   threadTimeline: ThreadTimeline;
   threadInputRef: RefObject<HTMLElement>;
+  editor: Editor;
 };
 
 const PAGINATION_LIMIT = 80;
 
-export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewProps) {
+export function TimelineView({ threadTimeline, threadInputRef, editor }: TimelineViewProps) {
   const ct = useClient();
   const roomId = useRoom();
   const encryptedRooms = useObservableValue(ct.encryptedRooms);
-  const editor = useEditor();
 
   const {
     hideActivity,
