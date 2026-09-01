@@ -24,6 +24,8 @@ import {
   Scroll,
   Spinner,
   Text,
+  Tooltip,
+  TooltipProvider,
   config,
   toRem,
 } from 'folds';
@@ -45,6 +47,8 @@ import { getMxIdServer } from '../../../utils/matrix';
 import { stopPropagation } from '../../../utils/keyboard';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../../components/BackRouteHandler';
+import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
+import { useExploreServers } from '../../../hooks/useExploreServers';
 
 const useServerSearchParams = (searchParams: URLSearchParams): ExploreServerPathSearchParams =>
   useMemo(
@@ -348,6 +352,7 @@ export function PublicRooms() {
   const allRooms = useAtomValue(allRoomsAtom);
   const { navigateSpace, navigateRoom } = useRoomNavigate();
   const screenSize = useScreenSizeContext();
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const [searchParams] = useSearchParams();
   const serverSearchParams = useServerSearchParams(searchParams);
@@ -356,6 +361,9 @@ export function PublicRooms() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const roomTypeFilters = useRoomTypeFilters();
+  const [exploreServers, , removeServer] = useExploreServers();
+  const isUserAddedServer = server && exploreServers.includes(server);
+  const isUserHomeServer = server && server === userServer;
 
   const currentLimit: number = useMemo(() => {
     const limitParam = serverSearchParams.limit;
@@ -468,6 +476,20 @@ export function PublicRooms() {
     explore({ instance: instanceId, since: undefined });
   };
 
+  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuAnchor(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const [removeServerState, handleRemoveServer] = useAsyncCallback(
+    useCallback(async () => {
+      if (!server) return;
+
+      setMenuAnchor(undefined);
+      await removeServer(server);
+    }, [server, removeServer])
+  );
+  const isRemoving = removeServerState.status === AsyncStatus.Loading;
+
   return (
     <Page>
       <PageHeader balance>
@@ -506,13 +528,78 @@ export function PublicRooms() {
                 </BackRouteHandler>
               )}
             </Box>
-            <Box grow="Yes" justifyContent="Center" alignItems="Center" gap="200">
-              {screenSize !== ScreenSize.Mobile && <Icon size="400" src={Icons.Server} />}
+            <Box grow="Yes" basis="Yes" justifyContent="Center" alignItems="Center" gap="200">
+              {screenSize !== ScreenSize.Mobile && <Icon size="400" src={isUserHomeServer ? Icons.Home : Icons.Server} />}
               <Text size="H3" truncate>
                 {server}
               </Text>
             </Box>
-            <Box grow="Yes" basis="No" />
+            <Box shrink="No" grow="Yes" basis="No" justifyContent="End">
+              <TooltipProvider
+                position="Bottom"
+                align="End"
+                offset={4}
+                tooltip={
+                  <Tooltip>
+                    <Text>More Options</Text>
+                  </Tooltip>
+                }
+              >
+                {(triggerRef) =>
+                  isUserAddedServer && (
+                    <IconButton
+                      onClick={handleOpenMenu}
+                      ref={triggerRef}
+                      aria-pressed={!!menuAnchor}
+                    >
+                      <Icon size="400" src={Icons.VerticalDots} filled={!!menuAnchor} />
+                    </IconButton>
+                  )
+                }
+              </TooltipProvider>
+              <PopOut
+                anchor={menuAnchor}
+                position="Bottom"
+                align="End"
+                content={
+                  <FocusTrap
+                    focusTrapOptions={{
+                      initialFocus: false,
+                      returnFocusOnDeactivate: false,
+                      onDeactivate: () => setMenuAnchor(undefined),
+                      clickOutsideDeactivates: true,
+                      isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                      isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                      escapeDeactivates: stopPropagation,
+                    }}
+                  >
+                    <Menu style={{ maxWidth: toRem(160), width: '100vw' }}>
+                      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                        <MenuItem
+                          onClick={handleRemoveServer}
+                          variant="Critical"
+                          fill="None"
+                          size="300"
+                          after={
+                            isRemoving ? (
+                              <Spinner fill="Solid" variant="Secondary" size="200" />
+                            ) : (
+                              <Icon size="100" src={Icons.Delete} />
+                            )
+                          }
+                          radii="300"
+                          disabled={isRemoving}
+                        >
+                          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+                            Remove Server
+                          </Text>
+                        </MenuItem>
+                      </Box>
+                    </Menu>
+                  </FocusTrap>
+                }
+              />
+            </Box>
           </>
         )}
       </PageHeader>
