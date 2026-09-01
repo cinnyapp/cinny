@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useEffect,
   useRef,
-  useState,
+  useState, useMemo,
 } from 'react';
 import { useAtom, useAtomValue } from 'jotai';
 import { isKeyHotkey } from 'is-hotkey';
@@ -28,7 +28,8 @@ import {
   config,
   toRem,
 } from 'folds';
-
+import parse, { HTMLReactParserOptions } from 'html-react-parser';
+import { Opts as LinkifyOpts } from 'linkifyjs';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
   CustomEditor,
@@ -117,6 +118,16 @@ import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
+import { sanitizeCustomHtml } from '../../utils/sanitize';
+import { useMentionClickHandler } from '../../hooks/useMentionClickHandler';
+import { useSpoilerClickHandler } from '../../hooks/useSpoilerClickHandler';
+import {
+  factoryRenderLinkifyWithMention,
+  getReactCustomHtmlParser,
+  LINKIFY_OPTS,
+  makeMentionCustomProps,
+  renderMatrixMention,
+} from '../../plugins/react-custom-html-parser';
 
 interface RoomInputProps {
   editor: Editor;
@@ -219,6 +230,28 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [hideStickerBtn, setHideStickerBtn] = useState(document.body.clientWidth < 500);
 
     const isComposing = useComposingCheck();
+
+    const mentionClickHandler = useMentionClickHandler(room.roomId);
+    const spoilerClickHandler = useSpoilerClickHandler();
+    const linkifyOpts = useMemo<LinkifyOpts>(
+      () => ({
+        ...LINKIFY_OPTS,
+        render: factoryRenderLinkifyWithMention((href) =>
+          renderMatrixMention(mx, room.roomId, href, makeMentionCustomProps(mentionClickHandler))
+        ),
+      }),
+      [mx, room, mentionClickHandler]
+    );
+    const htmlReactParserOptions = useMemo<HTMLReactParserOptions>(
+      () =>
+        getReactCustomHtmlParser(mx, room.roomId, {
+          linkifyOpts,
+          useAuthentication,
+          handleSpoilerClick: spoilerClickHandler,
+          handleMentionClick: mentionClickHandler,
+        }),
+      [mx, room, linkifyOpts, useAuthentication, spoilerClickHandler, mentionClickHandler]
+    );
 
     useElementSizeObserver(
       useCallback(() => fileDropContainerRef.current, [fileDropContainerRef]),
@@ -574,7 +607,12 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                       }
                     >
                       <Text size="T300" truncate>
-                        {trimReplyFromBody(replyDraft.body)}
+                        {replyDraft.formattedBody
+                          ? parse(
+                              sanitizeCustomHtml(trimReplyFromBody(replyDraft.formattedBody.replace('<br/>', ''))),
+                              htmlReactParserOptions
+                            )
+                          : trimReplyFromBody(replyDraft.body)}
                       </Text>
                     </ReplyLayout>
                   </Box>
