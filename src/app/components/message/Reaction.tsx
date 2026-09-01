@@ -47,11 +47,7 @@ export const Reaction = as<
           </Text>
         )}
       </Text>
-      <Text
-        className={classNames({ [css.ReactionChangeAnimation]: removing })}
-        as="span"
-        size="T300"
-      >
+      <Text className={classNames({ [css.ReactionDropAnimation]: removing })} as="span" size="T300">
         {count}
       </Text>
     </Box>

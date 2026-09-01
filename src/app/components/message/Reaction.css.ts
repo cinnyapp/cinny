@@ -64,6 +64,7 @@ export const ReactionText = style([
     lineHeight: toRem(20),
   },
 ]);
+
 const scaleAnimation = keyframes({
   '0%': {
     transform: 'scale(1)',
@@ -76,7 +77,22 @@ const scaleAnimation = keyframes({
   },
 });
 export const ReactionChangeAnimation = style({
-  animation: `${scaleAnimation} 1000ms ease-in-out infinite`,
+  animation: `${scaleAnimation} 700ms ease-in-out infinite`,
+});
+
+const dropAnimation = keyframes({
+  '0%': {
+    transform: 'translateY(0)',
+  },
+  '50%': {
+    transform: 'translateY(0.1em)',
+  },
+  '100%': {
+    transform: 'translateY(0)',
+  },
+});
+export const ReactionDropAnimation = style({
+  animation: `${dropAnimation} 700ms ease-in-out infinite`,
 });
 
 export const ReactionImg = style([
