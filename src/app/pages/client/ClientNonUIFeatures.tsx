@@ -1,7 +1,7 @@
 import { useAtomValue } from 'jotai';
 import React, { ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RoomEvent, RoomEventHandlerMap } from 'matrix-js-sdk';
+import { RelationType, RoomEvent, RoomEventHandlerMap } from 'matrix-js-sdk';
 import { roomToUnreadAtom, unreadEqual, unreadInfoToUnread } from '../../state/room/roomToUnread';
 import LogoSVG from '../../../../public/res/svg/cinny.svg';
 import LogoUnreadSVG from '../../../../public/res/svg/cinny-unread.svg';
@@ -136,6 +136,7 @@ function MessageNotifications() {
   const useAuthentication = useMediaAuthentication();
   const [showNotifications] = useSetting(settingsAtom, 'showNotifications');
   const [notificationSound] = useSetting(settingsAtom, 'isNotificationSounds');
+  const [onlyParticipatedThreads] = useSetting(settingsAtom, 'onlyParticipatedThreads');
 
   const navigate = useNavigate();
   const notificationSelected = useInboxNotificationsSelected();
@@ -177,6 +178,29 @@ function MessageNotifications() {
     audioElement?.play();
   }, []);
 
+  /**
+   * Check if the user has participated in a thread by scanning the thread timeline
+   * for events sent by the current user.
+   */
+  const hasUserParticipatedInThread = useCallback(
+    (roomId: string, threadRootEventId: string): boolean => {
+      const room = mx.getRoom(roomId);
+      if (!room) return false;
+
+      const thread = room.getThread(threadRootEventId);
+      if (!thread) return false;
+
+      const userId = mx.getUserId();
+      if (!userId) return false;
+
+      // Check if user sent any events in the thread timeline
+      const timeline = thread.timelineSet.getLiveTimeline();
+      const events = timeline.getEvents();
+      return events.some((event) => event.getSender() === userId);
+    },
+    [mx]
+  );
+
   useEffect(() => {
     const handleTimelineEvent: RoomEventHandlerMap[RoomEvent.Timeline] = (
       mEvent,
@@ -200,6 +224,17 @@ function MessageNotifications() {
       const sender = mEvent.getSender();
       const eventId = mEvent.getId();
       if (!sender || !eventId || mEvent.getSender() === mx.getUserId()) return;
+
+      // Check if this is a thread reply and filter based on participation
+      const relation = mEvent.getRelation();
+      if (onlyParticipatedThreads && relation?.rel_type === RelationType.Thread) {
+        const threadRootEventId = relation.event_id;
+        if (threadRootEventId && !hasUserParticipatedInThread(room.roomId, threadRootEventId)) {
+          // User hasn't participated in this thread, skip notification
+          return;
+        }
+      }
+
       const unreadInfo = getUnreadInfo(room);
       const cachedUnreadInfo = unreadCacheRef.current.get(room.roomId);
       unreadCacheRef.current.set(room.roomId, unreadInfo);
@@ -239,6 +274,8 @@ function MessageNotifications() {
     notificationSound,
     notificationSelected,
     showNotifications,
+    onlyParticipatedThreads,
+    hasUserParticipatedInThread,
     playSound,
     notify,
     selectedRoomId,
