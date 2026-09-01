@@ -1,32 +1,38 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { ReactionContent, RelationType } from '../../../../types/matrix/common';
 import { MessageEvent } from '../../../../types/matrix/room';
 import { useClient } from '../../../hooks/useClient';
 import {
+  EventSenderError,
   EventSenderIdle,
   LocalEvent,
   LocalEventSender,
   LocalMessage,
 } from '../../../../client/room/local-event';
 import { useRoom } from '../../../hooks/useRoom';
-import { useTimelineView } from './useTimeline';
 
-export const useSendReaction = () => {
+export const useSendReaction = (
+  reactions: Map<string, MessageEventWithoutRoomId<ReactionContent>[]>,
+  redacted: Set<string>
+) => {
   const ct = useClient();
   const roomId = useRoom();
-  const timeline = useTimelineView();
+  const [reactionSender, setReactionSender] = useState<LocalEventSender<ReactionContent>>();
+
+  const hasExistingReaction = useCallback(
+    (targetEventId: string, key: string) => {
+      const eventReactions = reactions.get(targetEventId)?.filter((r) => !redacted.has(r.event_id));
+      return eventReactions?.some(
+        (evt) => evt.sender === ct.session.userId && evt.content['m.relates_to'].key === key
+      );
+    },
+    [reactions, redacted, ct]
+  );
 
   const handleAddReaction = useCallback(
     (targetEventId: string, key: string, shortcode?: string) => {
-      const redacted = timeline.relations.redacted.read;
-      const reactions = timeline.relations.reactions.eventToRelations.read
-        .get(targetEventId)
-        ?.filter((r) => !redacted.has(r.event_id));
-      if (
-        reactions?.some(
-          (evt) => evt.sender === ct.session.userId && evt.content['m.relates_to'].key === key
-        )
-      ) {
+      if (hasExistingReaction(targetEventId, key)) {
         // Already reacted with this emoji
         return;
       }
@@ -48,9 +54,29 @@ export const useSendReaction = () => {
       if (eventSender.state.read instanceof EventSenderIdle) {
         eventSender.state.read.send();
       }
+      setReactionSender(eventSender);
     },
-    [ct, roomId, timeline]
+    [ct, roomId, hasExistingReaction]
   );
 
-  return handleAddReaction;
+  useEffect(() => {
+    const unsub = reactionSender?.state.subscribe((state) => {
+      if (state instanceof EventSenderError) {
+        setReactionSender(undefined);
+      }
+    });
+    return () => {
+      unsub?.();
+    };
+  }, [reactionSender]);
+
+  const sendingRel = reactionSender?.localEvent.original.content['m.relates_to'];
+
+  return {
+    reactionSender:
+      sendingRel && hasExistingReaction(sendingRel.event_id, sendingRel.key)
+        ? undefined
+        : reactionSender,
+    handleAddReaction,
+  };
 };

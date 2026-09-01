@@ -313,7 +313,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   const handleUsernameClick = useUsernameClickHandler(editor);
   const [replyDraft, handleReplyClick] = useReplyClickHandler(editor);
 
-  const handleReactionToggle = useSendReaction();
+  const { reactionSender, handleAddReaction } = useSendReaction(reactions, redacted);
 
   const handleEdit = useCallback(
     (editEvtId?: string) => {
@@ -345,15 +345,20 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   let threadSeries: MessageEventWithoutRoomId[] = [];
   const renderMatrixEvent = (event: MessageEventWithoutRoomId, item: number, collapse: boolean) => {
     const reactionEvents = reactions.get(event.event_id)?.filter((r) => !redacted.has(r.event_id));
+    const reactionSenderTarget =
+      reactionSender?.localEvent.original.content['m.relates_to'].event_id === event.event_id;
+
     const editEvents = edits.get(event.event_id);
     const editedEvent = getLatestEditEvent(event, editEvents, redacted);
     const highlighted = focusItem?.index === item && focusItem.highlight;
 
-    const reactionJSX = reactionEvents && reactionEvents?.length > 0 && (
+    const reactionJSX = (reactionSenderTarget ||
+      (reactionEvents && reactionEvents?.length > 0)) && (
       <Reactions
         style={{ marginTop: config.space.S200 }}
         roomId={roomId}
-        reactions={reactionEvents}
+        reactions={reactionEvents ?? []}
+        reactionSender={reactionSenderTarget ? reactionSender : undefined}
         eventId={event.event_id}
         canSendReaction={canSendReaction}
         canRedactReaction={canRedact || canDeleteOwn}
@@ -434,7 +439,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
         onUsernameClick={handleUsernameClick}
         onReplyClick={handleReplyClick}
         onThreadClick={handleThreadClick}
-        onReactionToggle={handleReactionToggle}
+        onReactionToggle={handleAddReaction}
         onEditId={handleEdit}
         redacted={redacted.has(event.event_id)}
         hideReadReceipts={hideActivity}

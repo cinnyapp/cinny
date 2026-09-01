@@ -266,7 +266,7 @@ export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewPro
   const handleUsernameClick = useUsernameClickHandler(editor);
   const [replyDraft, handleReplyClick] = useReplyClickHandler(editor, threadTimeline.threadId);
 
-  const handleReactionToggle = useSendReaction();
+  const { reactionSender, handleAddReaction } = useSendReaction(reactions, redacted);
 
   const handleEdit = useCallback(
     (editEvtId?: string) => {
@@ -284,6 +284,9 @@ export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewPro
 
   const renderMatrixEvent = (event: MessageEventWithoutRoomId, item: number, collapse: boolean) => {
     const reactionEvents = reactions.get(event.event_id)?.filter((r) => !redacted.has(r.event_id));
+    const reactionSenderTarget =
+      reactionSender?.localEvent.original.content['m.relates_to'].event_id === event.event_id;
+
     const editEvents = edits.get(event.event_id);
     const editedEvent = getLatestEditEvent(event, editEvents, redacted);
     const highlighted = focusItem?.index === item && focusItem.highlight;
@@ -305,11 +308,13 @@ export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewPro
       />
     ) : null;
 
-    const reactionJSX = reactionEvents && reactionEvents?.length > 0 && (
+    const reactionJSX = (reactionSenderTarget ||
+      (reactionEvents && reactionEvents?.length > 0)) && (
       <Reactions
         style={{ marginTop: config.space.S200 }}
         roomId={roomId}
-        reactions={reactionEvents}
+        reactions={reactionEvents ?? []}
+        reactionSender={reactionSenderTarget ? reactionSender : undefined}
         eventId={event.event_id}
         canSendReaction={canSendReaction}
         canRedactReaction={canRedact || canDeleteOwn}
@@ -338,7 +343,7 @@ export function TimelineView({ threadTimeline, threadInputRef }: TimelineViewPro
         onUserClick={handleUserClick}
         onUsernameClick={handleUsernameClick}
         onReplyClick={handleReplyClick}
-        onReactionToggle={handleReactionToggle}
+        onReactionToggle={handleAddReaction}
         onEditId={handleEdit}
         redacted={redacted.has(event.event_id)}
         hideReadReceipts={hideActivity}

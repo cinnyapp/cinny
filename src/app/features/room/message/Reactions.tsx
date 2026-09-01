@@ -29,6 +29,7 @@ import {
   EventSenderPending,
   LocalEvent,
   LocalEventSender,
+  LocalEventSenderState,
   LocalMessage,
 } from '../../../../client/room/local-event';
 import { MessageEvent } from '../../../../types/matrix/room';
@@ -40,6 +41,7 @@ type ReactionUnpressedProps = {
   eventId: string;
   reaction: ReactionGroup;
   onViewReaction: MouseEventHandler<HTMLButtonElement>;
+  reactionSenderState?: LocalEventSenderState;
   disabled?: boolean;
 };
 function ReactionUnpressed({
@@ -47,11 +49,13 @@ function ReactionUnpressed({
   eventId,
   reaction,
   onViewReaction,
+  reactionSenderState,
   disabled,
 }: ReactionUnpressedProps) {
   const ct = useClient();
 
   const [sender, setSender] = useState<LocalEventSender<ReactionContent>>();
+  const adding = !!sender || !!reactionSenderState;
 
   const senderState = useObservableValueOptionally(sender?.state);
 
@@ -62,6 +66,13 @@ function ReactionUnpressed({
   }, [senderState]);
 
   const handleToggleReaction = () => {
+    if (reactionSenderState) {
+      if (reactionSenderState instanceof EventSenderPending) {
+        reactionSenderState.abort();
+      }
+      return;
+    }
+
     if (senderState instanceof EventSenderPending) {
       senderState.abort();
       setSender(undefined);
@@ -113,10 +124,10 @@ function ReactionUnpressed({
         <Reaction
           ref={targetRef}
           data-reaction-key={reaction.key}
-          aria-pressed={!!sender}
+          aria-pressed={adding}
           reaction={reaction.key}
-          count={sender ? reaction.users.size + 1 : reaction.users.size}
-          adding={!!sender}
+          count={adding ? reaction.users.size + 1 : reaction.users.size}
+          adding={adding}
           onClick={disabled ? undefined : handleToggleReaction}
           onContextMenu={onViewReaction}
           aria-disabled={disabled}
@@ -221,14 +232,26 @@ export type ReactionsProps = {
   canSendReaction?: boolean;
   canRedactReaction?: boolean;
   reactions: MessageEventWithoutRoomId<ReactionContent>[];
+  reactionSender?: LocalEventSender<ReactionContent>;
 };
 export const Reactions = as<'div', ReactionsProps>(
   (
-    { className, reactions, roomId, eventId, canSendReaction, canRedactReaction, ...props },
+    {
+      className,
+      reactions,
+      reactionSender,
+      roomId,
+      eventId,
+      canSendReaction,
+      canRedactReaction,
+      ...props
+    },
     ref
   ) => {
     const ct = useClient();
     const [viewer, setViewer] = useState<boolean | string>(false);
+    const reactionSenderState = useObservableValueOptionally(reactionSender?.state);
+    const senderKey = reactionSender?.localEvent.original.content['m.relates_to'].key;
 
     const handleViewReaction: MouseEventHandler<HTMLButtonElement> = (evt) => {
       evt.stopPropagation();
@@ -238,7 +261,23 @@ export const Reactions = as<'div', ReactionsProps>(
       else setViewer(key);
     };
 
-    const reactionGroups = useMemo(() => getReactionGroups(reactions), [reactions]);
+    const reactionGroups = useMemo(() => {
+      const groups = getReactionGroups(reactions);
+      if (!reactionSender) {
+        return groups;
+      }
+
+      const existingGroup = groups.some((g) => g.key === senderKey);
+      if (!existingGroup && senderKey) {
+        groups.push({
+          key: senderKey,
+          events: [],
+          users: new Set([]),
+          firstTs: Date.now(),
+        });
+      }
+      return groups;
+    }, [reactions, reactionSender, senderKey]);
 
     return (
       <Box
@@ -267,6 +306,7 @@ export const Reactions = as<'div', ReactionsProps>(
               eventId={eventId}
               reaction={reaction}
               onViewReaction={handleViewReaction}
+              reactionSenderState={senderKey === reaction.key ? reactionSenderState : undefined}
               disabled={!canSendReaction}
             />
           );
