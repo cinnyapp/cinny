@@ -47,9 +47,9 @@ export const BlockQuoteRule: BlockMDRule = {
   },
 };
 
-const ORDERED_LIST_MD_1 = '-';
+const ORDERED_LIST_MD_1 = '1.';
 const UNORDERED_LIST_MD_1 = '*';
-const LIST_ITEM_REG = /^( *)([-*]|[\da-zA-Z]\.) +(.+)$/;
+const LIST_ITEM_REG = /^( *)([-*]|\d+\.|[aAiI]\.) +(.+)$/;
 type ListType = 'ol' | 'ul';
 
 function getListType(marker: string): ListType {
@@ -57,7 +57,7 @@ function getListType(marker: string): ListType {
 }
 
 function getOrderedMeta(marker: string) {
-  const startMatch = marker.match(/^(\d)\./);
+  const startMatch = marker.match(/^(\d+)\./);
   const typeMatch = marker.match(/^([aAiI])\./);
 
   return {
