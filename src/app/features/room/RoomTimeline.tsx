@@ -1620,7 +1620,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   );
 
   let prevEvent: MatrixEvent | undefined;
-  let isPrevRendered = false;
+  let prevRenderedEvent: MatrixEvent | undefined;
   let newDivider = false;
   let dayDivider = false;
   const eventRenderer = (item: number) => {
@@ -1640,25 +1640,25 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       return null;
     }
 
+    const isVisible = !reactionOrEditEvent(mEvent);
+
     if (!newDivider && readUptoEventIdRef.current) {
       newDivider = prevEvent?.getId() === readUptoEventIdRef.current;
     }
-    if (!dayDivider) {
-      dayDivider = prevEvent ? !inSameDay(prevEvent.getTs(), mEvent.getTs()) : false;
+    if (isVisible && !dayDivider) {
+      dayDivider = prevRenderedEvent ? !inSameDay(prevRenderedEvent.getTs(), mEvent.getTs()) : false;
     }
 
     const collapsed =
-      isPrevRendered &&
       !dayDivider &&
       (!newDivider || eventSender === mx.getUserId()) &&
-      prevEvent !== undefined &&
-      prevEvent.getSender() === eventSender &&
-      prevEvent.getType() === mEvent.getType() &&
-      minuteDifference(prevEvent.getTs(), mEvent.getTs()) < 2;
+      prevRenderedEvent !== undefined &&
+      prevRenderedEvent.getSender() === eventSender &&
+      prevRenderedEvent.getType() === mEvent.getType() &&
+      minuteDifference(prevRenderedEvent.getTs(), mEvent.getTs()) < 2;
 
-    const eventJSX = reactionOrEditEvent(mEvent)
-      ? null
-      : renderMatrixEvent(
+    const eventJSX = isVisible
+      ? renderMatrixEvent(
           mEvent.getType(),
           typeof mEvent.getStateKey() === 'string',
           mEventId,
@@ -1666,9 +1666,12 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           item,
           timelineSet,
           collapsed
-        );
+        )
+      : null;
     prevEvent = mEvent;
-    isPrevRendered = !!eventJSX;
+    if (isVisible) {
+      prevRenderedEvent = mEvent;
+    }
 
     const newDividerJSX =
       newDivider && eventJSX && eventSender !== mx.getUserId() ? (
