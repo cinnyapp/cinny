@@ -52,12 +52,9 @@ jobs:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_PR_CINNY }}
         timeout-minutes: 1
       - name: Comment preview on PR
-        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b #v3.0.1
-        env:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
-          pr-number: ${{ steps.pr.outputs.id }}
-          comment-tag: ${{ steps.pr.outputs.id }}
+          number: ${{ steps.pr.outputs.id }}
           message: |
-              Preview: ${{ steps.netlify.outputs.deploy-url }}
-              ⚠️ Exercise caution. Use test accounts. ⚠️
+            Preview: ${{ steps.netlify.outputs.deploy-url }}
+            ⚠️ Exercise caution. Use test accounts. ⚠️
