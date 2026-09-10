@@ -99,6 +99,12 @@ export function AudioContent({
     }
   };
 
+  // The download can fail (e.g. the service worker could not authenticate it).
+  // Show that instead of an endless spinner - clicking again retries.
+  const failedToLoad = srcState.status === AsyncStatus.Error;
+  const playIcon = playing ? Icons.Pause : Icons.Play;
+  const playLabel = playing ? 'Pause' : 'Play';
+
   return renderMediaControl({
     after: (
       <Range
@@ -141,18 +147,18 @@ export function AudioContent({
       <>
         <Chip
           onClick={handlePlay}
-          variant="Secondary"
+          variant={failedToLoad ? 'Critical' : 'Secondary'}
           radii="300"
           disabled={srcState.status === AsyncStatus.Loading}
           before={
             srcState.status === AsyncStatus.Loading || loading ? (
               <Spinner variant="Secondary" size="50" />
             ) : (
-              <Icon src={playing ? Icons.Pause : Icons.Play} size="50" filled={playing} />
+              <Icon src={failedToLoad ? Icons.Warning : playIcon} size="50" filled={playing} />
             )
           }
         >
-          <Text size="B300">{playing ? 'Pause' : 'Play'}</Text>
+          <Text size="B300">{failedToLoad ? 'Retry' : playLabel}</Text>
         </Chip>
 
         <Text size="T200">{`${secondsToMinutesAndSeconds(
