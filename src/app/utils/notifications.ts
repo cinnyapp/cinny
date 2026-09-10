@@ -5,7 +5,13 @@ export async function markAsRead(mx: MatrixClient, roomId: string, privateReceip
   if (!room) return;
 
   const timeline = room.getLiveTimeline().getEvents();
-  const readEventId = room.getEventReadUpTo(mx.getUserId()!);
+  // `ignoreSynthesized = true`: matrix-js-sdk synthesizes an implicit read receipt
+  // for the sender of every live event, so when our own message is the newest event
+  // the default (non-ignoring) lookup returns that message as "read up to" and
+  // `getLatestValidEvent()` bails out on its first iteration - no receipt is ever
+  // sent and the server's notification count stays stuck. Only server-sent receipts
+  // may decide whether there is anything left to acknowledge.
+  const readEventId = room.getEventReadUpTo(mx.getUserId()!, true);
 
   const getLatestValidEvent = () => {
     for (let i = timeline.length - 1; i >= 0; i -= 1) {

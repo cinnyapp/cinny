@@ -420,7 +420,10 @@ const getEmptyTimeline = () => ({
 });
 
 const getRoomUnreadInfo = (room: Room, scrollTo = false) => {
-  const readUptoEventId = room.getEventReadUpTo(room.client.getUserId() ?? '');
+  // `ignoreSynthesized = true` so this matches what `markAsRead` compares against:
+  // the js-sdk's synthesized receipt for our own messages must not be mistaken for
+  // an acknowledgement the server knows about.
+  const readUptoEventId = room.getEventReadUpTo(room.client.getUserId() ?? '', true);
   if (!readUptoEventId) return undefined;
   const evtTimeline = getEventTimeline(room, readUptoEventId);
   const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
