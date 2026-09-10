@@ -20,18 +20,11 @@ it, please check out our ["Developing Cinny"](HACKING.md) document as well.
 ## The Critical Rule
 
 **The most important rule: you must understand your code.** If you can't
-explain what your changes do and how they interact with the greater system
-without the aid of AI tools, do not contribute to this project.
-
-Using AI to write code is fine. You can gain understanding by interrogating an
-agent with access to the codebase until you grasp all edge cases and effects
-of your changes. What's not fine is submitting agent-generated slop without
-that understanding. Be sure to read the [AI Usage Policy](AI_POLICY.md).
+explain what your changes do and how they interact with the greater system, do not contribute to this project.
 
 ## AI Usage
 
-The Cinny project has strict rules for AI usage. Please see
-the [AI Usage Policy](AI_POLICY.md). **This is very important.**
+The Cinny project stictly does not allow any AI generated code. Any pull request containing it will be rejected. **This is very important.**
 
 ## Quick Guide
 
@@ -42,7 +35,7 @@ the [AI Usage Policy](AI_POLICY.md). **This is very important.**
 > When contributing to this project, you must agree that you have authored 100%
 > of the content, that you have the necessary rights to the content and that
 > the content you contribute may be provided under the project license. You will
-> also be asked to [sign the CLA] upon submiting your pull request.
+> also be asked to [sign the CLA] ([why CLA?]) upon submiting your pull request.
 
 [All issues are actionable](#issues-are-actionable). Pick one and start
 working on it. Thank you. If you need help or guidance, comment on the issue.
@@ -51,6 +44,7 @@ Issues that are extra friendly to new contributors are tagged with
 
 ["contributor friendly"]: https://github.com/cinnyapp/cinny/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22contributor%20friendly%22
 [sign the cla]: https://github.com/cinnyapp/cla
+[why CLA?]: https://github.com/cinnyapp/cla#but-why
 
 ### I have a bug! / Something isn't working
 
@@ -106,11 +100,11 @@ in the ["Feature Requests, Ideas"] category.
 ### I have a question which is neither a bug report nor a feature request
 
 Open an [Q&A discussion], or join our [Matrix Space] and ask away in the
-`Cinny` room.
+`Cinny Support` room.
 
 Do not use other rooms to ask for help as our rooms are mostly specific
 topic only. If you do ask a question there, you will be redirected
-to `Cinny` room instead.
+to `Cinny Support` room instead.
 
 > [!NOTE]
 > If your question is about a missing feature, please open a discussion under
