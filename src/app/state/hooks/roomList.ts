@@ -147,6 +147,12 @@ export const useRooms = (mx: MatrixClient, roomsAtom: RoomsAtom, mDirects: Set<s
   return useSelectedRooms(roomsAtom, selector);
 };
 
+/** All joined rooms including DM/WhatsApp portal rooms — for search scoping. */
+export const useAllJoinedRooms = (mx: MatrixClient, roomsAtom: RoomsAtom) => {
+  const selector: RoomSelector = useCallback((roomId: string) => isRoom(mx.getRoom(roomId)), [mx]);
+  return useSelectedRooms(roomsAtom, selector);
+};
+
 export const useOrphanRooms = (
   mx: MatrixClient,
   roomsAtom: RoomsAtom,

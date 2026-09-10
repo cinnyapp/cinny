@@ -23,6 +23,7 @@ import {
   mxcUrlToHttp,
 } from '../../../utils/matrix';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+import { TranscribeButton } from '../../../features/transcription/TranscribeButton';
 
 const PLAY_TIME_THROTTLE_OPS = {
   wait: 500,
@@ -41,6 +42,10 @@ export type AudioContentProps = {
   info: IAudioInfo;
   encInfo?: EncryptedAttachmentInfo;
   renderMediaControl: (props: RenderMediaControlProps) => ReactNode;
+  // Identifiers for the local transcription action (app-only overlay). When
+  // both are present a mic/transcribe button is shown next to the audio player.
+  roomId?: string;
+  eventId?: string;
 };
 export function AudioContent({
   mimeType,
@@ -48,6 +53,8 @@ export function AudioContent({
   info,
   encInfo,
   renderMediaControl,
+  roomId,
+  eventId,
 }: AudioContentProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
@@ -92,6 +99,12 @@ export function AudioContent({
     }
   };
 
+  // The download can fail (e.g. the service worker could not authenticate it).
+  // Show that instead of an endless spinner - clicking again retries.
+  const failedToLoad = srcState.status === AsyncStatus.Error;
+  const playIcon = playing ? Icons.Pause : Icons.Play;
+  const playLabel = playing ? 'Pause' : 'Play';
+
   return renderMediaControl({
     after: (
       <Range
@@ -134,18 +147,18 @@ export function AudioContent({
       <>
         <Chip
           onClick={handlePlay}
-          variant="Secondary"
+          variant={failedToLoad ? 'Critical' : 'Secondary'}
           radii="300"
           disabled={srcState.status === AsyncStatus.Loading}
           before={
             srcState.status === AsyncStatus.Loading || loading ? (
               <Spinner variant="Secondary" size="50" />
             ) : (
-              <Icon src={playing ? Icons.Pause : Icons.Play} size="50" filled={playing} />
+              <Icon src={failedToLoad ? Icons.Warning : playIcon} size="50" filled={playing} />
             )
           }
         >
-          <Text size="B300">{playing ? 'Pause' : 'Play'}</Text>
+          <Text size="B300">{failedToLoad ? 'Retry' : playLabel}</Text>
         </Chip>
 
         <Text size="T200">{`${secondsToMinutesAndSeconds(
@@ -155,6 +168,7 @@ export function AudioContent({
     ),
     rightControl: (
       <>
+        {roomId && eventId && <TranscribeButton roomId={roomId} eventId={eventId} mxc={url} />}
         <IconButton
           variant="SurfaceVariant"
           size="300"

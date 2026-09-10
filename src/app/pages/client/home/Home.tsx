@@ -208,6 +208,7 @@ export function Home() {
   const searchSelected = useHomeSearchSelected();
   const noRoomToDisplay = rooms.length === 0;
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
+  const [hideActivityDots] = useSetting(settingsAtom, 'hideUnreadActivityDots');
 
   const sortedRooms = useMemo(() => {
     const items = Array.from(rooms).sort(
@@ -216,10 +217,16 @@ export function Home() {
         : factoryRoomIdByAtoZ(mx)
     );
     if (closedCategories.has(DEFAULT_CATEGORY_ID)) {
-      return items.filter((rId) => roomToUnread.has(rId) || rId === selectedRoomId);
+      return items.filter((rId) => {
+        const u = roomToUnread.get(rId);
+        const isUnread = hideActivityDots
+          ? u !== undefined && (u.total > 0 || u.highlight > 0)
+          : roomToUnread.has(rId);
+        return isUnread || rId === selectedRoomId;
+      });
     }
     return items;
-  }, [mx, rooms, closedCategories, roomToUnread, selectedRoomId]);
+  }, [mx, rooms, closedCategories, roomToUnread, selectedRoomId, hideActivityDots]);
 
   const virtualizer = useVirtualizer({
     count: sortedRooms.length,

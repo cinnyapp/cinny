@@ -419,7 +419,10 @@ const getEmptyTimeline = () => ({
 });
 
 const getRoomUnreadInfo = (room: Room, scrollTo = false) => {
-  const readUptoEventId = room.getEventReadUpTo(room.client.getUserId() ?? '');
+  // `ignoreSynthesized = true` so this matches what `markAsRead` compares against:
+  // the js-sdk's synthesized receipt for our own messages must not be mistaken for
+  // an acknowledgement the server knows about.
+  const readUptoEventId = room.getEventReadUpTo(room.client.getUserId() ?? '', true);
   if (!readUptoEventId) return undefined;
   const evtTimeline = getEventTimeline(room, readUptoEventId);
   const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
@@ -713,7 +716,19 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       return;
     }
     const evtTimeline = getEventTimeline(room, readUptoEventId);
-    const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
+    if (!evtTimeline) {
+      // The server-side read-up-to event is too old to be found in any loaded
+      // timeline (e.g. the receipt was pinned far behind by a bridge or a bot
+      // posting as us). If the user is viewing the live timeline at its end,
+      // advance the receipt to the latest event instead of silently doing
+      // nothing — otherwise the room's badge can never be cleared by reading
+      // it (stuck-unread bug).
+      if (atLiveEndRef.current) {
+        requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity));
+      }
+      return;
+    }
+    const latestTimeline = getFirstLinkedTimeline(evtTimeline, Direction.Forward);
     if (latestTimeline === room.getLiveTimeline()) {
       requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity));
     }
@@ -1106,6 +1121,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 htmlReactParserOptions={htmlReactParserOptions}
                 linkifyOpts={linkifyOpts}
                 outlineAttachment={messageLayout === MessageLayout.Bubble}
+                roomId={room.roomId}
+                eventId={mEvent.getId()}
               />
             )}
           </Message>
@@ -1212,6 +1229,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                       htmlReactParserOptions={htmlReactParserOptions}
                       linkifyOpts={linkifyOpts}
                       outlineAttachment={messageLayout === MessageLayout.Bubble}
+                      roomId={room.roomId}
+                      eventId={mEvent.getId()}
                     />
                   );
                 }

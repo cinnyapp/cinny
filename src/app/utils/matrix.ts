@@ -299,6 +299,13 @@ export const mxcUrlToHttp = (
 export const downloadMedia = async (src: string): Promise<Blob> => {
   // this request is authenticated by service worker
   const res = await fetch(src, { method: 'GET' });
+  if (!res.ok) {
+    // Without this check an error body (a 401 M_MISSING_TOKEN when the service
+    // worker could not authenticate the request, for example) would be wrapped in
+    // an object URL and handed to the player/viewer as if it were the file, which
+    // just spins forever. Throwing surfaces it as a retryable error instead.
+    throw new Error(`Failed to download media! Status: ${res.status}`);
+  }
   const blob = await res.blob();
   return blob;
 };
