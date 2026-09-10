@@ -3,7 +3,7 @@ import { BlockMDRule } from './type';
 const HEADING_REG_1 = /^(#{1,6}) +(.+)\n?/m;
 export const HeadingRule: BlockMDRule = {
   match: (text) => text.match(HEADING_REG_1),
-  html: (match, parseInline) => {
+  html: (match, parseBlock, parseInline) => {
     const [, g1, g2] = match;
     const level = g1.length;
     return `<h${level} data-md="${g1}">${parseInline ? parseInline(g2) : g2}</h${level}>`;
@@ -35,33 +35,29 @@ const BLOCKQUOTE_TRAILING_NEWLINE = /\n$/;
 const BLOCKQUOTE_REG_1 = /(^>.*\n?)+/m;
 export const BlockQuoteRule: BlockMDRule = {
   match: (text) => text.match(BLOCKQUOTE_REG_1),
-  html: (match, parseInline) => {
+  html: (match, parseBlock, parseInline) => {
     const [blockquoteText] = match;
 
     const lines = blockquoteText
       .replace(BLOCKQUOTE_TRAILING_NEWLINE, '')
       .split('\n')
-      .map((lineText) => {
-        const line = lineText.replace(QUOTE_LINE_PREFIX, '');
-        if (parseInline) return `${parseInline(line)}<br/>`;
-        return `${line}<br/>`;
-      })
-      .join('');
-    return `<blockquote data-md="${BLOCKQUOTE_MD_1}">${lines}</blockquote>`;
+      .map((lineText) => lineText.replace(QUOTE_LINE_PREFIX, ''))
+      .join('\n');
+    return `<blockquote data-md="${BLOCKQUOTE_MD_1}">${parseBlock(lines, parseInline)}</blockquote>`;
   },
 };
 
-const ORDERED_LIST_MD_1 = '-';
+const ORDERED_LIST_MD_1 = '1.';
 const UNORDERED_LIST_MD_1 = '*';
-const LIST_ITEM_REG = /^( *)([-*]|[\da-zA-Z]\.) +(.+)$/;
+const LIST_ITEM_REG = /^( *)([-*]|\d+\.|[aAiI]\.) +(.+)$/;
 type ListType = 'ol' | 'ul';
 
 function getListType(marker: string): ListType {
-  return marker === '*' ? 'ul' : 'ol';
+  return marker === '*' || marker === '-' ? 'ul' : 'ol';
 }
 
 function getOrderedMeta(marker: string) {
-  const startMatch = marker.match(/^(\d)\./);
+  const startMatch = marker.match(/^(\d+)\./);
   const typeMatch = marker.match(/^([aAiI])\./);
 
   return {
@@ -113,10 +109,15 @@ function closeList(listType: ListType) {
   return listType === 'ul' ? '</ul>' : '</ol>';
 }
 
+interface StackItem {
+  type: ListType;
+  indent: number;
+}
+
 function buildList(lines: ParsedLine[], parseInline?: (s: string) => string): string {
   let html = '';
 
-  const stack: ('ul' | 'ol')[] = [];
+  const stack: StackItem[] = [];
 
   lines.forEach((line, index) => {
     const prev = lines[index - 1];
@@ -127,13 +128,13 @@ function buildList(lines: ParsedLine[], parseInline?: (s: string) => string): st
     // FIRST ITEM
     if (!prev) {
       html += openList(line);
-      stack.push(line.listType);
+      stack.push({ type: line.listType, indent: line.indent });
     }
 
     // DEEPER INDENT > open nested list
     else if (line.indent > prev.indent) {
       html += openList(line);
-      stack.push(line.listType);
+      stack.push({ type: line.listType, indent: line.indent });
     }
 
     // SAME LEVEL
@@ -142,10 +143,10 @@ function buildList(lines: ParsedLine[], parseInline?: (s: string) => string): st
 
       // different list type
       if (line.listType !== prev.listType) {
-        html += closeList(stack.pop()!);
+        html += closeList(stack.pop()!.type);
 
         html += openList(line);
-        stack.push(line.listType);
+        stack.push({ type: line.listType, indent: line.indent });
       }
     }
 
@@ -153,16 +154,24 @@ function buildList(lines: ParsedLine[], parseInline?: (s: string) => string): st
     else if (line.indent < prev.indent) {
       html += '</li>';
 
-      while (stack.length > line.indent + 1) {
-        html += closeList(stack.pop()!);
-        html += '</li>';
+      while (stack.length > 1 && stack[stack.length - 1].indent > line.indent) {
+        html += closeList(stack.pop()!.type);
+        // If there's still an item, close the li of the previous level?
+        // Wait, the original code added '</li>' here!
+        if (stack.length > 0) {
+          // If we matched the target indent, we don't close its li because we are about to add a new li.
+          // Wait, actually, the original code did: html += '</li>';
+          // But that might close too many lis. Let's see. If we go back up, we just close the list we opened.
+          // In standard HTML, a nested list is INSIDE an <li>. So when we close a nested list, we close the <ul>, and then we close the <li> that contained it.
+          html += '</li>';
+        }
       }
 
-      if (line.listType !== stack[stack.length - 1]) {
-        html += closeList(stack.pop()!);
+      if (stack.length > 0 && line.listType !== stack[stack.length - 1].type) {
+        html += closeList(stack.pop()!.type);
 
         html += openList(line);
-        stack.push(line.listType);
+        stack.push({ type: line.listType, indent: line.indent });
       }
     }
 
@@ -173,7 +182,10 @@ function buildList(lines: ParsedLine[], parseInline?: (s: string) => string): st
       html += '</li>';
 
       while (stack.length) {
-        html += closeList(stack.pop()!);
+        html += closeList(stack.pop()!.type);
+        if (stack.length > 0) {
+          html += '</li>';
+        }
       }
     }
   });
@@ -184,7 +196,7 @@ function buildList(lines: ParsedLine[], parseInline?: (s: string) => string): st
 const LIST_REG_1 = /^(?: *(?:[-*]|[\da-zA-Z]\.) +.+\n?)+/m;
 export const ListRule: BlockMDRule = {
   match: (text) => text.match(LIST_REG_1),
-  html: (match, parseInline) => {
+  html: (match, parseBlock, parseInline) => {
     const [listText] = match;
 
     const lines = parseLines(listText);

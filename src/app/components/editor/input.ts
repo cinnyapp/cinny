@@ -261,10 +261,10 @@ const parseListMarkdown = (
   processText: ProcessTextCallback,
   depth = 0
 ): ParagraphElement[] => {
-  const md = isTag(node) && node.name === 'ul' ? '*' : '-';
+  const md = isTag(node) && node.name === 'ul' ? '*' : '1.';
   const prefix = node.attribs['data-md'] ?? md;
   const [starOrHyphen] = prefix.match(/^\*|-$/) ?? [];
-  const [digitOrChar] = prefix.match(/^[\da-zA-Z]/) ?? [];
+  const [digitOrChar] = prefix.match(/^(\d+|[a-zA-Z])/) ?? [];
 
   const digit = digitOrChar ? parseInt(digitOrChar, 10) : undefined;
 
