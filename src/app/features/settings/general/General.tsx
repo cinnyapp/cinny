@@ -306,6 +306,7 @@ function PageZoomInput() {
 function Appearance() {
   const [systemTheme, setSystemTheme] = useSetting(settingsAtom, 'useSystemTheme');
   const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
+  const [uniformIcons, setUniformIcons] = useSetting(settingsAtom, 'uniformIcons');
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
 
   return (
@@ -337,6 +338,16 @@ function Appearance() {
         <SettingTile
           title="Monochrome Mode"
           after={<Switch variant="Primary" value={monochromeMode} onChange={setMonochromeMode} />}
+        />
+      </SequenceCard>
+
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Consistent Icon Style"
+          description="Harmonize icon appearance with background fill"
+          after={
+            <Switch variant="Primary" value={uniformIcons} onChange={setUniformIcons} />
+          }
         />
       </SequenceCard>
 
