@@ -1,4 +1,4 @@
-import { useCallback, DragEventHandler, RefObject, useState, useEffect, useRef } from 'react';
+import { useCallback, DragEventHandler, RefObject, useState, useEffect } from 'react';
 import { getDataTransferFiles } from '../utils/dom';
 
 export const useFileDropHandler = (onDrop: (file: File[]) => void): DragEventHandler =>
@@ -14,14 +14,12 @@ export const useFileDropZone = (
   zoneRef: RefObject<HTMLElement>,
   onDrop: (file: File[]) => void
 ): boolean => {
-  const dragStateRef = useRef<'start' | 'leave' | 'over'>();
   const [active, setActive] = useState(false);
 
   useEffect(() => {
     const target = zoneRef.current;
     const handleDrop = (evt: DragEvent) => {
       evt.preventDefault();
-      dragStateRef.current = undefined;
       setActive(false);
       if (!evt.dataTransfer) return;
       const files = getDataTransferFiles(evt.dataTransfer);
@@ -38,18 +36,21 @@ export const useFileDropZone = (
     const target = zoneRef.current;
     const handleDragEnter = (evt: DragEvent) => {
       if (evt.dataTransfer?.types.includes('Files')) {
-        dragStateRef.current = 'start';
         setActive(true);
       }
     };
-    const handleDragLeave = () => {
-      if (dragStateRef.current !== 'over') return;
-      dragStateRef.current = 'leave';
-      setActive(false);
+    const handleDragLeave = (evt: DragEvent) => {
+      // relatedTarget is the node being entered. It is absent when leaving the window,
+      // when the drag is cancelled (Esc / source abort), and on every dragleave in
+      // WebKit (https://bugs.webkit.org/show_bug.cgi?id=66547) — all treated as leaving.
+      const enteredNode = evt.relatedTarget instanceof Node ? evt.relatedTarget : null;
+      // Overlays and PopOuts render into #portalContainer, a sibling of #root, so they
+      // are never contained by the zone. The drop overlay avoids deactivating itself
+      // here only because it sets pointerEvents: 'none' (see RoomInput.tsx).
+      if (!enteredNode || !target?.contains(enteredNode)) setActive(false);
     };
     const handleDragOver = (evt: DragEvent) => {
       evt.preventDefault();
-      dragStateRef.current = 'over';
     };
 
     target?.addEventListener('dragenter', handleDragEnter);
