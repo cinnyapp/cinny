@@ -250,7 +250,12 @@ export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] => {
     if (getNotificationType(mx, room.roomId) === NotificationType.Mute) return unread;
 
     if (roomHaveNotification(room) || roomHaveUnread(mx, room)) {
-      unread.push(getUnreadInfo(room));
+      const info = getUnreadInfo(room);
+      // Only show badge if server actually reports notifications
+      // This prevents phantom badges in bridged rooms where read receipts don't sync
+      if (info.total > 0 || info.highlight > 0) {
+        unread.push(info);
+      }
     }
 
     return unread;
