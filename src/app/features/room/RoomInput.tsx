@@ -28,7 +28,7 @@ import {
   config,
   toRem,
 } from 'folds';
-
+import { RESET } from 'jotai/utils';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
   CustomEditor,
@@ -117,6 +117,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
+import { useDebounce } from '../../hooks/useDebounce';
 
 interface RoomInputProps {
   editor: Editor;
@@ -226,21 +227,38 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     );
 
     useEffect(() => {
-      Transforms.insertFragment(editor, msgDraft);
+      // if the editor is empty and there is a draft, restore it
+      if (isEmptyEditor(editor) && msgDraft && msgDraft.length > 0) {
+        Transforms.insertFragment(editor, msgDraft);
+      }
     }, [editor, msgDraft]);
 
+    // On unmount, if the editor is not empty, save the draft. Otherwise, clear the draft.
     useEffect(
       () => () => {
         if (!isEmptyEditor(editor)) {
           const parsedDraft = JSON.parse(JSON.stringify(editor.children));
           setMsgDraft(parsedDraft);
         } else {
-          setMsgDraft([]);
+          setMsgDraft(RESET);
         }
         resetEditor(editor);
         resetEditorHistory(editor);
       },
       [roomId, editor, setMsgDraft]
+    );
+
+    // Save draft after the editor changes
+    const handleAutomaticDraftSave = useDebounce(
+      () => {
+        if (!isEmptyEditor(editor)) {
+          const parsedDraft = JSON.parse(JSON.stringify(editor.children));
+          setMsgDraft(parsedDraft);
+        } else {
+          setMsgDraft(RESET);
+        }
+      },
+      { wait: 400 }
     );
 
     const handleFileMetadata = useCallback(
@@ -543,6 +561,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
           onPaste={handlePaste}
+          onChange={handleAutomaticDraftSave}
           top={
             replyDraft && (
               <div>
