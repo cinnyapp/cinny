@@ -29,8 +29,11 @@ import {
 } from 'folds';
 import { isKeyHotkey } from 'is-hotkey';
 import FocusTrap from 'focus-trap-react';
+import { HexColorPicker } from 'react-colorful';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { SequenceCard } from '../../../components/sequence-card';
+import { HexColorPickerPopOut } from '../../../components/HexColorPickerPopOut';
+import { PowerColorBadge } from '../../../components/power/PowerColorBadge';
 import { useSetting } from '../../../state/hooks/settings';
 import { DateFormat, MessageLayout, MessageSpacing, settingsAtom } from '../../../state/settings';
 import { SettingTile } from '../../../components/setting-tile';
@@ -259,47 +262,99 @@ function SystemThemePreferences() {
   );
 }
 
-function PageZoomInput() {
-  const [pageZoom, setPageZoom] = useSetting(settingsAtom, 'pageZoom');
-  const [currentZoom, setCurrentZoom] = useState(`${pageZoom}`);
+function NumberSettingInput({ settingKey, min = 0, max = 360 , percent = false}: NumberSettingInputProps) {
 
-  const handleZoomChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
-    setCurrentZoom(evt.target.value);
+  const [value, setValue] = useSetting(settingsAtom, settingKey);
+  const [current, setCurrent] = useState(`${value}`);
+
+  const handleChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
+    setCurrent(evt.target.value);
   };
 
-  const handleZoomEnter: KeyboardEventHandler<HTMLInputElement> = (evt) => {
+  const handleKeyDown: KeyboardEventHandler<HTMLInputElement> = (evt) => {
     if (isKeyHotkey('escape', evt)) {
       evt.stopPropagation();
-      setCurrentZoom(pageZoom.toString());
+      setCurrent(`${value}`);
     }
     if (
       isKeyHotkey('enter', evt) &&
       'value' in evt.target &&
       typeof evt.target.value === 'string'
     ) {
-      const newZoom = parseInt(evt.target.value, 10);
-      if (Number.isNaN(newZoom)) return;
-      const safeZoom = Math.max(Math.min(newZoom, 150), 75);
-      setPageZoom(safeZoom);
-      setCurrentZoom(safeZoom.toString());
+      const newValue = parseInt(evt.target.value, 10);
+      if (Number.isNaN(newValue)) return;
+
+      const safeValue = Math.max(Math.min(newValue, max), min);
+      setValue(safeValue);
+      setCurrent(safeValue.toString());
     }
   };
 
   return (
     <Input
-      style={{ width: toRem(100) }}
-      variant={pageZoom === parseInt(currentZoom, 10) ? 'Secondary' : 'Success'}
+      style={{ width: percent ? toRem(100) : toRem(80) }}
+      variant={value === parseInt(current, 10) ? 'Secondary' : 'Success'}
       size="300"
       radii="300"
       type="number"
-      min="75"
-      max="150"
-      value={currentZoom}
-      onChange={handleZoomChange}
-      onKeyDown={handleZoomEnter}
-      after={<Text size="T300">%</Text>}
+      min={min}
+      max={max}
+      value={current}
+      onChange={handleChange}
+      onKeyDown={handleKeyDown}
+      after={<Text size="T300">{percent ? '%' : ''}</Text>}
       outlined
     />
+  );
+}
+
+type NumberSettingKey = 'transparency' | 'pageZoom' | 'angle' | 'blur'; 
+interface NumberSettingInputProps {
+  settingKey: NumberSettingKey;
+  min?: number;
+  max?: number;
+  percent?: boolean;
+}
+
+function TransparencyInput() {
+  return <NumberSettingInput settingKey="transparency" min={0} max={50} percent={true}/>;
+}
+function AngleInput() {
+  return <NumberSettingInput settingKey="angle" min={0} max={360} percent={false} />;
+}
+function BlurInput() {
+  return <NumberSettingInput settingKey="blur" min={0} max={100} percent={true} />;
+}
+function PageZoomInput() {
+  return <NumberSettingInput settingKey="pageZoom" min={75} max={150} percent={true} />;
+}
+
+type ColorPickerButtonProps = {
+  color: string;
+  onChange: (color: string) => void;
+  onRemove?: () => void;
+}
+function ColorPickerButton({ color, onChange, onRemove, }: ColorPickerButtonProps) {
+  return (
+    <HexColorPickerPopOut
+      picker={<HexColorPicker color={color || '#000000'} onChange={onChange} />}
+      onRemove={onRemove}
+    >
+      {(openPicker, opened) => (
+        <Button
+          aria-pressed={opened}
+          onClick={openPicker}
+          size="300"
+          type="button"
+          variant="Secondary"
+          fill="Soft"
+          radii="500"
+          style={{ flex: 1 }}
+        >
+          <PowerColorBadge color={color} />
+        </Button>
+      )}
+    </HexColorPickerPopOut>
   );
 }
 
@@ -307,6 +362,15 @@ function Appearance() {
   const [systemTheme, setSystemTheme] = useSetting(settingsAtom, 'useSystemTheme');
   const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
+
+  const [customBackgroundEnabled, setCustomBackgroundEnabled] = useSetting(settingsAtom, 'customBackgroundEnabled');
+  const [customBackgroundOnly, setCustomBackgroundOnly] = useSetting(settingsAtom, 'customBackgroundOnly');
+  const [transparency,   setTransparency]   = useSetting(settingsAtom, 'transparency');
+  const [customBgColor1, setCustomBgColor1] = useSetting(settingsAtom, 'customBgColor1');
+  const [customBgColor2, setCustomBgColor2] = useSetting(settingsAtom, 'customBgColor2');
+  const [customBgColor3, setCustomBgColor3] = useSetting(settingsAtom, 'customBgColor3');
+  const [customBgColor4, setCustomBgColor4] = useSetting(settingsAtom, 'customBgColor4');
+  const [customBgColor5, setCustomBgColor5] = useSetting(settingsAtom, 'customBgColor5');
 
   return (
     <Box direction="Column" gap="100">
@@ -332,6 +396,83 @@ function Appearance() {
           after={<SelectTheme disabled={systemTheme} />}
         />
       </SequenceCard>
+
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Custom Gradient"
+          description="Choose a custom gradient theme."
+          after={
+            <Switch
+              variant="Primary"
+              value={customBackgroundEnabled}
+              onChange={(value) => {
+                setCustomBackgroundEnabled(value);
+                if(value && transparency == 0) setTransparency(15)
+              }}
+            />
+          }
+        />
+      </SequenceCard>
+
+      {customBackgroundEnabled && (
+        <>
+          <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+            <Box direction="Row" gap="200">
+              <ColorPickerButton
+                color={customBgColor1}
+                onChange={setCustomBgColor1}
+                onRemove={() => setCustomBgColor1('')}
+              />
+              <ColorPickerButton
+                color={customBgColor2}
+                onChange={setCustomBgColor2}
+                onRemove={() => setCustomBgColor2('')}
+              />
+              <ColorPickerButton
+                color={customBgColor3}
+                onChange={setCustomBgColor3}
+                onRemove={() => setCustomBgColor3('')}
+              />
+              <ColorPickerButton
+                color={customBgColor4}
+                onChange={setCustomBgColor4}
+                onRemove={() => setCustomBgColor4('')}
+              />
+              <ColorPickerButton
+                color={customBgColor5}
+                onChange={setCustomBgColor5}
+                onRemove={() => setCustomBgColor5('')}
+              />
+            </Box>
+          </SequenceCard>
+
+          <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+            <SettingTile
+              title="Background Only"
+              after={
+                <Switch
+                  variant="Primary"
+                  value={customBackgroundOnly}
+                  onChange={setCustomBackgroundOnly}
+                />
+              }
+            />
+          </SequenceCard>
+
+          <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+            <SettingTile title="Transparency" after={<TransparencyInput/>}/>
+          </SequenceCard>
+
+          <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+            <SettingTile title="Angle" after={<AngleInput/>}/>
+          </SequenceCard>
+
+          {/* The blur setting is currently not applied as it does not offer a visible effect at the moment */}
+          {/* <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+            <SettingTile title="Blur" after={<BlurInput/>}/>
+          </SequenceCard> */}
+        </>
+      )}
 
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile

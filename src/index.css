@@ -54,11 +54,21 @@ body {
   /*Why font-variant-ligatures => https://github.com/rsms/inter/issues/222 */
   font-variant-ligatures: no-contextual;
 }
+
 #root {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
+}
+
+#gradientLayer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: none;
+  backdrop-filter: none;
 }
 
 *,
