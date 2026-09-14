@@ -498,6 +498,57 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   atBottomRef.current = atBottom;
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const smoothScrollRef = useRef<{
+    rafId: number | null;
+    cancel: (() => void) | null;
+  }>({ rafId: null, cancel: null });
+
+  const cancelSmoothScroll = useCallback(() => {
+    const s = smoothScrollRef.current;
+    if (s.rafId !== null) {
+      cancelAnimationFrame(s.rafId);
+      s.rafId = null;
+    }
+    if (s.cancel) {
+      s.cancel();
+      s.cancel = null;
+    }
+  }, []);
+
+  const doSmoothScrollToBottom = useCallback(
+    (scrollEl: HTMLElement) => {
+      const s = smoothScrollRef.current;
+      // Let the running loop handle it, it picks up the new scrollHeight each frame.
+      if (s.rafId !== null) return;
+
+      const onUserScroll = () => cancelSmoothScroll();
+      scrollEl.addEventListener('wheel', onUserScroll, { passive: true });
+      scrollEl.addEventListener('touchstart', onUserScroll, { passive: true });
+      s.cancel = () => {
+        scrollEl.removeEventListener('wheel', onUserScroll);
+        scrollEl.removeEventListener('touchstart', onUserScroll);
+      };
+
+      const step = () => {
+        const target = scrollEl.scrollHeight - scrollEl.offsetHeight;
+        const current = scrollEl.scrollTop;
+        const remaining = target - current;
+
+        if (remaining <= 0.5) {
+          scrollEl.scrollTop = target;
+          cancelSmoothScroll();
+          return;
+        }
+
+        scrollEl.scrollTop = current + Math.max(remaining * 0.2, 1);
+        s.rafId = requestAnimationFrame(step);
+      };
+
+      s.rafId = requestAnimationFrame(step);
+    },
+    [cancelSmoothScroll]
+  );
+
   const scrollToBottomRef = useRef({
     count: 0,
     smooth: true,
@@ -854,10 +905,18 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   useLayoutEffect(() => {
     if (scrollToBottomCount > 0) {
       const scrollEl = scrollRef.current;
-      if (scrollEl)
-        scrollToBottom(scrollEl, scrollToBottomRef.current.smooth ? 'smooth' : 'instant');
+      if (scrollEl) {
+        if (scrollToBottomRef.current.smooth) {
+          doSmoothScrollToBottom(scrollEl);
+        } else {
+          cancelSmoothScroll();
+          scrollToBottom(scrollEl, 'instant');
+        }
+      }
     }
-  }, [scrollToBottomCount]);
+  }, [doSmoothScrollToBottom, cancelSmoothScroll, scrollToBottomCount]);
+
+  useEffect(() => () => cancelSmoothScroll(), [cancelSmoothScroll]);
 
   // Remove unreadInfo on mark as read
   useEffect(() => {
