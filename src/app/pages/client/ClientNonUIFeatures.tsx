@@ -76,6 +76,32 @@ function FaviconUpdater() {
   return null;
 }
 
+function BadgeUpdater() {
+  const roomToUnread = useAtomValue(roomToUnreadAtom);
+
+  useEffect(() => {
+    let badgeCount = 0;
+    roomToUnread.forEach((unread) => {
+      if (unread.from != null) {
+        return; // Don't count entries from parent rooms twice
+      }
+      badgeCount += unread.total;
+    });
+
+    if (badgeCount > 0) {
+      if (navigator.setAppBadge) {
+        navigator.setAppBadge(badgeCount);
+      }
+    } else {
+      if (navigator.clearAppBadge) {
+        navigator.clearAppBadge();
+      }
+    }
+  }, [roomToUnread]);
+
+  return null;
+}
+
 function InviteNotifications() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const invites = useAtomValue(allInvitesAtom);
@@ -100,7 +126,7 @@ function InviteNotifications() {
         noti.close();
       };
     },
-    [navigate]
+    [navigate],
   );
 
   const playSound = useCallback(() => {
@@ -169,7 +195,7 @@ function MessageNotifications() {
       notifRef.current?.close();
       notifRef.current = noti;
     },
-    [navigate]
+    [navigate],
   );
 
   const playSound = useCallback(() => {
@@ -183,7 +209,7 @@ function MessageNotifications() {
       room,
       toStartOfTimeline,
       removed,
-      data
+      data,
     ) => {
       if (mx.getSyncState() !== 'SYNCING') return;
       if (document.hasFocus() && (selectedRoomId === room?.roomId || notificationSelected)) return;
@@ -218,7 +244,7 @@ function MessageNotifications() {
         notify({
           roomName: room.name ?? 'Unknown',
           roomAvatar: avatarMxc
-            ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined
+            ? (mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined)
             : undefined,
           username: getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender) ?? sender,
           roomId: room.roomId,
@@ -263,6 +289,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
       <SystemEmojiFeature />
       <PageZoomFeature />
       <FaviconUpdater />
+      <BadgeUpdater />
       <InviteNotifications />
       <MessageNotifications />
       {children}
