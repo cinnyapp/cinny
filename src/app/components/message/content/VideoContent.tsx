@@ -130,17 +130,15 @@ export const VideoContent = as<'div', VideoContentProps>(
           </Box>
         )}
         {!autoPlay && !blurred && srcState.status === AsyncStatus.Idle && (
-          <Box className={css.AbsoluteContainer} alignItems="Center" justifyContent="Center">
-            <Button
-              variant="Secondary"
-              fill="Solid"
-              radii="300"
-              size="300"
-              onClick={loadSrc}
-              before={<Icon size="Inherit" src={Icons.Play} filled />}
-            >
-              <Text size="B300">Watch</Text>
-            </Button>
+          <Box
+            className={css.MediaBackdrop}
+            alignItems="Center"
+            justifyContent="Center"
+            onClick={loadSrc}
+          >
+            <div className={css.WatchButton}>
+              <Icon style={{ width: '100%', height: '100%' }} size="Inherit" src={Icons.Play} filled />
+            </div>
           </Box>
         )}
         {srcState.status === AsyncStatus.Success && (
