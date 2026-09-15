@@ -1,5 +1,5 @@
 import { Box, Icon, Icons, Text, as, color, toRem } from 'folds';
-import { EventTimelineSet, Room } from 'matrix-js-sdk';
+import { EventTimelineSet, MsgType, Room } from 'matrix-js-sdk';
 import React, { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
 import classNames from 'classnames';
 import { getMemberDisplayName, trimReplyFromBody } from '../../utils/room';
@@ -36,6 +36,40 @@ export const ReplyLayout = as<'div', ReplyLayoutProps>(
     </Box>
   )
 );
+
+/**
+ * Derive a short, human-readable preview for a replied-to message that has no
+ * usable text `body` (e.g. voice notes / images / files, often bridged from
+ * WhatsApp). Without this, such replies fell through to the generic
+ * "Failed to load message" fallback even though the event loaded fine.
+ */
+const getMediaReplyFallback = (
+  content: Record<string, unknown> | undefined
+): string | undefined => {
+  if (!content) return undefined;
+  const msgtype = content.msgtype as string | undefined;
+
+  // A voice note is an m.audio event flagged with the MSC3245 voice extension.
+  const isVoice =
+    msgtype === MsgType.Audio &&
+    (content['org.matrix.msc3245.voice'] !== undefined ||
+      content['org.matrix.msc1767.audio'] !== undefined);
+
+  switch (msgtype) {
+    case MsgType.Audio:
+      return isVoice ? '🎤 Voice message' : '🔊 Audio';
+    case MsgType.Image:
+      return '🖼️ Image';
+    case MsgType.Video:
+      return '🎬 Video';
+    case MsgType.File:
+      return '📄 File';
+    case MsgType.Location:
+      return '📍 Location';
+    default:
+      return undefined;
+  }
+};
 
 export const ThreadIndicator = as<'div'>(({ ...props }, ref) => (
   <Box
@@ -84,21 +118,31 @@ export const Reply = as<'div', ReplyProps>(
     );
     const replyEvent = useRoomEvent(room, replyEventId, getFromLocalTimeline);
 
-    const { body } = replyEvent?.getContent() ?? {};
+    const content = replyEvent?.getContent();
+    const { body } = content ?? {};
     const sender = replyEvent?.getSender();
     const powerTag = sender ? getMemberPowerTag?.(sender) : undefined;
     const tagColor = powerTag?.color ? accessibleTagColors?.get(powerTag.color) : undefined;
 
     const usernameColor = legacyUsernameColor ? colorMXID(sender ?? replyEventId) : tagColor;
 
-    const fallbackBody = replyEvent?.isRedacted() ? (
-      <MessageDeletedContent />
-    ) : (
-      <MessageFailedContent />
-    );
+    // When the replied-to event loaded but carries no usable text body (voice
+    // notes, images, files, …), show a msgtype-based preview instead of the
+    // generic "Failed to load message". Only genuinely un-renderable events
+    // (redacted / no content / unknown media) hit the failure fallbacks.
+    const mediaFallback = getMediaReplyFallback(content);
+    let fallbackBody: ReactNode;
+    if (replyEvent?.isRedacted()) {
+      fallbackBody = <MessageDeletedContent />;
+    } else if (mediaFallback) {
+      fallbackBody = scaleSystemEmoji(mediaFallback);
+    } else {
+      fallbackBody = <MessageFailedContent />;
+    }
 
+    const trimmedBody = body ? trimReplyFromBody(body) : '';
     const badEncryption = replyEvent?.getContent().msgtype === 'm.bad.encrypted';
-    const bodyJSX = body ? scaleSystemEmoji(trimReplyFromBody(body)) : fallbackBody;
+    const bodyJSX = trimmedBody ? scaleSystemEmoji(trimmedBody) : fallbackBody;
 
     return (
       <Box direction="Row" gap="200" alignItems="Center" {...props} ref={ref}>

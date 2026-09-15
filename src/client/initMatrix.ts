@@ -67,6 +67,7 @@ export const logoutClient = async (mx: MatrixClient) => {
 };
 
 export const clearLoginData = async () => {
+  pushSessionToSW();
   const dbs = await window.indexedDB.databases();
 
   dbs.forEach((idbInfo) => {

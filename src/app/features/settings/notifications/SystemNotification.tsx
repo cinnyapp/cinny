@@ -91,6 +91,10 @@ export function SystemNotification() {
     settingsAtom,
     'isNotificationSounds'
   );
+  const [hideUnreadActivityDots, setHideUnreadActivityDots] = useSetting(
+    settingsAtom,
+    'hideUnreadActivityDots'
+  );
 
   const requestNotificationPermission = () => {
     window.Notification.requestPermission();
@@ -143,6 +147,20 @@ export function SystemNotification() {
           title="Notification Sound"
           description="Play sound when new message arrive."
           after={<Switch value={isNotificationSounds} onChange={setIsNotificationSounds} />}
+        />
+      </SequenceCard>
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        gap="400"
+      >
+        <SettingTile
+          title="Hide Unread Activity Dots"
+          description="Hide the small empty indicator shown for rooms with unread events that did not trigger a notification (e.g. rooms set to mentions-only or otherwise downgraded). Rooms with notification or highlight counts are unaffected."
+          after={
+            <Switch value={hideUnreadActivityDots} onChange={setHideUnreadActivityDots} />
+          }
         />
       </SequenceCard>
       <SequenceCard

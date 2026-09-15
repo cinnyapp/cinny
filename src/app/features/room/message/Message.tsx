@@ -79,6 +79,7 @@ import { MemberPowerTag, StateEvent } from '../../../../types/matrix/room';
 import { PowerIcon } from '../../../components/power';
 import colorMXID from '../../../../util/colorMXID';
 import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
+import { MessageTranslation } from '../../translation/MessageTranslation';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -831,6 +832,10 @@ export const Message = as<'div', MessageProps>(
         ) : (
           children
         )}
+        {/* In-app translation (per-message button + inline translation, auto-translate when on).
+            Self-contained; renders nothing unless the translate backend is configured and this is
+            a text message. Kept separate from the transcription UI to minimize merge conflicts. */}
+        {!edit && <MessageTranslation mEvent={mEvent} roomId={room.roomId} />}
         {reactions}
       </Box>
     );

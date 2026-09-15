@@ -42,11 +42,20 @@ export interface Settings {
 
   showNotifications: boolean;
   isNotificationSounds: boolean;
+  hideUnreadActivityDots: boolean;
 
   hour24Clock: boolean;
   dateFormatString: string;
 
   developerTools: boolean;
+
+  // Local Whisper transcription (see features/transcription).
+  // transcribeLanguage: ISO-639-1 code, '' = auto-detect.
+  transcribeLanguage: string;
+  // Optional overrides for the transcription backend; empty => use the
+  // VITE_TRANSCRIBE_API_BASE / VITE_TRANSCRIBE_API_SECRET env vars / defaults.
+  transcribeApiBase: string;
+  transcribeApiSecret: string;
 }
 
 const defaultSettings: Settings = {
@@ -76,11 +85,16 @@ const defaultSettings: Settings = {
 
   showNotifications: true,
   isNotificationSounds: true,
+  hideUnreadActivityDots: false,
 
   hour24Clock: false,
   dateFormatString: 'D MMM YYYY',
 
   developerTools: false,
+
+  transcribeLanguage: '',
+  transcribeApiBase: '',
+  transcribeApiSecret: '',
 };
 
 export const getSettings = () => {

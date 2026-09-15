@@ -15,6 +15,7 @@ import {
 } from '../../common-settings/general';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
+import { RoomAutoTranslate } from '../../translation/RoomAutoTranslate';
 
 type GeneralProps = {
   requestClose: () => void;
@@ -58,6 +59,9 @@ export function General({ requestClose }: GeneralProps) {
                 <RoomPublishedAddresses permissions={permissions} />
                 <RoomLocalAddresses permissions={permissions} />
               </Box>
+              {/* Per-chat auto-translate (offline Libre backend). Self-contained; renders nothing
+                  unless the translate backend is configured. */}
+              <RoomAutoTranslate />
               <Box direction="Column" gap="100">
                 <Text size="L400">Advanced Options</Text>
                 <RoomUpgrade permissions={permissions} requestClose={requestClose} />

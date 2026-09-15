@@ -35,6 +35,16 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
   navigator.serviceWorker.ready.then(sendSessionToSW);
 
+  // A newly activated (or respawned) worker starts with no session, and taking
+  // control of this page is the moment it begins serving our media requests.
+  navigator.serviceWorker.addEventListener('controllerchange', sendSessionToSW);
+
+  // Cheap safety net: refresh the worker's copy whenever the tab comes back to
+  // the foreground, which is also when media is about to be requested again.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') sendSessionToSW();
+  });
+
   navigator.serviceWorker.addEventListener('message', (ev) => {
     const { type } = ev.data ?? {};
 
