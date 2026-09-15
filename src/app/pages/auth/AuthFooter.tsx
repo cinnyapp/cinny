@@ -15,7 +15,7 @@ export function AuthFooter() {
         target="_blank"
         rel="noreferrer"
       >
-        v4.12.6
+        v4.12.7
       </Text>
       <Text as="a" size="T300" href="https://twitter.com/cinnyapp" target="_blank" rel="noreferrer">
         Twitter
