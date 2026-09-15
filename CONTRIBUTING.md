@@ -126,6 +126,9 @@ to `Cinny Support` room instead.
 
 ### Issues are Actionable
 
+> [!NOTE]
+> This is WIP and only issue with number greater than #2876 are actionable.
+
 The Cinny [issue tracker](https://github.com/cinnyapp/cinny/issues)
 is for _actionable items_.
 
