@@ -79,6 +79,7 @@ import { MemberPowerTag, StateEvent } from '../../../../types/matrix/room';
 import { PowerIcon } from '../../../components/power';
 import colorMXID from '../../../../util/colorMXID';
 import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
+import { MessageForwardItem } from './MessageForward';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -1049,6 +1050,7 @@ export const Message = as<'div', MessageProps>(
                               </Text>
                             </MenuItem>
                           )}
+                          <MessageForwardItem room={room} mEvent={mEvent} onClose={closeMenu} />
                           {canEditEvent(mx, mEvent) && onEditId && (
                             <MenuItem
                               size="300"
