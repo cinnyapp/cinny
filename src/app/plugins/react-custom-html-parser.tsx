@@ -16,7 +16,20 @@ import {
 } from 'html-react-parser';
 import { MatrixClient } from 'matrix-js-sdk';
 import classNames from 'classnames';
-import { Box, Chip, config, Header, Icon, IconButton, Icons, Scroll, Text, toRem } from 'folds';
+import {
+  Box,
+  Chip,
+  config,
+  Header,
+  Icon,
+  IconButton,
+  Icons,
+  Scroll,
+  Text,
+  Tooltip,
+  TooltipProvider,
+  toRem,
+} from 'folds';
 import { IntermediateRepresentation, Opts as LinkifyOpts, OptFn } from 'linkifyjs';
 import Linkify from 'linkify-react';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -169,13 +182,28 @@ export const scaleSystemEmoji = (text: string): (string | JSX.Element)[] =>
   findAndReplace(
     text,
     EMOJI_REG_G,
-    (match, pushIndex) => (
-      <span key={`scaleSystemEmoji-${pushIndex}`} className={css.EmoticonBase}>
-        <span className={css.Emoticon()} title={getShortcodeFor(getHexcodeForEmoji(match[0]))}>
-          {match[0]}
-        </span>
-      </span>
-    ),
+    (match, pushIndex) => {
+      const shortcode = getShortcodeFor(getHexcodeForEmoji(match[0])) ?? 'unknown';
+      return (
+        <TooltipProvider
+          key={`scaleSystemEmoji-${pushIndex}`}
+          position="Top"
+          tooltip={
+            <Tooltip style={{ maxWidth: toRem(200) }}>
+              <Text size="T300">:{shortcode}:</Text>
+            </Tooltip>
+          }
+        >
+          {(targetRef) => (
+            <span className={css.EmoticonBase}>
+              <span ref={targetRef} className={css.Emoticon()}>
+                {match[0]}
+              </span>
+            </span>
+          )}
+        </TooltipProvider>
+      );
+    },
     (txt) => txt
   );
 
