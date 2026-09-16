@@ -454,6 +454,7 @@ function SpaceTab({
               >
                 <RoomAvatar
                   roomId={space.roomId}
+                  uniformIcons
                   src={getRoomAvatarUrl(mx, space, 96, useAuthentication) ?? undefined}
                   alt={space.name}
                   renderFallback={() => (
@@ -580,6 +581,7 @@ function ClosedSpaceFolder({
                     <SidebarAvatar key={sId} size="200" radii="300">
                       <RoomAvatar
                         roomId={space.roomId}
+                        uniformIcons
                         src={getRoomAvatarUrl(mx, space, 96, useAuthentication) ?? undefined}
                         alt={space.name}
                         renderFallback={() => (
