@@ -187,7 +187,7 @@ export const toPlainText = (node: Descendant | Descendant[], isMarkdown: boolean
 export const customHtmlEqualsPlainText = (customHtml: string, plain: string): boolean =>
   customHtml.replace(/<br\/>/g, '\n') === sanitizeText(plain);
 
-export const trimCustomHtml = (customHtml: string) => customHtml.replace(/<br\/>$/g, '').trim();
+export const trimCustomHtml = (customHtml: string) => customHtml.replace(/^(<br\/>)+|(<br\/>)+$/g, '').trim();
 
 export const trimCommand = (cmdName: string, str: string) => {
   const cmdRegX = new RegExp(`^(\\s+)?(\\/${sanitizeForRegex(cmdName)})([^\\S\n]+)?`);
