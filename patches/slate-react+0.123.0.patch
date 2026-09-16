@@ -1,0 +1,168 @@
+diff --git a/node_modules/slate-react/dist/index.es.js b/node_modules/slate-react/dist/index.es.js
+index 69f81ce..c4f1584 100644
+--- a/node_modules/slate-react/dist/index.es.js
++++ b/node_modules/slate-react/dist/index.es.js
+@@ -118,6 +118,22 @@ function createAndroidInputManager(_ref) {
+   var compositionEndTimeoutId = null;
+   var flushTimeoutId = null;
+   var actionTimeoutId = null;
++  var __lastCompositionActivity = 0;
++  var __compositionCleared = false;
++  // [cinny patch 6/6] compositionend is not fired reliably in every browser.
++  // A composition that has gone quiet, or that has lost focus, is treated as
++  // stale so that deferred diffs still reach the value.
++  var __isCompositionLive = () => {
++    if (!IS_COMPOSING.get(editor) || __compositionCleared) return false;
++    try {
++      var __editable = ReactEditor.toDOMNode(editor, editor);
++      var __active = ReactEditor.getWindow(editor).document.activeElement;
++      if (__active !== __editable && !__editable.contains(__active)) return false;
++    } catch (__e) {
++      // fall through to the idle check
++    }
++    return Date.now() - __lastCompositionActivity < 5000;
++  };
+   var idCounter = 0;
+   var insertPositionHint = false;
+   var applyPendingSelection = () => {
+@@ -160,6 +176,27 @@ function createAndroidInputManager(_ref) {
+       clearTimeout(actionTimeoutId);
+       actionTimeoutId = null;
+     }
++    // [cinny patch 2/6] While the IME composes into a leaf that is still empty in the model,
++    // applying pending changes re-renders the empty leaf (<br>/zero-width) into
++    // a text leaf. That replaces the DOM text node the composition lives in and
++    // silently cancels the composition (first-character breakage, e.g. Hangul
++    // jamo separation). Defer the flush until the composition ends.
++    if (__isCompositionLive()) {
++      var __pendingDiffs = EDITOR_TO_PENDING_DIFFS.get(editor);
++    var __composingIntoEmptyLeaf = !!(__pendingDiffs && __pendingDiffs.length) && __pendingDiffs.some(__d => {
++      try {
++        return Node.leaf(editor, __d.path).text.length === 0;
++      } catch (__e) {
++        return false;
++      }
++    });
++      if (__composingIntoEmptyLeaf) {
++        // 50ms, not FLUSH_DELAY: this only bounds how quickly the value catches
++        // up with a composition that ended without firing compositionend.
++        flushTimeoutId = setTimeout(flush, 50);
++        return;
++      }
++    }
+     if (!hasPendingDiffs() && !hasPendingAction()) {
+       applyPendingSelection();
+       return;
+@@ -246,13 +283,44 @@ function createAndroidInputManager(_ref) {
+     if (compositionEndTimeoutId) {
+       clearTimeout(compositionEndTimeoutId);
+     }
++    // [cinny patch 3/6] If pending changes target a leaf that is still empty in the model,
++    // their flush was deferred to keep the composition alive. Apply them
++    // synchronously at the composition boundary: the next composition session
++    // may start immediately after this event, and an asynchronous render would
++    // replace the DOM text node it is composing into.
++    var __pendingDiffs = EDITOR_TO_PENDING_DIFFS.get(editor);
++    var __composingIntoEmptyLeaf = !!(__pendingDiffs && __pendingDiffs.length) && __pendingDiffs.some(__d => {
++      try {
++        return Node.leaf(editor, __d.path).text.length === 0;
++      } catch (__e) {
++        return false;
++      }
++    });
++    if (__composingIntoEmptyLeaf && !flushing) {
++      ReactDOM.flushSync(() => {
++        IS_COMPOSING.set(editor, false);
++        flush();
++      });
++      updatePlaceholderVisibility();
++      return;
++    }
+     compositionEndTimeoutId = setTimeout(() => {
+       IS_COMPOSING.set(editor, false);
+       flush();
++      if (typeof __compositionCleared !== 'undefined' && __compositionCleared) {
++        // A cancelled composition can take the empty leaf's text node with it.
++        // A forced render lets RestoreDOM put the leaf's DOM back, so the next
++        // composition starts from a clean state instead of a bare <br>.
++        var __forceRender = EDITOR_TO_FORCE_RENDER.get(editor);
++        if (__forceRender) __forceRender();
++      }
++      updatePlaceholderVisibility();
+     }, RESOLVE_DELAY);
+   };
+   var handleCompositionStart = _event => {
+     IS_COMPOSING.set(editor, true);
++    __lastCompositionActivity = Date.now();
++    __compositionCleared = false;
+     if (compositionEndTimeoutId) {
+       clearTimeout(compositionEndTimeoutId);
+       compositionEndTimeoutId = null;
+@@ -330,6 +398,28 @@ function createAndroidInputManager(_ref) {
+     var {
+       inputType: type
+     } = event;
++    if (type === 'insertCompositionText' || type === 'deleteCompositionText') {
++      __lastCompositionActivity = Date.now();
++      if (event.data) {
++        __compositionCleared = false;
++      } else {
++        __compositionCleared = true;
++        var __deferredDiffs = EDITOR_TO_PENDING_DIFFS.get(editor);
++        if (__deferredDiffs && __deferredDiffs.length) {
++          var __allEmptyLeaves = __deferredDiffs.every(__d => {
++            try {
++              return Node.leaf(editor, __d.path).text.length === 0;
++            } catch (__e) {
++              return false;
++            }
++          });
++          if (__allEmptyLeaves) {
++            EDITOR_TO_PENDING_DIFFS.set(editor, []);
++            EDITOR_TO_PENDING_SELECTION.delete(editor);
++          }
++        }
++      }
++    }
+     var targetRange = null;
+     var data = event.dataTransfer || event.data || undefined;
+     if (insertPositionHint !== false && type !== 'insertText' && type !== 'insertCompositionText') {
+@@ -862,6 +952,7 @@ var TextString = props => {
+     text,
+     isTrailing = false
+   } = props;
++  var editor = useSlateStatic();
+   var ref = useRef(null);
+   var getTextContent = () => {
+     return "".concat(text !== null && text !== void 0 ? text : '').concat(isTrailing ? '\n' : '');
+@@ -879,6 +970,21 @@ var TextString = props => {
+     // null coalescing text to make sure we're not outputing "null" as a string in the extreme case it is nullish at runtime
+     var textWithTrailing = getTextContent();
+     if (ref.current && ref.current.textContent !== textWithTrailing) {
++      // [cinny patch 5/6] On Android, while the IME is composing inside this span, the DOM
++      // legitimately runs ahead of the model (input is stored as pending
++      // diffs). Rewriting textContent here would replace the text node the
++      // composition lives in and cancel it (e.g. Hangul jamo separation).
++      // Skip; the pending-diff flush reconciles when composition ends.
++      if (IS_ANDROID && IS_COMPOSING.get(editor)) {
++        try {
++          var domSelection = ReactEditor.getWindow(editor).getSelection();
++          if (domSelection && domSelection.anchorNode && ref.current.contains(domSelection.anchorNode)) {
++            return;
++          }
++        } catch (e) {
++          // fall through to the rewrite below
++        }
++      }
+       ref.current.textContent = textWithTrailing;
+     }
+     // intentionally not specifying dependencies, so that this effect runs on every render
+@@ -920,7 +1026,7 @@ var ZeroWidthString = props => {
+   // be because accepting an IME suggestion when at the start of a block (no
+   // preceding \uFEFF) removes one or more DOM elements that `toSlateRange`
+   // depends on. (https://github.com/ianstormtaylor/slate/issues/5703)
+-  return /*#__PURE__*/React.createElement("span", _objectSpread$6({}, attributes), !IS_ANDROID || !isLineBreak ? '\uFEFF' : null, isLineBreak ? /*#__PURE__*/React.createElement("br", null) : null);
++  return /*#__PURE__*/React.createElement("span", _objectSpread$6({}, attributes), '\uFEFF', isLineBreak ? /*#__PURE__*/React.createElement("br", null) : null);
+ };
+ 
+ function ownKeys$5(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
