@@ -1,6 +1,6 @@
 import React, { FormEventHandler, useCallback, useEffect, useState } from 'react';
 import { Box, Button, color, Icon, Icons, Spinner, Text, toRem } from 'folds';
-import FileSaver from 'file-saver';
+import { saveFile } from '../../../utils/file-saver';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SettingTile } from '../../../components/setting-tile';
 import { SequenceCardStyle } from '../styles.css';
@@ -28,7 +28,7 @@ function ExportKeys() {
         const blob = new Blob([encKeys], {
           type: 'text/plain;charset=us-ascii',
         });
-        FileSaver.saveAs(blob, 'cinny-keys.txt');
+        await saveFile(blob, 'cinny-keys.txt');
       },
       [mx]
     )

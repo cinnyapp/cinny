@@ -14,9 +14,9 @@ import {
   TooltipProvider,
   as,
 } from 'folds';
-import FileSaver from 'file-saver';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import FocusTrap from 'focus-trap-react';
+import { saveFile } from '../../../utils/file-saver';
 import { IFileInfo } from '../../../../types/matrix/common';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
@@ -261,9 +261,7 @@ export function DownloadFile({ body, mimeType, url, info, encInfo }: DownloadFil
         ? await downloadEncryptedMedia(mediaUrl, (encBuf) => decryptFile(encBuf, mimeType, encInfo))
         : await downloadMedia(mediaUrl);
 
-      const fileURL = URL.createObjectURL(fileContent);
-      FileSaver.saveAs(fileURL, body);
-      return fileURL;
+      await saveFile(fileContent, body);
     }, [mx, url, useAuthentication, mimeType, encInfo, body])
   );
 
@@ -275,11 +273,7 @@ export function DownloadFile({ body, mimeType, url, info, encInfo }: DownloadFil
       fill="Soft"
       radii="300"
       size="400"
-      onClick={() =>
-        downloadState.status === AsyncStatus.Success
-          ? FileSaver.saveAs(downloadState.data, body)
-          : download()
-      }
+      onClick={() => download()}
       disabled={downloadState.status === AsyncStatus.Loading}
       before={
         downloadState.status === AsyncStatus.Loading ? (
