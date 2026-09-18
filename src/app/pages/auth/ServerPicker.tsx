@@ -89,6 +89,11 @@ export function ServerPicker({
       size="500"
       readOnly={!allowCustomServer}
       onClick={allowCustomServer ? undefined : handleOpenServerMenu}
+      // disable auto-capitalization, which is usually undesirable for server name input.
+      autoCapitalize="off"
+      // disable spell-check and auto-correction
+      spellCheck={false}
+      autoCorrect="off"
       after={
         serverList.length === 0 || (serverList.length === 1 && !allowCustomServer) ? undefined : (
           <PopOut
