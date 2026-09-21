@@ -81,6 +81,27 @@ body {
 [dir='rtl'] {
   --direction: rtl;
 }
+
+/*
+ * BiDi (Bidirectional text) fix for mixed Persian+English content.
+ *
+ * `unicode-bidi: plaintext` makes the browser treat each block as if it had
+ * dir="auto": it reads the first strong directional character and sets that
+ * line's base direction accordingly. Without this, a global dir="rtl" causes
+ * text like "یک پیام english وسط فارسی" to render with wrong word order.
+ */
+[dir='rtl'] textarea,
+[dir='rtl'] input[type='text'],
+[dir='rtl'] input[type='search'],
+[dir='rtl'] input[type='email'],
+[dir='rtl'] input[type='username'],
+[dir='rtl'] input[type='password'],
+[dir='rtl'] [data-message-body],
+[dir='rtl'] [class*='message'],
+[dir='rtl'] p,
+[dir='rtl'] blockquote {
+  unicode-bidi: plaintext;
+}
 a {
   color: var(--tc-link);
   text-decoration: none;
