@@ -123,7 +123,13 @@ export function AuthLayout() {
     discoveryState.status === AsyncStatus.Success ? discoveryState.data.response : [];
 
   return (
-    <Scroll variant="Background" visibility="Hover" size="300" hideTrack>
+    <Scroll
+      variant="Background"
+      visibility="Hover"
+      size="300"
+      hideTrack
+      style={{ overflow: 'auto' }}
+    >
       <Box
         className={classNames(css.AuthLayout, PatternsCss.BackgroundDotPattern)}
         direction="Column"
