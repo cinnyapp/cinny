@@ -21,6 +21,9 @@ export const timeYear = (ts: number): string => dayjs(ts).format('YYYY');
 export const timeHourMinute = (ts: number, hour24Clock: boolean): string =>
   dayjs(ts).format(hour24Clock ? 'HH:mm' : 'hh:mm A');
 
+export const timeHourMinuteSecond = (ts: number, hour24Clock: boolean): string =>
+  dayjs(ts).format(hour24Clock ? 'HH:mm:ss' : 'hh:mm A');
+
 export const timeDayMonYear = (ts: number, dateFormatString: string): string =>
   dayjs(ts).format(dateFormatString);
 
