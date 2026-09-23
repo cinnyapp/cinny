@@ -91,6 +91,10 @@ export function SystemNotification() {
     settingsAtom,
     'isNotificationSounds'
   );
+  const [onlyParticipatedThreads, setOnlyParticipatedThreads] = useSetting(
+    settingsAtom,
+    'onlyParticipatedThreads'
+  );
 
   const requestNotificationPermission = () => {
     window.Notification.requestPermission();
@@ -143,6 +147,23 @@ export function SystemNotification() {
           title="Notification Sound"
           description="Play sound when new message arrive."
           after={<Switch value={isNotificationSounds} onChange={setIsNotificationSounds} />}
+        />
+      </SequenceCard>
+      <SequenceCard
+        className={SequenceCardStyle}
+        variant="SurfaceVariant"
+        direction="Column"
+        gap="400"
+      >
+        <SettingTile
+          title="Thread Notifications"
+          description="Only notify for threads you have participated in."
+          after={
+            <Switch
+              value={onlyParticipatedThreads}
+              onChange={setOnlyParticipatedThreads}
+            />
+          }
         />
       </SequenceCard>
       <SequenceCard
