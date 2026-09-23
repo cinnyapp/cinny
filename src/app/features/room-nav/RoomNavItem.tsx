@@ -28,6 +28,7 @@ import { nameInitials } from '../../utils/common';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRoomUnread } from '../../state/hooks/unread';
 import { roomToUnreadAtom } from '../../state/room/roomToUnread';
+import { favouriteRoomsAtom } from '../../state/room/favouriteRooms';
 import { getPowersLevelFromMatrixEvent, usePowerLevels } from '../../hooks/usePowerLevels';
 import { copyToClipboard } from '../../utils/dom';
 import { markAsRead } from '../../utils/notifications';
@@ -59,7 +60,7 @@ import { callChatAtom } from '../../state/callEmbed';
 import { useCallPreferencesAtom } from '../../state/hooks/callPreferences';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
 import { livekitSupport } from '../../hooks/useLivekitSupport';
-import { StateEvent } from '../../../types/matrix/room';
+import { RoomTag, StateEvent } from '../../../types/matrix/room';
 import { webRTCSupported } from '../../utils/rtc';
 
 type RoomNavItemMenuProps = {
@@ -79,6 +80,8 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
     const canInvite = permissions.action('invite', mx.getSafeUserId());
     const openRoomSettings = useOpenRoomSettings();
     const space = useSpaceOptionally();
+    const favouriteRooms = useAtomValue(favouriteRoomsAtom);
+    const favourite = favouriteRooms.has(room.roomId);
 
     const [invitePrompt, setInvitePrompt] = useState(false);
 
@@ -103,6 +106,14 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
       requestClose();
     };
 
+    const handleToggleFavourite = () => {
+      const promise = favourite
+        ? mx.deleteRoomTag(room.roomId, RoomTag.Favourite)
+        : mx.setRoomTag(room.roomId, RoomTag.Favourite, {});
+      promise.catch(() => undefined);
+      requestClose();
+    };
+
     return (
       <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
         {invitePrompt && room && (
@@ -115,6 +126,17 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
           />
         )}
         <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+          <MenuItem
+            onClick={handleToggleFavourite}
+            size="300"
+            after={<Icon size="100" src={Icons.Star} filled={favourite} />}
+            radii="300"
+            aria-pressed={favourite}
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              {favourite ? 'Remove from Favourites' : 'Add to Favourites'}
+            </Text>
+          </MenuItem>
           <MenuItem
             onClick={handleMarkAsRead}
             size="300"
