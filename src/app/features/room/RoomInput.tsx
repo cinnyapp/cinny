@@ -110,6 +110,7 @@ import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useImagePackRooms } from '../../hooks/useImagePackRooms';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import colorMXID from '../../../util/colorMXID';
+import { rainbow } from '../../../util/rainbow';
 import { useIsDirectRoom } from '../../hooks/useRoom';
 import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
@@ -318,6 +319,15 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         msgType = MsgType.Emote;
       } else if (commandName === Command.Notice) {
         msgType = MsgType.Notice;
+      } else if (commandName === Command.Rainbow) {
+        plainText = rainbow(plainText);
+        customHtml = rainbow(customHtml);
+      } else if (commandName === Command.RainbowMe) {
+        plainText = rainbow(plainText);
+        customHtml = rainbow(customHtml);
+        msgType = MsgType.Emote;
+      } else if (commandName === Command.Html) {
+        customHtml = plainText;
       } else if (commandName === Command.Shrug) {
         plainText = `${SHRUG} ${plainText}`;
         customHtml = `${SHRUG} ${customHtml}`;
