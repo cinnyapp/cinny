@@ -30,7 +30,7 @@ import { useRoomUnread } from '../../state/hooks/unread';
 import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 import { getPowersLevelFromMatrixEvent, usePowerLevels } from '../../hooks/usePowerLevels';
 import { copyToClipboard } from '../../utils/dom';
-import { markAsRead } from '../../utils/notifications';
+import { markAsRead, markAsUnread } from '../../utils/notifications';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
 import { useRoomTypingMember } from '../../hooks/useRoomTypingMembers';
@@ -87,6 +87,11 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
       requestClose();
     };
 
+    const handleMarkAsUnread = () => {
+      markAsUnread(mx, room.roomId);
+      requestClose();
+    };
+
     const handleInvite = () => {
       setInvitePrompt(true);
     };
@@ -115,17 +120,31 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
           />
         )}
         <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
-          <MenuItem
-            onClick={handleMarkAsRead}
-            size="300"
-            after={<Icon size="100" src={Icons.CheckTwice} />}
-            radii="300"
-            disabled={!unread}
-          >
-            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-              Mark as Read
-            </Text>
-          </MenuItem>
+          {unread && (
+            <MenuItem
+              onClick={handleMarkAsRead}
+              size="300"
+              after={<Icon size="100" src={Icons.CheckTwice} />}
+              radii="300"
+            >
+              <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+                Mark as Read
+              </Text>
+            </MenuItem>
+          )}
+          {!unread && (
+            <MenuItem
+              onClick={handleMarkAsUnread}
+              size="300"
+              after={<Icon size="100" src={Icons.MessageUnread} />}
+              radii="300"
+            >
+              <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+                Mark as Unread
+              </Text>
+            </MenuItem>
+          )}
+
           <RoomNotificationModeSwitcher roomId={room.roomId} value={notificationMode}>
             {(handleOpen, opened, changing) => (
               <MenuItem

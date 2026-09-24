@@ -18,6 +18,10 @@ export enum AccountDataEvent {
   MegolmBackupV1 = 'm.megolm_backup.v1',
 }
 
+export enum RoomAccountDataEvent {
+  MarkedUnread = 'm.marked_unread',
+}
+
 export type MDirectContent = Record<string, string[]>;
 
 export type SecretStorageDefaultKeyContent = {
