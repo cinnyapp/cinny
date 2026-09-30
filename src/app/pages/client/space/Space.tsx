@@ -383,6 +383,7 @@ export function Space() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const mDirects = useAtomValue(mDirectAtom);
   const roomToUnread = useAtomValue(roomToUnreadAtom);
+  const [hideActivityDots] = useSetting(settingsAtom, 'hideUnreadActivityDots');
   const allRooms = useAtomValue(allRoomsAtom);
   const allJoinedRooms = useMemo(() => new Set(allRooms), [allRooms]);
   const notificationPreferences = useRoomsNotificationPreferencesContext();
@@ -413,11 +414,14 @@ export function Space() {
         if (!closedCategories.has(makeNavCategoryId(space.roomId, parentId))) {
           return false;
         }
-        const showRoomAnyway =
-          roomToUnread.has(roomId) || roomId === selectedRoomId || callEmbed?.roomId === roomId;
+        const u = roomToUnread.get(roomId);
+        const isUnread = hideActivityDots
+          ? u !== undefined && (u.total > 0 || u.highlight > 0)
+          : roomToUnread.has(roomId);
+        const showRoomAnyway = isUnread || roomId === selectedRoomId || callEmbed?.roomId === roomId;
         return !showRoomAnyway;
       },
-      [space.roomId, closedCategories, roomToUnread, selectedRoomId, callEmbed]
+      [space.roomId, closedCategories, roomToUnread, selectedRoomId, callEmbed, hideActivityDots]
     ),
     useCallback(
       (sId) => closedCategories.has(makeNavCategoryId(space.roomId, sId)),

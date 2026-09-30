@@ -9,7 +9,7 @@ import {
   SyncState,
 } from 'matrix-js-sdk';
 import { ReceiptContent, ReceiptType } from 'matrix-js-sdk/lib/@types/read_receipts';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Membership,
   NotificationType,
@@ -22,19 +22,17 @@ import {
   getAllParents,
   getNotificationType,
   getUnreadInfo,
-  getUnreadInfos,
+  getUnreadInfoIfUnread,
   isNotificationEvent,
 } from '../../utils/room';
 import { roomToParentsAtom } from './roomToParents';
 import { useStateEventCallback } from '../../hooks/useStateEventCallback';
 import { useSyncState } from '../../hooks/useSyncState';
 import { useRoomsNotificationPreferencesContext } from '../../hooks/useRoomsNotificationPreferences';
+import { ChunkedRun, Coalescer, createCoalescer, runChunked } from '../../utils/batch';
 
-export type RoomToUnreadAction =
-  | {
-      type: 'RESET';
-      unreadInfos: UnreadInfo[];
-    }
+/** A single room-scoped change that can be applied as part of a `BULK` action. */
+export type RoomToUnreadUpdate =
   | {
       type: 'PUT';
       unreadInfo: UnreadInfo;
@@ -42,6 +40,17 @@ export type RoomToUnreadAction =
   | {
       type: 'DELETE';
       roomId: string;
+    };
+
+export type RoomToUnreadAction =
+  | {
+      type: 'RESET';
+      unreadInfos: UnreadInfo[];
+    }
+  | RoomToUnreadUpdate
+  | {
+      type: 'BULK';
+      updates: RoomToUnreadUpdate[];
     };
 
 export const unreadInfoToUnread = (unreadInfo: UnreadInfo): Unread => ({
@@ -162,20 +171,154 @@ export const roomToUnreadAtom = atom<RoomToUnread, [RoomToUnreadAction], undefin
           )
         )
       );
+      return;
+    }
+    if (action.type === 'BULK') {
+      // One `/sync` response can carry events for hundreds of rooms. Applying each
+      // one as its own atom write copies the whole map and re-renders every
+      // subscriber per room; applying them together does it once.
+      const currentRoomToUnread = get(baseRoomToUnread);
+
+      // Keep only the last update per room, then drop the ones that would not
+      // change anything, so an all-no-op batch does not trigger a render.
+      const lastUpdatePerRoom = new Map<string, RoomToUnreadUpdate>();
+      action.updates.forEach((update) => {
+        lastUpdatePerRoom.set(
+          update.type === 'PUT' ? update.unreadInfo.roomId : update.roomId,
+          update
+        );
+      });
+      const updates = Array.from(lastUpdatePerRoom.values()).filter((update) => {
+        if (update.type === 'DELETE') return currentRoomToUnread.has(update.roomId);
+        const currentUnread = currentRoomToUnread.get(update.unreadInfo.roomId);
+        return !(
+          currentUnread && unreadEqual(currentUnread, unreadInfoToUnread(update.unreadInfo))
+        );
+      });
+      if (updates.length === 0) return;
+
+      const roomToParents = get(roomToParentsAtom);
+      set(
+        baseRoomToUnread,
+        produce(currentRoomToUnread, (draftRoomToUnread) => {
+          updates.forEach((update) => {
+            if (update.type === 'PUT') {
+              putUnreadInfo(
+                draftRoomToUnread,
+                getAllParents(roomToParents, update.unreadInfo.roomId),
+                update.unreadInfo
+              );
+              return;
+            }
+            deleteUnreadInfo(
+              draftRoomToUnread,
+              getAllParents(roomToParents, update.roomId),
+              update.roomId
+            );
+          });
+        })
+      );
     }
   }
 );
+
+/**
+ * Rooms scanned per slice when rebuilding the whole unread map. Keeps each slice
+ * in the low-millisecond range even on an account with thousands of rooms, so the
+ * rebuild never becomes one long task that freezes the UI.
+ */
+const UNREAD_SCAN_CHUNK_SIZE = 250;
+
+type UnreadScheduler = {
+  /** Queue a single room's change; queued changes are applied together. */
+  queue: (update: RoomToUnreadUpdate) => void;
+  /** Request a full rebuild of the unread map (coalesced, sliced). */
+  scanAll: () => void;
+  dispose: () => void;
+};
+
+const createUnreadScheduler = (
+  mx: MatrixClient,
+  setUnreadAtom: (action: RoomToUnreadAction) => void
+): UnreadScheduler => {
+  const pending = new Map<string, RoomToUnreadUpdate>();
+  let scan: ChunkedRun | undefined;
+  let rescanQueued = false;
+
+  const flushPending = () => {
+    if (pending.size === 0) return;
+    const updates = Array.from(pending.values());
+    pending.clear();
+    setUnreadAtom({ type: 'BULK', updates });
+  };
+  const flush: Coalescer = createCoalescer(flushPending);
+
+  const runScan = () => {
+    if (scan) {
+      // A scan is already in progress. Let it finish and run once more after it,
+      // rather than restarting it and risking never reaching the end.
+      rescanQueued = true;
+      return;
+    }
+    const rooms = mx.getRooms();
+    const unreadInfos: UnreadInfo[] = [];
+    scan = runChunked(
+      rooms,
+      UNREAD_SCAN_CHUNK_SIZE,
+      (room) => {
+        const unreadInfo = getUnreadInfoIfUnread(mx, room);
+        if (unreadInfo) unreadInfos.push(unreadInfo);
+      },
+      () => {
+        scan = undefined;
+        setUnreadAtom({ type: 'RESET', unreadInfos });
+        // Anything that arrived while the scan was running has to win over it.
+        flush.cancel();
+        flushPending();
+        if (rescanQueued) {
+          rescanQueued = false;
+          runScan();
+        }
+      }
+    );
+  };
+  const scanRequest: Coalescer = createCoalescer(runScan);
+
+  return {
+    queue: (update) => {
+      pending.set(update.type === 'PUT' ? update.unreadInfo.roomId : update.roomId, update);
+      flush.schedule();
+    },
+    scanAll: () => {
+      scanRequest.schedule();
+    },
+    dispose: () => {
+      flush.cancel();
+      scanRequest.cancel();
+      scan?.cancel();
+      scan = undefined;
+      rescanQueued = false;
+      pending.clear();
+    },
+  };
+};
 
 export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roomToUnreadAtom) => {
   const setUnreadAtom = useSetAtom(unreadAtom);
   const roomsNotificationPreferences = useRoomsNotificationPreferencesContext();
 
+  const setUnreadAtomRef = useRef(setUnreadAtom);
+  setUnreadAtomRef.current = setUnreadAtom;
+
+  const scheduler = useMemo(
+    () => createUnreadScheduler(mx, (action) => setUnreadAtomRef.current(action)),
+    [mx]
+  );
+  useEffect(() => () => scheduler.dispose(), [scheduler]);
+
   useEffect(() => {
-    setUnreadAtom({
-      type: 'RESET',
-      unreadInfos: getUnreadInfos(mx),
-    });
-  }, [mx, setUnreadAtom]);
+    scheduler.scanAll();
+  }, [scheduler]);
 
   useSyncState(
     mx,
@@ -185,13 +328,10 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
           (state === SyncState.Prepared && prevState === null) ||
           (state === SyncState.Syncing && prevState !== SyncState.Syncing)
         ) {
-          setUnreadAtom({
-            type: 'RESET',
-            unreadInfos: getUnreadInfos(mx),
-          });
+          scheduler.scanAll();
         }
       },
-      [mx, setUnreadAtom]
+      [scheduler]
     )
   );
 
@@ -205,7 +345,7 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
     ) => {
       if (!room || !data.liveEvent || room.isSpaceRoom() || !isNotificationEvent(mEvent)) return;
       if (getNotificationType(mx, room.roomId) === NotificationType.Mute) {
-        setUnreadAtom({
+        scheduler.queue({
           type: 'DELETE',
           roomId: room.roomId,
         });
@@ -213,13 +353,13 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
       }
 
       if (mEvent.getSender() === mx.getUserId()) return;
-      setUnreadAtom({ type: 'PUT', unreadInfo: getUnreadInfo(room) });
+      scheduler.queue({ type: 'PUT', unreadInfo: getUnreadInfo(room) });
     };
     mx.on(RoomEvent.Timeline, handleTimelineEvent);
     return () => {
       mx.removeListener(RoomEvent.Timeline, handleTimelineEvent);
     };
-  }, [mx, setUnreadAtom]);
+  }, [mx, scheduler]);
 
   useEffect(() => {
     const handleReceipt = (mEvent: MatrixEvent, room: Room) => {
@@ -234,26 +374,23 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
         )
       );
       if (isMyReceipt) {
-        setUnreadAtom({ type: 'DELETE', roomId: room.roomId });
+        scheduler.queue({ type: 'DELETE', roomId: room.roomId });
       }
     };
     mx.on(RoomEvent.Receipt, handleReceipt);
     return () => {
       mx.removeListener(RoomEvent.Receipt, handleReceipt);
     };
-  }, [mx, setUnreadAtom]);
+  }, [mx, scheduler]);
 
   useEffect(() => {
-    setUnreadAtom({
-      type: 'RESET',
-      unreadInfos: getUnreadInfos(mx),
-    });
-  }, [mx, setUnreadAtom, roomsNotificationPreferences]);
+    scheduler.scanAll();
+  }, [scheduler, roomsNotificationPreferences]);
 
   useEffect(() => {
     const handleMembershipChange = (room: Room, membership: string) => {
       if (membership !== Membership.Join) {
-        setUnreadAtom({
+        scheduler.queue({
           type: 'DELETE',
           roomId: room.roomId,
         });
@@ -263,20 +400,17 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
     return () => {
       mx.removeListener(RoomEvent.MyMembership, handleMembershipChange);
     };
-  }, [mx, setUnreadAtom]);
+  }, [mx, scheduler]);
 
   useStateEventCallback(
     mx,
     useCallback(
       (mEvent) => {
         if (mEvent.getType() === StateEvent.SpaceChild) {
-          setUnreadAtom({
-            type: 'RESET',
-            unreadInfos: getUnreadInfos(mx),
-          });
+          scheduler.scanAll();
         }
       },
-      [mx, setUnreadAtom]
+      [scheduler]
     )
   );
 };

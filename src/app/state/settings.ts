@@ -42,11 +42,26 @@ export interface Settings {
 
   showNotifications: boolean;
   isNotificationSounds: boolean;
+  hideUnreadActivityDots: boolean;
+
+  // Home lists every joined chat (rooms *and* direct chats), including the ones
+  // that are a child of a space — e.g. the bridge "WhatsApp"/"Telegram" spaces.
+  // When false, Home keeps upstream Cinny's behaviour and only lists rooms that
+  // do not belong to any space.
+  homeShowsAllRooms: boolean;
 
   hour24Clock: boolean;
   dateFormatString: string;
 
   developerTools: boolean;
+
+  // Local Whisper transcription (see features/transcription).
+  // transcribeLanguage: ISO-639-1 code, '' = auto-detect.
+  transcribeLanguage: string;
+  // Optional overrides for the transcription backend; empty => use the
+  // VITE_TRANSCRIBE_API_BASE / VITE_TRANSCRIBE_API_SECRET env vars / defaults.
+  transcribeApiBase: string;
+  transcribeApiSecret: string;
 }
 
 const defaultSettings: Settings = {
@@ -76,11 +91,18 @@ const defaultSettings: Settings = {
 
   showNotifications: true,
   isNotificationSounds: true,
+  hideUnreadActivityDots: false,
+
+  homeShowsAllRooms: true,
 
   hour24Clock: false,
   dateFormatString: 'D MMM YYYY',
 
   developerTools: false,
+
+  transcribeLanguage: '',
+  transcribeApiBase: '',
+  transcribeApiSecret: '',
 };
 
 export const getSettings = () => {

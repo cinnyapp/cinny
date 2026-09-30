@@ -171,51 +171,72 @@ export const useSpaceHierarchy = (
   return hierarchy;
 };
 
-const getSpaceJoinedHierarchy = (
+/** One space of a joined hierarchy together with its joined (non-space) children. */
+type JoinedHierarchyLevel = {
+  space: HierarchyItemSpace;
+  rooms: HierarchyItemRoom[];
+};
+
+/**
+ * Read the space tree out of room state.
+ *
+ * This is the expensive half: it walks every `m.space.child` state event of every
+ * space in the tree (a bridge space such as "WhatsApp" has thousands of them) and
+ * allocates one item per child. It therefore only depends on the tree itself — not
+ * on which rooms are unread or selected — so it can be kept out of the render path
+ * of ordinary activity.
+ */
+const getSpaceJoinedHierarchyLevels = (
   rootSpaceId: string,
-  getRoom: GetRoomCallback,
-  excludeRoom: (parentId: string, roomId: string) => boolean,
-  sortRoomItems: (parentId: string, items: HierarchyItem[]) => HierarchyItem[]
-): HierarchyItem[] => {
+  getRoom: GetRoomCallback
+): JoinedHierarchyLevel[] => {
   const spaceItems: HierarchyItemSpace[] = getHierarchySpaces(rootSpaceId, getRoom, new Set());
 
-  const hierarchy: HierarchyItem[] = spaceItems.flatMap((spaceItem) => {
+  return spaceItems.flatMap<JoinedHierarchyLevel>((spaceItem) => {
     const space = getRoom(spaceItem.roomId);
     if (!space) {
       return [];
     }
-    const joinedRoomEvents = getStateEvents(space, StateEvent.SpaceChild).filter((childEvent) => {
-      if (!isValidChild(childEvent)) return false;
-      const childId = childEvent.getStateKey();
-      if (!childId || !isRoomId(childId)) return false;
-      const room = getRoom(childId);
-      if (!room || room.isSpaceRoom()) return false;
-
-      return true;
-    });
-
-    if (joinedRoomEvents.length === 0) return [];
 
     const childItems: HierarchyItemRoom[] = [];
-    joinedRoomEvents.forEach((childEvent) => {
+    getStateEvents(space, StateEvent.SpaceChild).forEach((childEvent) => {
+      if (!isValidChild(childEvent)) return;
       const childId = childEvent.getStateKey();
-      if (!childId) return;
+      if (!childId || !isRoomId(childId)) return;
+      const room = getRoom(childId);
+      if (!room || room.isSpaceRoom()) return;
 
-      if (excludeRoom(space.roomId, childId)) return;
-
-      const childItem: HierarchyItemRoom = {
+      childItems.push({
         roomId: childId,
         content: childEvent.getContent<MSpaceChildContent>(),
         ts: childEvent.getTs(),
         parentId: spaceItem.roomId,
-      };
-      childItems.push(childItem);
+      });
     });
-    return [spaceItem, ...sortRoomItems(spaceItem.roomId, childItems)];
-  });
 
-  return hierarchy;
+    if (childItems.length === 0) return [];
+
+    return [{ space: spaceItem, rooms: childItems }];
+  });
 };
+
+/**
+ * The cheap half: hide the rooms the caller wants hidden and order what is left.
+ * Filtering never changes the relative order of the remaining rooms, so sorting
+ * after the filter gives the same result as sorting before it.
+ */
+const flattenSpaceJoinedHierarchy = (
+  levels: JoinedHierarchyLevel[],
+  excludeRoom: (parentId: string, roomId: string) => boolean,
+  sortRoomItems: (parentId: string, items: HierarchyItem[]) => HierarchyItem[]
+): HierarchyItem[] =>
+  levels.flatMap<HierarchyItem>(({ space, rooms }) => [
+    space,
+    ...sortRoomItems(
+      space.roomId,
+      rooms.filter((item) => !excludeRoom(space.roomId, item.roomId))
+    ),
+  ]);
 
 export const useSpaceJoinedHierarchy = (
   spaceId: string,
@@ -238,14 +259,12 @@ export const useSpaceJoinedHierarchy = (
     [mx, sortByActivity]
   );
 
-  const [hierarchyAtom] = useState(() =>
-    atom(getSpaceJoinedHierarchy(spaceId, getRoom, excludeRoom, sortRoomItems))
-  );
-  const [hierarchy, setHierarchy] = useAtom(hierarchyAtom);
+  const [levelsAtom] = useState(() => atom(getSpaceJoinedHierarchyLevels(spaceId, getRoom)));
+  const [levels, setLevels] = useAtom(levelsAtom);
 
   useEffect(() => {
-    setHierarchy(getSpaceJoinedHierarchy(spaceId, getRoom, excludeRoom, sortRoomItems));
-  }, [mx, spaceId, setHierarchy, getRoom, excludeRoom, sortRoomItems]);
+    setLevels(getSpaceJoinedHierarchyLevels(spaceId, getRoom));
+  }, [mx, spaceId, setLevels, getRoom]);
 
   useStateEventCallback(
     mx,
@@ -256,14 +275,17 @@ export const useSpaceJoinedHierarchy = (
         if (!eventRoomId) return;
 
         if (spaceId === eventRoomId || getAllParents(roomToParents, eventRoomId).has(spaceId)) {
-          setHierarchy(getSpaceJoinedHierarchy(spaceId, getRoom, excludeRoom, sortRoomItems));
+          setLevels(getSpaceJoinedHierarchyLevels(spaceId, getRoom));
         }
       },
-      [spaceId, roomToParents, setHierarchy, getRoom, excludeRoom, sortRoomItems]
+      [spaceId, roomToParents, setLevels, getRoom]
     )
   );
 
-  return hierarchy;
+  return useMemo(
+    () => flattenSpaceJoinedHierarchy(levels, excludeRoom, sortRoomItems),
+    [levels, excludeRoom, sortRoomItems]
+  );
 };
 
 // we will paginate until 5000 items

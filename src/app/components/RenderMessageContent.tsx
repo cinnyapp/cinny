@@ -44,6 +44,9 @@ type RenderMessageContentProps = {
   htmlReactParserOptions: HTMLReactParserOptions;
   linkifyOpts: Opts;
   outlineAttachment?: boolean;
+  // Identifiers used by the local transcription action on voice/audio messages.
+  roomId?: string;
+  eventId?: string;
 };
 export function RenderMessageContent({
   displayName,
@@ -57,6 +60,8 @@ export function RenderMessageContent({
   htmlReactParserOptions,
   linkifyOpts,
   outlineAttachment,
+  roomId,
+  eventId,
 }: RenderMessageContentProps) {
   const renderUrlsPreview = (urls: string[]) => {
     const filteredUrls = urls.filter((url) => !testMatrixTo(url));
@@ -243,7 +248,12 @@ export function RenderMessageContent({
           content={getContent()}
           renderAsFile={renderFile}
           renderAudioContent={(props) => (
-            <AudioContent {...props} renderMediaControl={(p) => <MediaControl {...p} />} />
+            <AudioContent
+              {...props}
+              roomId={roomId}
+              eventId={eventId}
+              renderMediaControl={(p) => <MediaControl {...p} />}
+            />
           )}
           outlined={outlineAttachment}
         />

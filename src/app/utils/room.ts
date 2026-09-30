@@ -243,15 +243,26 @@ export const getUnreadInfo = (room: Room): UnreadInfo => {
   };
 };
 
+/**
+ * Unread info for a single room, or `undefined` when the room has nothing unread
+ * (or should not contribute to the unread map at all).
+ */
+export const getUnreadInfoIfUnread = (mx: MatrixClient, room: Room): UnreadInfo | undefined => {
+  if (room.isSpaceRoom()) return undefined;
+  if (room.getMyMembership() !== 'join') return undefined;
+  if (getNotificationType(mx, room.roomId) === NotificationType.Mute) return undefined;
+
+  if (roomHaveNotification(room) || roomHaveUnread(mx, room)) {
+    return getUnreadInfo(room);
+  }
+
+  return undefined;
+};
+
 export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] => {
   const unreadInfos = mx.getRooms().reduce<UnreadInfo[]>((unread, room) => {
-    if (room.isSpaceRoom()) return unread;
-    if (room.getMyMembership() !== 'join') return unread;
-    if (getNotificationType(mx, room.roomId) === NotificationType.Mute) return unread;
-
-    if (roomHaveNotification(room) || roomHaveUnread(mx, room)) {
-      unread.push(getUnreadInfo(room));
-    }
+    const unreadInfo = getUnreadInfoIfUnread(mx, room);
+    if (unreadInfo) unread.push(unreadInfo);
 
     return unread;
   }, []);

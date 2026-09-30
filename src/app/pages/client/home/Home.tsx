@@ -49,6 +49,7 @@ import { VirtualTile } from '../../../components/virtualizer';
 import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
 import { makeNavCategoryId } from '../../../state/closedNavCategories';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
+import { mDirectAtom } from '../../../state/mDirectList';
 import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 import { PageNav, PageNavHeader, PageNavContent } from '../../../components/page';
@@ -203,23 +204,36 @@ export function Home() {
   const roomToUnread = useAtomValue(roomToUnreadAtom);
   const navigate = useNavigate();
 
+  const mDirects = useAtomValue(mDirectAtom);
+
   const selectedRoomId = useSelectedRoom();
   const createRoomSelected = useHomeCreateSelected();
   const searchSelected = useHomeSearchSelected();
   const noRoomToDisplay = rooms.length === 0;
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
+  const [hideActivityDots] = useSetting(settingsAtom, 'hideUnreadActivityDots');
+  const [showAllRooms] = useSetting(settingsAtom, 'homeShowsAllRooms');
+
+  const categoryClosed = closedCategories.has(DEFAULT_CATEGORY_ID);
+
+  // Sorting every room in Home is the expensive part, and A-Z order does not change
+  // as messages arrive. Keeping it in its own memo takes the full sort out of the
+  // path that runs on every sync response and every time another room is opened.
+  const orderedRooms = useMemo(() => Array.from(rooms).sort(factoryRoomIdByAtoZ(mx)), [mx, rooms]);
 
   const sortedRooms = useMemo(() => {
-    const items = Array.from(rooms).sort(
-      closedCategories.has(DEFAULT_CATEGORY_ID)
-        ? factoryRoomIdByActivity(mx)
-        : factoryRoomIdByAtoZ(mx)
-    );
-    if (closedCategories.has(DEFAULT_CATEGORY_ID)) {
-      return items.filter((rId) => roomToUnread.has(rId) || rId === selectedRoomId);
-    }
+    if (!categoryClosed) return orderedRooms;
+    // Collapsed category: show only unread rooms (plus the open one), newest first.
+    const items = orderedRooms.filter((rId) => {
+      const u = roomToUnread.get(rId);
+      const isUnread = hideActivityDots
+        ? u !== undefined && (u.total > 0 || u.highlight > 0)
+        : roomToUnread.has(rId);
+      return isUnread || rId === selectedRoomId;
+    });
+    items.sort(factoryRoomIdByActivity(mx));
     return items;
-  }, [mx, rooms, closedCategories, roomToUnread, selectedRoomId]);
+  }, [mx, orderedRooms, categoryClosed, roomToUnread, selectedRoomId, hideActivityDots]);
 
   const virtualizer = useVirtualizer({
     count: sortedRooms.length,
@@ -315,11 +329,11 @@ export function Home() {
             <NavCategory>
               <NavCategoryHeader>
                 <RoomNavCategoryButton
-                  closed={closedCategories.has(DEFAULT_CATEGORY_ID)}
+                  closed={categoryClosed}
                   data-category-id={DEFAULT_CATEGORY_ID}
                   onClick={handleCategoryClick}
                 >
-                  Rooms
+                  {showAllRooms ? 'Chats' : 'Rooms'}
                 </RoomNavCategoryButton>
               </NavCategoryHeader>
               <div
@@ -333,6 +347,10 @@ export function Home() {
                   const room = mx.getRoom(roomId);
                   if (!room) return null;
                   const selected = selectedRoomId === roomId;
+                  // Direct chats are part of Home when "Show All Chats in Home" is on.
+                  // They keep their Direct look (avatar + call button) but stay on the
+                  // Home route, so opening one does not jump the sidebar to another tab.
+                  const direct = mDirects.has(roomId);
 
                   return (
                     <VirtualTile
@@ -343,6 +361,8 @@ export function Home() {
                       <RoomNavItem
                         room={room}
                         selected={selected}
+                        showAvatar={direct}
+                        direct={direct}
                         linkPath={getHomeRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
                         notificationMode={getRoomNotificationMode(
                           notificationPreferences,
