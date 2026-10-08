@@ -7,7 +7,7 @@ const imageFilesFromClipboard = (items: ClipboardItems): Promise<File[]> =>
       const type = item.types.find((entry) => entry.startsWith('image/')); // has to be an image too,
       if (!type) return undefined;
       const blob = await item.getType(type);
-      const ext = type.split('/')[1]?.split('+')[0] || 'bin';
+      const ext = type.split('/')[1]?.split('+')[0] || 'bin'; // ex image/svg+xml want svg part
       return new File([blob], `clipboard.${ext}`, { type });
     })
   ).then((files) => files.filter((file): file is File => file !== undefined));
@@ -22,7 +22,7 @@ export const useFilePasteHandler = (onPaste: (file: File[]) => void): ClipboardE
         return;
       }
 
-      // If there are types or the clipboard is NOT readable, return.
+      // If there are other types in there, or the clipboard is just NOT readable, return.
       if (evt.clipboardData.types.length > 0 || !navigator.clipboard?.read) return;
 
       evt.preventDefault(); // Prevent the default paste behavior
