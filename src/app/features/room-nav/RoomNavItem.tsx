@@ -130,7 +130,9 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
             size="300"
             after={<Icon size="100" src={Icons.CheckTwice} />}
             radii="300"
-            disabled={!unread}
+            // a chat that is only *marked* unread has no counts, but
+            // "Mark as Read" still has something to do: clear the mark
+            disabled={!unread && !markedUnread}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
               Mark as Read
