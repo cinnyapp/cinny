@@ -515,6 +515,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
                 onClick={handleOpenMenu}
                 ref={triggerRef}
                 aria-pressed={!!menuAnchor}
+                aria-label="Room Options"
               >
                 <Icon size="400" src={Icons.VerticalDots} filled={!!menuAnchor} />
               </IconButton>

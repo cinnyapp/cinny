@@ -54,5 +54,15 @@ export function UnreadBadge({ highlight, count }: UnreadBadgeProps) {
  * activity, whereas this dot is the direct result of the user asking for it.
  */
 export function MarkedUnreadBadge() {
-  return <Badge variant="Secondary" size="200" fill="Solid" radii="Pill" outlined={false} />;
+  return (
+    <Badge
+      variant="Secondary"
+      size="200"
+      fill="Solid"
+      radii="Pill"
+      outlined={false}
+      role="status"
+      aria-label="Marked as unread"
+    />
+  );
 }
