@@ -37,12 +37,28 @@ import { AuthMetadataProvider } from '../../hooks/useAuthMetadata';
 import { getFallbackSession } from '../../state/sessions';
 import { AutoDiscovery } from './AutoDiscovery';
 
-function ClientRootLoading() {
+function ClientRootLoading({ mx }: { mx?: MatrixClient }) {
+  // On accounts with a very large number of rooms, restoring the persisted
+  // /sync data can take a long time. Show how many rooms have been restored so
+  // far so that the splash screen does not look stuck.
+  const [roomCount, setRoomCount] = useState(0);
+
+  useEffect(() => {
+    if (!mx) return undefined;
+    const update = () => setRoomCount(mx.getRooms().length);
+    update();
+    const intervalId = setInterval(update, 1000);
+    return () => clearInterval(intervalId);
+  }, [mx]);
+
   return (
     <SplashScreen>
       <Box direction="Column" grow="Yes" alignItems="Center" justifyContent="Center" gap="400">
         <Spinner variant="Secondary" size="600" />
         <Text>Heating up</Text>
+        {roomCount > 0 && (
+          <Text size="T200" priority="300">{`${roomCount} chats loaded`}</Text>
+        )}
       </Box>
     </SplashScreen>
   );
@@ -216,7 +232,7 @@ export function ClientRoot({ children }: ClientRootProps) {
           </SplashScreen>
         )}
         {loading || !mx ? (
-          <ClientRootLoading />
+          <ClientRootLoading mx={mx} />
         ) : (
           <MatrixClientProvider value={mx}>
             <ServerConfigsLoader>
