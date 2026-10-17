@@ -28,8 +28,19 @@ import {
 } from './lite-mode';
 
 export const SYNC_DB_NAME = 'web-sync-store';
+/**
+ * The real IndexedDB database name. matrix-js-sdk prefixes whatever `dbName`
+ * you give `IndexedDBStore` with `matrix-js-sdk:`
+ * (`LocalIndexedDBStoreBackend`), so the raw open has to use the prefixed name.
+ */
+const SYNC_IDB_NAME = `matrix-js-sdk:${SYNC_DB_NAME}`;
 const SYNC_STORE = 'sync';
-const SYNC_KEY = '-';
+const SYNC_CLOBBER = '-';
+/**
+ * The `sync` store is created with `keyPath: ['clobber']` — a compound key of
+ * one component — so the record's key is the ARRAY `['-']`, not the string.
+ */
+const SYNC_KEY = [SYNC_CLOBBER];
 
 const SKIPPED_KEY = 'cinny_lite_skipped_rooms';
 const REPORT_KEY = 'cinny_lite_report';
@@ -170,18 +181,22 @@ const openExistingDb = (dbName: string): Promise<IDBDatabase | undefined> =>
     req.onblocked = () => resolve(undefined);
   });
 
-const skip = (note: string, windowDays: number, ms: number): LiteReport => ({
-  at: Date.now(),
-  windowDays,
-  totalRooms: 0,
-  keptRooms: 0,
-  skippedRooms: 0,
-  skippedEvents: 0,
-  keptEvents: 0,
-  keptBecause: {},
-  ms,
-  note,
-});
+const skip = (note: string, windowDays: number, ms = 0): LiteReport => {
+  const report: LiteReport = {
+    at: Date.now(),
+    windowDays,
+    totalRooms: 0,
+    keptRooms: 0,
+    skippedRooms: 0,
+    skippedEvents: 0,
+    keptEvents: 0,
+    keptBecause: {},
+    ms,
+    note,
+  };
+  writeJson(REPORT_KEY, report);
+  return report;
+};
 
 export type LitePruneResult = {
   /** Rooms that are now absent from the store (cumulative, for the filter). */
@@ -204,26 +219,26 @@ export const pruneDormantRooms = async (
   const previous = getSkippedRooms();
 
   if (!options.enabled) {
-    return { skippedRooms: previous, report: skip('lite mode off', options.windowDays, 0) };
+    return { skippedRooms: previous, report: skip('lite mode off', options.windowDays) };
   }
   if (isLiteBypassed()) {
     // one-shot "show everything": also forget the list so the server filter is
     // not applied either
     return {
       skippedRooms: [],
-      report: skip('showing all chats for this load', options.windowDays, 0),
+      report: skip('showing all chats for this load', options.windowDays),
     };
   }
 
   let db: IDBDatabase | undefined;
   try {
-    db = await openExistingDb(SYNC_DB_NAME);
+    db = await openExistingDb(SYNC_IDB_NAME);
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('lite mode: could not open the sync store, loading everything', err);
     return {
       skippedRooms: previous,
-      report: skip('could not open the saved chats', options.windowDays, 0),
+      report: skip('could not open the saved chats', options.windowDays),
     };
   }
   if (!db) {
@@ -231,7 +246,7 @@ export const pruneDormantRooms = async (
     // skip. The next load will be the fast one.
     return {
       skippedRooms: previous,
-      report: skip('nothing saved yet — first load is always the slow one', options.windowDays, 0),
+      report: skip('nothing saved yet — first load is always the slow one', options.windowDays),
     };
   }
 
@@ -239,7 +254,7 @@ export const pruneDormantRooms = async (
     if (!db.objectStoreNames.contains(SYNC_STORE)) {
       return {
         skippedRooms: previous,
-        report: skip('saved chats not in the expected shape', options.windowDays, 0),
+        report: skip('saved chats not in the expected shape', options.windowDays),
       };
     }
 
@@ -254,11 +269,7 @@ export const pruneDormantRooms = async (
     if (!record?.roomsData?.join || !record.nextBatch) {
       return {
         skippedRooms: previous,
-        report: skip(
-          'nothing saved yet — first load is always the slow one',
-          options.windowDays,
-          0
-        ),
+        report: skip('nothing saved yet — first load is always the slow one', options.windowDays),
       };
     }
 
@@ -274,7 +285,7 @@ export const pruneDormantRooms = async (
       const prunedRoomsData = pruneRoomsData(record.roomsData, classification.dormant);
       const writeTx = db.transaction([SYNC_STORE], 'readwrite');
       writeTx.objectStore(SYNC_STORE).put({
-        clobber: SYNC_KEY,
+        clobber: SYNC_CLOBBER,
         nextBatch: record.nextBatch,
         roomsData: prunedRoomsData,
       });
@@ -300,7 +311,7 @@ export const pruneDormantRooms = async (
     console.error('lite mode: prune failed, loading everything', err);
     return {
       skippedRooms: previous,
-      report: skip('could not skip the old chats this time', options.windowDays, 0),
+      report: skip('could not skip the old chats this time', options.windowDays),
     };
   } finally {
     db.close();
