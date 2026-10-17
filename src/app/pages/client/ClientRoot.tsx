@@ -19,10 +19,12 @@ import React, { MouseEventHandler, ReactNode, useCallback, useEffect, useState }
 import {
   clearCacheAndReload,
   clearLoginData,
+  getLiteState,
   initClient,
   logoutClient,
   startClient,
 } from '../../../client/initMatrix';
+import { watchSkippedRooms } from '../../../client/lite-revive';
 import { SplashScreen } from '../../components/splash-screen';
 import { ServerConfigsLoader } from '../../components/ServerConfigsLoader';
 import { CapabilitiesProvider } from '../../hooks/useCapabilities';
@@ -42,6 +44,7 @@ function ClientRootLoading({ mx }: { mx?: MatrixClient }) {
   // /sync data can take a long time. Show how many rooms have been restored so
   // far so that the splash screen does not look stuck.
   const [roomCount, setRoomCount] = useState(0);
+  const skippedCount = getLiteState().report?.skippedRooms ?? 0;
 
   useEffect(() => {
     if (!mx) return undefined;
@@ -56,8 +59,9 @@ function ClientRootLoading({ mx }: { mx?: MatrixClient }) {
       <Box direction="Column" grow="Yes" alignItems="Center" justifyContent="Center" gap="400">
         <Spinner variant="Secondary" size="600" />
         <Text>Heating up</Text>
-        {roomCount > 0 && (
-          <Text size="T200" priority="300">{`${roomCount} chats loaded`}</Text>
+        {roomCount > 0 && <Text size="T200" priority="300">{`${roomCount} chats loaded`}</Text>}
+        {skippedCount > 0 && (
+          <Text size="T200" priority="300">{`${skippedCount} older chats skipped`}</Text>
         )}
       </Box>
     </SplashScreen>
@@ -139,6 +143,18 @@ function ClientRootOptions({ mx }: { mx?: MatrixClient }) {
   );
 }
 
+/**
+ * Lite mode: a chat that was skipped must still come back when it wakes up.
+ */
+const useSkippedRoomWatcher = (mx?: MatrixClient) => {
+  useEffect(() => {
+    if (!mx) return undefined;
+    const { options } = getLiteState();
+    if (!options.enabled) return undefined;
+    return watchSkippedRooms(mx, options.serverFilter);
+  }, [mx]);
+};
+
 const useLogoutListener = (mx?: MatrixClient) => {
   useEffect(() => {
     const handleLogout: HttpApiEventHandlerMap[HttpApiEvent.SessionLoggedOut] = async () => {
@@ -177,6 +193,7 @@ export function ClientRoot({ children }: ClientRootProps) {
   );
 
   useLogoutListener(mx);
+  useSkippedRoomWatcher(mx);
 
   useEffect(() => {
     if (loadState.status === AsyncStatus.Idle) {

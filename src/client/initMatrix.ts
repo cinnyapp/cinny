@@ -1,8 +1,26 @@
-import { createClient, MatrixClient, IndexedDBStore, IndexedDBCryptoStore } from 'matrix-js-sdk';
+import {
+  createClient,
+  Filter,
+  MatrixClient,
+  IndexedDBStore,
+  IndexedDBCryptoStore,
+} from 'matrix-js-sdk';
 
 import { cryptoCallbacks } from './secretStorageKeys';
 import { clearNavToActivePathStore } from '../app/state/navToActivePath';
 import { pushSessionToSW } from '../sw-session';
+import { buildLiteFilterDefinition, LITE_FILTER_INLINE_SAFE_ROOMS, LiteOptions } from './lite-mode';
+import {
+  bypassLiteOnce,
+  clearLiteBypass,
+  forgetSkippedRooms,
+  getSkippedRooms,
+  isLiteBypassed,
+  liteOptionsFromSettings,
+  LiteReport,
+  pruneDormantRooms,
+  SYNC_DB_NAME,
+} from './lite-store';
 
 type Session = {
   baseUrl: string;
@@ -27,7 +45,7 @@ const createSyncStore = (useWorker: boolean): IndexedDBStore =>
   new IndexedDBStore({
     indexedDB: global.indexedDB,
     localStorage: global.localStorage,
-    dbName: 'web-sync-store',
+    dbName: SYNC_DB_NAME,
     ...(useWorker
       ? {
           workerFactory: () =>
@@ -49,7 +67,31 @@ const createClientWithStore = (session: Session, store: IndexedDBStore): MatrixC
     verificationMethods: ['m.sas.v1'],
   });
 
+/**
+ * What lite mode did on this load — read by the settings screen and by
+ * `startClient` (which turns the skipped list into a /sync filter).
+ */
+let liteState: { options: LiteOptions; skippedRooms: string[]; report?: LiteReport } = {
+  options: { enabled: false, windowDays: 90, serverFilter: false },
+  skippedRooms: [],
+};
+
+export const getLiteState = () => liteState;
+
 export const initClient = async (session: Session): Promise<MatrixClient> => {
+  // BEFORE the store is opened: delete the chats that have gone quiet from the
+  // persisted /sync record, so the SDK never replays them. See client/lite-store.ts.
+  const liteOptions = liteOptionsFromSettings();
+  const bypassed = isLiteBypassed();
+  const { skippedRooms, report } = await pruneDormantRooms(liteOptions);
+  if (bypassed) {
+    // "Show older chats" was a one-shot: everything is loaded this time, and the
+    // skipped list is dropped so nothing is filtered out either.
+    forgetSkippedRooms();
+    clearLiteBypass();
+  }
+  liteState = { options: liteOptions, skippedRooms, report };
+
   let indexedDBStore = createSyncStore(true);
   let mx = createClientWithStore(session, indexedDBStore);
 
@@ -79,9 +121,34 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
   return mx;
 };
 
+/**
+ * Build the /sync filter that tells the homeserver to leave the skipped chats
+ * out, or `undefined` when it should not be used.
+ *
+ * Guard: on the very first sync of an empty store matrix-js-sdk inlines the
+ * filter into the /sync query string, which thousands of room IDs would blow
+ * past any URL limit. That path only happens when there is no saved sync token,
+ * so we require one.
+ */
+const buildLiteSyncFilter = async (mx: MatrixClient): Promise<Filter | undefined> => {
+  const { options } = liteState;
+  if (!options.enabled || !options.serverFilter) return undefined;
+  const skipped = getSkippedRooms();
+  if (skipped.length === 0) return undefined;
+  if (skipped.length > LITE_FILTER_INLINE_SAFE_ROOMS) {
+    const savedToken = await mx.store.getSavedSyncToken();
+    if (!savedToken) return undefined;
+  }
+  const filter = new Filter(mx.getUserId());
+  filter.setDefinition(buildLiteFilterDefinition(skipped));
+  return filter;
+};
+
 export const startClient = async (mx: MatrixClient) => {
+  const filter = await buildLiteSyncFilter(mx);
   await mx.startClient({
     lazyLoadMembers: true,
+    ...(filter ? { filter } : {}),
   });
 };
 
@@ -90,6 +157,21 @@ export const clearCacheAndReload = async (mx: MatrixClient) => {
   clearNavToActivePathStore(mx.getSafeUserId());
   await mx.store.deleteAllData();
   window.location.reload();
+};
+
+/**
+ * Lite mode: bring every chat back, once.
+ *
+ * The skipped chats were deleted from the saved copy, and an incremental /sync
+ * will not re-send a chat that nothing has happened in — so the only honest way
+ * to see them all again is to drop the saved copy and let the server send
+ * everything. That is the slow load again (minutes on a 9,000-chat account).
+ * Lite mode stays on, so the load after this one is lean again.
+ */
+export const loadAllChatsOnce = async (mx: MatrixClient) => {
+  bypassLiteOnce();
+  forgetSkippedRooms();
+  await clearCacheAndReload(mx);
 };
 
 export const logoutClient = async (mx: MatrixClient) => {

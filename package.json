@@ -16,6 +16,7 @@
     "check:prettier": "prettier --check .",
     "fix:prettier": "prettier --write .",
     "typecheck": "tsc --noEmit",
+    "test:lite": "node --experimental-strip-types scripts/test-lite-mode.mjs",
     "prepare": "husky install",
     "commit": "git-cz",
     "semantic-release": "semantic-release"
