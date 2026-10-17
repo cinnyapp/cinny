@@ -11,28 +11,67 @@ type Session = {
   deviceId: string;
 };
 
-export const initClient = async (session: Session): Promise<MatrixClient> => {
-  const indexedDBStore = new IndexedDBStore({
+/**
+ * Build the persisted /sync store.
+ *
+ * With `useWorker`, matrix-js-sdk talks to IndexedDB through a web worker
+ * (`RemoteIndexedDBStoreBackend`). On an account with a very large number of
+ * rooms the persisted /sync blob is hundreds of megabytes, and without a worker
+ * every byte of it is read, re-accumulated, `deepCopy()`-ed (a full
+ * JSON.stringify + JSON.parse round-trip) and — every five minutes —
+ * re-serialised **on the main thread**, which freezes the UI. A worker moves
+ * all of that off the main thread and skips the `deepCopy()` entirely.
+ * Element Web has always done this.
+ */
+const createSyncStore = (useWorker: boolean): IndexedDBStore =>
+  new IndexedDBStore({
     indexedDB: global.indexedDB,
     localStorage: global.localStorage,
     dbName: 'web-sync-store',
+    ...(useWorker
+      ? {
+          workerFactory: () =>
+            new Worker(new URL('./indexeddb-worker.ts', import.meta.url), { type: 'module' }),
+        }
+      : {}),
   });
 
-  const legacyCryptoStore = new IndexedDBCryptoStore(global.indexedDB, 'crypto-store');
-
-  const mx = createClient({
+const createClientWithStore = (session: Session, store: IndexedDBStore): MatrixClient =>
+  createClient({
     baseUrl: session.baseUrl,
     accessToken: session.accessToken,
     userId: session.userId,
-    store: indexedDBStore,
-    cryptoStore: legacyCryptoStore,
+    store,
+    cryptoStore: new IndexedDBCryptoStore(global.indexedDB, 'crypto-store'),
     deviceId: session.deviceId,
     timelineSupport: true,
     cryptoCallbacks: cryptoCallbacks as any,
     verificationMethods: ['m.sas.v1'],
   });
 
-  await indexedDBStore.startup();
+export const initClient = async (session: Session): Promise<MatrixClient> => {
+  let indexedDBStore = createSyncStore(true);
+  let mx = createClientWithStore(session, indexedDBStore);
+
+  try {
+    await indexedDBStore.startup();
+  } catch (err) {
+    // The worker could not be started (unsupported runtime, blocked by a CSP,
+    // failed chunk load, ...). Fall back to the previous main-thread store
+    // rather than failing to load the app at all. Nothing has used `mx` yet —
+    // `createClient` does no I/O — so it is safe to rebuild both.
+    // eslint-disable-next-line no-console
+    console.error('initMatrix: IndexedDB worker store failed, falling back to main thread', err);
+    try {
+      await indexedDBStore.destroy();
+    } catch {
+      // ignore
+    }
+    indexedDBStore = createSyncStore(false);
+    mx = createClientWithStore(session, indexedDBStore);
+    await indexedDBStore.startup();
+  }
+
   await mx.initRustCrypto();
 
   mx.setMaxListeners(50);
