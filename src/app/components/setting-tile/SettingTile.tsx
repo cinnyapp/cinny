@@ -1,6 +1,8 @@
 import React, { ReactNode } from 'react';
 import { Box, Text } from 'folds';
 import { BreakWord } from '../../styles/Text.css';
+import { useSettingHighlight } from '../../features/settings/search/SettingsHighlight';
+import { TileHighlight } from '../../features/settings/search/SettingsSearch.css';
 
 type SettingTileProps = {
   title?: ReactNode;
@@ -10,8 +12,16 @@ type SettingTileProps = {
   children?: ReactNode;
 };
 export function SettingTile({ title, description, before, after, children }: SettingTileProps) {
+  // When the Settings search jumps to this setting, scroll to it and flash it.
+  const { ref, highlighted } = useSettingHighlight(title);
+
   return (
-    <Box alignItems="Center" gap="300">
+    <Box
+      ref={ref}
+      className={highlighted ? TileHighlight : undefined}
+      alignItems="Center"
+      gap="300"
+    >
       {before && <Box shrink="No">{before}</Box>}
       <Box grow="Yes" direction="Column" gap="100">
         {title && (

@@ -19,7 +19,10 @@
     "test:lite": "node --experimental-strip-types scripts/test-lite-mode.mjs",
     "prepare": "husky install",
     "commit": "git-cz",
-    "semantic-release": "semantic-release"
+    "semantic-release": "semantic-release",
+    "test:settings-search": "node --experimental-strip-types --import ./scripts/ts-resolve-hook.mjs scripts/test-settings-search.mjs",
+    "build:settings-index": "node scripts/build-settings-index.mjs",
+    "test": "npm run test:lite && npm run test:settings-search"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": "eslint",
