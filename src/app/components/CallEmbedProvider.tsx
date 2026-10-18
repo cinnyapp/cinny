@@ -18,6 +18,9 @@ import {
   toRem,
 } from 'folds';
 import { putSend } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { roomTimeline } from 'neurone/lib/utils/sync/v3/join';
+import { ClientEventWithoutRoomId } from 'neurone/lib/api/types';
+import { ObjectReader } from 'neurone/lib/utils';
 import {
   CallEmbedContextProvider,
   CallEmbedRefContextProvider,
@@ -37,7 +40,7 @@ import { mDirectAtom } from '../state/mDirectList';
 import { useMediaAuthentication } from '../hooks/useMediaAuthentication';
 import { RoomAvatar, RoomIcon } from './room-avatar';
 import { useRoomNavigate } from '../hooks/useRoomNavigate';
-import { CallEventType, MessageEvent } from '../../types/matrix/room';
+import { CallEventType, MessageEvent, StateEvent, StateEventType } from '../../types/matrix/room';
 import { useLivekitSupport } from '../hooks/useLivekitSupport';
 import { CallAvatarAnimation } from '../styles/Animations.css';
 import { webRTCSupported } from '../utils/rtc';
@@ -48,6 +51,13 @@ import { useGetRoomAvatar } from '../hooks/storage/useGetRoomAvatar';
 import { mxcToHttp } from '../../client/mxcToHttp';
 import { RelationType } from '../../types/matrix/common';
 import { ensureEncryptionSession } from '../hooks/useEnsureRoomEncryptionSession';
+import { SyncValue } from '../../client/sync';
+import { isCallRoom } from '../utils/room';
+import { reference } from '../../client/room/relations';
+import { rContent, rMentions, rRelatesTo } from '../../client/reader';
+import { getJoinRoomStateId } from '../../client/storage/collections';
+import { getPowerLevels } from '../hooks/usePowerLevels';
+import { getRoomPermissionsAPI } from '../hooks/useRoomPermissions';
 
 type IncomingCallInfo = {
   roomId: string;
@@ -234,82 +244,92 @@ function IncomingCallListener({ callEmbed, joined }: IncomingCallListenerProps) 
   const [callInfo, setCallInfo] = useState<IncomingCallInfo>();
   const dm = callInfo ? directs.has(callInfo.roomId) : false;
   const startCall = useCallStart();
-  //
-  //   const handleSync = useCallback(
-  //     async (syncValue: SyncValue) => {
-  //       // only process rtc notification reference events.
-  //       // we do not want to wait to decrypt all events.
-  //       if (event.getRelation()?.rel_type !== RelationType.Reference) return;
-  //       if (room?.isCallRoom()) return;
-  //
-  //       if (event.isEncrypted()) {
-  //         if (!event.isBeingDecrypted()) {
-  //           await event.attemptDecryption(mx.getCrypto() as CryptoBackend);
-  //         }
-  //         await event.getDecryptionPromise();
-  //       }
-  //
-  //       if (
-  //         !room ||
-  //         event.getType() !== EventType.RTCNotification ||
-  //         event.getSender() === mx.getSafeUserId() ||
-  //         !data.liveEvent
-  //       ) {
-  //         return;
-  //       }
-  //
-  //       const sender = event.getSender();
-  //       const content = event.getContent<IRTCNotificationContent>();
-  //       const senderTs =
-  //         content.sender_ts - event.getTs() > 20000 ? event.getTs() : content.sender_ts;
-  //       const lifetime = Math.min(content.lifetime, 120000);
-  //       const notificationType = content.notification_type;
-  //       const relation =
-  //         event.getRelation()?.rel_type === RelationType.Reference ? event.getRelation() : undefined;
-  //       const refEventId = relation?.event_id;
-  //
-  //       const mention =
-  //         content['m.mentions']?.room ||
-  //         content['m.mentions']?.user_ids?.includes(mx.getSafeUserId());
-  //       if (!sender || !refEventId || !mention || Date.now() >= senderTs + lifetime) {
-  //         return;
-  //       }
-  //
-  //       const powerLevelsEvent = getStateEvent(room, StateEvent.RoomPowerLevels);
-  //       const powerLevels = getPowersLevelFromMatrixEvent(powerLevelsEvent);
-  //       const creators = getRoomCreatorsForRoomId(mx, room.roomId);
-  //       const permissions = getRoomPermissionsAPI(creators, powerLevels);
-  //
-  //       const hasCallPermission = permissions.stateEvent(
-  //         StateEvent.GroupCallMemberPrefix,
-  //         mx.getSafeUserId()
-  //       );
-  //       if (!hasCallPermission) return;
-  //
-  //       const info: IncomingCallInfo = {
-  //         room,
-  //         sender,
-  //         senderTs,
-  //         lifetime,
-  //         intent:
-  //           'm.call.intent' in content && typeof content['m.call.intent'] === 'string'
-  //             ? content['m.call.intent']
-  //             : undefined,
-  //         notificationType,
-  //         refEventId,
-  //       };
-  //
-  //       setCallInfo(info);
-  //     },
-  //     [mx]
-  //   );
-  //
-  //   useEffect(() => {
-  //     const unsub = ct.sync.observable.subscribe(handleSync)
-  //     return () => {
-  //       unsub()
-  //     }
-  //   }, [ct, handleSync]);
+
+  const handleReferenceEvent = useCallback(
+    async (roomId: string, event: ClientEventWithoutRoomId) => {
+      let targetEvent = event;
+
+      if (ct.encryptedRooms.read.has(roomId) && event.type === MessageEvent.RoomMessageEncrypted) {
+        targetEvent = await ct.decryption.tryDecryptEvent(roomId, event);
+      }
+
+      if (
+        targetEvent.type !== CallEventType.RTCInvite ||
+        targetEvent.sender === ct.session.userId
+      ) {
+        return;
+      }
+
+      const { sender, content } = targetEvent;
+
+      const senderTs = ObjectReader.number(content, 'sender_ts') ?? targetEvent.origin_server_ts;
+      const lifetime = Math.min(ObjectReader.number(content, 'lifetime') ?? 120000, 120000);
+
+      const refEventId = rRelatesTo.eventId(rContent.relatesTo(content));
+
+      const mention =
+        rMentions.room(rContent.mentions(content)) ||
+        rMentions.userIds(rContent.mentions(content))?.includes(ct.session.userId);
+
+      if (!refEventId || !mention || Date.now() >= senderTs + lifetime) {
+        return;
+      }
+
+      const powerLevelsObj = await ct.storage.joinRoomState.read.get(
+        getJoinRoomStateId(roomId, StateEventType.RoomPowerLevels, '')
+      );
+      if (!powerLevelsObj) return;
+      const powerLevels = getPowerLevels(powerLevelsObj);
+      const creators = ct.roomToCreators.read.get(roomId);
+      const permissions = getRoomPermissionsAPI(creators, powerLevels);
+
+      const hasCallPermission = permissions.stateEvent(
+        StateEvent.GroupCallMemberPrefix,
+        ct.session.userId
+      );
+      if (!hasCallPermission) return;
+
+      const info: IncomingCallInfo = {
+        roomId,
+        sender,
+        senderTs,
+        lifetime,
+        intent: ObjectReader.string(content, 'm.call.intent'),
+        silent: !ct.directRooms.read.has(roomId),
+        refEventId,
+      };
+
+      setCallInfo((currentInfo) => {
+        if (currentInfo) return currentInfo;
+        return info;
+      });
+    },
+    [ct]
+  );
+
+  useEffect(() => {
+    const unsub = ct.sync.observable.subscribe(async (syncValue: SyncValue) => {
+      const [, data] = syncValue ?? [];
+      if (!data) return;
+
+      Object.keys(data.rooms?.join ?? {}).forEach(async (roomId) => {
+        if (isCallRoom(ct.roomToType.read.get(roomId))) return;
+
+        const joinedRoom = data.rooms?.join?.[roomId];
+        if (!joinedRoom) return;
+
+        const timelineEvents = roomTimeline(joinedRoom);
+        Array.from(timelineEvents)
+          .reverse()
+          .forEach((event) => {
+            if (reference(event)) handleReferenceEvent(roomId, event);
+          });
+      });
+    });
+    return () => {
+      unsub();
+    };
+  }, [ct, handleReferenceEvent]);
 
   const handleIgnore = useCallback(() => {
     setCallInfo(undefined);

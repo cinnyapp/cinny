@@ -8,6 +8,7 @@ import { ObjectReader } from 'neurone/lib/utils';
 import { Disposable, Disposer } from 'neurone/lib/utils/disposable';
 import { EncryptedEvent, EventDecryptionSuccess } from './EncryptedEvent';
 import { EncryptedEventIndex } from './EncryptedEventIndex';
+import { MessageEvent } from '../../types/matrix/room';
 
 export class DecryptionManager implements Disposable {
   private readonly machine: Machine;
@@ -91,7 +92,7 @@ export class DecryptionManager implements Disposable {
     roomId: string,
     event: ClientEventWithoutRoomId
   ): Promise<ClientEventWithoutRoomId> {
-    if (event.type !== 'm.room.encryption') {
+    if (event.type !== MessageEvent.RoomMessageEncrypted) {
       return event;
     }
     const encryptedEvent = this.registerEvent(
