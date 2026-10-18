@@ -52,7 +52,7 @@ import {
   Username,
   UsernameBold,
 } from '../../../components/message';
-import { canEditEvent, fallbackReply, getReactionGroups, getReplyId } from '../../../utils/room';
+import { canEditEvent, getReactionGroups } from '../../../utils/room';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
 import * as css from './styles.css';

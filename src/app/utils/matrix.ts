@@ -3,14 +3,11 @@ import {
   decryptAttachment,
   encryptAttachment,
 } from 'browser-encrypt-attachment';
-import { MatrixClient, MatrixEvent } from 'matrix-js-sdk';
 import to from 'await-to-js';
 import { putAccountData } from 'neurone/lib/api/matrix/client/v3/user';
 import { MatrixError } from 'neurone/lib/matrix-request';
 import { IImageInfo, IThumbnailContent, IVideoInfo } from '../../types/matrix/common';
 import { AccountDataType } from '../../types/matrix/accountData';
-import { getStateEvent } from './room';
-import { StateEvent } from '../../types/matrix/room';
 import { ClientContext } from '../../client/context';
 import { JoinRoomMemberObject } from '../../client/storage/collections';
 import { rError } from '../../client/reader';
@@ -32,26 +29,6 @@ export const isUserId = (id: string): boolean => validMxId(id) && id.startsWith(
 export const isRoomId = (id: string): boolean => id.startsWith('!');
 
 export const isRoomAlias = (id: string): boolean => validMxId(id) && id.startsWith('#');
-
-export const getCanonicalAliasRoomId = (mx: MatrixClient, alias: string): string | undefined =>
-  mx
-    .getRooms()
-    ?.find(
-      (room) =>
-        room.getCanonicalAlias() === alias &&
-        getStateEvent(room, StateEvent.RoomTombstone) === undefined
-    )?.roomId;
-
-export const getCanonicalAliasOrRoomId = (mx: MatrixClient, roomId: string): string => {
-  const room = mx.getRoom(roomId);
-  if (!room) return roomId;
-  if (getStateEvent(room, StateEvent.RoomTombstone) !== undefined) return roomId;
-  const alias = room.getCanonicalAlias();
-  if (alias && getCanonicalAliasRoomId(mx, alias) === roomId) {
-    return alias;
-  }
-  return roomId;
-};
 
 export const getImageInfo = (img: HTMLImageElement, fileOrBlob: File | Blob): IImageInfo => {
   const info: IImageInfo = {};
@@ -109,9 +86,13 @@ export const encryptFile = async (
 }> => {
   const dataBuffer = await file.arrayBuffer();
   const encryptedAttachment = await encryptAttachment(dataBuffer);
-  const encFile = new File([encryptedAttachment.data], file.name, {
-    type: file.type,
-  });
+  const encFile = new File(
+    [encryptedAttachment.data],
+    file instanceof File ? file.name : 'Untitled',
+    {
+      type: file.type,
+    }
+  );
   return {
     encInfo: encryptedAttachment.info,
     file: encFile,
@@ -130,14 +111,6 @@ export const decryptFile = async (
 };
 
 export type UploadContent = File | Blob;
-
-export const matrixEventByRecency = (m1: MatrixEvent, m2: MatrixEvent) => m2.getTs() - m1.getTs();
-
-export const factoryEventSentBy = (senderId: string) => (ev: MatrixEvent) =>
-  ev.getSender() === senderId;
-
-export const eventWithShortcode = (ev: MatrixEvent) =>
-  typeof ev.getContent().shortcode === 'string';
 
 export const getUserDirectRooms = (ct: ClientContext, userId: string): string[] => {
   const rooms = Object.keys(ct.roomToSummary.read);
@@ -242,26 +215,6 @@ export const removeRoomIdFromMDirect = async (ct: ClientContext, roomId: string)
     })
   );
 };
-
-export const mxcUrlToHttp = (
-  mx: MatrixClient,
-  mxcUrl: string,
-  useAuthentication?: boolean,
-  width?: number,
-  height?: number,
-  resizeMethod?: string,
-  allowDirectLinks?: boolean,
-  allowRedirects?: boolean
-): string | null =>
-  mx.mxcUrlToHttp(
-    mxcUrl,
-    width,
-    height,
-    resizeMethod,
-    allowDirectLinks,
-    allowRedirects,
-    useAuthentication
-  );
 
 export const downloadMedia = async (src: string): Promise<Blob> => {
   // this request is authenticated by service worker
