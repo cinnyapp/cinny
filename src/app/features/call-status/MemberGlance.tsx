@@ -1,5 +1,5 @@
 import { Box, config, Icon, Icons, Text } from 'folds';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { UserAvatar } from '../../components/user-avatar';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { StackedAvatar } from '../../components/stacked-avatar';
@@ -22,7 +22,16 @@ export function MemberGlance({ roomId, users, membersAPI, speakers, max = 6 }: M
   const useAuthentication = useMediaAuthentication();
   const openUserProfile = useOpenUserRoomProfile();
 
-  const visibleMembers = users.slice(0, max);
+  const visibleMembers = useMemo(
+    () =>
+      Array.from(users)
+        .sort((a, b) => {
+          if (speakers.has(a) === speakers.has(b)) return 0;
+          return speakers.has(a) ? -1 : 1;
+        })
+        .slice(0, max),
+    [users, speakers, max]
+  );
   const remainingCount = max && users.length > max ? users.length - max : 0;
 
   return (
