@@ -80,6 +80,7 @@ import { PowerIcon } from '../../../components/power';
 import colorMXID from '../../../../util/colorMXID';
 import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
 import { MessageTranslation } from '../../translation/MessageTranslation';
+import { IrrelevantContent, MessageIrrelevantItem, useIrrelevantMarkers } from '../../irrelevant';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -660,6 +661,7 @@ export type MessageProps = {
   highlight: boolean;
   edit?: boolean;
   canDelete?: boolean;
+  canRedact?: boolean;
   canSendReaction?: boolean;
   canPinEvent?: boolean;
   imagePackRooms?: Room[];
@@ -694,6 +696,7 @@ export const Message = as<'div', MessageProps>(
       highlight,
       edit,
       canDelete,
+      canRedact,
       canSendReaction,
       canPinEvent,
       imagePackRooms,
@@ -728,6 +731,13 @@ export const Message = as<'div', MessageProps>(
     const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
     const [menuAnchor, setMenuAnchor] = useState<RectCords>();
     const [emojiBoardAnchor, setEmojiBoardAnchor] = useState<RectCords>();
+
+    // "Mark as irrelevant": a 🙈 marker reaction (from anyone) collapses the message like a
+    // deleted one; Show/Hide reveals the original inline. Editing always shows the content.
+    const irrelevantMarkers = useIrrelevantMarkers(relations);
+    const [irrelevantRevealed, setIrrelevantRevealed] = useState(false);
+    const irrelevant = irrelevantMarkers.length > 0 && !edit;
+    const hideIrrelevantContent = irrelevant && !irrelevantRevealed;
 
     const senderDisplayName =
       getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
@@ -816,26 +826,38 @@ export const Message = as<'div', MessageProps>(
 
     const msgContentJSX = (
       <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
-        {reply}
-        {edit && onEditId ? (
-          <MessageEditor
-            style={{
-              maxWidth: '100%',
-              width: '100vw',
-            }}
-            roomId={room.roomId}
+        {irrelevant && (
+          <IrrelevantContent
             room={room}
-            mEvent={mEvent}
-            imagePackRooms={imagePackRooms}
-            onCancel={() => onEditId()}
+            markers={irrelevantMarkers}
+            revealed={irrelevantRevealed}
+            onToggle={() => setIrrelevantRevealed((revealed) => !revealed)}
           />
-        ) : (
-          children
         )}
-        {/* In-app translation (per-message button + inline translation, auto-translate when on).
-            Self-contained; renders nothing unless the translate backend is configured and this is
-            a text message. Kept separate from the transcription UI to minimize merge conflicts. */}
-        {!edit && <MessageTranslation mEvent={mEvent} roomId={room.roomId} />}
+        {!hideIrrelevantContent && (
+          <>
+            {reply}
+            {edit && onEditId ? (
+              <MessageEditor
+                style={{
+                  maxWidth: '100%',
+                  width: '100vw',
+                }}
+                roomId={room.roomId}
+                room={room}
+                mEvent={mEvent}
+                imagePackRooms={imagePackRooms}
+                onCancel={() => onEditId()}
+              />
+            ) : (
+              children
+            )}
+            {/* In-app translation (per-message button + inline translation, auto-translate when on).
+                Self-contained; renders nothing unless the translate backend is configured and this
+                is a text message. Kept separate from the transcription UI to minimize conflicts. */}
+            {!edit && <MessageTranslation mEvent={mEvent} roomId={room.roomId} />}
+          </>
+        )}
         {reactions}
       </Box>
     );
@@ -1074,6 +1096,17 @@ export const Message = as<'div', MessageProps>(
                                 Edit Message
                               </Text>
                             </MenuItem>
+                          )}
+                          {!mEvent.isRedacted() && (
+                            <MessageIrrelevantItem
+                              room={room}
+                              mEvent={mEvent}
+                              markers={irrelevantMarkers}
+                              canRedact={canRedact}
+                              canSendReaction={canSendReaction}
+                              onReactionToggle={onReactionToggle}
+                              onClose={closeMenu}
+                            />
                           )}
                           {!hideReadReceipts && (
                             <MessageReadReceiptItem
