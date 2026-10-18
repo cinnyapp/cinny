@@ -620,7 +620,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             // Check if the document is in focus (user is actively viewing the app),
             // and either there are no unread messages or the latest message is from the current user.
             // If either condition is met, trigger the markAsRead function to send a read receipt.
-            requestAnimationFrame(() => markAsRead(mx, mEvt.getRoomId()!, hideActivity));
+            requestAnimationFrame(() =>
+              // automatic receipt: never clears a manual "mark as unread"
+              markAsRead(mx, mEvt.getRoomId()!, hideActivity, false)
+            );
           }
 
           if (!document.hasFocus() && !unreadInfo) {
@@ -713,7 +716,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const tryAutoMarkAsRead = useCallback(() => {
     const readUptoEventId = readUptoEventIdRef.current;
     if (!readUptoEventId) {
-      requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity));
+      requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity, false));
       return;
     }
     const evtTimeline = getEventTimeline(room, readUptoEventId);
@@ -725,13 +728,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       // nothing — otherwise the room's badge can never be cleared by reading
       // it (stuck-unread bug).
       if (atLiveEndRef.current) {
-        requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity));
+        requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity, false));
       }
       return;
     }
     const latestTimeline = getFirstLinkedTimeline(evtTimeline, Direction.Forward);
     if (latestTimeline === room.getLiveTimeline()) {
-      requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity));
+      requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity, false));
     }
   }, [mx, room, hideActivity]);
 
@@ -1065,6 +1068,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             highlight={highlighted}
             edit={editId === mEventId}
             canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
+            canRedact={canRedact}
             canSendReaction={canSendReaction}
             canPinEvent={canPinEvent}
             imagePackRooms={imagePackRooms}
@@ -1149,6 +1153,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             highlight={highlighted}
             edit={editId === mEventId}
             canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
+            canRedact={canRedact}
             canSendReaction={canSendReaction}
             canPinEvent={canPinEvent}
             imagePackRooms={imagePackRooms}
@@ -1269,6 +1274,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             collapse={collapse}
             highlight={highlighted}
             canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
+            canRedact={canRedact}
             canSendReaction={canSendReaction}
             canPinEvent={canPinEvent}
             imagePackRooms={imagePackRooms}

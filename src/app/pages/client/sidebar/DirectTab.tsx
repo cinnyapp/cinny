@@ -17,7 +17,8 @@ import {
   SidebarItemTooltip,
 } from '../../../components/sidebar';
 import { useDirectSelected } from '../../../hooks/router/useDirectSelected';
-import { UnreadBadge } from '../../../components/unread-badge';
+import { MarkedUnreadBadge, UnreadBadge } from '../../../components/unread-badge';
+import { useRoomsMarkedUnread } from '../../../state/hooks/markedUnread';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
 import { useDirectRooms } from '../direct/useDirectRooms';
@@ -69,6 +70,8 @@ export function DirectTab() {
   const mDirects = useAtomValue(mDirectAtom);
   const directs = useDirects(mx, allRoomsAtom, mDirects);
   const directUnread = useRoomsUnread(directs, roomToUnreadAtom);
+  // Hand-marked chats (MSC2867) carry no counts, so they show as a plain dot.
+  const directMarkedUnread = useRoomsMarkedUnread(directs);
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const directSelected = useDirectSelected();
@@ -109,6 +112,11 @@ export function DirectTab() {
       {directUnread && (
         <SidebarItemBadge hasCount={directUnread.total > 0}>
           <UnreadBadge highlight={directUnread.highlight > 0} count={directUnread.total} />
+        </SidebarItemBadge>
+      )}
+      {!directUnread && directMarkedUnread && (
+        <SidebarItemBadge hasCount={false}>
+          <MarkedUnreadBadge />
         </SidebarItemBadge>
       )}
       {menuAnchor && (

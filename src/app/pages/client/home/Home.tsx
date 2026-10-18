@@ -66,6 +66,8 @@ import {
 import { UseStateProvider } from '../../../components/UseStateProvider';
 import { JoinAddressPrompt } from '../../../components/join-address-prompt';
 import { _RoomSearchParams } from '../../paths';
+import { loadAllChatsOnce } from '../../../../client/initMatrix';
+import { getLiteReport } from '../../../../client/lite-store';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -213,6 +215,9 @@ export function Home() {
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
   const [hideActivityDots] = useSetting(settingsAtom, 'hideUnreadActivityDots');
   const [showAllRooms] = useSetting(settingsAtom, 'homeShowsAllRooms');
+  const [liteMode] = useSetting(settingsAtom, 'liteMode');
+  // How many chats lite mode left out of this load (see client/lite-store.ts).
+  const skippedChats = useMemo(() => getLiteReport()?.skippedRooms ?? 0, []);
 
   const categoryClosed = closedCategories.has(DEFAULT_CATEGORY_ID);
 
@@ -325,6 +330,24 @@ export function Home() {
                   </NavItemContent>
                 </NavLink>
               </NavItem>
+              {liteMode && skippedChats > 0 && (
+                <NavItem variant="Background" radii="400">
+                  <NavButton onClick={() => loadAllChatsOnce(mx)}>
+                    <NavItemContent>
+                      <Box as="span" grow="Yes" alignItems="Center" gap="200">
+                        <Avatar size="200" radii="400">
+                          <Icon src={Icons.Clock} size="100" />
+                        </Avatar>
+                        <Box as="span" grow="Yes">
+                          <Text as="span" size="Inherit" truncate>
+                            {`Show ${skippedChats.toLocaleString()} older chats`}
+                          </Text>
+                        </Box>
+                      </Box>
+                    </NavItemContent>
+                  </NavButton>
+                </NavItem>
+              )}
             </NavCategory>
             <NavCategory>
               <NavCategoryHeader>

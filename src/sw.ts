@@ -214,11 +214,22 @@ function validMediaRequest(url: string, baseUrl: string): boolean {
   });
 }
 
-function fetchConfig(token: string): RequestInit {
+/**
+ * Re-issue a media request with the access token attached.
+ *
+ * The original request's `Range` header is forwarded when the browser exposes
+ * it (media elements send one while seeking). Dropping it would turn every
+ * seek into a fresh full-file download; forwarding it lets the homeserver
+ * answer with a 206 when it supports partial content, and changes nothing
+ * when it does not.
+ */
+function fetchConfig(token: string, request?: Request): RequestInit {
+  const headers = new Headers();
+  headers.set('Authorization', `Bearer ${token}`);
+  const range = request?.headers.get('range');
+  if (range) headers.set('Range', range);
   return {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
     cache: 'default',
   };
 }
@@ -233,7 +244,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   const session = clientId ? sessions.get(clientId) : undefined;
   if (session) {
     if (validMediaRequest(url, session.baseUrl)) {
-      event.respondWith(fetch(url, fetchConfig(session.accessToken)));
+      event.respondWith(fetch(url, fetchConfig(session.accessToken, event.request)));
     }
     return;
   }
@@ -245,7 +256,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
       const knownSession = await getLastKnownSession();
       if (knownSession) {
         if (validMediaRequest(url, knownSession.baseUrl)) {
-          return fetch(url, fetchConfig(knownSession.accessToken));
+          return fetch(url, fetchConfig(knownSession.accessToken, event.request));
         }
         // Some other host's media path - never attach our token to it.
         return fetch(event.request);
@@ -256,7 +267,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
       // a credential-less request only produces a 401 that looks like a broken file.
       const pageSession = clientId ? await requestSessionWithTimeout(clientId) : undefined;
       if (pageSession && validMediaRequest(url, pageSession.baseUrl)) {
-        return fetch(url, fetchConfig(pageSession.accessToken));
+        return fetch(url, fetchConfig(pageSession.accessToken, event.request));
       }
 
       // Truly no session (e.g. logged out) - let the request go as it is.

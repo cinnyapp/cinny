@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useCallback, useState } from 'react';
+import React, { MouseEventHandler, useCallback, useRef, useState } from 'react';
 import {
   Box,
   Chip,
@@ -51,6 +51,17 @@ export function TranscribeButton({ roomId, eventId, mxc }: TranscribeButtonProps
   const apiSecret = apiSecretSetting?.trim() || configTranscription?.token || '';
 
   const [anchor, setAnchor] = useState<RectCords>();
+  // The always-present Close button. Keeping a stable, tabbable node in the popover
+  // (used as the focus-trap's initialFocus target) guarantees the trap always has at
+  // least one tabbable element — even while loading, on error, or on an empty
+  // transcript — otherwise focus-trap-react throws "must have at least one container
+  // with at least one tabbable node in it at all times" and crashes the app.
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  // Second line of defence: the popover container itself is focusable
+  // (tabIndex -1) and is handed to focus-trap as fallbackFocus, so even if a
+  // future change made the Close button conditional the trap still has
+  // something to hold and cannot throw.
+  const menuRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
   // Cache the transcript in component state so re-opening does not re-request.
@@ -111,21 +122,42 @@ export function TranscribeButton({ roomId, eventId, mxc }: TranscribeButtonProps
       content={
         <FocusTrap
           focusTrapOptions={{
-            initialFocus: false,
+            // Focus the always-present Close button on open. It is rendered in every
+            // state (loading / error / empty / populated), so the trap always has a
+            // tabbable node and never throws focus-trap's "must have at least one
+            // container with at least one tabbable node" error — which was crashing
+            // the app when the popover opened in the loading/spinner state. Returning
+            // undefined (when the ref isn't attached yet) falls back to focus-trap's
+            // default of focusing the first tabbable node, which is this same button.
+            initialFocus: () => closeBtnRef.current ?? menuRef.current ?? undefined,
+            fallbackFocus: () => menuRef.current ?? document.body,
             onDeactivate: handleClose,
             clickOutsideDeactivates: true,
             escapeDeactivates: stopPropagation,
           }}
         >
-          <Menu style={{ maxWidth: '100vw', width: 'max-content' }}>
+          <Menu ref={menuRef} tabIndex={-1} style={{ maxWidth: '100vw', width: 'max-content' }}>
             <Box
               direction="Column"
               gap="200"
               style={{ padding: config.space.S300, maxWidth: '20rem' }}
             >
               <Box alignItems="Center" justifyContent="SpaceBetween" gap="200">
-                <Text size="L400">Transcript</Text>
-                {loading && <Spinner size="100" variant="Secondary" />}
+                <Box alignItems="Center" gap="200">
+                  <Text size="L400">Transcript</Text>
+                  {loading && <Spinner size="100" variant="Secondary" />}
+                </Box>
+                <IconButton
+                  ref={closeBtnRef}
+                  onClick={handleClose}
+                  variant="SurfaceVariant"
+                  size="300"
+                  radii="Pill"
+                  aria-label="Close transcript"
+                  title="Close"
+                >
+                  <Icon src={Icons.Cross} size="50" />
+                </IconButton>
               </Box>
 
               {loading && (

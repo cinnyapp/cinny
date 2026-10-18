@@ -50,6 +50,18 @@ export interface Settings {
   // do not belong to any space.
   homeShowsAllRooms: boolean;
 
+  // Show the "Pinned" bar above the timeline (the room header's pin button and
+  // the Pinned Messages list are unaffected).
+  showPinnedBanner: boolean;
+  // "Lite mode" — do not load chats that have gone quiet (see client/lite-mode.ts).
+  // liteMode: skip them entirely on load.
+  // liteWindowDays: a chat counts as quiet when its newest message is older than this.
+  // liteServerFilter: also ask the homeserver to leave them out of /sync (faster,
+  // but a new message in a skipped chat only arrives once the chat is loaded again).
+  liteMode: boolean;
+  liteWindowDays: number;
+  liteServerFilter: boolean;
+
   hour24Clock: boolean;
   dateFormatString: string;
 
@@ -94,6 +106,11 @@ const defaultSettings: Settings = {
   hideUnreadActivityDots: false,
 
   homeShowsAllRooms: true,
+
+  showPinnedBanner: true,
+  liteMode: false,
+  liteWindowDays: 90,
+  liteServerFilter: false,
 
   hour24Clock: false,
   dateFormatString: 'D MMM YYYY',
