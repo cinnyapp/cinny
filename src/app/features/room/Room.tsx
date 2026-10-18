@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Box, Line } from 'folds';
 import { useParams } from 'react-router-dom';
 import { isKeyHotkey } from 'is-hotkey';
@@ -12,6 +12,7 @@ import { PowerLevelsContextProvider, usePowerLevels } from '../../hooks/usePower
 import { useRoom } from '../../hooks/useRoom';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import { markAsRead } from '../../utils/notifications';
+import { setMarkedUnreadState } from '../../utils/markedUnread';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRoomMembers } from '../../hooks/useRoomMembers';
 import { CallView } from '../call/CallView';
@@ -42,6 +43,16 @@ export function Room() {
       [mx, room.roomId, hideActivity]
     )
   );
+
+  // MSC2867: "Clients SHOULD reset the unread marker by setting `unread` to
+  // `false` when opening a room to display its timeline." Keyed on the room id,
+  // so it runs exactly once per room open — the same place Element Web clears
+  // it (its `ViewRoom` dispatch handler). Marking the room you are *currently*
+  // in as unread therefore sticks until you navigate away and come back, which
+  // is what Element does too.
+  useEffect(() => {
+    setMarkedUnreadState(mx, room.roomId, false).catch(() => undefined);
+  }, [mx, room.roomId]);
 
   const callView = room.isCallRoom();
 

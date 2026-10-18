@@ -50,6 +50,10 @@ export interface Settings {
   // do not belong to any space.
   homeShowsAllRooms: boolean;
 
+  // Show the "Pinned" bar above the timeline (the room header's pin button and
+  // the Pinned Messages list are unaffected).
+  showPinnedBanner: boolean;
+
   hour24Clock: boolean;
   dateFormatString: string;
 
@@ -94,6 +98,8 @@ const defaultSettings: Settings = {
   hideUnreadActivityDots: false,
 
   homeShowsAllRooms: true,
+
+  showPinnedBanner: true,
 
   hour24Clock: false,
   dateFormatString: 'D MMM YYYY',

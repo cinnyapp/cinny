@@ -42,6 +42,8 @@ import * as css from './RoomViewHeader.css';
 import { useRoomUnread } from '../../state/hooks/unread';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { markAsRead } from '../../utils/notifications';
+import { setMarkedUnreadState } from '../../utils/markedUnread';
+import { useRoomMarkedUnread } from '../../state/hooks/markedUnread';
 import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 import { copyToClipboard } from '../../utils/dom';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
@@ -77,6 +79,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
   const mx = useMatrixClient();
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
+  const markedUnread = useRoomMarkedUnread(room.roomId);
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(room);
 
@@ -90,6 +93,14 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
 
   const handleMarkAsRead = () => {
     markAsRead(mx, room.roomId, hideActivity);
+    requestClose();
+  };
+
+  const handleMarkAsUnread = () => {
+    // MSC2867 / spec v1.12 `m.marked_unread`. The flag survives while you stay
+    // in the room (automatic read receipts no longer clear it); it is cleared
+    // the next time the room is opened, exactly like Element.
+    setMarkedUnreadState(mx, room.roomId, true).catch(() => undefined);
     requestClose();
   };
 
@@ -128,10 +139,24 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
           size="300"
           after={<Icon size="100" src={Icons.CheckTwice} />}
           radii="300"
-          disabled={!unread}
+          // see RoomNavItem: a marked-unread chat has no counts but can still
+          // be "read"
+          disabled={!unread && !markedUnread}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
             Mark as Read
+          </Text>
+        </MenuItem>
+        <MenuItem
+          onClick={handleMarkAsUnread}
+          size="300"
+          after={<Icon size="100" src={Icons.MessageUnread} />}
+          radii="300"
+          disabled={markedUnread}
+          aria-label="Mark as Unread"
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Mark as Unread
           </Text>
         </MenuItem>
         <RoomNotificationModeSwitcher roomId={room.roomId} value={notificationMode}>
@@ -492,6 +517,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
                 onClick={handleOpenMenu}
                 ref={triggerRef}
                 aria-pressed={!!menuAnchor}
+                aria-label="Room Options"
               >
                 <Icon size="400" src={Icons.VerticalDots} filled={!!menuAnchor} />
               </IconButton>

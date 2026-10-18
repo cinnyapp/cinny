@@ -308,6 +308,7 @@ function Appearance() {
   const [systemTheme, setSystemTheme] = useSetting(settingsAtom, 'useSystemTheme');
   const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
+  const [showPinnedBanner, setShowPinnedBanner] = useSetting(settingsAtom, 'showPinnedBanner');
 
   return (
     <Box direction="Column" gap="100">
@@ -350,6 +351,16 @@ function Appearance() {
 
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile title="Page Zoom" after={<PageZoomInput />} />
+      </SequenceCard>
+
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Show Pinned Message Banner"
+          description="Show a small bar above the timeline with the room's pinned messages, with arrows to step through them and a tap to jump to the message. The pin button in the room header and the Pinned Messages list are unaffected."
+          after={
+            <Switch variant="Primary" value={showPinnedBanner} onChange={setShowPinnedBanner} />
+          }
+        />
       </SequenceCard>
     </Box>
   );

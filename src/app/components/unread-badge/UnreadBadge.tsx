@@ -41,3 +41,28 @@ export function UnreadBadge({ highlight, count }: UnreadBadgeProps) {
     </Badge>
   );
 }
+
+/**
+ * Indicator for a room the user explicitly marked unread (MSC2867).
+ *
+ * A dot with no count, which is what MSC2867 asks for: "of similar visual
+ * importance to a non-highlight notification badge without the notification
+ * count".
+ *
+ * Unlike `UnreadBadge` this is **never** suppressed by the
+ * `hideUnreadActivityDots` setting: that setting exists to hide incidental
+ * activity, whereas this dot is the direct result of the user asking for it.
+ */
+export function MarkedUnreadBadge() {
+  return (
+    <Badge
+      variant="Secondary"
+      size="200"
+      fill="Solid"
+      radii="Pill"
+      outlined={false}
+      role="status"
+      aria-label="Marked as unread"
+    />
+  );
+}
