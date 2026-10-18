@@ -15,6 +15,7 @@ import { CallControls } from './CallControls';
 import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 import { webRTCSupported } from '../../utils/rtc';
 import { useClient } from '../../hooks/useClient';
+import { CameraPreview } from './CameraPreview';
 
 function LivekitServerMissingMessage() {
   return (
@@ -114,6 +115,7 @@ function CallPrescreen() {
               </Badge>
             </Header>
           )}
+          <CameraPreview />
           <CallMemberRenderer members={callMembers} />
           <PrescreenControls canJoin={canJoin} />
           <Box className={css.PrescreenMessage} alignItems="Center">
