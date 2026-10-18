@@ -1,5 +1,5 @@
 import React from 'react';
-import { Chip, Icon, Icons, Text } from 'folds';
+import { Chip, Icon, Icons, Text, toRem } from 'folds';
 import { useAtomValue } from 'jotai';
 import { RoomIcon } from '../../components/room-avatar';
 import { roomToParentsAtom } from '../../state/room/roomToParents';
@@ -45,6 +45,7 @@ export function CallRoomName({ roomId }: CallRoomNameProps) {
     <Chip
       variant="Background"
       radii="Pill"
+      style={{ maxWidth: toRem(296) }}
       before={
         dm ? (
           <Icon size="200" src={Icons.VolumeHigh} filled />

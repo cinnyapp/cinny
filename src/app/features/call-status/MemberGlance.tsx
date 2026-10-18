@@ -22,16 +22,35 @@ export function MemberGlance({ roomId, users, membersAPI, speakers, max = 6 }: M
   const useAuthentication = useMediaAuthentication();
   const openUserProfile = useOpenUserRoomProfile();
 
-  const visibleMembers = useMemo(
-    () =>
-      Array.from(users)
-        .sort((a, b) => {
-          if (speakers.has(a) === speakers.has(b)) return 0;
-          return speakers.has(a) ? -1 : 1;
-        })
-        .slice(0, max),
-    [users, speakers, max]
-  );
+  const visibleMembers = useMemo(() => {
+    const members = Array.from(users);
+    const visible = members.slice(0, max);
+
+    const visibleSpeakers = members.filter(
+      (member) => speakers.has(member) && !visible.includes(member)
+    );
+
+    for (let i = 0; i < visibleSpeakers.length; i += 1) {
+      const speaker = visibleSpeakers[i];
+      let replaceIndex = -1;
+
+      for (let j = visible.length - 1; j >= 0; j -= 1) {
+        if (!speakers.has(visible[j])) {
+          replaceIndex = j;
+          break;
+        }
+      }
+
+      if (replaceIndex === -1) break;
+
+      visible[replaceIndex] = speaker;
+    }
+
+    // Restore the original order of the visible members
+    const memberOrder = new Map(members.map((member, index) => [member, index]));
+
+    return visible.sort((a, b) => (memberOrder.get(a) ?? 0) - (memberOrder.get(b) ?? 0));
+  }, [users, speakers, max]);
   const remainingCount = max && users.length > max ? users.length - max : 0;
 
   return (

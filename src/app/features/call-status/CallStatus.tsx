@@ -56,28 +56,24 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
           {!compact && (
             <>
               <CallRoomName roomId={roomId} />
-              {speakers.size > 0 && (
-                <>
-                  <StatusDivider />
-                  <span data-spacing-node />
-                  <MemberSpeaking membersAPI={membersAPI} speakers={speakers} />
-                </>
+              <StatusDivider />
+              <span data-spacing-node />
+              {memberVisible && (
+                <MemberGlance
+                  roomId={roomId}
+                  users={users}
+                  membersAPI={membersAPI}
+                  speakers={speakers}
+                />
               )}
+              {speakers.size > 0 && <MemberSpeaking membersAPI={membersAPI} speakers={speakers} />}
             </>
           )}
         </Box>
-        {memberVisible && (
-          <Box shrink="No">
-            <MemberGlance
-              roomId={roomId}
-              users={users}
-              membersAPI={membersAPI}
-              speakers={speakers}
-            />
-          </Box>
+        {compact && memberVisible && (
+          <MemberGlance roomId={roomId} users={users} membersAPI={membersAPI} speakers={speakers} />
         )}
       </Box>
-      {memberVisible && !compact && <StatusDivider />}
       <Box shrink="No" alignItems="Center" gap="Inherit">
         {compact && (
           <Box grow="Yes">
