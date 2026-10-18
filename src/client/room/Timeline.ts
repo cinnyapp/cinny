@@ -103,8 +103,7 @@ export class Timeline implements TimelineView, Disposable {
 
     this.batchManager.handleSync(messageEvents, limited, prevToken);
 
-    const eventsWithRemoteEcho = this.outbox.getSentEventIds().filter((e) => this.findEvent(e));
-    this.outbox.removeByEventIds(eventsWithRemoteEcho);
+    this.outbox.handleRemoteEcho(messageEvents);
   }
 
   private syncThreads(

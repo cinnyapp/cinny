@@ -162,8 +162,7 @@ export class ThreadTimeline implements TimelineView, Disposable {
       this.syncThreadMeta(events);
     }
 
-    const eventsWithRemoteEcho = this.outbox.getSentEventIds().filter((e) => this.findEvent(e));
-    this.outbox.removeByEventIds(eventsWithRemoteEcho);
+    this.outbox.handleRemoteEcho(events);
   }
 
   private async getMessages(

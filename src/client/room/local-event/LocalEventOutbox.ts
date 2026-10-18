@@ -1,6 +1,8 @@
 import { ObservableValue } from 'neurone/lib/utils/observable';
+import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { EventSenderSuccess, LocalEventSender } from './LocalEventSender';
 import { randomStr } from '../../../app/utils/common';
+import { rUnsigned } from '../../reader';
 
 export class LocalEventOutbox {
   private readonly publishKey = randomStr();
@@ -34,21 +36,22 @@ export class LocalEventOutbox {
     this.senders.publish(this.publishKey, n);
   }
 
-  public removeByEventIds(eventIds: readonly string[]): void {
-    const ids = new Set(eventIds);
+  public handleRemoteEcho(events: MessageEventWithoutRoomId[]): void {
+    const waitingSenders = this.items.filter((sender) => {
+      const { txnId } = sender.localEvent;
+      const eventId =
+        sender.state.read instanceof EventSenderSuccess ? sender.state.read.eventId : undefined;
 
-    const n = this.items.filter(
-      (s) => !(s.state.read instanceof EventSenderSuccess && ids.has(s.state.read.eventId))
-    );
-    if (n.length === this.items.length) {
+      const received = events.some(
+        (event) => rUnsigned.transactionId(event.unsigned) === txnId || event.event_id === eventId
+      );
+
+      return !received;
+    });
+
+    if (waitingSenders.length === this.items.length) {
       return;
     }
-    this.senders.publish(this.publishKey, n);
-  }
-
-  public getSentEventIds(): string[] {
-    return this.items
-      .map((s) => (s.state.read instanceof EventSenderSuccess ? s.state.read.eventId : undefined))
-      .filter<string>((eId) => typeof eId === 'string');
+    this.senders.publish(this.publishKey, waitingSenders);
   }
 }
