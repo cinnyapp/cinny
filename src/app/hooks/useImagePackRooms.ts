@@ -1,7 +1,7 @@
 import { useAtomValue } from 'jotai';
 import { useMemo } from 'react';
 import { getAllParents } from '../utils/room';
-import { useAllJoinedRoomsSet } from './useGetRoom';
+import { useAllJoinedRoomsSet } from './useAllJoinedRoomsSet';
 import { roomToParentsAtom } from '../state/room/roomToParents';
 
 export const useImagePackRooms = (roomId: string): string[] => {

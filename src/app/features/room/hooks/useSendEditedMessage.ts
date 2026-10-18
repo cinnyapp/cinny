@@ -3,7 +3,7 @@ import { Editor } from 'slate';
 import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { useClient } from '../../../hooks/useClient';
 import { useRoom } from '../../../hooks/useRoom';
-import { useEnsureRoomEncryptionSession } from './useEnsureRoomEncryptionSession';
+import { useEnsureRoomEncryptionSession } from '../../../hooks/useEnsureRoomEncryptionSession';
 import {
   EventSenderIdle,
   LocalEvent,

@@ -24,6 +24,7 @@ import {
   writeReadReceipt,
   writeUnreadNotifications,
   writeUnreadThreadNotifications,
+  writeJoinRoomSticky,
 } from './utils';
 import { sessionValue } from '../storage/collections';
 
@@ -60,6 +61,7 @@ export const writeSync = async (ct: ClientContext, data: GetSyncOK): Promise<voi
     await writeJoinAccountData(ct, joinRooms, join);
     await writeJoinRoomSummary(ct, joinRooms, join);
     await writeJoinRoomState(ct, joinRooms, join);
+    await writeJoinRoomSticky(ct, joinRooms, join);
     await writeJoinRoomMember(ct, joinRooms, join);
     await writeJoinRoomLatestEvent(ct, joinRooms, join);
 

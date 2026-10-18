@@ -1,4 +1,3 @@
-import { MatrixEvent } from 'matrix-js-sdk';
 import { createContext, useCallback, useContext, useMemo } from 'react';
 import produce from 'immer';
 import { PendingObservableResult } from 'neurone/lib/utils/observable';
@@ -56,14 +55,6 @@ const fillMissingPowers = (powerLevels: IPowerLevels): IPowerLevels =>
     }
     return draftPl;
   });
-
-export const getPowersLevelFromMatrixEvent = (mEvent?: MatrixEvent): IPowerLevels => {
-  const plContent = mEvent?.getContent<IPowerLevels>();
-
-  const powerLevels = !plContent ? DEFAULT_POWER_LEVELS : fillMissingPowers(plContent);
-
-  return powerLevels;
-};
 
 export function usePowerLevelsState(
   roomId: string

@@ -10,7 +10,7 @@ import { SortFunc, byOrderKey, byTsOldToNew, factoryRoomIdByActivity } from '../
 import { ErrorCode } from '../cs-errorcode';
 import { useObservableValue } from './useObservableValue';
 import { useClient } from './useClient';
-import { useAllJoinedRoomsSet } from './useGetRoom';
+import { useAllJoinedRoomsSet } from './useAllJoinedRoomsSet';
 import { spaceRoomsAtom } from '../state/spaceRooms';
 import { rError } from '../../client/reader';
 import { useRoomsLatestEvent } from './useRoomsLatestEvent';

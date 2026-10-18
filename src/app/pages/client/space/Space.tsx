@@ -89,7 +89,7 @@ import {
   useRoomsTotalNotifications,
 } from '../../../state/hooks/roomNotifications';
 import { getJoinRoomStateId } from '../../../../client/storage/collections';
-import { useAllJoinedRoomsSet } from '../../../hooks/useGetRoom';
+import { useAllJoinedRoomsSet } from '../../../hooks/useAllJoinedRoomsSet';
 import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { RoomAccessIndicator } from '../../../components/RoomAccessIndicator';

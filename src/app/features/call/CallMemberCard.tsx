@@ -1,53 +1,51 @@
-import { CallMembership } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
 import React, { useState } from 'react';
 import { Avatar, Box, Icon, Icons, Text } from 'folds';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { SequenceCard } from '../../components/sequence-card';
-import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
 import { useRoom } from '../../hooks/useRoom';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { UserAvatar } from '../../components/user-avatar';
 import { getMouseEventCords } from '../../utils/dom';
 import * as css from './styles.css';
+import { CallMember } from '../../../client/call';
+import { useClient } from '../../hooks/useClient';
+import { useRoomMembersAPI } from '../../hooks/useRoomMembers';
+import { mxcToHttp } from '../../../client/mxcToHttp';
 
 type CallMemberCardProps = {
-  member: CallMembership;
+  member: CallMember;
 };
 export function CallMemberCard({ member }: CallMemberCardProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
-  const room = useRoom();
+  const roomId = useRoom();
+  const membersAPI = useRoomMembersAPI();
 
   const openUserProfile = useOpenUserRoomProfile();
 
   const { userId } = member;
   if (!userId) return null;
 
-  const name = getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId;
-  const avatarMxc = getMemberAvatarMxc(room, userId);
+  const name = membersAPI.getName(member.userId);
+  const avatarMxc = membersAPI.getAvatar(member.userId);
   const avatarUrl = avatarMxc
-    ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96) ?? undefined
+    ? mxcToHttp(ct.session.baseUrl, avatarMxc, useAuthentication).thumbnail({
+        width: 96,
+        height: 96,
+      })
     : undefined;
 
-  const audioOnly = member.callIntent === 'audio';
+  const audioOnly = member.intent === 'audio';
 
   return (
     <SequenceCard
       as="button"
-      key={member.memberId}
+      key={member.userId}
       className={css.CallMemberCard}
       variant="SurfaceVariant"
       radii="500"
       onClick={(evt: any) =>
-        openUserProfile(
-          room.roomId,
-          undefined,
-          userId,
-          getMouseEventCords(evt.nativeEvent),
-          'Right'
-        )
+        openUserProfile(roomId, undefined, userId, getMouseEventCords(evt.nativeEvent), 'Right')
       }
     >
       <Box grow="Yes" gap="300" alignItems="Center">
@@ -70,13 +68,7 @@ export function CallMemberCard({ member }: CallMemberCardProps) {
   );
 }
 
-export function CallMemberRenderer({
-  members,
-  max = 4,
-}: {
-  members: CallMembership[];
-  max?: number;
-}) {
+export function CallMemberRenderer({ members, max = 4 }: { members: CallMember[]; max?: number }) {
   const [viewMore, setViewMore] = useState(false);
 
   const truncatedMembers = viewMore ? members : members.slice(0, 4);
@@ -85,7 +77,7 @@ export function CallMemberRenderer({
   return (
     <>
       {truncatedMembers.map((member) => (
-        <CallMemberCard key={member.memberId} member={member} />
+        <CallMemberCard key={member.userId} member={member} />
       ))}
       {members.length > max && (
         <SequenceCard

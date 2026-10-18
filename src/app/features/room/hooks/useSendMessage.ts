@@ -36,7 +36,7 @@ import {
   RelationType,
   StickerContent,
 } from '../../../../types/matrix/common';
-import { useEnsureRoomEncryptionSession } from './useEnsureRoomEncryptionSession';
+import { useEnsureRoomEncryptionSession } from '../../../hooks/useEnsureRoomEncryptionSession';
 import { LocalMessage } from '../../../../client/room/local-event';
 import { useTimelineView } from './useTimeline';
 

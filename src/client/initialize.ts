@@ -26,6 +26,7 @@ import {
   createVerificationRequestObservable,
   createBackupInfoObservable,
   createUserReceiptObservable,
+  createToDeviceEventsObservable,
 } from './context';
 import { createStorage } from './storage';
 import { getAuthJSONRequest } from './request';
@@ -39,6 +40,7 @@ import { DecryptionManager } from './decryption';
 import { initializeCrypto } from './crypto';
 import { MegolmBackup } from './MegolmBackup';
 import { clearUserLocalStorage } from './localStorage';
+import { CallSessions } from './call';
 
 export type InitializeClientResult = {
   ct: ClientContext;
@@ -85,6 +87,7 @@ export const initializeClient = async (session: Session): Promise<InitializeClie
   const pendingMemberRooms = await createPendingMemberRoomObservable(storage, disposer);
 
   const { verificationRequest, onVerificationRequest } = createVerificationRequestObservable();
+  const { toDeviceEvents, onToDeviceEvents } = createToDeviceEventsObservable();
   const secrets = await createSecretsObservable(storage, disposer);
   const backupInfo = await createBackupInfoObservable(requestAuthJSON, secrets, disposer);
   const megolmBackup = new MegolmBackup(machine, requestAuthJSON, backupInfo);
@@ -100,6 +103,7 @@ export const initializeClient = async (session: Session): Promise<InitializeClie
 
   const decryption = new DecryptionManager(machine);
 
+  const callSessions = new CallSessions(storage, syncObservable);
   const roomToTimeline = createTimelines(rooms.join, syncObservable, requestAuthJSON, disposer);
 
   const logoutObservable = createLogoutObservable(syncObservable, disposer);
@@ -149,6 +153,8 @@ export const initializeClient = async (session: Session): Promise<InitializeClie
 
     pendingMemberRooms,
     verificationRequest,
+    toDeviceEvents,
+    callSessions,
     secrets,
     backupInfo,
     megolmBackup,
@@ -168,6 +174,7 @@ export const initializeClient = async (session: Session): Promise<InitializeClie
     onWriteComplete,
     onSyncToken,
     onVerificationRequest,
+    onToDeviceEvents,
   });
 
   disposer.collect(
@@ -182,6 +189,8 @@ export const initializeClient = async (session: Session): Promise<InitializeClie
     logoutManager,
     machineManager,
     verificationRequest,
+    toDeviceEvents,
+    callSessions,
     syncResponseManager
   );
 

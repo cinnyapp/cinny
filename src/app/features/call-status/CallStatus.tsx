@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, Spinner } from 'folds';
 import classNames from 'classnames';
 import { LiveChip } from './LiveChip';
@@ -15,15 +15,19 @@ import { useCallEmbed, useCallJoined } from '../../hooks/useCallEmbed';
 import { useCallSpeakers } from '../../hooks/useCallSpeakers';
 import { MemberSpeaking } from './MemberSpeaking';
 import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
+import { useRoomMembers } from '../../hooks/useRoomMembers';
 
 type CallStatusProps = {
   callEmbed: CallEmbed;
 };
 export function CallStatus({ callEmbed }: CallStatusProps) {
-  const { room } = callEmbed;
+  const { roomId } = callEmbed;
 
-  const callSession = useCallSession(room);
+  const callSession = useCallSession(roomId);
   const callMembers = useCallMembers(callSession);
+  const users = useMemo(() => Array.from(new Set(callMembers.map((m) => m.userId))), [callMembers]);
+  const membersAPI = useRoomMembers(roomId, users);
+
   const screenSize = useScreenSize();
   const callJoined = useCallJoined(callEmbed);
   const speakers = useCallSpeakers(callEmbed);
@@ -43,7 +47,7 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
       <Box grow="Yes" alignItems="Center" gap="200">
         {memberVisible ? (
           <Box shrink="No">
-            <LiveChip count={callMembers.length} room={room} members={callMembers} />
+            <LiveChip count={users.length} roomId={roomId} users={users} membersAPI={membersAPI} />
           </Box>
         ) : (
           <Spinner variant="Secondary" size="200" />
@@ -51,12 +55,12 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
         <Box grow="Yes" alignItems="Center" gap="Inherit">
           {!compact && (
             <>
-              <CallRoomName room={room} />
+              <CallRoomName roomId={roomId} />
               {speakers.size > 0 && (
                 <>
                   <StatusDivider />
                   <span data-spacing-node />
-                  <MemberSpeaking room={room} speakers={speakers} />
+                  <MemberSpeaking membersAPI={membersAPI} speakers={speakers} />
                 </>
               )}
             </>
@@ -64,7 +68,12 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
         </Box>
         {memberVisible && (
           <Box shrink="No">
-            <MemberGlance room={room} members={callMembers} speakers={speakers} />
+            <MemberGlance
+              roomId={roomId}
+              users={users}
+              membersAPI={membersAPI}
+              speakers={speakers}
+            />
           </Box>
         )}
       </Box>
@@ -72,7 +81,7 @@ export function CallStatus({ callEmbed }: CallStatusProps) {
       <Box shrink="No" alignItems="Center" gap="Inherit">
         {compact && (
           <Box grow="Yes">
-            <CallRoomName room={room} />
+            <CallRoomName roomId={roomId} />
           </Box>
         )}
         <CallControl callJoined={callJoined} compact={compact} callEmbed={callEmbed} />

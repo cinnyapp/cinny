@@ -30,6 +30,8 @@ import { ClientContext } from '../../client/context';
 import { rContent, rInReplyTo, rRelatesTo } from '../../client/reader';
 import { replaced } from '../../client/room/relations';
 
+export const isCallRoom = (roomType?: string) => roomType === 'org.matrix.msc3417.call';
+
 export const getStateEvent = (
   room: Room,
   eventType: StateEvent,

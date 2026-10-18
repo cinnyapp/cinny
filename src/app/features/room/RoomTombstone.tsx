@@ -9,7 +9,7 @@ import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useClient } from '../../hooks/useClient';
 import { useRoomStateEvent } from '../../hooks/storage/useRoomStateEvent';
-import { useAllJoinedRoomsSet } from '../../hooks/useGetRoom';
+import { useAllJoinedRoomsSet } from '../../hooks/useAllJoinedRoomsSet';
 import { getMxIdServer } from '../../utils/matrix';
 
 type RoomTombstoneProps = { roomId: string; replacementRoomId: string };

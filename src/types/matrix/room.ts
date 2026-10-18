@@ -76,6 +76,22 @@ export enum MessageEvent {
   Reaction = 'm.reaction',
 }
 
+export enum CallEventType {
+  CallInvite = 'm.call.invite',
+  CallCandidates = 'm.call.candidates',
+  CallAnswer = 'm.call.answer',
+  CallHangup = 'm.call.hangup',
+  CallReject = 'm.call.reject',
+  CallSelectAnswer = 'm.call.select_answer',
+  CallNegotiate = 'm.call.negotiate',
+  CallSDPStreamMetadataChanged = 'm.call.sdp_stream_metadata_changed',
+  CallSDPStreamMetadataChangedPrefix = 'org.matrix.call.sdp_stream_metadata_changed',
+  CallReplaces = 'm.call.replaces',
+  CallEncryptionKeysPrefix = 'io.element.call.encryption_keys',
+  RTCDecline = 'org.matrix.msc4310.rtc.decline',
+  RTCInvite = 'org.matrix.msc4075.rtc.notification',
+}
+
 export enum RoomType {
   Space = 'm.space',
   Call = 'org.matrix.msc3417.call',

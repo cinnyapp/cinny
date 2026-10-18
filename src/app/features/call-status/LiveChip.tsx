@@ -15,26 +15,25 @@ import {
   Text,
   toRem,
 } from 'folds';
-import { CallMembership } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
 import FocusTrap from 'focus-trap-react';
-import { Room } from 'matrix-js-sdk';
 import * as css from './styles.css';
 import { stopPropagation } from '../../utils/keyboard';
-import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { UserAvatar } from '../../components/user-avatar';
 import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { getMouseEventCords } from '../../utils/dom';
+import { useClient } from '../../hooks/useClient';
+import { RoomMembersAPI } from '../../hooks/useRoomMembers';
+import { mxcToHttp } from '../../../client/mxcToHttp';
 
 type LiveChipProps = {
-  room: Room;
-  members: CallMembership[];
+  roomId: string;
+  users: string[];
   count: number;
+  membersAPI: RoomMembersAPI;
 };
-export function LiveChip({ count, room, members }: LiveChipProps) {
-  const mx = useMatrixClient();
+export function LiveChip({ count, roomId, users, membersAPI }: LiveChipProps) {
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
   const openUserProfile = useOpenUserRoomProfile();
 
@@ -70,26 +69,27 @@ export function LiveChip({ count, room, members }: LiveChipProps) {
             <Box grow="Yes">
               <Scroll size="0" hideTrack visibility="Hover">
                 <Box direction="Column" style={{ padding: config.space.S100 }}>
-                  {members.map((callMember) => {
-                    const userId = callMember.sender;
+                  {users.map((userId) => {
                     if (!userId) return null;
-                    const name =
-                      getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId;
-                    const avatarMxc = getMemberAvatarMxc(room, userId);
+                    const name = membersAPI.getName(userId);
+                    const avatarMxc = membersAPI.getAvatar(userId);
                     const avatarUrl = avatarMxc
-                      ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96) ?? undefined
+                      ? mxcToHttp(ct.session.baseUrl, avatarMxc, useAuthentication).thumbnail({
+                          width: 96,
+                          height: 96,
+                        })
                       : undefined;
 
                     return (
                       <MenuItem
-                        key={callMember.memberId}
+                        key={userId}
                         size="400"
                         variant="Surface"
                         radii="300"
                         style={{ paddingLeft: config.space.S200 }}
                         onClick={(evt) =>
                           openUserProfile(
-                            room.roomId,
+                            roomId,
                             undefined,
                             userId,
                             getMouseEventCords(evt.nativeEvent),

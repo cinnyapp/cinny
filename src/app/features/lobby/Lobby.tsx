@@ -58,7 +58,7 @@ import { RoomMembersAPIProvider, useCreateRoomMembersAPI } from '../../hooks/use
 import { usePendingMemberLoader, usePendingMembers } from '../../hooks/usePendingMembers';
 import { useAccountData } from '../../hooks/storage/useAccountData';
 import { AccountDataType } from '../../../types/matrix/accountData';
-import { useAllJoinedRoomsSet } from '../../hooks/useGetRoom';
+import { useAllJoinedRoomsSet } from '../../hooks/useAllJoinedRoomsSet';
 import {
   PowerLevelTagsContextProvider,
   usePowerLevelTags,

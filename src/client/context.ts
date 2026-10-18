@@ -13,6 +13,7 @@ import {
   StateEventWithoutRoomId,
 } from 'neurone/lib/api/types';
 import { AesHmacSha2EncryptedData, SecretStorage } from 'neurone/lib/crypto/ssss';
+import { ProcessedToDeviceEvent } from 'neurone/lib/crypto/machine/events';
 import {
   InviteRoomStateObject,
   JoinRoomStateObject,
@@ -30,6 +31,7 @@ import { Timeline } from './room';
 import { AccountDataType } from '../types/matrix/accountData';
 import { DecryptionManager } from './decryption';
 import { MegolmBackup } from './MegolmBackup';
+import { CallSessions } from './call';
 
 export type StateContext = {
   join: {
@@ -123,6 +125,8 @@ export type ClientContext = {
 
   pendingMemberRooms: ObservableValue<string[]>;
   verificationRequest: Observable<InboundVerification | OutboundVerification>;
+  toDeviceEvents: Observable<ProcessedToDeviceEvent[]>;
+  callSessions: CallSessions;
   secrets: Secrets;
   backupInfo: ObservableValue<BackupVersionInfo | undefined>;
   megolmBackup: MegolmBackup;
@@ -936,6 +940,20 @@ export const createVerificationRequestObservable = () => {
   return {
     verificationRequest,
     onVerificationRequest,
+  };
+};
+
+export const createToDeviceEventsObservable = () => {
+  const publishKey = crypto.randomUUID();
+  const toDeviceEvents = new Observable<ProcessedToDeviceEvent[]>(publishKey);
+
+  const onToDeviceEvents = (events: ProcessedToDeviceEvent[]) => {
+    toDeviceEvents.publish(publishKey, events);
+  };
+
+  return {
+    toDeviceEvents,
+    onToDeviceEvents,
   };
 };
 

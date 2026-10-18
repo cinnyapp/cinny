@@ -1,6 +1,7 @@
 import { InviteRoom, JoinRoom, KnockRoom, LeaveRoom } from 'neurone/lib/api/matrix/client/v3/sync';
 import {
   AccountDataEvent,
+  MessageEventWithoutRoomId,
   PresenceEvent,
   Receipt,
   ReceiptType,
@@ -11,6 +12,7 @@ import * as inviteRoomUtil from 'neurone/lib/utils/sync/v3/invite';
 import * as knockRoomUtil from 'neurone/lib/utils/sync/v3/knock';
 import * as leaveRoomUtil from 'neurone/lib/utils/sync/v3/leave';
 import { ObjectReader } from 'neurone/lib/utils';
+import { QueryRange } from 'neurone/lib/storage/collection';
 import { ClientContext } from '../context';
 import {
   AccountDataObject,
@@ -29,6 +31,7 @@ import {
   JoinRoomLatestEventObject,
   JoinRoomMemberObject,
   JoinRoomStateObject,
+  JoinRoomStickyObject,
   JoinRoomSummaryObject,
   KnockRoomStateObject,
   LeaveAccountDataObject,
@@ -133,6 +136,58 @@ export const writeJoinRoomState = async (
   });
 
   await ct.storage.joinRoomState.write.putMultiple(roomStateObjects);
+};
+
+export const writeJoinRoomSticky = async (
+  ct: ClientContext,
+  joinRooms: string[],
+  join: Record<string, JoinRoom>
+): Promise<void> => {
+  const expiredEventKeys = await ct.storage.joinRoomSticky.read.queryIndexKeys(
+    'expiresAt',
+    new QueryRange(0, Date.now())
+  );
+  if (expiredEventKeys.length > 0) {
+    await ct.storage.joinRoomSticky.write.deleteMultiple(expiredEventKeys);
+  }
+
+  const stickyEventObjects: JoinRoomStickyObject[] = joinRooms.flatMap((roomId) => {
+    const joinRoom = join[roomId];
+
+    const stickyEvents = Array.from(
+      (ObjectReader.array(ObjectReader.object(joinRoom, 'msc4354_sticky'), 'events') as
+        | MessageEventWithoutRoomId[]
+        | undefined) ?? []
+    );
+
+    stickyEvents.push(
+      ...joinRoomUtil.roomTimeline(joinRoom).filter((event) => {
+        const remainingMs = ObjectReader.number(event.unsigned, 'msc4354_sticky_duration_ttl_ms');
+        return remainingMs && remainingMs > 0;
+      })
+    );
+
+    const stickyObjects: JoinRoomStickyObject[] = [];
+
+    stickyEvents.forEach((event) => {
+      const remainingMs = ObjectReader.number(event.unsigned, 'msc4354_sticky_duration_ttl_ms');
+      if (!remainingMs || remainingMs <= 0) return;
+
+      const obj: JoinRoomStickyObject = {
+        id: event.event_id,
+        roomId,
+        type: event.type,
+        expiresAt: Date.now() + remainingMs,
+        event,
+      };
+
+      stickyObjects.push(obj);
+    });
+
+    return stickyObjects;
+  });
+
+  await ct.storage.joinRoomSticky.write.putMultiple(stickyEventObjects);
 };
 
 export const writeJoinRoomMember = async (

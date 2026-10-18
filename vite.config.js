@@ -18,6 +18,11 @@ const copyFiles = {
       dest: 'public/element-call',
     },
     {
+      src: 'call.config.json',
+      dest: 'public/element-call',
+      rename: 'config.json',
+    },
+    {
       src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
       dest: '',
       rename: 'pdf.worker.min.js',

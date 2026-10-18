@@ -46,12 +46,15 @@ import {
   JoinRoomLatestCollection,
   createJoinRoomLatestEventCollection,
   prepareJoinRoomLatestEventStore,
+  prepareJoinRoomStickyStore,
+  JoinRoomStickyCollection,
+  createJoinRoomStickyCollection,
 } from './collections';
 import { getSessionStoreName, Session } from '../sessions';
 
 export * from './utils';
 
-const DATABASE_VERSION = 2;
+const DATABASE_VERSION = 3;
 
 export interface Storage {
   sessionValue: SessionValueCollection;
@@ -61,6 +64,7 @@ export interface Storage {
   joinAccountData: JoinAccountDataCollection;
   joinRoomSummary: JoinRoomSummaryCollection;
   joinRoomState: JoinRoomStateCollection;
+  joinRoomSticky: JoinRoomStickyCollection;
   joinRoomMember: JoinRoomMemberCollection;
   joinRoomLatestEvent: JoinRoomLatestCollection;
 
@@ -102,6 +106,7 @@ export const createStorage = async (
       prepareJoinAccountDataStore(db, oldVersion);
       prepareJoinRoomSummaryStore(db, oldVersion);
       prepareJoinRoomStateStore(db, oldVersion);
+      prepareJoinRoomStickyStore(db, oldVersion);
       prepareJoinRoomMemberStore(db, oldVersion);
       prepareJoinRoomLatestEventStore(db, oldVersion);
 
@@ -138,6 +143,7 @@ export const createStorage = async (
     joinAccountData: createJoinAccountDataCollection(driver),
     joinRoomSummary: createJoinRoomSummaryCollection(driver),
     joinRoomState: createJoinRoomStateCollection(driver),
+    joinRoomSticky: createJoinRoomStickyCollection(driver),
     joinRoomMember: createJoinRoomMemberCollection(driver),
     joinRoomLatestEvent: createJoinRoomLatestEventCollection(driver),
 

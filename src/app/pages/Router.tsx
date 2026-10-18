@@ -83,15 +83,18 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                   <ClientRoomsNotificationPreferences>
                     <ClientBindAtoms />
                     <ClientNonUIFeatures />
-                    <ClientLayout
-                      nav={
-                        <MobileFriendlyClientNav>
-                          <SidebarNav />
-                        </MobileFriendlyClientNav>
-                      }
-                    >
-                      <Outlet />
-                    </ClientLayout>
+                    <CallEmbedProvider>
+                      <ClientLayout
+                        nav={
+                          <MobileFriendlyClientNav>
+                            <SidebarNav />
+                          </MobileFriendlyClientNav>
+                        }
+                      >
+                        <Outlet />
+                      </ClientLayout>
+                      <CallStatusRenderer />
+                    </CallEmbedProvider>
                     <SearchModalRenderer />
                     <UserRoomProfileRenderer />
                     <CreateRoomModalRenderer />

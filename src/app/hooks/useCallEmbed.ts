@@ -1,5 +1,4 @@
 import { createContext, RefObject, useCallback, useContext, useEffect, useState } from 'react';
-import { MatrixClient, Room } from 'matrix-js-sdk';
 import { useSetAtom } from 'jotai';
 import {
   CallEmbed,
@@ -7,13 +6,14 @@ import {
   ElementWidgetActions,
   useClientWidgetApiEvent,
 } from '../plugins/call';
-import { useMatrixClient } from './useMatrixClient';
 import { ThemeKind, useTheme } from './useTheme';
 import { callEmbedAtom } from '../state/callEmbed';
 import { useResizeObserver } from './useResizeObserver';
 import { CallControlState } from '../plugins/call/CallControlState';
 import { useCallMembersChange, useCallSession } from './useCall';
 import { CallPreferences } from '../state/callPreferences';
+import { ClientContext } from '../../client/context';
+import { useClient } from './useClient';
 
 const CallEmbedContext = createContext<CallEmbed | undefined>(undefined);
 
@@ -36,42 +36,49 @@ export const useCallEmbedRef = (): RefObject<HTMLDivElement> => {
 };
 
 export const createCallEmbed = (
-  mx: MatrixClient,
-  room: Room,
+  ct: ClientContext,
+  roomId: string,
   dm: boolean,
   themeKind: ElementCallThemeKind,
   container: HTMLElement,
   pref?: CallPreferences
 ): CallEmbed => {
-  const rtcSession = mx.matrixRTC.getRoomSession(room);
-  const ongoing = rtcSession.memberships.length > 0;
+  const callSession = ct.callSessions.getSession(roomId);
+  const ongoing = callSession.members.read.length > 0;
 
   const intent = CallEmbed.getIntent(dm, ongoing, pref?.video);
-  const widget = CallEmbed.getWidget(mx, room, intent, themeKind);
+  const widget = CallEmbed.getWidget(ct, roomId, intent, themeKind);
   const controlState = pref && new CallControlState(pref.microphone, pref.video, pref.sound);
 
-  const embed = new CallEmbed(mx, room, widget, container, controlState);
+  const embed = new CallEmbed(ct, roomId, widget, container, controlState);
 
   return embed;
 };
 
-export const useCallStart = (dm = false) => {
-  const mx = useMatrixClient();
+export const useCallStart = () => {
+  const ct = useClient();
   const theme = useTheme();
   const setCallEmbed = useSetAtom(callEmbedAtom);
   const callEmbedRef = useCallEmbedRef();
 
   const startCall = useCallback(
-    (room: Room, pref?: CallPreferences) => {
+    (roomId: string, pref?: CallPreferences) => {
       const container = callEmbedRef.current;
       if (!container) {
         throw new Error('Failed to start call, No embed container element found!');
       }
-      const callEmbed = createCallEmbed(mx, room, dm, theme.kind, container, pref);
+      const callEmbed = createCallEmbed(
+        ct,
+        roomId,
+        ct.directRooms.read.has(roomId),
+        theme.kind,
+        container,
+        pref
+      );
 
       setCallEmbed(callEmbed);
     },
-    [mx, dm, theme, setCallEmbed, callEmbedRef]
+    [ct, theme, setCallEmbed, callEmbedRef]
   );
 
   return startCall;
@@ -103,7 +110,7 @@ export const useCallHangupEvent = (embed: CallEmbed, callback: () => void) => {
 };
 
 export const useCallMemberSoundSync = (embed: CallEmbed) => {
-  const callSession = useCallSession(embed.room);
+  const callSession = useCallSession(embed.roomId);
   useCallMembersChange(
     callSession,
     useCallback(() => embed.control.applySound(), [embed])

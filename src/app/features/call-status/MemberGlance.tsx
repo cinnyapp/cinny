@@ -1,59 +1,54 @@
 import { Box, config, Icon, Icons, Text } from 'folds';
-import { CallMembership } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
 import React from 'react';
-import { Room } from 'matrix-js-sdk';
 import { UserAvatar } from '../../components/user-avatar';
-import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { StackedAvatar } from '../../components/stacked-avatar';
 import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { getMouseEventCords } from '../../utils/dom';
 import * as css from './styles.css';
+import { RoomMembersAPI } from '../../hooks/useRoomMembers';
+import { useClient } from '../../hooks/useClient';
+import { mxcToHttp } from '../../../client/mxcToHttp';
 
 type MemberGlanceProps = {
-  room: Room;
-  members: CallMembership[];
+  roomId: string;
+  users: string[];
+  membersAPI: RoomMembersAPI;
   speakers: Set<string>;
   max?: number;
 };
-export function MemberGlance({ room, members, speakers, max = 6 }: MemberGlanceProps) {
-  const mx = useMatrixClient();
+export function MemberGlance({ roomId, users, membersAPI, speakers, max = 6 }: MemberGlanceProps) {
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
   const openUserProfile = useOpenUserRoomProfile();
 
-  const visibleMembers = members.slice(0, max);
-  const remainingCount = max && members.length > max ? members.length - max : 0;
+  const visibleMembers = users.slice(0, max);
+  const remainingCount = max && users.length > max ? users.length - max : 0;
 
   return (
     <Box alignItems="Center">
-      {visibleMembers.map((callMember) => {
-        const { userId } = callMember;
+      {visibleMembers.map((userId) => {
         if (!userId) return null;
-        const name = getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId;
-        const avatarMxc = getMemberAvatarMxc(room, userId);
+        const name = membersAPI.getName(userId);
+        const avatarMxc = membersAPI.getAvatar(userId);
         const avatarUrl = avatarMxc
-          ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96) ?? undefined
+          ? mxcToHttp(ct.session.baseUrl, avatarMxc, useAuthentication).thumbnail({
+              width: 96,
+              height: 96,
+            })
           : undefined;
 
         return (
           <StackedAvatar
-            key={callMember.memberId}
-            className={speakers.has(callMember.sender) ? css.SpeakerAvatarOutline : undefined}
+            key={userId}
+            className={speakers.has(userId) ? css.SpeakerAvatarOutline : undefined}
             title={name}
             as="button"
             variant="Background"
             size="200"
             radii="Pill"
             onClick={(evt) =>
-              openUserProfile(
-                room.roomId,
-                undefined,
-                userId,
-                getMouseEventCords(evt.nativeEvent),
-                'Top'
-              )
+              openUserProfile(roomId, undefined, userId, getMouseEventCords(evt.nativeEvent), 'Top')
             }
           >
             <UserAvatar

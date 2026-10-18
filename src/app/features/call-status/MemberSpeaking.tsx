@@ -1,17 +1,14 @@
-import { Room } from 'matrix-js-sdk';
 import React from 'react';
 import { Box, Icon, Icons, Text } from 'folds';
-import { getMemberDisplayName } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { RoomMembersAPI } from '../../hooks/useRoomMembers';
 
 type MemberSpeakingProps = {
-  room: Room;
+  membersAPI: RoomMembersAPI;
   speakers: Set<string>;
 };
-export function MemberSpeaking({ room, speakers }: MemberSpeakingProps) {
-  const speakingNames = Array.from(speakers).map(
-    (userId) => getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId
-  );
+export function MemberSpeaking({ membersAPI, speakers }: MemberSpeakingProps) {
+  const speakingNames = Array.from(speakers).map((userId) => membersAPI.getName(userId));
+
   return (
     <Box alignItems="Center" gap="100">
       <Icon size="100" src={Icons.Mic} filled />

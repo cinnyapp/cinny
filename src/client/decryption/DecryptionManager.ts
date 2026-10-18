@@ -6,7 +6,7 @@ import {
 import { Machine, RoomKeyInfo, RoomKeyWithheldInfo } from 'neurone/lib/crypto/machine';
 import { ObjectReader } from 'neurone/lib/utils';
 import { Disposable, Disposer } from 'neurone/lib/utils/disposable';
-import { EncryptedEvent } from './EncryptedEvent';
+import { EncryptedEvent, EventDecryptionSuccess } from './EncryptedEvent';
 import { EncryptedEventIndex } from './EncryptedEventIndex';
 
 export class DecryptionManager implements Disposable {
@@ -77,6 +77,35 @@ export class DecryptionManager implements Disposable {
     event: StateEventWithoutRoomId
   ): EncryptedEvent<StateEventWithoutRoomId> {
     return this.registerEvent(this.stateEvents, roomId, event);
+  }
+
+  /**
+   * Attempts to decrypt an encrypted room event.
+   * If the event is not encrypted or decryption fails, returns the original event unchanged.
+   * @param roomId - The ID of the room the event belongs to.
+   * @param event - The event to decrypt.
+   * @returns A promise that resolves to the decrypted event if decryption succeeds,
+   * or the original event otherwise.
+   */
+  public async tryDecryptEvent(
+    roomId: string,
+    event: ClientEventWithoutRoomId
+  ): Promise<ClientEventWithoutRoomId> {
+    if (event.type !== 'm.room.encryption') {
+      return event;
+    }
+    const encryptedEvent = this.registerEvent(
+      'state_key' in event ? this.stateEvents : this.messageEvents,
+      roomId,
+      event
+    );
+    await encryptedEvent.decrypt();
+    const decryption = encryptedEvent.decryption.read;
+    if (decryption instanceof EventDecryptionSuccess) {
+      return decryption.event;
+    }
+
+    return event;
   }
 
   dispose(): void {

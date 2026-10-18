@@ -2,7 +2,11 @@ import { GetSyncOK, JoinRoom } from 'neurone/lib/api/matrix/client/v3/sync';
 import { ObservableValue } from 'neurone/lib/utils/observable';
 import { EncryptionSyncChanges } from 'neurone/lib/crypto/machine';
 import { Disposable, Disposer } from 'neurone/lib/utils/disposable';
-import { ToDeviceDecrypted, ToDevicePlainText } from 'neurone/lib/crypto/machine/events';
+import {
+  ProcessedToDeviceEvent,
+  ToDeviceDecrypted,
+  ToDevicePlainText,
+} from 'neurone/lib/crypto/machine/events';
 import { roomState } from 'neurone/lib/utils/sync/v3/join';
 import { ObjectReader } from 'neurone/lib/utils';
 import { InboundVerification, OutboundVerification } from 'neurone/lib/crypto/machine/verification';
@@ -17,6 +21,7 @@ export type SyncResponseManagerCallbacks = {
   onWriteComplete: () => void;
   onSyncToken: (token: string) => void;
   onVerificationRequest: (verificationFlow: OutboundVerification | InboundVerification) => void;
+  onToDeviceEvents: (toDeviceEvents: ProcessedToDeviceEvent[]) => void;
 };
 
 export class SyncResponseManager implements Disposable {
@@ -82,6 +87,8 @@ export class SyncResponseManager implements Disposable {
           this.callbacks.onVerificationRequest(v)
         );
       });
+
+    this.callbacks.onToDeviceEvents(proccessedToDeviceEvents);
     // TODO: room key bundle detection from to device events;
 
     const encryptedRooms = this.filterEncryptedRoomResponse(data.rooms?.join ?? {});

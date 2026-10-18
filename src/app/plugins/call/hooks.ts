@@ -3,9 +3,10 @@ import {
   IWidgetApiAcknowledgeResponseData,
   IWidgetApiRequestData,
 } from 'matrix-widget-api';
-import { useCallback, useEffect, useState } from 'react';
-import { CallControl, CallControlEvent } from './CallControl';
+import { useCallback, useEffect } from 'react';
+import { CallControl } from './CallControl';
 import { CallControlState } from './CallControlState';
+import { useObservableValue } from '../../hooks/useObservableValue';
 
 export const useClientWidgetApiEvent = <T>(
   api: ClientWidgetApi | undefined,
@@ -33,17 +34,7 @@ export const useSendClientWidgetApiAction = (api: ClientWidgetApi) => {
 };
 
 export const useCallControlState = (control: CallControl): CallControlState => {
-  const [state, setState] = useState(control.getState());
-
-  useEffect(() => {
-    const handleUpdate = () => {
-      setState(control.getState());
-    };
-    control.on(CallControlEvent.StateUpdate, handleUpdate);
-    return () => {
-      control.off(CallControlEvent.StateUpdate, handleUpdate);
-    };
-  }, [control]);
+  const state = useObservableValue(control.state);
 
   return state;
 };

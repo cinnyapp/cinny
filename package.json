@@ -37,7 +37,6 @@
     "@atlaskit/pragmatic-drag-and-drop-auto-scroll": "1.3.0",
     "@atlaskit/pragmatic-drag-and-drop-hitbox": "1.0.3",
     "@fontsource/inter": "4.5.14",
-    "@matrix-org/matrix-sdk-crypto-wasm": "18.3.1",
     "@tanstack/react-query": "5.24.1",
     "@tanstack/react-query-devtools": "5.24.1",
     "@tanstack/react-virtual": "3.2.0",
@@ -57,7 +56,7 @@
     "emojibase-data": "15.3.2",
     "file-saver": "2.0.5",
     "focus-trap-react": "10.0.2",
-    "folds": "2.7.1",
+    "folds": "2.7.3",
     "html-dom-parser": "4.0.0",
     "html-react-parser": "4.2.0",
     "i18next": "23.12.2",
@@ -72,6 +71,7 @@
     "matrix-js-sdk": "41.7.0",
     "matrix-widget-api": "1.20.0",
     "millify": "6.1.0",
+    "neurone": "0.0.9",
     "pdfjs-dist": "4.2.67",
     "prismjs": "1.30.0",
     "react": "18.2.0",
@@ -92,7 +92,7 @@
     "ua-parser-js": "1.0.35"
   },
   "devDependencies": {
-    "@element-hq/element-call-embedded": "0.26.1",
+    "@element-hq/element-call-embedded": "0.28.0",
     "@esbuild-plugins/node-globals-polyfill": "0.2.3",
     "@rollup/plugin-inject": "5.0.3",
     "@rollup/plugin-wasm": "6.1.1",

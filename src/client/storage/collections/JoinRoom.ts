@@ -112,6 +112,44 @@ export const createJoinRoomStateCollection = (driver: StorageDriver): JoinRoomSt
   new Collection(ROOM_STATE_STORE_NAME, 'id', driver);
 
 /**
+ * JoinRoomSticky Store
+ */
+const ROOM_STATE_STICKY_NAME = 'JoinRoomSticky';
+
+export const prepareJoinRoomStickyStore = (idb: IDBPDatabase, oldVersion: number) => {
+  if (oldVersion < 3) {
+    const store = idb.createObjectStore(ROOM_STATE_STICKY_NAME, {
+      keyPath: 'id',
+    });
+
+    store.createIndex('roomId', 'roomId', { unique: false });
+    store.createIndex('type', 'type', { unique: false });
+    store.createIndex('expiresAt', 'expiresAt', { unique: false });
+  }
+};
+
+export type JoinRoomStickyObject = Entry<
+  'id',
+  'roomId' | 'type' | 'expiresAt',
+  {
+    id: string;
+    roomId: string;
+    type: string;
+    expiresAt: number;
+    event: MessageEventWithoutRoomId;
+  }
+>;
+
+export type JoinRoomStickyCollection = Collection<
+  'id',
+  'roomId' | 'type' | 'expiresAt',
+  JoinRoomStickyObject
+>;
+
+export const createJoinRoomStickyCollection = (driver: StorageDriver): JoinRoomStickyCollection =>
+  new Collection(ROOM_STATE_STICKY_NAME, 'id', driver);
+
+/**
  * JoinRoomMember Store
  */
 const ROOM_MEMBER_STORE_NAME = 'JoinRoomMember';

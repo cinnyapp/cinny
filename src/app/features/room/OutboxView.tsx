@@ -200,7 +200,7 @@ function MessageSending({
           <div
             style={{
               marginTop: config.space.S200,
-              width: toRem(400),
+              maxWidth: toRem(400),
             }}
           >
             <MessageSendingError sender={sender} outbox={outbox} senderError={senderState} />

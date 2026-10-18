@@ -1,14 +1,11 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { useSetAtom } from 'jotai';
-import { useParams } from 'react-router-dom';
 import { Box, Text, TooltipProvider, Tooltip, Icon, Icons, IconButton, toRem } from 'folds';
 import { Page, PageHeader } from '../../components/page';
 import { callChatAtom } from '../../state/callEmbed';
-import { RoomView } from './RoomView';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 
-export function CallChatView() {
-  const { eventId } = useParams();
+export function CallChatView({ children }: { children: ReactNode }) {
   const setChat = useSetAtom(callChatAtom);
   const screenSize = useScreenSizeContext();
 
@@ -17,7 +14,7 @@ export function CallChatView() {
   return (
     <Page
       style={{
-        width: screenSize === ScreenSize.Desktop ? toRem(456) : '100%',
+        width: screenSize === ScreenSize.Desktop ? toRem(496) : '100%',
         flexShrink: 0,
         flexGrow: 0,
       }}
@@ -50,7 +47,7 @@ export function CallChatView() {
         </Box>
       </PageHeader>
       <Box grow="Yes" direction="Column">
-        <RoomView eventId={eventId} />
+        {children}
       </Box>
     </Page>
   );

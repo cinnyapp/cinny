@@ -21,6 +21,7 @@ import {
   RectCords,
   Badge,
   Spinner,
+  Button,
 } from 'folds';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '../../components/page';
@@ -71,6 +72,11 @@ import { roomToNotificationsAtom } from '../../state/room/roomToNotifications';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { RoomSettingsPage } from '../../state/roomSettings';
 import { RoomAccessIndicator } from '../../components/RoomAccessIndicator';
+import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
+import { useLivekitSupport } from '../../hooks/useLivekitSupport';
+import { webRTCSupported } from '../../utils/rtc';
+import { StateEvent } from '../../../types/matrix/room';
+import { isCallRoom } from '../../utils/room';
 
 type RoomMenuProps = {
   requestClose: () => void;
@@ -259,6 +265,131 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ requestClose }, re
   );
 });
 
+type CallMenuProps = {
+  onVoiceCall: () => void;
+  onVideoCall: () => void;
+  requestClose: () => void;
+};
+const CallMenu = forwardRef<HTMLDivElement, CallMenuProps>(
+  ({ requestClose, onVoiceCall, onVideoCall }, ref) => {
+    const handleVoice = () => {
+      onVoiceCall();
+      requestClose();
+    };
+    const handleVideo = () => {
+      onVideoCall();
+      requestClose();
+    };
+
+    return (
+      <Menu ref={ref} style={{ padding: config.space.S200, minWidth: toRem(150) }}>
+        <Box direction="Column" gap="200">
+          <Text size="L400">Start Call</Text>
+          <Box direction="Column" gap="200">
+            <Button
+              size="300"
+              variant="Success"
+              fill="Soft"
+              outlined
+              radii="300"
+              before={<Icon size="100" src={Icons.Phone} filled />}
+              onClick={handleVoice}
+            >
+              <Text size="B300">Voice</Text>
+            </Button>
+            <Button
+              size="300"
+              variant="Success"
+              radii="300"
+              before={<Icon size="100" src={Icons.VideoCamera} filled />}
+              onClick={handleVideo}
+            >
+              <Text size="B300">Video</Text>
+            </Button>
+          </Box>
+        </Box>
+      </Menu>
+    );
+  }
+);
+
+function CallButton() {
+  const roomId = useRoom();
+
+  const callEmbed = useCallEmbed();
+  const startCall = useCallStart();
+  const callStarted = callEmbed && callEmbed.roomId === roomId;
+  const inAnotherCall = callEmbed && !callStarted;
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+
+  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuAnchor(evt.currentTarget.getBoundingClientRect());
+  };
+
+  return (
+    <>
+      <TooltipProvider
+        position="Bottom"
+        offset={4}
+        tooltip={
+          <Tooltip>
+            {inAnotherCall ? (
+              <Text size="L400">Already in another call — End the current call to join!</Text>
+            ) : (
+              <Text>Call</Text>
+            )}
+          </Tooltip>
+        }
+      >
+        {(triggerRef) => (
+          <IconButton
+            variant="Surface"
+            fill="None"
+            ref={triggerRef}
+            onClick={handleOpenMenu}
+            onContextMenu={(evt) => {
+              evt.preventDefault();
+              startCall(roomId, {
+                microphone: true,
+                video: true,
+                sound: true,
+              });
+            }}
+            disabled={inAnotherCall || callStarted}
+            aria-pressed={!!menuAnchor}
+          >
+            <Icon size="400" src={Icons.VideoCamera} filled={!!menuAnchor} />
+          </IconButton>
+        )}
+      </TooltipProvider>
+      <PopOut
+        anchor={menuAnchor}
+        position="Bottom"
+        align="Center"
+        content={
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              returnFocusOnDeactivate: false,
+              onDeactivate: () => setMenuAnchor(undefined),
+              clickOutsideDeactivates: true,
+              isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+              isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+              escapeDeactivates: stopPropagation,
+            }}
+          >
+            <CallMenu
+              onVideoCall={() => startCall(roomId, { microphone: true, video: true, sound: true })}
+              onVoiceCall={() => startCall(roomId, { microphone: true, video: false, sound: true })}
+              requestClose={() => setMenuAnchor(undefined)}
+            />
+          </FocusTrap>
+        }
+      />
+    </>
+  );
+}
+
 export function RoomViewHeader({ callView }: { callView?: boolean }) {
   const navigate = useNavigate();
   const ct = useClient();
@@ -270,6 +401,16 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
   const [pinMenuAnchor, setPinMenuAnchor] = useState<RectCords>();
   const encryptedRooms = useObservableValue(ct.encryptedRooms);
   const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
+
+  const creators = useRoomCreators(roomId);
+  const powerLevels = usePowerLevelsContext();
+  const permissions = useRoomPermissions(creators, powerLevels);
+  const hasCallPermission = permissions.stateEvent(
+    StateEvent.GroupCallMemberPrefix,
+    ct.session.userId
+  );
+  const livekitSupported = useLivekitSupport();
+  const rtcSupported = webRTCSupported();
 
   const pinnedEvents = useRoomPinnedEvents(roomId);
 
@@ -474,6 +615,11 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
               </FocusTrap>
             }
           />
+          {!isCallRoom(ct.roomToType.read.get(roomId)) &&
+            livekitSupported &&
+            rtcSupported &&
+            hasCallPermission && <CallButton />}
+
           {screenSize === ScreenSize.Desktop && (
             <TooltipProvider
               position="Bottom"

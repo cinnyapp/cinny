@@ -121,7 +121,10 @@ export const useBindUploadAtom = (uploadAtom: UploadAtom, hideFilename?: boolean
     request(
       postUpload({
         searchParams: {
-          filename: hideFilename ? undefined : file.name,
+          filename:
+            !hideFilename && 'name' in file && typeof file.name === 'string'
+              ? file.name
+              : undefined,
         },
         body: file,
       }),

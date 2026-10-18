@@ -11,34 +11,75 @@ import {
   OpenIDRequestState,
   SimpleObservable,
   IOpenIDUpdate,
+  IRoomAccountData,
+  IRtcTransportsResult,
+  IRtcLivekitGetTokenFromWidgetRequestData,
+  IRtcLivekitGetTokenFromWidgetResponseData,
+  IRtcLivekitDelegateDelayedLeaveFromWidgetRequestData,
+  IRtcLivekitDelegateDelayedLeaveFromWidgetResponseData,
 } from 'matrix-widget-api';
 import {
-  EventType,
-  type IContent,
-  MatrixError,
-  type MatrixEvent,
-  Direction,
-  type SendDelayedEventResponse,
-  type StateEvents,
-  type TimelineEvents,
-  MatrixClient,
-} from 'matrix-js-sdk';
+  getMessages,
+  GetMessagesOK,
+  putRedact,
+  PutRedactOK,
+  putSend,
+  PutSendOK,
+  putStateEvent,
+  PutStateEventOK,
+} from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
+import { putSendToDevice } from 'neurone/lib/api/matrix/client/v3/sendToDevice';
+import { postUpload, PostUploadOK } from 'neurone/lib/api/matrix/media/v3/upload';
+import { getConfig, GetConfigOK } from 'neurone/lib/api/matrix/client/v1/media';
+import { postSearch, PostSearchOK } from 'neurone/lib/api/matrix/client/v3/userDirectory';
+import {
+  postOpenidRequestToken,
+  PostOpenidRequestTokenOK,
+} from 'neurone/lib/api/matrix/client/v3/user';
+import {
+  getRelations,
+  GetRelationsOK,
+  getRelationsRelType,
+  getRelationsRelTypeEventType,
+} from 'neurone/lib/api/matrix/client/v1/rooms';
+import { QueryRange } from 'neurone/lib/storage/collection';
+import { MatrixEndpointStruct } from 'neurone/lib/api/MatrixEndpoint';
+import { ClientEventWithoutRoomId } from 'neurone/lib/api/types';
 import { getCallCapabilities } from './utils';
-import { downloadMedia, mxcUrlToHttp } from '../../utils/matrix';
+import { downloadMedia, getMxIdServer } from '../../utils/matrix';
+import { ClientContext } from '../../../client/context';
+import { MessageEvent } from '../../../types/matrix/room';
+import { mxcToHttp } from '../../../client/mxcToHttp';
+import { getAuthUploadRequest } from '../../../client/request';
+import { getJoinRoomMemberId, getJoinRoomStateId } from '../../../client/storage/collections';
+import { MAX_UNICODE } from '../../../client/storage';
+import { rContent } from '../../../client/reader';
+import {
+  unstablePostDelayedEvents,
+  unstablePutDelayedEvent,
+  UnstablePutDelayedEventOK,
+} from '../msc4140-delayed-events';
+import { fulfilledPromiseSettledResult } from '../../utils/common';
+import { ensureEncryptionSession } from '../../hooks/useEnsureRoomEncryptionSession';
+import { unstablePutSendSticky } from '../msc4354-sticky-events';
+import { unstableGetTransports, UnstableGetTransportsOK } from '../msc4143-matrixrtc';
+import {
+  unstablePostLivekitDelegateDelayedLeave,
+  unstablePostLivekitGetToken,
+  UnstablePostLivekitGetTokenOK,
+} from '../msc4195-matrixrtc-livekit';
+import { autoDiscovery } from '../../cs-api';
 
 export class CallWidgetDriver extends WidgetDriver {
   private allowedCapabilities: Set<Capability>;
 
-  private readonly mx: MatrixClient;
-
-  public constructor(mx: MatrixClient, private inRoomId: string) {
+  public constructor(private ct: ClientContext, private inRoomId: string) {
     super();
-    this.mx = mx;
 
-    const deviceId = mx.getDeviceId();
-    if (!deviceId) throw new Error('Failed to initialize CallWidgetDriver! Device ID not found.');
+    const { deviceId, userId } = ct.session;
 
-    this.allowedCapabilities = getCallCapabilities(inRoomId, mx.getSafeUserId(), deviceId);
+    this.allowedCapabilities = getCallCapabilities(inRoomId, userId, deviceId);
   }
 
   public async validateCapabilities(requested: Set<Capability>): Promise<Set<Capability>> {
@@ -48,95 +89,217 @@ export class CallWidgetDriver extends WidgetDriver {
 
   public async sendEvent(
     eventType: string,
-    content: IContent,
+    content: object,
     stateKey: string | null = null,
     targetRoomId: string | null = null
   ): Promise<ISendEventDetails> {
     const roomId = targetRoomId || this.inRoomId;
 
-    let r: { event_id: string } | null;
     if (typeof stateKey === 'string') {
-      r = await this.mx.sendStateEvent(
-        roomId,
-        eventType as keyof StateEvents,
-        content as StateEvents[keyof StateEvents],
-        stateKey
+      const resp = await this.ct.requestAuthJSON(
+        putStateEvent({ pathParams: { roomId, eventType, stateKey }, body: content })
       );
-    } else if (eventType === EventType.RoomRedaction) {
-      // special case: extract the `redacts` property and call redact
-      r = await this.mx.redactEvent(roomId, content.redacts);
-    } else {
-      r = await this.mx.sendEvent(
-        roomId,
-        eventType as keyof TimelineEvents,
-        content as TimelineEvents[keyof TimelineEvents]
-      );
+      const [err, result] = await parseMatrixResp<PutStateEventOK>(resp);
+      if (err) throw err;
+
+      return { roomId, eventId: result.event_id };
     }
 
-    return { roomId, eventId: r.event_id };
+    if (
+      eventType === MessageEvent.RoomRedaction &&
+      'redacts' in content &&
+      typeof content.redacts === 'string'
+    ) {
+      // special case: extract the `redacts` property and call redact
+      const resp = await this.ct.requestAuthJSON(
+        putRedact({ pathParams: { roomId, eventId: content.redacts, txnId: this.ct.getTxnId() } })
+      );
+      const [err, result] = await parseMatrixResp<PutRedactOK>(resp);
+      if (err) throw err;
+
+      return { roomId, eventId: result.event_id };
+    }
+
+    let encContent: object | undefined;
+    if (this.ct.encryptedRooms.read.has(roomId)) {
+      await ensureEncryptionSession(this.ct, roomId);
+
+      const encStr = await this.ct.machine.roomEncryption.encryptMessageEvent(
+        roomId,
+        eventType,
+        content
+      );
+      encContent = JSON.parse(encStr);
+    }
+
+    const resp = await this.ct.requestAuthJSON(
+      putSend({
+        pathParams: {
+          roomId,
+          eventType: encContent ? MessageEvent.RoomMessageEncrypted : eventType,
+          txnId: this.ct.getTxnId(),
+        },
+        body: encContent ?? content,
+      })
+    );
+    const [err, result] = await parseMatrixResp<PutSendOK>(resp);
+    if (err) throw err;
+
+    return { roomId, eventId: result.event_id };
+  }
+
+  public async sendStickyEvent(
+    stickyDurationMs: number,
+    eventType: string,
+    content: object,
+    targetRoomId?: string | null
+  ): Promise<ISendEventDetails> {
+    const roomId = targetRoomId || this.inRoomId;
+
+    let encContent: object | undefined;
+    if (this.ct.encryptedRooms.read.has(roomId)) {
+      await ensureEncryptionSession(this.ct, roomId);
+
+      const encStr = await this.ct.machine.roomEncryption.encryptMessageEvent(
+        roomId,
+        eventType,
+        content
+      );
+      encContent = JSON.parse(encStr);
+    }
+
+    const resp = await this.ct.requestAuthJSON(
+      unstablePutSendSticky({
+        pathParams: {
+          roomId,
+          eventType: encContent ? MessageEvent.RoomMessageEncrypted : eventType,
+          txnId: this.ct.getTxnId(),
+        },
+        searchParams: {
+          'org.matrix.msc4354.sticky_duration_ms': stickyDurationMs,
+        },
+        body: encContent ?? content,
+      })
+    );
+    const [err, result] = await parseMatrixResp<PutSendOK>(resp);
+    if (err) throw err;
+
+    return { roomId, eventId: result.event_id };
   }
 
   public async sendDelayedEvent(
-    delay: number | null,
-    parentDelayId: string | null,
+    delay: number,
     eventType: string,
-    content: IContent,
+    content: object,
     stateKey: string | null = null,
     targetRoomId: string | null = null
   ): Promise<ISendDelayedEventDetails> {
     const roomId = targetRoomId || this.inRoomId;
 
-    let delayOpts;
-    if (delay !== null) {
-      delayOpts = {
-        delay,
-        ...(parentDelayId !== null && { parent_delay_id: parentDelayId }),
-      };
-    } else if (parentDelayId !== null) {
-      delayOpts = {
-        parent_delay_id: parentDelayId,
-      };
-    } else {
-      throw new Error('Must provide at least one of delay or parentDelayId');
-    }
+    let encContent: object | undefined;
+    if (typeof stateKey !== 'string' && this.ct.encryptedRooms.read.has(roomId)) {
+      await ensureEncryptionSession(this.ct, roomId);
 
-    let r: SendDelayedEventResponse | null;
-    if (stateKey !== null) {
-      // state event
-      r = await this.mx._unstable_sendDelayedStateEvent(
+      const encStr = await this.ct.machine.roomEncryption.encryptMessageEvent(
         roomId,
-        delayOpts,
-        eventType as keyof StateEvents,
-        content as StateEvents[keyof StateEvents],
-        stateKey
+        eventType,
+        content
       );
-    } else {
-      // message event
-      r = await this.mx._unstable_sendDelayedEvent(
-        roomId,
-        delayOpts,
-        null,
-        eventType as keyof TimelineEvents,
-        content as TimelineEvents[keyof TimelineEvents]
-      );
+      encContent = JSON.parse(encStr);
+    }
+    const resp = await this.ct.requestAuthJSON(
+      unstablePutDelayedEvent({
+        pathParams: {
+          roomId,
+          eventType: encContent ? MessageEvent.RoomMessageEncrypted : eventType,
+          txnId: this.ct.getTxnId(),
+        },
+        body: {
+          delay_ms: delay,
+          state_key: stateKey ?? undefined,
+          content: encContent ?? content,
+        },
+      })
+    );
+
+    const [err, result] = await parseMatrixResp<UnstablePutDelayedEventOK>(resp);
+
+    if (err) {
+      throw err;
     }
 
     return {
       roomId,
-      delayId: r.delay_id,
+      delayId: result.delay_id,
+    };
+  }
+
+  public async sendDelayedStickyEvent(
+    delay: number,
+    stickyDurationMs: number,
+    eventType: string,
+    content: object,
+    targetRoomId?: string | null
+  ): Promise<ISendDelayedEventDetails> {
+    const roomId = targetRoomId || this.inRoomId;
+
+    let encContent: object | undefined;
+    if (this.ct.encryptedRooms.read.has(roomId)) {
+      await ensureEncryptionSession(this.ct, roomId);
+
+      const encStr = await this.ct.machine.roomEncryption.encryptMessageEvent(
+        roomId,
+        eventType,
+        content
+      );
+      encContent = JSON.parse(encStr);
+    }
+    const resp = await this.ct.requestAuthJSON(
+      unstablePutDelayedEvent({
+        pathParams: {
+          roomId,
+          eventType: encContent ? MessageEvent.RoomMessageEncrypted : eventType,
+          txnId: this.ct.getTxnId(),
+        },
+        body: {
+          delay_ms: delay,
+          'org.matrix.msc4354.sticky_duration_ms': stickyDurationMs,
+          content: encContent ?? content,
+        },
+      })
+    );
+
+    const [err, result] = await parseMatrixResp<UnstablePutDelayedEventOK>(resp);
+
+    if (err) {
+      throw err;
+    }
+
+    return {
+      roomId,
+      delayId: result.delay_id,
     };
   }
 
   public async cancelScheduledDelayedEvent(delayId: string): Promise<void> {
-    await this.mx._unstable_cancelScheduledDelayedEvent(delayId);
+    const resp = await this.ct.requestAuthJSON(
+      unstablePostDelayedEvents({ pathParams: { delayId, action: 'cancel' } })
+    );
+    await parseMatrixResp(resp);
   }
 
   public async restartScheduledDelayedEvent(delayId: string): Promise<void> {
-    await this.mx._unstable_restartScheduledDelayedEvent(delayId);
+    const resp = await this.ct.requestAuthJSON(
+      unstablePostDelayedEvents({ pathParams: { delayId, action: 'restart' } })
+    );
+    await parseMatrixResp(resp);
   }
 
   public async sendScheduledDelayedEvent(delayId: string): Promise<void> {
-    await this.mx._unstable_sendScheduledDelayedEvent(delayId);
+    const resp = await this.ct.requestAuthJSON(
+      unstablePostDelayedEvents({ pathParams: { delayId, action: 'send' } })
+    );
+    await parseMatrixResp(resp);
   }
 
   public async sendToDevice(
@@ -144,48 +307,89 @@ export class CallWidgetDriver extends WidgetDriver {
     encrypted: boolean,
     contentMap: { [userId: string]: { [deviceId: string]: object } }
   ): Promise<void> {
+    let messages = contentMap;
+
     if (encrypted) {
-      const crypto = this.mx.getCrypto();
-      if (!crypto) throw new Error('E2EE not enabled');
+      const users = Object.keys(contentMap);
+      await this.ct.machine.outgoingRequests.claimKeys(users);
 
-      // attempt to re-batch these up into a single request
-      const invertedContentMap: { [content: string]: { userId: string; deviceId: string }[] } = {};
+      const encryptedContentMap: { [userId: string]: { [deviceId: string]: object } } = {};
 
-      // eslint-disable-next-line no-restricted-syntax
-      for (const userId of Object.keys(contentMap)) {
-        const userContentMap = contentMap[userId];
-        // eslint-disable-next-line no-restricted-syntax
-        for (const deviceId of Object.keys(userContentMap)) {
-          const content = userContentMap[deviceId];
-          const stringifiedContent = JSON.stringify(content);
-          invertedContentMap[stringifiedContent] = invertedContentMap[stringifiedContent] || [];
-          invertedContentMap[stringifiedContent].push({ userId, deviceId });
-        }
-      }
+      await Promise.allSettled(
+        Object.entries(contentMap).map(async ([userId, userContentMap]) => {
+          encryptedContentMap[userId] = {};
 
-      await Promise.all(
-        Object.entries(invertedContentMap).map(async ([stringifiedContent, recipients]) => {
-          const batch = await crypto.encryptToDeviceMessages(
-            eventType,
-            recipients,
-            JSON.parse(stringifiedContent)
+          await Promise.all(
+            Object.entries(userContentMap).map(async ([deviceId, payload]) => {
+              const userDevice = await this.ct.machine.userTracker.getDevice(userId, deviceId);
+
+              if (!userDevice) {
+                throw new Error(`Device not found: ${userId} / ${deviceId}`);
+              }
+
+              try {
+                const encryptedPayload = userDevice.encryptToDeviceEvent(eventType, payload);
+
+                if (encryptedPayload == null || typeof encryptedPayload !== 'object') {
+                  throw new Error('Encryption returned an invalid payload');
+                }
+
+                encryptedContentMap[userId][deviceId] = encryptedPayload;
+              } catch (error) {
+                const reason = error instanceof Error ? error.message : String(error);
+
+                throw new Error(
+                  `Failed to encrypt to-device event for ${userId} / ${deviceId}: ${reason}`,
+                  { cause: error }
+                );
+              }
+            })
           );
-
-          await this.mx.queueToDevice(batch);
         })
       );
-    } else {
-      await this.mx.queueToDevice({
-        eventType,
-        batch: Object.entries(contentMap).flatMap(([userId, userContentMap]) =>
-          Object.entries(userContentMap).map(([deviceId, content]) => ({
-            userId,
-            deviceId,
-            payload: content,
-          }))
-        ),
-      });
+
+      messages = encryptedContentMap;
     }
+
+    const resp = await this.ct.requestAuthJSON(
+      putSendToDevice({
+        pathParams: { eventType, txnId: this.ct.getTxnId() },
+        body: { messages },
+      })
+    );
+
+    const [err] = await parseMatrixResp(resp);
+
+    if (err) {
+      throw err;
+    }
+  }
+
+  public async readRoomAccountData(
+    eventType: string,
+    roomIds?: string[] | null
+  ): Promise<IRoomAccountData[]> {
+    const dataObjects = await this.ct.storage.joinAccountData.read.queryIndex('type', eventType);
+    const events = dataObjects
+      .filter((obj) => (Array.isArray(roomIds) ? roomIds.includes(obj.roomId) : true))
+      .map((obj) => ({
+        ...obj.event,
+        room_id: obj.roomId,
+        content: obj.event.content as Record<string, unknown>,
+      }));
+
+    return events;
+  }
+
+  public async readStickyEvents(roomId: string): Promise<IRoomEvent[]> {
+    const eventObjs = await this.ct.storage.joinRoomSticky.read.queryIndex('roomId', roomId);
+
+    return eventObjs.map(({ event }) => ({
+      room_id: roomId,
+      ...event,
+      content: event.content as Record<string, unknown>,
+      unsigned: event.unsigned as Record<string, unknown>,
+    }));
   }
 
   public async readRoomTimeline(
@@ -193,40 +397,54 @@ export class CallWidgetDriver extends WidgetDriver {
     eventType: string,
     msgtype: string | undefined,
     stateKey: string | undefined,
-    limit: number,
-    since: string | undefined
+    limit: number
   ): Promise<IRoomEvent[]> {
     const safeLimit =
-      limit > 0 ? Math.min(limit, Number.MAX_SAFE_INTEGER) : Number.MAX_SAFE_INTEGER; // relatively arbitrary
+      limit > 0 ? Math.min(limit, Number.MAX_SAFE_INTEGER) : Number.MAX_SAFE_INTEGER;
 
-    const room = this.mx.getRoom(roomId);
-    if (room === null) return [];
-    const results: MatrixEvent[] = [];
-    const events = room.getLiveTimeline().getEvents();
+    const msgResp = await this.ct.requestAuthJSON(
+      getMessages({
+        pathParams: { roomId },
+        searchParams: { dir: 'b', limit: safeLimit },
+      })
+    );
 
-    for (let i = events.length - 1; i >= 0; i -= 1) {
+    const [err, result] = await parseMatrixResp<GetMessagesOK>(msgResp);
+    if (err) throw err;
+
+    let events: ClientEventWithoutRoomId[] = result.chunk;
+
+    if (this.ct.encryptedRooms.read.has(roomId)) {
+      const pending = events.map((evt) => this.ct.decryption.tryDecryptEvent(roomId, evt));
+
+      events = fulfilledPromiseSettledResult(await Promise.allSettled(pending));
+    }
+
+    const resultEvents: ClientEventWithoutRoomId[] = [];
+
+    for (let i = 0; i < events.length; i += 1) {
       const ev = events[i];
-      if (results.length >= safeLimit) break;
-      if (since !== undefined && ev.getId() === since) break;
+      if (resultEvents.length >= safeLimit) break;
+
+      const eventStateKey = 'state_key' in ev ? ev.state_key : undefined;
 
       if (
-        ev.getType() === eventType &&
-        !ev.isState() &&
-        (eventType !== EventType.RoomMessage || !msgtype || msgtype === ev.getContent().msgtype) &&
-        (ev.getStateKey() === undefined || stateKey === undefined || ev.getStateKey() === stateKey)
+        ev.type === eventType &&
+        (eventStateKey === undefined || stateKey === undefined || eventStateKey === stateKey) &&
+        (eventType !== MessageEvent.RoomMessage ||
+          !msgtype ||
+          msgtype === rContent.msgtype(ev.content))
       ) {
-        results.push(ev);
+        resultEvents.push(ev);
       }
     }
 
-    return results.map((e) => e.getEffectiveEvent() as IRoomEvent);
-  }
-
-  public async askOpenID(observer: SimpleObservable<IOpenIDUpdate>): Promise<void> {
-    return observer.update({
-      state: OpenIDRequestState.Allowed,
-      token: await this.mx.getOpenIdToken(),
-    });
+    return resultEvents.map((evt) => ({
+      room_id: roomId,
+      ...evt,
+      content: evt.content as Record<string, unknown>,
+      unsigned: evt.unsigned as Record<string, unknown>,
+    }));
   }
 
   public async readRoomState(
@@ -234,58 +452,134 @@ export class CallWidgetDriver extends WidgetDriver {
     eventType: string,
     stateKey: string | undefined
   ): Promise<IRoomEvent[]> {
-    const room = this.mx.getRoom(roomId);
-    if (room === null) return [];
-    const state = room.getLiveTimeline().getState(Direction.Forward);
-    if (state === undefined) return [];
+    if (stateKey === undefined) {
+      const stateObjs =
+        eventType === 'm.room.member'
+          ? await this.ct.storage.joinRoomMember.read.queryIndex('roomId', roomId)
+          : await this.ct.storage.joinRoomState.read.query(
+              new QueryRange(
+                getJoinRoomStateId(roomId, eventType, ''),
+                getJoinRoomStateId(roomId, eventType, MAX_UNICODE)
+              )
+            );
 
-    if (stateKey === undefined)
-      return state.getStateEvents(eventType).map((e) => e.getEffectiveEvent() as IRoomEvent);
-    const event = state.getStateEvents(eventType, stateKey);
-    return event === null ? [] : [event.getEffectiveEvent() as IRoomEvent];
+      return stateObjs.map((stateObj) => ({
+        ...stateObj.event,
+        room_id: roomId,
+        content: stateObj.event.content as Record<string, unknown>,
+        unsigned: stateObj.event.unsigned as Record<string, unknown>,
+      }));
+    }
+
+    const stateObj =
+      eventType === 'm.room.member'
+        ? await this.ct.storage.joinRoomMember.read.get(getJoinRoomMemberId(roomId, stateKey))
+        : await this.ct.storage.joinRoomState.read.get(
+            getJoinRoomStateId(roomId, eventType, stateKey ?? '')
+          );
+    if (!stateObj) return [];
+    const { event: stateEvent } = stateObj;
+
+    return [
+      {
+        ...stateEvent,
+        room_id: roomId,
+        content: stateEvent.content as Record<string, unknown>,
+        unsigned: stateEvent.unsigned as Record<string, unknown>,
+      },
+    ];
   }
 
   public async readEventRelations(
     eventId: string,
     roomId?: string,
-    relationType?: string,
+    relType?: string,
     eventType?: string,
     from?: string,
     to?: string,
     limit?: number,
-    direction?: 'f' | 'b'
+    dir?: 'f' | 'b'
   ): Promise<IReadEventRelationsResult> {
-    const dir = direction as Direction;
-    const targetRoomId = roomId ?? this.inRoomId ?? undefined;
+    const targetRoomId = roomId ?? this.inRoomId;
 
     if (typeof targetRoomId !== 'string') {
       throw new Error('Error while reading the current room');
     }
 
-    const { events, nextBatch, prevBatch } = await this.mx.relations(
-      targetRoomId,
-      eventId,
-      relationType ?? null,
-      eventType ?? null,
-      { from, to, limit, dir }
-    );
+    let endpoint: MatrixEndpointStruct;
+    if (relType && eventType) {
+      endpoint = getRelationsRelTypeEventType({
+        pathParams: { roomId: targetRoomId, eventId, relType, eventType },
+        searchParams: { dir, from, to, limit },
+      });
+    } else if (relType) {
+      endpoint = getRelationsRelType({
+        pathParams: { roomId: targetRoomId, eventId, relType },
+        searchParams: { dir, from, to, limit },
+      });
+    } else {
+      endpoint = getRelations({
+        pathParams: { roomId: targetRoomId, eventId },
+        searchParams: { dir, from, to, limit },
+      });
+    }
 
-    return {
-      chunk: events.map((e) => e.getEffectiveEvent() as IRoomEvent),
-      nextBatch: nextBatch ?? undefined,
-      prevBatch: prevBatch ?? undefined,
-    };
+    const resp = await this.ct.requestAuthJSON(endpoint);
+
+    const [err, result] = await parseMatrixResp<GetRelationsOK>(resp);
+
+    if (err) {
+      throw err;
+    }
+
+    if (this.ct.encryptedRooms.read.has(targetRoomId)) {
+      const pending = result.chunk.map((evt) =>
+        this.ct.decryption.tryDecryptEvent(targetRoomId, evt)
+      );
+      const clientEvents = fulfilledPromiseSettledResult(await Promise.allSettled(pending));
+      return {
+        chunk: clientEvents.map((evt) => ({
+          room_id: targetRoomId,
+          ...evt,
+          content: evt.content as Record<string, unknown>,
+          unsigned: evt.unsigned as Record<string, unknown>,
+        })),
+        prevBatch: result.prev_batch,
+        nextBatch: result.next_batch,
+      };
+    }
+    return result as IReadEventRelationsResult;
+  }
+
+  public async askOpenID(observer: SimpleObservable<IOpenIDUpdate>): Promise<void> {
+    const resp = await this.ct.requestAuthJSON(
+      postOpenidRequestToken({
+        pathParams: {
+          userId: this.ct.session.userId,
+        },
+      })
+    );
+    const [err, result] = await parseMatrixResp<PostOpenidRequestTokenOK>(resp);
+    if (err) return;
+
+    observer.update({ state: OpenIDRequestState.Allowed, token: result });
   }
 
   public async searchUserDirectory(
     searchTerm: string,
     limit?: number
   ): Promise<ISearchUserDirectoryResult> {
-    const { limited, results } = await this.mx.searchUserDirectory({ term: searchTerm, limit });
+    const resp = await this.ct.requestAuthJSON(
+      postSearch({ body: { search_term: searchTerm, limit } })
+    );
+    const [err, result] = await parseMatrixResp<PostSearchOK>(resp);
+    if (err) {
+      throw err;
+    }
 
     return {
-      limited,
-      results: results.map((r) => ({
+      limited: result.limited,
+      results: result.results.map((r) => ({
         userId: r.user_id,
         displayName: r.display_name,
         avatarUrl: r.avatar_url,
@@ -294,32 +588,95 @@ export class CallWidgetDriver extends WidgetDriver {
   }
 
   public async getMediaConfig(): Promise<IGetMediaConfigResult> {
-    return this.mx.getMediaConfig();
+    const resp = await this.ct.requestAuthJSON(getConfig({}));
+    const [err, result] = await parseMatrixResp<GetConfigOK>(resp);
+    if (err) {
+      throw err;
+    }
+    return result;
+  }
+
+  public async getRtcTransports(): Promise<IRtcTransportsResult> {
+    const resp = await this.ct.requestAuthJSON(unstableGetTransports({}));
+    const [err, result] = await parseMatrixResp<UnstableGetTransportsOK>(resp);
+    if (result) {
+      return {
+        rtc_transports: result.rtc_transports ?? result.transports,
+      };
+    }
+
+    const userId = getMxIdServer(this.ct.session.userId);
+    if (!userId) throw err;
+
+    const [, info] = await autoDiscovery(fetch, userId);
+    const rtcInfo = info?.['org.matrix.msc4143.rtc_foci'];
+    if (rtcInfo)
+      return {
+        rtc_transports: rtcInfo,
+      };
+
+    throw err;
   }
 
   public async uploadFile(file: XMLHttpRequestBodyInit): Promise<{ contentUri: string }> {
-    const uploadResult = await this.mx.uploadContent(file);
+    if (!(file instanceof Blob) || !(file instanceof FormData)) {
+      throw new Error('Failed to upload file. Unsupported file type');
+    }
 
-    return { contentUri: uploadResult.content_uri };
+    const request = getAuthUploadRequest<PostUploadOK>(
+      this.ct.session.baseUrl,
+      this.ct.session.accessToken
+    );
+    const [err, result] = await request(postUpload({ body: file }));
+    if (err) {
+      throw err;
+    }
+    return { contentUri: result.content_uri };
   }
 
   public async downloadFile(contentUri: string): Promise<{ file: XMLHttpRequestBodyInit }> {
-    const httpUrl = mxcUrlToHttp(this.mx, contentUri, true);
-    if (!httpUrl) {
-      throw new Error('Call widget failed to download file! No http url!');
-    }
+    const httpUrl = mxcToHttp(this.ct.session.baseUrl, contentUri, true).url();
     const blob = await downloadMedia(httpUrl);
     return { file: blob };
   }
 
+  public async getRtcLivekitToken(
+    data: IRtcLivekitGetTokenFromWidgetRequestData
+  ): Promise<IRtcLivekitGetTokenFromWidgetResponseData> {
+    const resp = await this.ct.requestAuthJSON(
+      unstablePostLivekitGetToken({
+        body: data,
+      })
+    );
+    const [err, result] = await parseMatrixResp<UnstablePostLivekitGetTokenOK>(resp);
+    if (err) {
+      throw err;
+    }
+    return result;
+  }
+
+  public async delegateRtcLivekitDelayedLeave(
+    data: IRtcLivekitDelegateDelayedLeaveFromWidgetRequestData
+  ): Promise<IRtcLivekitDelegateDelayedLeaveFromWidgetResponseData> {
+    const resp = await this.ct.requestAuthJSON(
+      unstablePostLivekitDelegateDelayedLeave({
+        body: data,
+      })
+    );
+    const [err] = await parseMatrixResp(resp);
+    if (err) {
+      throw err;
+    }
+
+    return {};
+  }
+
   public getKnownRooms(): string[] {
-    return this.mx.getVisibleRooms().map((r) => r.roomId);
+    return this.ct.rooms.join.read;
   }
 
   // eslint-disable-next-line class-methods-use-this
-  public processError(error: unknown): IWidgetApiErrorResponseDataDetails | undefined {
-    return error instanceof MatrixError
-      ? { matrix_api_error: error.asWidgetApiErrorData() }
-      : undefined;
+  public processError(): IWidgetApiErrorResponseDataDetails | undefined {
+    return undefined;
   }
 }

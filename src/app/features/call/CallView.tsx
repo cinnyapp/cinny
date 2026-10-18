@@ -1,4 +1,4 @@
-import React, { RefObject, useRef } from 'react';
+import React, { RefObject, useMemo, useRef } from 'react';
 import { Badge, Box, color, Header, Scroll, Text, toRem } from 'folds';
 import { useCallEmbed, useCallJoined, useCallEmbedPlacementSync } from '../../hooks/useCallEmbed';
 import { ContainerColor } from '../../styles/ContainerColor.css';
@@ -7,7 +7,6 @@ import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { useRoom } from '../../hooks/useRoom';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { StateEvent } from '../../../types/matrix/room';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
 import { CallMemberRenderer } from './CallMemberCard';
@@ -15,6 +14,7 @@ import * as css from './styles.css';
 import { CallControls } from './CallControls';
 import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 import { webRTCSupported } from '../../utils/rtc';
+import { useClient } from '../../hooks/useClient';
 
 function LivekitServerMissingMessage() {
   return (
@@ -75,26 +75,26 @@ function AlreadyInCallMessage() {
 }
 
 function CallPrescreen() {
-  const mx = useMatrixClient();
-  const room = useRoom();
+  const ct = useClient();
+  const roomId = useRoom();
   const livekitSupported = useLivekitSupport();
   const rtcSupported = webRTCSupported();
 
   const powerLevels = usePowerLevelsContext();
-  const creators = useRoomCreators(room);
+  const creators = useRoomCreators(roomId);
 
   const permissions = useRoomPermissions(creators, powerLevels);
-  const hasPermission = permissions.stateEvent(
-    StateEvent.GroupCallMemberPrefix,
-    mx.getSafeUserId()
-  );
+  const hasPermission = permissions.stateEvent(StateEvent.GroupCallMemberPrefix, ct.session.userId);
 
-  const callSession = useCallSession(room);
+  const callSession = useCallSession(roomId);
   const callMembers = useCallMembers(callSession);
+
+  const users = useMemo(() => Array.from(new Set(callMembers.map((m) => m.userId))), [callMembers]);
+
   const hasParticipant = callMembers.length > 0;
 
   const callEmbed = useCallEmbed();
-  const inOtherCall = callEmbed && callEmbed.roomId !== room.roomId;
+  const inOtherCall = callEmbed && callEmbed.roomId !== roomId;
 
   const canJoin = hasPermission && livekitSupported && rtcSupported;
 
@@ -109,7 +109,7 @@ function CallPrescreen() {
               </Box>
               <Badge variant="Critical" fill="Solid" size="400">
                 <Text as="span" size="L400" truncate>
-                  {callMembers.length} Live
+                  {users.length} Live
                 </Text>
               </Badge>
             </Header>
@@ -151,14 +151,14 @@ function CallJoined({ joined, containerRef }: CallJoinedProps) {
 }
 
 export function CallView() {
-  const room = useRoom();
+  const roomId = useRoom();
   const callContainerRef = useRef<HTMLDivElement>(null);
   useCallEmbedPlacementSync(callContainerRef);
 
   const callEmbed = useCallEmbed();
   const callJoined = useCallJoined(callEmbed);
 
-  const currentJoined = callEmbed?.roomId === room.roomId && callJoined;
+  const currentJoined = callEmbed?.roomId === roomId && callJoined;
 
   return (
     <Box
