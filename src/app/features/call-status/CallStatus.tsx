@@ -7,7 +7,7 @@ import { CallRoomName } from './CallRoomName';
 import { CallControl } from './CallControl';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
-import { ScreenSize, useScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
+import { ScreenSize, useScreenSize } from '../../hooks/useScreenSize';
 import { MemberGlance } from './MemberGlance';
 import { StatusDivider } from './components';
 import { CallEmbed } from '../../plugins/call/CallEmbed';
@@ -94,11 +94,9 @@ export function CallStatusRenderer() {
   const callEmbed = useCallEmbed();
   const selectedRoom = useSelectedRoom();
 
-  const screenSize = useScreenSizeContext();
-
   if (!callEmbed) return null;
 
-  if (screenSize === ScreenSize.Mobile && callEmbed.roomId === selectedRoom) return null;
+  if (callEmbed.roomId === selectedRoom) return null;
 
   return <CallStatus callEmbed={callEmbed} />;
 }
