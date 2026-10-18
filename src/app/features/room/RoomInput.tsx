@@ -20,7 +20,7 @@ import {
   AutocompletePrefix,
   AutocompleteQuery,
   getAutocompleteQuery,
-  getPrevWorldRange,
+  getPrevWordRange,
   resetEditor,
   RoomMentionAutocomplete,
   UserMentionAutocomplete,
@@ -218,7 +218,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           sendTypingStatus(!isEmptyEditor(editor));
         }
 
-        const prevWordRange = getPrevWorldRange(editor);
+        const prevWordRange = getPrevWordRange(editor);
         const query = prevWordRange
           ? getAutocompleteQuery<AutocompletePrefix>(editor, prevWordRange, AUTOCOMPLETE_PREFIXES)
           : undefined;

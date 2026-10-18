@@ -241,15 +241,15 @@ export const getPointUntilChar = (
   return targetPoint;
 };
 
-export const getPrevWorldRange = (editor: Editor): BaseRange | undefined => {
+export const getPrevWordRange = (editor: Editor): BaseRange | undefined => {
   const { selection } = editor;
   if (!selection || !Range.isCollapsed(selection)) return undefined;
   const [cursorPoint] = Range.edges(selection);
-  const worldStartPoint = getPointUntilChar(editor, cursorPoint, {
+  const wordStartPoint = getPointUntilChar(editor, cursorPoint, {
     reverse: true,
-    match: (char) => char === ' ',
+    match: (char) => char === ' ' || char === '',
   });
-  return worldStartPoint && Editor.range(editor, worldStartPoint, cursorPoint);
+  return wordStartPoint && Editor.range(editor, wordStartPoint, cursorPoint);
 };
 
 export const isEmptyEditor = (editor: Editor): boolean => {
