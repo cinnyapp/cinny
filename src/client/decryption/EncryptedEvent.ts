@@ -5,6 +5,7 @@ import {
 } from 'neurone/lib/api/types';
 import { MegolmDecryptionError, RoomEncryption } from 'neurone/lib/crypto/machine';
 import { ObservableValue } from 'neurone/lib/utils/observable';
+import { randomStr } from '../../app/utils/common';
 
 export class EventDecryptionIdle {}
 
@@ -36,7 +37,7 @@ export class EventDecryptionSuccess<T extends ClientEventWithoutRoomId> {
 export class EncryptedEvent<T extends ClientEventWithoutRoomId> {
   private readonly roomEncryption: RoomEncryption;
 
-  private readonly publishKey = crypto.randomUUID();
+  private readonly publishKey = randomStr();
 
   private decryptPromise: Promise<void> | undefined;
 

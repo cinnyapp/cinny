@@ -4,6 +4,7 @@ import { JoinRoom } from 'neurone/lib/api/matrix/client/v3/sync';
 import { MatrixRequest } from 'neurone/lib/matrix-request';
 import { Timeline } from './Timeline';
 import { SyncValue } from '../sync';
+import { randomStr } from '../../app/utils/common';
 
 export * from './Timeline';
 export * from './TimelineView';
@@ -14,7 +15,7 @@ export const createTimelines = (
   request: MatrixRequest,
   disposer: Disposer
 ): ObservableValue<Map<string, Timeline>> => {
-  const publishKey: string = crypto.randomUUID();
+  const publishKey: string = randomStr();
 
   const roomToTimeline = new ObservableValue<Map<string, Timeline>>(new Map(), publishKey);
 

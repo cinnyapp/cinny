@@ -3,13 +3,14 @@ import { ObservableValue } from 'neurone/lib/utils/observable';
 import { Disposable } from 'neurone/lib/utils/disposable';
 import { CallControlState } from './CallControlState';
 import { ElementMediaStateDetail, ElementMediaStatePayload, ElementWidgetActions } from './types';
+import { randomStr } from '../../utils/common';
 
 export enum CallControlEvent {
   StateUpdate = 'state_update',
 }
 
 export class CallControl implements CallControlState, Disposable {
-  private readonly publishKey = crypto.randomUUID();
+  private readonly publishKey = randomStr();
 
   public readonly state: ObservableValue<CallControlState>;
 

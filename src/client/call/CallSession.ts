@@ -10,6 +10,7 @@ import {
   getJoinRoomMemberId,
 } from '../storage/collections';
 import { CALL_APPLICATION_TYPE, DEFAULT_CALL_SLOT_IDS, resolveActiveRtcMembers } from './rtcMember';
+import { randomStr } from '../../app/utils/common';
 
 export type CallMember = {
   kind: 'call.member' | 'rtc.member';
@@ -71,7 +72,7 @@ export class CallSession implements Disposable {
 
   private readonly storage: Storage;
 
-  private readonly publisherKey = crypto.randomUUID();
+  private readonly publisherKey = randomStr();
 
   private callEvents: JoinRoomStateObject[] = [];
 

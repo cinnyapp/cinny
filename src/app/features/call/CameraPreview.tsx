@@ -125,7 +125,7 @@ export function CameraPreview() {
             gap="200"
             grow="Yes"
           >
-            <Icon src={status === 'idle' ? Icons.User : Icons.Warning} />
+            <Icon src={status === 'idle' ? Icons.EyeBlind : Icons.Warning} />
             <Text size="L400" align="Center">
               {STATUS_MESSAGE[status as Exclude<CameraStatus, 'ready'>]}
             </Text>

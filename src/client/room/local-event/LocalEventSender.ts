@@ -3,6 +3,7 @@ import { MatrixError, MatrixRequest, parseMatrixResp } from 'neurone/lib/matrix-
 import { ObservableValue } from 'neurone/lib/utils/observable';
 import to from 'await-to-js';
 import { LocalEvent } from './LocalEvent';
+import { randomStr } from '../../../app/utils/common';
 
 export class EventSenderIdle {
   constructor(public readonly send: () => Promise<void>) {}
@@ -35,7 +36,7 @@ export class LocalEventSender<TContent extends object = object> {
 
   private readonly request: MatrixRequest;
 
-  private readonly publishKey = crypto.randomUUID();
+  private readonly publishKey = randomStr();
 
   public readonly state: ObservableValue<LocalEventSenderState>;
 

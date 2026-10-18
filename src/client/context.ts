@@ -32,6 +32,7 @@ import { AccountDataType } from '../types/matrix/accountData';
 import { DecryptionManager } from './decryption';
 import { MegolmBackup } from './MegolmBackup';
 import { CallSessions } from './call';
+import { randomStr } from '../app/utils/common';
 
 export type StateContext = {
   join: {
@@ -929,7 +930,7 @@ export const createPendingMemberRoomObservable = async (
 };
 
 export const createVerificationRequestObservable = () => {
-  const publishKey = crypto.randomUUID();
+  const publishKey = randomStr();
   const verificationRequest = new Observable<InboundVerification | OutboundVerification>(
     publishKey
   );
@@ -944,7 +945,7 @@ export const createVerificationRequestObservable = () => {
 };
 
 export const createToDeviceEventsObservable = () => {
-  const publishKey = crypto.randomUUID();
+  const publishKey = randomStr();
   const toDeviceEvents = new Observable<ProcessedToDeviceEvent[]>(publishKey);
 
   const onToDeviceEvents = (events: ProcessedToDeviceEvent[]) => {
@@ -1036,7 +1037,7 @@ export const createBackupInfoObservable = async (
   secrets: Secrets,
   disposer: Disposer
 ): Promise<ObservableValue<BackupVersionInfo | undefined>> => {
-  const publishKey = crypto.randomUUID();
+  const publishKey = randomStr();
   const backupInfo = new ObservableValue<BackupVersionInfo | undefined>(undefined, publishKey);
 
   const update = async () => {

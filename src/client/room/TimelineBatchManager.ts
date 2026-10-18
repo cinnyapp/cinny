@@ -1,6 +1,7 @@
 import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { ObservableValue } from 'neurone/lib/utils/observable';
 import { MessageBatch, Messages, BatchInfo, BatchChange } from './messages';
+import { randomStr } from '../../app/utils/common';
 
 export class TimelineBatchManager {
   private readonly publishKey: string;
@@ -30,7 +31,7 @@ export class TimelineBatchManager {
       this.batch.publish(
         this.publishKey,
         new MessageBatch(
-          crypto.randomUUID(),
+          randomStr(),
           this.batch.read.messages,
           this.batch.read.prev,
           new BatchInfo(undefined, false),
@@ -117,7 +118,7 @@ export class TimelineBatchManager {
 
   public loadEvents(events: MessageEventWithoutRoomId[], prevToken?: string, nextToken?: string) {
     const newBatch = new MessageBatch(
-      crypto.randomUUID(),
+      randomStr(),
       new Messages(events),
       new BatchInfo(prevToken, !prevToken),
       new BatchInfo(nextToken, !nextToken),

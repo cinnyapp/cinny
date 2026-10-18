@@ -5,9 +5,10 @@ import { MessageEvent } from '../../../types/matrix/room';
 import { Relations } from './Relations';
 import { RelationType, ReactionContent } from '../../../types/matrix/common';
 import { getRedactedEventId, redacted, reference, relation, replaced, replacement } from './utils';
+import { randomStr } from '../../../app/utils/common';
 
 export class RelationsProcessor implements Disposable {
-  private readonly publishKey = crypto.randomUUID();
+  private readonly publishKey = randomStr();
 
   public readonly reactions: Relations<RelationType.Annotation, ReactionContent>;
 

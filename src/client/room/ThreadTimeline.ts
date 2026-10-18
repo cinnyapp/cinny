@@ -23,6 +23,7 @@ import { rRelations, rThread, rUnsigned } from '../reader';
 import { TimelineUtils } from './TimelineUtils';
 import { LocalEventOutbox } from './local-event/LocalEventOutbox';
 import { EventSenderIdle, LocalEvent, LocalEventSender, LocalMessage } from './local-event';
+import { randomStr } from '../../app/utils/common';
 
 export type ThreadSyncData = {
   events: MessageEventWithoutRoomId[];
@@ -31,7 +32,7 @@ export type ThreadSyncData = {
 };
 
 export class ThreadTimeline implements TimelineView, Disposable {
-  private readonly publishKey = crypto.randomUUID();
+  private readonly publishKey = randomStr();
 
   public readonly roomId: string;
 

@@ -1,11 +1,12 @@
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getRootPath } from '../pages/pathUtils';
+import { randomStr } from '../utils/common';
 
 export const useSingleSessionTab = (userId?: string) => {
   const broadcast = useMemo(() => new BroadcastChannel('in.cinny.broadcast'), []);
 
-  const tabId = useMemo(() => crypto.randomUUID(), []);
+  const tabId = useMemo(() => randomStr(), []);
   const navigate = useNavigate();
 
   useEffect(() => {

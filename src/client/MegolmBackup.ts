@@ -7,6 +7,7 @@ import { Base64 } from 'neurone/lib/utils';
 import { Disposable, Disposer } from 'neurone/lib/utils/disposable';
 import { ObservableValue } from 'neurone/lib/utils/observable';
 import { ProgressCallback, responseProgress } from './responseProgress';
+import { randomStr } from '../app/utils/common';
 
 export type ImportBackupIdle = {
   type: 'idle';
@@ -43,7 +44,7 @@ export type BackupRestoreState =
 export class MegolmBackup implements Disposable {
   private readonly disposer = new Disposer();
 
-  private readonly publishKey = crypto.randomUUID();
+  private readonly publishKey = randomStr();
 
   public readonly keyBackup: ObservableValue<KeyBackup | undefined>;
 

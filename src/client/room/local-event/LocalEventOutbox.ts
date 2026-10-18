@@ -1,8 +1,9 @@
 import { ObservableValue } from 'neurone/lib/utils/observable';
 import { EventSenderSuccess, LocalEventSender } from './LocalEventSender';
+import { randomStr } from '../../../app/utils/common';
 
 export class LocalEventOutbox {
-  private readonly publishKey = crypto.randomUUID();
+  private readonly publishKey = randomStr();
 
   public readonly senders: ObservableValue<readonly LocalEventSender[]>;
 

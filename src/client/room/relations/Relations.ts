@@ -3,6 +3,7 @@ import { Disposable, Disposer } from 'neurone/lib/utils/disposable';
 import { ObservableValue } from 'neurone/lib/utils/observable';
 import { Relation, RelationType } from '../../../types/matrix/common';
 import { rContent, rRelatesTo } from '../../reader';
+import { randomStr } from '../../../app/utils/common';
 
 export class Relations<T extends RelationType, Content extends Relation<T> = Relation<T>>
   implements Disposable
@@ -13,7 +14,7 @@ export class Relations<T extends RelationType, Content extends Relation<T> = Rel
     Map<string, MessageEventWithoutRoomId<Content>[]>
   >;
 
-  private publishKey: string = crypto.randomUUID();
+  private publishKey: string = randomStr();
 
   private disposer = new Disposer();
 

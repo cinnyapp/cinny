@@ -25,9 +25,10 @@ import { getThreadId } from '../../app/utils/room';
 import { TimelineUtils } from './TimelineUtils';
 import { EventSenderIdle, LocalEvent, LocalEventSender, LocalMessage } from './local-event';
 import { LocalEventOutbox } from './local-event/LocalEventOutbox';
+import { randomStr } from '../../app/utils/common';
 
 export class Timeline implements TimelineView, Disposable {
-  private readonly publishKey = crypto.randomUUID();
+  private readonly publishKey = randomStr();
 
   public readonly roomId: string;
 

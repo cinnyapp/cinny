@@ -1,6 +1,7 @@
 import { BatchChange } from './BatchChange';
 import { BatchInfo } from './BatchInfo';
 import { Messages } from '.';
+import { randomStr } from '../../../app/utils/common';
 
 export class MessageBatch {
   public readonly id: string;
@@ -15,7 +16,7 @@ export class MessageBatch {
 
   static emptyAtForwardEnd(): MessageBatch {
     return new MessageBatch(
-      crypto.randomUUID(),
+      randomStr(),
       new Messages([]),
       new BatchInfo(),
       new BatchInfo(undefined, true),

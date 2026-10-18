@@ -1,6 +1,7 @@
 import { Disposable, Disposer } from 'neurone/lib/utils/disposable';
 import { ObservableValue } from 'neurone/lib/utils/observable';
 import { MessageBatch } from './MessageBatch';
+import { randomStr } from '../../../app/utils/common';
 
 export type RangeInfo = {
   start: number;
@@ -12,7 +13,7 @@ export class MessageRange implements Disposable {
 
   public readonly info: ObservableValue<RangeInfo>;
 
-  private readonly publishKey = crypto.randomUUID();
+  private readonly publishKey = randomStr();
 
   private oldLength: number;
 
