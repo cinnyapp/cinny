@@ -1,10 +1,11 @@
 import { useCallback } from 'react';
 import { useAtomValue } from 'jotai';
+import { ObjectReader } from 'neurone/lib/utils';
 import { useClient } from '../useClient';
 import { useObservableValue } from '../useObservableValue';
 import { GetRoomHeroesCallback } from './useRoomHeros';
 import { getMxIdLocalPart } from '../../utils/matrix';
-import { roomMemberContentDisplayname } from '../../utils/room';
+import { roomMemberContentDisplayname, roomMemberContentMembership } from '../../utils/room';
 import { roomToHeroMembersAtom } from '../../state/room/roomToHeroMembers';
 
 export type GetRoomNameCallback = (roomId: string) => string | undefined;
@@ -29,13 +30,16 @@ export const useGetRoomName = (getRoomHeroes: GetRoomHeroesCallback): GetRoomNam
         const member = members?.get(userId);
         if (!member) return getMxIdLocalPart(userId) ?? userId;
         const { content } = member;
+        const membership = roomMemberContentMembership(content);
+
         const username =
           roomMemberContentDisplayname(content)?.trim() || getMxIdLocalPart(userId) || userId;
-        return username;
+
+        return membership === 'leave' ? `${username} (left)` : username;
       });
 
       if (heroNames.length === 0) {
-        return undefined;
+        return 'NO NAME';
       }
 
       if (heroNames.length === 1) {
