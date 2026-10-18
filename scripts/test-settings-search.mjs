@@ -14,7 +14,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 
-import { fuzzyMatch, highlightChunks, mergeRanges } from '../src/app/features/settings/search/fuzzyMatch.ts';
+import {
+  fuzzyMatch,
+  highlightChunks,
+  mergeRanges,
+} from '../src/app/features/settings/search/fuzzyMatch.ts';
 import { searchSettings } from '../src/app/features/settings/search/settingsIndex.ts';
 import { SETTINGS_INDEX } from '../src/app/features/settings/search/settingsIndex.ts';
 

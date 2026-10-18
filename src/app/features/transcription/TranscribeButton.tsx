@@ -57,6 +57,11 @@ export function TranscribeButton({ roomId, eventId, mxc }: TranscribeButtonProps
   // transcript — otherwise focus-trap-react throws "must have at least one container
   // with at least one tabbable node in it at all times" and crashes the app.
   const closeBtnRef = useRef<HTMLButtonElement>(null);
+  // Second line of defence: the popover container itself is focusable
+  // (tabIndex -1) and is handed to focus-trap as fallbackFocus, so even if a
+  // future change made the Close button conditional the trap still has
+  // something to hold and cannot throw.
+  const menuRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
   // Cache the transcript in component state so re-opening does not re-request.
@@ -124,13 +129,14 @@ export function TranscribeButton({ roomId, eventId, mxc }: TranscribeButtonProps
             // the app when the popover opened in the loading/spinner state. Returning
             // undefined (when the ref isn't attached yet) falls back to focus-trap's
             // default of focusing the first tabbable node, which is this same button.
-            initialFocus: () => closeBtnRef.current ?? undefined,
+            initialFocus: () => closeBtnRef.current ?? menuRef.current ?? undefined,
+            fallbackFocus: () => menuRef.current ?? document.body,
             onDeactivate: handleClose,
             clickOutsideDeactivates: true,
             escapeDeactivates: stopPropagation,
           }}
         >
-          <Menu style={{ maxWidth: '100vw', width: 'max-content' }}>
+          <Menu ref={menuRef} tabIndex={-1} style={{ maxWidth: '100vw', width: 'max-content' }}>
             <Box
               direction="Column"
               gap="200"

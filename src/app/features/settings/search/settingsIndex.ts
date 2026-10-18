@@ -187,6 +187,12 @@ export const searchSettings = (
     }
   });
 
+  if (results.length === 0) return [];
   results.sort((a, b) => b.score - a.score || a.entry.title.localeCompare(b.entry.title));
-  return results.slice(0, limit);
+
+  // Drop the long tail: a loose character-by-character match is useful when it
+  // is all you have, but not next to a real hit. Keep anything within a third
+  // of the best score.
+  const floor = Math.max(150, results[0].score * 0.34);
+  return results.filter((r) => r.score >= floor).slice(0, limit);
 };
