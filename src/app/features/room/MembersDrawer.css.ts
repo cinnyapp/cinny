@@ -47,6 +47,10 @@ export const MembersGroup = style({
 });
 export const MembersGroupLabel = style({
   padding: config.space.S200,
+  display: 'flex',
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: '4px',
   selectors: {
     '&:not(:first-child)': {
       paddingTop: config.space.S500,
