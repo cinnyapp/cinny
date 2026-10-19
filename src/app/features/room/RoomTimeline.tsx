@@ -94,7 +94,7 @@ import {
   getIntersectionObserverEntry,
   useIntersectionObserver,
 } from '../../hooks/useIntersectionObserver';
-import { markAsRead } from '../../utils/notifications';
+import { clearUnreadMarker, markAsRead } from '../../utils/notifications';
 import { useDebounce } from '../../hooks/useDebounce';
 import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
 import * as css from './RoomTimeline.css';
@@ -865,6 +865,12 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       setUnreadInfo(undefined);
     }
   }, [unread]);
+
+  // Clear unread marker when the room initially loads
+  useEffect(() => {
+    clearUnreadMarker(mx, room.roomId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // scroll out of view msg editor in view.
   useEffect(() => {

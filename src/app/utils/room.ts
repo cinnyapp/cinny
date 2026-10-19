@@ -18,9 +18,10 @@ import {
   RoomMember,
 } from 'matrix-js-sdk';
 import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
-import { AccountDataEvent } from '../../types/matrix/accountData';
+import { AccountDataEvent, RoomAccountDataEvent } from '../../types/matrix/accountData';
 import {
   IRoomCreateContent,
+  IUnreadContent,
   Membership,
   MessageEvent,
   NotificationType,
@@ -214,9 +215,24 @@ export const roomHaveNotification = (room: Room): boolean => {
   return total > 0 || highlight > 0;
 };
 
+export const getUnreadMarker = (mx: MatrixClient, room: Room) => {
+  const unreadMarkerData = room.getAccountData(RoomAccountDataEvent.MarkedUnread);
+  if (unreadMarkerData) {
+    const unreadMarketEventContent = unreadMarkerData.getContent<IUnreadContent>();
+    if (unreadMarketEventContent.unread) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
 export const roomHaveUnread = (mx: MatrixClient, room: Room) => {
   const userId = mx.getUserId();
   if (!userId) return false;
+
+  if (getUnreadMarker(mx, room)) return true;
+
   const readUpToId = room.getEventReadUpTo(userId);
   const liveEvents = room.getLiveTimeline().getEvents();
 
@@ -233,12 +249,15 @@ export const roomHaveUnread = (mx: MatrixClient, room: Room) => {
   return true;
 };
 
-export const getUnreadInfo = (room: Room): UnreadInfo => {
+export const getUnreadInfo = (mx: MatrixClient, room: Room): UnreadInfo => {
   const total = room.getUnreadNotificationCount(NotificationCountType.Total);
   const highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
+  const unreadMarker = getUnreadMarker(mx, room);
+
   return {
     roomId: room.roomId,
     highlight,
+    unreadMarker,
     total: highlight > total ? highlight : total,
   };
 };
@@ -250,7 +269,7 @@ export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] => {
     if (getNotificationType(mx, room.roomId) === NotificationType.Mute) return unread;
 
     if (roomHaveNotification(room) || roomHaveUnread(mx, room)) {
-      unread.push(getUnreadInfo(room));
+      unread.push(getUnreadInfo(mx, room));
     }
 
     return unread;
