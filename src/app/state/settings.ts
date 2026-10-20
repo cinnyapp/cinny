@@ -1,4 +1,5 @@
 import { atom } from 'jotai';
+import type { ChatSort, MutedMode } from '../utils/chatList';
 
 const STORAGE_KEY = 'settings';
 export type DateFormat =
@@ -54,6 +55,18 @@ export interface Settings {
   // When false, Home keeps upstream Cinny's behaviour and only lists rooms that
   // do not belong to any space.
   homeShowsAllRooms: boolean;
+
+  // Chat list (Home + Direct): see utils/chatList.ts and utils/roomActivity.ts.
+  // chatListSort: 'activity' = last real message (not the last event of any kind).
+  // chatListFilter: the last filter chip picked (All / Unread / People / … / a network).
+  // chatListMuted: how muted + archived chats are placed.
+  // chatListServerLookup: ask the homeserver for the last message of chats whose
+  // loaded events contain none (one small GET each, a few hundred at most).
+  chatListSort: ChatSort;
+  chatListFilter: string;
+  chatListMuted: MutedMode;
+  chatListShowFilters: boolean;
+  chatListServerLookup: boolean;
 
   // Show the "Pinned" bar above the timeline (the room header's pin button and
   // the Pinned Messages list are unaffected).
@@ -112,6 +125,12 @@ const defaultSettings: Settings = {
   preferContactPhoto: true,
 
   homeShowsAllRooms: true,
+
+  chatListSort: 'activity',
+  chatListFilter: 'all',
+  chatListMuted: 'stay',
+  chatListShowFilters: true,
+  chatListServerLookup: true,
 
   showPinnedBanner: true,
   liteMode: false,

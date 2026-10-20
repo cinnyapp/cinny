@@ -3,12 +3,44 @@
  * GENERATED FILE — do not edit by hand.
  * Run `node scripts/build-settings-index.mjs` after adding a setting.
  *
- * 56 settings indexed for the Settings search field.
+ * 60 settings indexed for the Settings search field.
  */
 import { SettingsPages } from '../pages';
 import type { SettingsIndexEntry } from './settingsIndex';
 
 export const GENERATED_SETTINGS_INDEX: SettingsIndexEntry[] = [
+  {
+    page: SettingsPages.GeneralPage,
+    pageName: 'General',
+    section: 'Chat List',
+    title: 'Sort chats by',
+    description:
+      'Last message puts the chat with the newest real message on top — a text, photo, voice note, call or poll, including your own. Profile-picture and name changes, people joining, reactions and edits never move a chat.',
+  },
+  {
+    page: SettingsPages.GeneralPage,
+    pageName: 'General',
+    section: 'Chat List',
+    title: 'Muted & archived chats',
+    description:
+      'Stay put: a muted or archived chat only moves up when you write in it or someone mentions you, and is shown faded. At the bottom: always below every other chat. Hidden from All: only under the Muted filter and in name search.',
+  },
+  {
+    page: SettingsPages.GeneralPage,
+    pageName: 'General',
+    section: 'Chat List',
+    title: 'Show Chat Filters',
+    description:
+      'The bar above Home and Direct Messages with a name filter, the sort menu and one-tap filters: All, Unread, People, Groups, Mentions, Favourites, Muted & archived and one per network (WhatsApp, Telegram, Signal, …).',
+  },
+  {
+    page: SettingsPages.GeneralPage,
+    pageName: 'General',
+    section: 'Chat List',
+    title: 'Find the last message of quiet chats',
+    description:
+      "When the app has only system events loaded for a chat (bridge renames, members joining), ask your homeserver once for that chat's last real message, in the background, and remember it. Off: such chats wait at the bottom until a message arrives.",
+  },
   {
     page: SettingsPages.GeneralPage,
     pageName: 'General',

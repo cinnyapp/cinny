@@ -52,6 +52,7 @@ import { useDateFormatItems } from '../../../hooks/useDateFormat';
 import { SequenceCardStyle } from '../styles.css';
 import { TranscriptionSettings } from '../../transcription/TranscriptionSettings';
 import { LiteModeSettings } from './LiteMode';
+import { ChatListSettings } from './ChatList';
 
 type ThemeSelectorProps = {
   themeNames: Record<string, string>;
@@ -1050,6 +1051,7 @@ export function General({ requestClose }: GeneralProps) {
             <Box direction="Column" gap="700">
               <Appearance />
               <Navigation />
+              <ChatListSettings />
               <LiteModeSettings />
               <DateAndTime />
               <Editor />

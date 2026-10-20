@@ -18,7 +18,6 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
 import FocusTrap from '../../../components/focus-trap';
-import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
 import {
   NavButton,
   NavCategory,
@@ -68,6 +67,8 @@ import { JoinAddressPrompt } from '../../../components/join-address-prompt';
 import { _RoomSearchParams } from '../../paths';
 import { loadAllChatsOnce } from '../../../../client/initMatrix';
 import { getLiteReport } from '../../../../client/lite-store';
+import { ChatListNoMatch, ChatListToolbar, useChatList } from '../../../features/chat-list';
+import { DimmedRow } from '../../../features/chat-list/styles.css';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -203,7 +204,6 @@ export function Home() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const rooms = useHomeRooms();
   const notificationPreferences = useRoomsNotificationPreferencesContext();
-  const roomToUnread = useAtomValue(roomToUnreadAtom);
   const navigate = useNavigate();
 
   const mDirects = useAtomValue(mDirectAtom);
@@ -213,7 +213,7 @@ export function Home() {
   const searchSelected = useHomeSearchSelected();
   const noRoomToDisplay = rooms.length === 0;
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
-  const [hideActivityDots] = useSetting(settingsAtom, 'hideUnreadActivityDots');
+  const [showChatFilters] = useSetting(settingsAtom, 'chatListShowFilters');
   const [showAllRooms] = useSetting(settingsAtom, 'homeShowsAllRooms');
   const [liteMode] = useSetting(settingsAtom, 'liteMode');
   // How many chats lite mode left out of this load (see client/lite-store.ts).
@@ -221,24 +221,11 @@ export function Home() {
 
   const categoryClosed = closedCategories.has(DEFAULT_CATEGORY_ID);
 
-  // Sorting every room in Home is the expensive part, and A-Z order does not change
-  // as messages arrive. Keeping it in its own memo takes the full sort out of the
-  // path that runs on every sync response and every time another room is opened.
-  const orderedRooms = useMemo(() => Array.from(rooms).sort(factoryRoomIdByAtoZ(mx)), [mx, rooms]);
-
-  const sortedRooms = useMemo(() => {
-    if (!categoryClosed) return orderedRooms;
-    // Collapsed category: show only unread rooms (plus the open one), newest first.
-    const items = orderedRooms.filter((rId) => {
-      const u = roomToUnread.get(rId);
-      const isUnread = hideActivityDots
-        ? u !== undefined && (u.total > 0 || u.highlight > 0)
-        : roomToUnread.has(rId);
-      return isUnread || rId === selectedRoomId;
-    });
-    items.sort(factoryRoomIdByActivity(mx));
-    return items;
-  }, [mx, orderedRooms, categoryClosed, roomToUnread, selectedRoomId, hideActivityDots]);
+  // Ordering + filtering (last real message, muted handling, filter chips, name
+  // filter) lives in features/chat-list. It re-sorts only when a real message
+  // arrives or a setting changes — never on navigation or profile/member noise.
+  const chatList = useChatList(rooms, 'home', selectedRoomId, categoryClosed);
+  const sortedRooms = chatList.items;
 
   const virtualizer = useVirtualizer({
     count: sortedRooms.length,
@@ -254,6 +241,7 @@ export function Home() {
   return (
     <PageNav>
       <HomeHeader />
+      {!noRoomToDisplay && showChatFilters && <ChatListToolbar view={chatList} scope="home" />}
       {noRoomToDisplay ? (
         <HomeEmpty />
       ) : (
@@ -381,21 +369,26 @@ export function Home() {
                       key={vItem.index}
                       ref={virtualizer.measureElement}
                     >
-                      <RoomNavItem
-                        room={room}
-                        selected={selected}
-                        showAvatar={direct}
-                        direct={direct}
-                        linkPath={getHomeRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
-                        notificationMode={getRoomNotificationMode(
-                          notificationPreferences,
-                          room.roomId
-                        )}
-                      />
+                      <div
+                        className={!selected && chatList.isDimmed(roomId) ? DimmedRow : undefined}
+                      >
+                        <RoomNavItem
+                          room={room}
+                          selected={selected}
+                          showAvatar={direct}
+                          direct={direct}
+                          linkPath={getHomeRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
+                          notificationMode={getRoomNotificationMode(
+                            notificationPreferences,
+                            room.roomId
+                          )}
+                        />
+                      </div>
                     </VirtualTile>
                   );
                 })}
               </div>
+              {sortedRooms.length === 0 && !categoryClosed && <ChatListNoMatch view={chatList} />}
             </NavCategory>
           </Box>
         </PageNavContent>
