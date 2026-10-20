@@ -20,7 +20,9 @@ export function ThumbnailContent({ info, renderImage }: ThumbnailContentProps) {
       const thumbMxcUrl = info.thumbnail_file?.url ?? info.thumbnail_url;
       const encInfo = info.thumbnail_file;
       if (typeof thumbMxcUrl !== 'string' || typeof thumbInfo?.mimetype !== 'string') {
-        throw new Error('Failed to load thumbnail');
+        // No thumbnail in the event (WhatsApp/Instagram videos never carry one):
+        // nothing to show, and nothing has failed.
+        return undefined;
       }
 
       const mediaUrl = mxcUrlToHttp(mx, thumbMxcUrl, useAuthentication);
@@ -37,8 +39,12 @@ export function ThumbnailContent({ info, renderImage }: ThumbnailContentProps) {
   );
 
   useEffect(() => {
-    loadThumbSrc();
+    // The state already records a failure; don't also leave an unhandled rejection
+    // ("Uncaught (in promise) Error: Failed to load thumbnail") in the console.
+    loadThumbSrc().catch(() => undefined);
   }, [loadThumbSrc]);
 
-  return thumbSrcState.status === AsyncStatus.Success ? renderImage(thumbSrcState.data) : null;
+  return thumbSrcState.status === AsyncStatus.Success && thumbSrcState.data
+    ? renderImage(thumbSrcState.data)
+    : null;
 }

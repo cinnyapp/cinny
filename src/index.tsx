@@ -16,7 +16,7 @@ import { RootErrorBoundary } from './app/components/error-boundary/AppErrorPage'
 
 // import i18n (needs to be bundled ;))
 import './app/i18n';
-import { pushSessionToSW } from './sw-session';
+import { claimIfUncontrolled, pushSessionToSW } from './sw-session';
 import { getFallbackSession } from './app/state/sessions';
 
 document.body.classList.add(configClass, varsClass);
@@ -35,6 +35,7 @@ if ('serviceWorker' in navigator) {
 
   navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
   navigator.serviceWorker.ready.then(sendSessionToSW);
+  claimIfUncontrolled();
 
   // A newly activated (or respawned) worker starts with no session, and taking
   // control of this page is the moment it begins serving our media requests.

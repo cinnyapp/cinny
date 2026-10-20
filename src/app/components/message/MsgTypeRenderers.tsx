@@ -1,7 +1,8 @@
 import React, { CSSProperties, ReactNode } from 'react';
 import { Box, Chip, Icon, Icons, Text, toRem } from 'folds';
 import { IContent } from 'matrix-js-sdk';
-import { JUMBO_EMOJI_REG, URL_REG } from '../../utils/regex';
+import { JUMBO_EMOJI_REG } from '../../utils/regex';
+import { extractPreviewUrls } from '../../utils/previewUrls';
 import { trimReplyFromBody } from '../../utils/room';
 import { MessageTextBody } from './layout';
 import {
@@ -81,8 +82,7 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
 
   if (typeof body !== 'string') return <BrokenContent />;
   const trimmedBody = trimReplyFromBody(body);
-  const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
-  const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
+  const urls = renderUrlsPreview ? extractPreviewUrls(trimmedBody) : undefined;
 
   return (
     <>
@@ -120,8 +120,7 @@ export function MEmote({
 
   if (typeof body !== 'string') return <BrokenContent />;
   const trimmedBody = trimReplyFromBody(body);
-  const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
-  const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
+  const urls = renderUrlsPreview ? extractPreviewUrls(trimmedBody) : undefined;
 
   return (
     <>
@@ -153,8 +152,7 @@ export function MNotice({ edited, content, renderBody, renderUrlsPreview }: MNot
 
   if (typeof body !== 'string') return <BrokenContent />;
   const trimmedBody = trimReplyFromBody(body);
-  const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
-  const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
+  const urls = renderUrlsPreview ? extractPreviewUrls(trimmedBody) : undefined;
 
   return (
     <>

@@ -194,6 +194,16 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
     event.waitUntil(setSession(client.id, accessToken, baseUrl));
     cleanupDeadClients();
   }
+
+  if (type === 'claim') {
+    // A hard reload (Ctrl+Shift+R) loads the page *without* this worker, and the
+    // browser keeps it that way for the page's whole life: every media request
+    // then goes out without a token and Synapse answers 401 - every picture,
+    // voice note and avatar is broken until a normal reload. Claiming the page
+    // makes this worker its controller again right away; the page answers the
+    // resulting `controllerchange` by sending its session.
+    event.waitUntil(self.clients.claim());
+  }
 });
 
 const MEDIA_PATHS = ['/_matrix/client/v1/media/download', '/_matrix/client/v1/media/thumbnail'];
