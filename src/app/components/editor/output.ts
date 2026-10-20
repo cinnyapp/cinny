@@ -11,7 +11,7 @@ import {
 } from '../../plugins/markdown';
 import { findAndReplace } from '../../utils/findAndReplace';
 import { sanitizeForRegex } from '../../utils/regex';
-import { getCanonicalAliasOrRoomId, isUserId } from '../../utils/matrix';
+import { isUserId } from '../../utils/matrix';
 
 export type OutputOptions = {
   allowTextFormatting?: boolean;
@@ -215,7 +215,7 @@ export const getMentions = (mx: MatrixClient, roomId: string, editor: Editor): M
       if (node.name === '@room') {
         mentionData.room = true;
       }
-      
+
       if (isUserId(node.id) && node.id !== mx.getUserId()) {
         mentionData.users.add(node.id);
       }

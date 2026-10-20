@@ -20,6 +20,7 @@ import {
   RectCords,
   Badge,
   Spinner,
+  Button,
 } from 'folds';
 import { useNavigate } from 'react-router-dom';
 import { Room } from 'matrix-js-sdk';
@@ -78,6 +79,9 @@ import { RoomSettingsPage } from '../../state/roomSettings';
 import { getDmColorKey } from '../../utils/dmAvatar';
 import { nameInitials } from '../../utils/common';
 import { useOpenMediaViewer } from '../media-viewer/state';
+import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
+import { useLivekitSupport } from '../../hooks/useLivekitSupport';
+import { webRTCSupported } from '../../utils/rtc';
 
 type RoomMenuProps = {
   room: Room;
@@ -301,6 +305,132 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
   );
 });
 
+type CallMenuProps = {
+  onVoiceCall: () => void;
+  onVideoCall: () => void;
+  requestClose: () => void;
+};
+const CallMenu = forwardRef<HTMLDivElement, CallMenuProps>(
+  ({ requestClose, onVoiceCall, onVideoCall }, ref) => {
+    const handleVoice = () => {
+      onVoiceCall();
+      requestClose();
+    };
+    const handleVideo = () => {
+      onVideoCall();
+      requestClose();
+    };
+
+    return (
+      <Menu ref={ref} style={{ padding: config.space.S200, minWidth: toRem(150) }}>
+        <Box direction="Column" gap="200">
+          <Text size="L400">Start Call</Text>
+          <Box direction="Column" gap="200">
+            <Button
+              size="300"
+              variant="Success"
+              fill="Soft"
+              outlined
+              radii="300"
+              before={<Icon size="100" src={Icons.Phone} filled />}
+              onClick={handleVoice}
+            >
+              <Text size="B300">Voice</Text>
+            </Button>
+            <Button
+              size="300"
+              variant="Success"
+              radii="300"
+              before={<Icon size="100" src={Icons.VideoCamera} filled />}
+              onClick={handleVideo}
+            >
+              <Text size="B300">Video</Text>
+            </Button>
+          </Box>
+        </Box>
+      </Menu>
+    );
+  }
+);
+
+function CallButton() {
+  const room = useRoom();
+  const direct = useIsDirectRoom();
+
+  const callEmbed = useCallEmbed();
+  const startCall = useCallStart(direct);
+  const callStarted = callEmbed && callEmbed.roomId === room.roomId;
+  const inAnotherCall = callEmbed && !callStarted;
+  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+
+  const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuAnchor(evt.currentTarget.getBoundingClientRect());
+  };
+
+  return (
+    <>
+      <TooltipProvider
+        position="Bottom"
+        offset={4}
+        tooltip={
+          <Tooltip>
+            {inAnotherCall ? (
+              <Text size="L400">Already in another call — End the current call to join!</Text>
+            ) : (
+              <Text>Call</Text>
+            )}
+          </Tooltip>
+        }
+      >
+        {(triggerRef) => (
+          <IconButton
+            variant="Surface"
+            fill="None"
+            ref={triggerRef}
+            onClick={handleOpenMenu}
+            onContextMenu={(evt) => {
+              evt.preventDefault();
+              startCall(room, {
+                microphone: true,
+                video: true,
+                sound: true,
+              });
+            }}
+            disabled={inAnotherCall || callStarted}
+            aria-pressed={!!menuAnchor}
+          >
+            <Icon size="400" src={Icons.VideoCamera} filled={!!menuAnchor} />
+          </IconButton>
+        )}
+      </TooltipProvider>
+      <PopOut
+        anchor={menuAnchor}
+        position="Bottom"
+        align="Center"
+        content={
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              returnFocusOnDeactivate: false,
+              onDeactivate: () => setMenuAnchor(undefined),
+              clickOutsideDeactivates: true,
+              isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+              isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+              escapeDeactivates: stopPropagation,
+            }}
+          >
+            <CallMenu
+              onVideoCall={() => startCall(room, { microphone: true, video: true, sound: true })}
+              onVoiceCall={() => startCall(room, { microphone: true, video: false, sound: true })}
+              requestClose={() => setMenuAnchor(undefined)}
+            />
+          </FocusTrap>
+        }
+      />
+    </>
+  );
+}
+
 export function RoomViewHeader({ callView }: { callView?: boolean }) {
   const navigate = useNavigate();
   const mx = useMatrixClient();
@@ -308,6 +438,17 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
   const screenSize = useScreenSizeContext();
   const room = useRoom();
   const space = useSpaceOptionally();
+  const powerLevels = usePowerLevelsContext();
+  const creators = useRoomCreators(room);
+  const permissions = useRoomPermissions(creators, powerLevels);
+
+  const hasCallPermission = permissions.stateEvent(
+    StateEvent.GroupCallMemberPrefix,
+    mx.getSafeUserId()
+  );
+  const livekitSupported = useLivekitSupport();
+  const rtcSupported = webRTCSupported();
+
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const [pinMenuAnchor, setPinMenuAnchor] = useState<RectCords>();
   const direct = useIsDirectRoom();
@@ -526,7 +667,9 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
               </FocusTrap>
             }
           />
-
+          {!room.isCallRoom() && livekitSupported && rtcSupported && hasCallPermission && (
+            <CallButton />
+          )}
           {screenSize === ScreenSize.Desktop && (
             <TooltipProvider
               position="Bottom"

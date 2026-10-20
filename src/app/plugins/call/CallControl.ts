@@ -14,7 +14,11 @@ export class CallControl extends EventEmitter implements CallControlState {
 
   private iframe: HTMLIFrameElement;
 
+  private bodyMutationObserver: MutationObserver;
+
   private controlMutationObserver: MutationObserver;
+
+  private mediaStatePromiseResolver: undefined | (() => void);
 
   private get document(): Document | undefined {
     return this.iframe.contentDocument ?? this.iframe.contentWindow?.document;
@@ -28,16 +32,25 @@ export class CallControl extends EventEmitter implements CallControlState {
     return screenshareBtn ?? undefined;
   }
 
-  private get settingsButton(): HTMLElement | undefined {
+  private get leaveButton(): Element | undefined {
     const leaveBtn = this.document?.querySelector('[data-testid="incall_leave"]');
 
-    const settingsButton = leaveBtn?.previousElementSibling as HTMLElement | null;
+    return leaveBtn ?? undefined;
+  }
 
-    return settingsButton ?? undefined;
+  private get settingsButton(): HTMLElement | undefined {
+    const settingsButtonLeft = this.document?.querySelector(
+      '[data-testid="settings-bottom-left"]'
+    ) as HTMLButtonElement | undefined;
+    const settingsButtonCenter = this.document?.querySelector(
+      '[data-testid="settings-bottom-center"]'
+    ) as HTMLButtonElement | undefined;
+
+    return settingsButtonLeft ?? settingsButtonCenter ?? undefined;
   }
 
   private get reactionsButton(): HTMLElement | undefined {
-    const reactionsButton = this.settingsButton?.previousElementSibling as HTMLElement | null;
+    const reactionsButton = this.leaveButton?.previousElementSibling as HTMLElement | null;
 
     return reactionsButton ?? undefined;
   }
@@ -65,6 +78,7 @@ export class CallControl extends EventEmitter implements CallControlState {
     this.call = call;
     this.iframe = iframe;
 
+    this.bodyMutationObserver = new MutationObserver(this.onBodyMutation.bind(this));
     this.controlMutationObserver = new MutationObserver(this.onControlMutation.bind(this));
   }
 
@@ -102,6 +116,30 @@ export class CallControl extends EventEmitter implements CallControlState {
   }
 
   public startObserving() {
+    if (!this.document) return;
+
+    this.bodyMutationObserver.observe(this.document.body, {
+      childList: true,
+      subtree: false, // only direct children of body
+    });
+    this.onBodyMutation();
+  }
+  
+  private onBodyMutation() {
+    if (!this.document) return;
+
+    this.document.body.style.setProperty('background', 'none', 'important');
+
+    const controls = this.leaveButton?.parentElement?.parentElement;
+    if (controls) {
+      controls.style.setProperty('position', 'absolute');
+      controls.style.setProperty('visibility', 'hidden');
+    }
+
+    this.observeControls();
+  }
+
+  private observeControls() {
     this.controlMutationObserver.disconnect();
 
     const screenshareBtn = this.screenshareButton;
@@ -125,8 +163,14 @@ export class CallControl extends EventEmitter implements CallControlState {
     this.setSound(this.sound);
   }
 
-  private setMediaState(state: ElementMediaStatePayload) {
-    return this.call.transport.send(ElementWidgetActions.DeviceMute, state);
+  private async setMediaState(state: ElementMediaStatePayload) {
+    const data = await this.call.transport.send(ElementWidgetActions.DeviceMute, state);
+    return new Promise<typeof data>(resolve => {
+      if (this.mediaStatePromiseResolver) {
+        this.mediaStatePromiseResolver();
+      }
+      this.mediaStatePromiseResolver = () => resolve(data);
+    });
   }
 
   private setSound(sound: boolean): void {
@@ -157,9 +201,14 @@ export class CallControl extends EventEmitter implements CallControlState {
     if (this.microphone && !this.sound) {
       this.toggleSound();
     }
+
+    if (this.mediaStatePromiseResolver) {
+      this.mediaStatePromiseResolver();
+      this.mediaStatePromiseResolver = undefined;
+    }
   }
 
-  public onControlMutation() {
+  private onControlMutation() {
     const screenshare: boolean = this.screenshareButton?.getAttribute('data-kind') === 'primary';
     const spotlight: boolean = this.spotlightButton?.checked ?? false;
 
@@ -230,6 +279,7 @@ export class CallControl extends EventEmitter implements CallControlState {
   }
 
   public dispose() {
+    this.bodyMutationObserver.disconnect();
     this.controlMutationObserver.disconnect();
   }
 

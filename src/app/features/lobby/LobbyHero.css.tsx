@@ -6,6 +6,7 @@ export const LobbyHeroTopic = style({
   WebkitLineClamp: 3,
   WebkitBoxOrient: 'vertical',
   overflow: 'hidden',
+  wordBreak: 'break-word',
 
   ':hover': {
     cursor: 'pointer',

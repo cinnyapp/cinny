@@ -16,16 +16,22 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Download pr number
-        uses: dawidd6/action-download-artifact@8305c0f1062bb0d184d09ef4493ecb9288447732 # v20
+        uses: dawidd6/action-download-artifact@d63b86af1b34672e53c440b1b83979861906bad7 # v24
         with:
           workflow: ${{ github.event.workflow.id }}
           run_id: ${{ github.event.workflow_run.id }}
           name: pr
-      - name: Output pr number
+      - name: Validate and output pr number
         id: pr
-        run: echo "id=$(<pr.txt)" >> $GITHUB_OUTPUT
+        run: |
+          PR_ID=$(<pr.txt)
+          if ! [[ "${PR_ID}" =~ ^[0-9]+$ ]]; then
+            echo "::error::pr.txt contains non-numeric content: ${PR_ID}"
+            exit 1
+          fi
+          echo "id=${PR_ID}" >> "${GITHUB_OUTPUT}"
       - name: Download artifact
-        uses: dawidd6/action-download-artifact@8305c0f1062bb0d184d09ef4493ecb9288447732 # v20
+        uses: dawidd6/action-download-artifact@d63b86af1b34672e53c440b1b83979861906bad7 # v24
         with:
           workflow: ${{ github.event.workflow.id }}
           run_id: ${{ github.event.workflow_run.id }}
@@ -33,7 +39,7 @@ jobs:
           path: dist
       - name: Deploy to Netlify
         id: netlify
-        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654 # v3.0.0
+        uses: nwtgck/actions-netlify@d22a32a27c918fe470bbc562e984f80ec48c2668 # v4.0.0
         with:
           publish-dir: dist
           deploy-message: "Deploy PR ${{ steps.pr.outputs.id }}"
@@ -42,16 +48,13 @@ jobs:
           enable-pull-request-comment: false
           enable-commit-comment: false
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN_PR }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_PR_CINNY }}
         timeout-minutes: 1
       - name: Comment preview on PR
-        uses: thollander/actions-comment-pull-request@24bffb9b452ba05a4f3f77933840a6a841d1b32b #v3.0.1
-        env:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
         with:
-          pr-number: ${{ steps.pr.outputs.id }}
-          comment-tag: ${{ steps.pr.outputs.id }}
+          number: ${{ steps.pr.outputs.id }}
           message: |
-              Preview: ${{ steps.netlify.outputs.deploy-url }}
-              ⚠️ Exercise caution. Use test accounts. ⚠️
+            Preview: ${{ steps.netlify.outputs.deploy-url }}
+            ⚠️ Exercise caution. Use test accounts. ⚠️

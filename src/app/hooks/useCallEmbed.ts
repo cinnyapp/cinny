@@ -1,5 +1,4 @@
 import { createContext, RefObject, useCallback, useContext, useEffect, useState } from 'react';
-import { MatrixRTCSession } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { MatrixClient, Room } from 'matrix-js-sdk';
 import { useSetAtom } from 'jotai';
 import {
@@ -45,10 +44,9 @@ export const createCallEmbed = (
   pref?: CallPreferences
 ): CallEmbed => {
   const rtcSession = mx.matrixRTC.getRoomSession(room);
-  const ongoing =
-    MatrixRTCSession.sessionMembershipsForRoom(room, rtcSession.sessionDescription).length > 0;
+  const ongoing = rtcSession.memberships.length > 0;
 
-  const intent = CallEmbed.getIntent(dm, ongoing);
+  const intent = CallEmbed.getIntent(dm, ongoing, pref?.video);
   const widget = CallEmbed.getWidget(mx, room, intent, themeKind);
   const controlState = pref && new CallControlState(pref.microphone, pref.video, pref.sound);
 
@@ -101,6 +99,7 @@ export const useCallJoined = (embed?: CallEmbed): boolean => {
 
 export const useCallHangupEvent = (embed: CallEmbed, callback: () => void) => {
   useClientWidgetApiEvent(embed.call, ElementWidgetActions.HangupCall, callback);
+  useClientWidgetApiEvent(embed.call, ElementWidgetActions.Close, callback);
 };
 
 export const useCallMemberSoundSync = (embed: CallEmbed) => {

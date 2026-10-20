@@ -14,11 +14,20 @@ import { CallMemberRenderer } from './CallMemberCard';
 import * as css from './styles.css';
 import { CallControls } from './CallControls';
 import { useLivekitSupport } from '../../hooks/useLivekitSupport';
+import { webRTCSupported } from '../../utils/rtc';
 
 function LivekitServerMissingMessage() {
   return (
     <Text style={{ margin: 'auto', color: color.Critical.Main }} size="L400" align="Center">
-      Your homeserver does not support calling. But you can still join call started by others.
+      Your homeserver does not support calling.
+    </Text>
+  );
+}
+
+function WebRTCMissingError() {
+  return (
+    <Text style={{ margin: 'auto', color: color.Critical.Main }} size="L400" align="Center">
+      Your browser does not support WebRTC, which is required for calling.
     </Text>
   );
 }
@@ -26,15 +35,21 @@ function LivekitServerMissingMessage() {
 function JoinMessage({
   hasParticipant,
   livekitSupported,
+  rtcSupported,
 }: {
   hasParticipant?: boolean;
   livekitSupported?: boolean;
+  rtcSupported?: boolean;
 }) {
-  if (hasParticipant) return null;
+  if (rtcSupported === false) {
+    return <WebRTCMissingError />;
+  }
 
   if (livekitSupported === false) {
     return <LivekitServerMissingMessage />;
   }
+
+  if (hasParticipant) return null;
 
   return (
     <Text style={{ margin: 'auto' }} size="L400" align="Center">
@@ -63,21 +78,25 @@ function CallPrescreen() {
   const mx = useMatrixClient();
   const room = useRoom();
   const livekitSupported = useLivekitSupport();
+  const rtcSupported = webRTCSupported();
 
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(room);
 
   const permissions = useRoomPermissions(creators, powerLevels);
-  const hasPermission = permissions.event(StateEvent.GroupCallMemberPrefix, mx.getSafeUserId());
+  const hasPermission = permissions.stateEvent(
+    StateEvent.GroupCallMemberPrefix,
+    mx.getSafeUserId()
+  );
 
   const callSession = useCallSession(room);
-  const callMembers = useCallMembers(room, callSession);
+  const callMembers = useCallMembers(callSession);
   const hasParticipant = callMembers.length > 0;
 
   const callEmbed = useCallEmbed();
   const inOtherCall = callEmbed && callEmbed.roomId !== room.roomId;
 
-  const canJoin = hasPermission && (livekitSupported || hasParticipant);
+  const canJoin = hasPermission && livekitSupported && rtcSupported;
 
   return (
     <Scroll variant="Surface" hideTrack>
@@ -100,7 +119,11 @@ function CallPrescreen() {
           <Box className={css.PrescreenMessage} alignItems="Center">
             {!inOtherCall &&
               (hasPermission ? (
-                <JoinMessage hasParticipant={hasParticipant} livekitSupported={livekitSupported} />
+                <JoinMessage
+                  hasParticipant={hasParticipant}
+                  livekitSupported={livekitSupported}
+                  rtcSupported={rtcSupported}
+                />
               ) : (
                 <NoPermissionMessage />
               ))}

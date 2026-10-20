@@ -1,4 +1,4 @@
-import { CallMembership, SessionMembershipData } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
+import { CallMembership } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
 import React, { useState } from 'react';
 import { Avatar, Box, Icon, Icons, Text } from 'folds';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
@@ -12,12 +12,6 @@ import { UserAvatar } from '../../components/user-avatar';
 import { getMouseEventCords } from '../../utils/dom';
 import * as css from './styles.css';
 
-interface MemberWithMembershipData {
-  membershipData?: SessionMembershipData & {
-    'm.call.intent': 'video' | 'audio';
-  };
-}
-
 type CallMemberCardProps = {
   member: CallMembership;
 };
@@ -28,7 +22,7 @@ export function CallMemberCard({ member }: CallMemberCardProps) {
 
   const openUserProfile = useOpenUserRoomProfile();
 
-  const userId = member.sender;
+  const { userId } = member;
   if (!userId) return null;
 
   const name = getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId;
@@ -37,13 +31,12 @@ export function CallMemberCard({ member }: CallMemberCardProps) {
     ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96) ?? undefined
     : undefined;
 
-  const audioOnly =
-    (member as unknown as MemberWithMembershipData).membershipData?.['m.call.intent'] === 'audio';
+  const audioOnly = member.callIntent === 'audio';
 
   return (
     <SequenceCard
       as="button"
-      key={member.membershipID}
+      key={member.memberId}
       className={css.CallMemberCard}
       variant="SurfaceVariant"
       radii="500"
@@ -92,7 +85,7 @@ export function CallMemberRenderer({
   return (
     <>
       {truncatedMembers.map((member) => (
-        <CallMemberCard key={member.membershipID} member={member} />
+        <CallMemberCard key={member.memberId} member={member} />
       ))}
       {members.length > max && (
         <SequenceCard

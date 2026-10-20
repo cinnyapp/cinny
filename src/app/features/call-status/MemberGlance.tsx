@@ -29,7 +29,7 @@ export function MemberGlance({ room, members, speakers, max = 6 }: MemberGlanceP
   return (
     <Box alignItems="Center">
       {visibleMembers.map((callMember) => {
-        const userId = callMember.sender;
+        const { userId } = callMember;
         if (!userId) return null;
         const name = getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId;
         const avatarMxc = getMemberAvatarMxc(room, userId);
@@ -39,7 +39,7 @@ export function MemberGlance({ room, members, speakers, max = 6 }: MemberGlanceP
 
         return (
           <StackedAvatar
-            key={callMember.membershipID}
+            key={callMember.memberId}
             className={speakers.has(callMember.sender) ? css.SpeakerAvatarOutline : undefined}
             title={name}
             as="button"

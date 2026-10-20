@@ -20,11 +20,17 @@ import { RoomViewHeader } from './RoomViewHeader';
 import { callChatAtom } from '../../state/callEmbed';
 import { CallChatView } from './CallChatView';
 import { SafeBoundary } from '../../components/error-boundary/SafeBoundary';
+import { useCallEmbed } from '../../hooks/useCallEmbed';
+import { useCallMembers, useCallSession } from '../../hooks/useCall';
 
 export function Room() {
   const { eventId } = useParams();
   const room = useRoom();
   const mx = useMatrixClient();
+
+  const callSession = useCallSession(room);
+  const callMembers = useCallMembers(callSession);
+  const callEmbed = useCallEmbed();
 
   const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
@@ -55,7 +61,7 @@ export function Room() {
     setMarkedUnreadState(mx, room.roomId, false).catch(() => undefined);
   }, [mx, room.roomId]);
 
-  const callView = room.isCallRoom();
+  const callView = callEmbed?.roomId === room.roomId || room.isCallRoom() || callMembers.length > 0;
 
   return (
     <PowerLevelsContextProvider value={powerLevels}>
