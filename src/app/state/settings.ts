@@ -76,7 +76,11 @@ export interface Settings {
   // liteWindowDays: a chat counts as quiet when its newest message is older than this.
   // liteServerFilter: also ask the homeserver to leave them out of /sync (faster,
   // but a new message in a skipped chat only arrives once the chat is loaded again).
+  // liteModeChoice: 'auto' (default) = on for accounts with 2,000+ chats (30-day
+  // window), off otherwise; 'on' / 'off' = the user decided. The old boolean
+  // `liteMode: true` still counts as 'on'.
   liteMode: boolean;
+  liteModeChoice: 'auto' | 'on' | 'off';
   liteWindowDays: number;
   liteServerFilter: boolean;
 
@@ -134,6 +138,7 @@ const defaultSettings: Settings = {
 
   showPinnedBanner: true,
   liteMode: false,
+  liteModeChoice: 'auto',
   liteWindowDays: 90,
   liteServerFilter: false,
 

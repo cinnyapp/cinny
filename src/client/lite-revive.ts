@@ -18,13 +18,13 @@
  */
 
 import { ClientEvent, MatrixClient, MatrixEvent, Method, Room } from 'matrix-js-sdk';
-import { getSkippedRooms, setSkippedRooms } from './lite-store';
+import { getSkippedRooms, isSkippedRoom, setSkippedRooms } from './lite-store';
 
 const NOTIFICATIONS_POLL_MS = 5 * 60 * 1000;
 
 const unskip = (roomId: string): void => {
+  if (!isSkippedRoom(roomId)) return;
   const skipped = getSkippedRooms();
-  if (!skipped.includes(roomId)) return;
   setSkippedRooms(skipped.filter((id) => id !== roomId));
 };
 
@@ -82,7 +82,7 @@ export const watchSkippedRooms = (
   const handleRoom = (room: Room) => {
     // During the replay of the saved chats every room fires this; skipped rooms
     // are not in the saved copy, so only a genuine wake-up matches.
-    if (!getSkippedRooms().includes(room.roomId)) return;
+    if (!isSkippedRoom(room.roomId)) return;
     unskip(room.roomId);
     refillRoomState(mx, room);
   };

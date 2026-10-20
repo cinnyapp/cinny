@@ -45,9 +45,17 @@ export type LiteRoomsSyncData = {
   leave?: Record<string, unknown>;
 };
 
+export type LiteChoice = 'auto' | 'on' | 'off';
+
 export type LiteOptions = {
-  /** Skip loading quiet chats at all. */
+  /**
+   * Skip loading quiet chats at all. With `choice: 'auto'` this is only the
+   * starting value — the real decision is made once the saved chats are counted
+   * (see `resolveAutoLite`).
+   */
   enabled: boolean;
+  /** What the user picked. `auto` = on for big accounts, off for small ones. */
+  choice?: LiteChoice;
   /** A chat is "quiet" when its newest message is older than this many days. */
   windowDays: number;
   /**
@@ -62,8 +70,36 @@ export const LITE_WINDOW_DAYS = [30, 90, 180, 365] as const;
 
 export const DEFAULT_LITE_OPTIONS: LiteOptions = {
   enabled: false,
+  choice: 'auto',
   windowDays: 90,
   serverFilter: false,
+};
+
+/**
+ * Automatic lite mode. Measured on his real account (9,000 chats, 2026-10-20):
+ * the reload spends most of its time rebuilding chats nobody has written in for
+ * months. So above this many saved chats lite mode switches itself on, with a
+ * short window; small accounts load everything as before.
+ */
+export const LITE_AUTO_MIN_ROOMS = 2000;
+export const LITE_AUTO_WINDOW_DAYS = 30;
+
+/**
+ * Decide, once the saved chats have been counted, whether lite mode applies to
+ * this load and with which window. Pure, for the tests.
+ */
+export const resolveAutoLite = (
+  options: LiteOptions,
+  savedRooms: number
+): { enabled: boolean; windowDays: number; auto: boolean } => {
+  const choice = options.choice ?? (options.enabled ? 'on' : 'off');
+  if (choice === 'on') return { enabled: true, windowDays: options.windowDays, auto: false };
+  if (choice === 'off') return { enabled: false, windowDays: options.windowDays, auto: false };
+  return {
+    enabled: savedRooms >= LITE_AUTO_MIN_ROOMS,
+    windowDays: LITE_AUTO_WINDOW_DAYS,
+    auto: true,
+  };
 };
 
 /** Event types that count as "someone actually said something". */
@@ -306,10 +342,27 @@ export const buildLiteFilterDefinition = (
  */
 export const LITE_FILTER_INLINE_SAFE_ROOMS = 40;
 
+const CHOICES: LiteChoice[] = ['auto', 'on', 'off'];
+
+/**
+ * `liteMode: true` from before the automatic mode existed still means "on".
+ * `liteMode: false` was the old default and is saved in everyone's settings, so
+ * it cannot mean "the user switched it off" — it maps to `auto`.
+ */
+export const liteChoiceFromSettings = (choice: unknown, legacyEnabled: unknown): LiteChoice => {
+  if (CHOICES.includes(choice as LiteChoice) && choice !== 'auto') return choice as LiteChoice;
+  if (legacyEnabled === true) return 'on';
+  return 'auto';
+};
+
 export const normalizeLiteOptions = (raw: Partial<LiteOptions> | undefined): LiteOptions => {
   const windowDays = Number(raw?.windowDays);
+  const choice = CHOICES.includes(raw?.choice as LiteChoice)
+    ? (raw?.choice as LiteChoice)
+    : undefined;
   return {
-    enabled: raw?.enabled === true,
+    enabled: raw?.enabled === true || choice === 'on',
+    ...(choice ? { choice } : {}),
     windowDays: LITE_WINDOW_DAYS.includes(windowDays as typeof LITE_WINDOW_DAYS[number])
       ? windowDays
       : DEFAULT_LITE_OPTIONS.windowDays,

@@ -15,7 +15,11 @@ import {
   classifyRooms,
   countRoomEvents,
   lastMessageTs,
+  LITE_AUTO_MIN_ROOMS,
+  LITE_AUTO_WINDOW_DAYS,
+  liteChoiceFromSettings,
   normalizeLiteOptions,
+  resolveAutoLite,
   pruneRoomsData,
   roomKeepReason,
   unionRoomIds,
@@ -254,4 +258,49 @@ test('a realistic 9,000-chat mix: 60% skipped', () => {
     result.dormantEvents / (result.dormantEvents + result.keptEvents) > 0.6,
     'skipping 60% of the chats must skip more than 60% of the stored events'
   );
+});
+
+test('automatic lite mode: on for big accounts, 30 days, off for small ones', () => {
+  const auto = { enabled: false, choice: 'auto', windowDays: 90, serverFilter: false };
+  assert.deepEqual(resolveAutoLite(auto, 9030), {
+    enabled: true,
+    windowDays: LITE_AUTO_WINDOW_DAYS,
+    auto: true,
+  });
+  assert.equal(LITE_AUTO_WINDOW_DAYS, 30);
+  assert.equal(resolveAutoLite(auto, LITE_AUTO_MIN_ROOMS - 1).enabled, false);
+  assert.equal(resolveAutoLite(auto, LITE_AUTO_MIN_ROOMS).enabled, true);
+  // the user's own choice always wins, with the user's own window
+  assert.deepEqual(resolveAutoLite({ ...auto, choice: 'off' }, 9030), {
+    enabled: false,
+    windowDays: 90,
+    auto: false,
+  });
+  assert.deepEqual(resolveAutoLite({ ...auto, choice: 'on', windowDays: 180 }, 50), {
+    enabled: true,
+    windowDays: 180,
+    auto: false,
+  });
+  // options without a choice (older callers) keep the old meaning
+  assert.equal(
+    resolveAutoLite({ enabled: true, windowDays: 90, serverFilter: false }, 10).enabled,
+    true
+  );
+  assert.equal(
+    resolveAutoLite({ enabled: false, windowDays: 90, serverFilter: false }, 9000).enabled,
+    false
+  );
+});
+
+test('old saved settings map onto the new choice', () => {
+  // liteMode:false was the old default and is in everyone's saved settings → auto
+  assert.equal(liteChoiceFromSettings(undefined, false), 'auto');
+  assert.equal(liteChoiceFromSettings(undefined, true), 'on');
+  assert.equal(liteChoiceFromSettings('auto', true), 'on');
+  assert.equal(liteChoiceFromSettings('auto', false), 'auto');
+  assert.equal(liteChoiceFromSettings('off', true), 'off');
+  assert.equal(liteChoiceFromSettings('on', false), 'on');
+  assert.equal(liteChoiceFromSettings('bogus', false), 'auto');
+  assert.equal(normalizeLiteOptions({ choice: 'on' }).enabled, true);
+  assert.equal(normalizeLiteOptions({ choice: 'nope' }).choice, undefined);
 });
