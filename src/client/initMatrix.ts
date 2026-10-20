@@ -9,6 +9,7 @@ import {
 import { cryptoCallbacks } from './secretStorageKeys';
 import { clearNavToActivePathStore } from '../app/state/navToActivePath';
 import { pushSessionToSW } from '../sw-session';
+import { installPushRuleIndex } from './pushRuleIndex';
 import { buildLiteFilterDefinition, LITE_FILTER_INLINE_SAFE_ROOMS, LiteOptions } from './lite-mode';
 import {
   bypassLiteOnce,
@@ -54,8 +55,8 @@ const createSyncStore = (useWorker: boolean): IndexedDBStore =>
       : {}),
   });
 
-const createClientWithStore = (session: Session, store: IndexedDBStore): MatrixClient =>
-  createClient({
+const createClientWithStore = (session: Session, store: IndexedDBStore): MatrixClient => {
+  const mx = createClient({
     baseUrl: session.baseUrl,
     accessToken: session.accessToken,
     userId: session.userId,
@@ -66,6 +67,11 @@ const createClientWithStore = (session: Session, store: IndexedDBStore): MatrixC
     cryptoCallbacks: cryptoCallbacks as any,
     verificationMethods: ['m.sas.v1'],
   });
+  // Push-rule matching was ~60 % of the reload on a 9,000-chat account with ~400
+  // per-chat rules. Same results, only the rules that can match are checked.
+  installPushRuleIndex(mx);
+  return mx;
+};
 
 /**
  * What lite mode did on this load — read by the settings screen and by
@@ -83,14 +89,25 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
   // persisted /sync record, so the SDK never replays them. See client/lite-store.ts.
   const liteOptions = liteOptionsFromSettings();
   const bypassed = isLiteBypassed();
-  const { skippedRooms, report } = await pruneDormantRooms(liteOptions);
+  const { skippedRooms, report, enabled, windowDays } = await pruneDormantRooms(liteOptions);
   if (bypassed) {
     // "Show older chats" was a one-shot: everything is loaded this time, and the
     // skipped list is dropped so nothing is filtered out either.
     forgetSkippedRooms();
     clearLiteBypass();
   }
-  liteState = { options: liteOptions, skippedRooms, report };
+  // `enabled` is the effective decision (auto mode turns itself on for big accounts).
+  // A load that skipped nothing new but has chats skipped earlier still needs the
+  // wake-up watcher, so `enabled` stays true whenever anything is left out.
+  liteState = {
+    options: {
+      ...liteOptions,
+      enabled: enabled || (!bypassed && skippedRooms.length > 0),
+      windowDays,
+    },
+    skippedRooms,
+    report,
+  };
 
   let indexedDBStore = createSyncStore(true);
   let mx = createClientWithStore(session, indexedDBStore);

@@ -23,7 +23,9 @@ import {
   LiteOptions,
   LiteRoomsSyncData,
   normalizeLiteOptions,
+  liteChoiceFromSettings,
   pruneRoomsData,
+  resolveAutoLite,
   unionRoomIds,
 } from './lite-mode';
 
@@ -45,10 +47,22 @@ const SYNC_KEY = [SYNC_CLOBBER];
 const SKIPPED_KEY = 'cinny_lite_skipped_rooms';
 const REPORT_KEY = 'cinny_lite_report';
 const BYPASS_KEY = 'cinny_lite_show_all';
+const LAST_PRUNE_KEY = 'cinny_lite_last_prune';
+const NOTICE_KEY = 'cinny_lite_notice_seen';
+/**
+ * Reading the saved chats to tidy them costs a full read of the store on the
+ * main thread (seconds on a big account) on top of the SDK's own read. Chats go
+ * quiet over days, so once tidied, the next few hours of reloads skip it.
+ */
+const PRUNE_EVERY_MS = 12 * 60 * 60 * 1000;
 
 export type LiteReport = {
   at: number;
   windowDays: number;
+  /** Lite mode switched itself on because the account is big. */
+  auto?: boolean;
+  /** Chats left out in total (this load and earlier ones). */
+  skippedTotal?: number;
   totalRooms: number;
   keptRooms: number;
   skippedRooms: number;
@@ -64,6 +78,7 @@ export const liteOptionsFromSettings = (): LiteOptions => {
   const settings = getSettings();
   return normalizeLiteOptions({
     enabled: settings.liteMode,
+    choice: liteChoiceFromSettings(settings.liteModeChoice, settings.liteMode),
     windowDays: settings.liteWindowDays,
     serverFilter: settings.liteServerFilter,
   });
@@ -87,16 +102,57 @@ const writeJson = (key: string, value: unknown): void => {
   }
 };
 
+/**
+ * In-memory copy of the skipped list. `ClientEvent.Room` fires once per chat
+ * while the saved chats are replayed, and the wake-up watcher asks "is this a
+ * skipped chat?" every time — re-parsing a 6,000-id JSON list from
+ * localStorage per chat was quadratic.
+ */
+let skippedCache: { list: string[]; set: Set<string> } | undefined;
+
 /** Every room lite mode has skipped so far (cumulative across loads). */
-export const getSkippedRooms = (): string[] => readJson<string[]>(SKIPPED_KEY, []);
-export const setSkippedRooms = (roomIds: string[]): void => writeJson(SKIPPED_KEY, roomIds);
+export const getSkippedRooms = (): string[] => {
+  if (!skippedCache) {
+    const list = readJson<string[]>(SKIPPED_KEY, []);
+    skippedCache = { list, set: new Set(list) };
+  }
+  return skippedCache.list;
+};
+export const isSkippedRoom = (roomId: string): boolean => {
+  getSkippedRooms();
+  return skippedCache?.set.has(roomId) ?? false;
+};
+export const setSkippedRooms = (roomIds: string[]): void => {
+  skippedCache = { list: roomIds, set: new Set(roomIds) };
+  writeJson(SKIPPED_KEY, roomIds);
+};
 export const forgetSkippedRooms = (): void => {
+  skippedCache = { list: [], set: new Set() };
   try {
     localStorage.removeItem(SKIPPED_KEY);
+    localStorage.removeItem(LAST_PRUNE_KEY);
   } catch {
     // ignore
   }
 };
+
+/** The one-line "old chats are not loaded" notice is shown once. */
+export const isLiteNoticeSeen = (): boolean => {
+  try {
+    return localStorage.getItem(NOTICE_KEY) === '1';
+  } catch {
+    return true;
+  }
+};
+export const markLiteNoticeSeen = (): void => {
+  try {
+    localStorage.setItem(NOTICE_KEY, '1');
+  } catch {
+    // ignore
+  }
+};
+
+type LastPrune = { at: number; windowDays: number; auto: boolean; totalRooms: number };
 
 export const getLiteReport = (): LiteReport | undefined =>
   readJson<LiteReport | undefined>(REPORT_KEY, undefined);
@@ -202,7 +258,12 @@ export type LitePruneResult = {
   /** Rooms that are now absent from the store (cumulative, for the filter). */
   skippedRooms: string[];
   report: LiteReport;
+  /** Whether lite mode actually applies to this load (auto mode decides here). */
+  enabled: boolean;
+  windowDays: number;
 };
+
+const choiceOf = (options: LiteOptions) => options.choice ?? (options.enabled ? 'on' : 'off');
 
 /**
  * Drop every quiet room from the persisted /sync record.
@@ -210,6 +271,8 @@ export type LitePruneResult = {
  * Must be called BEFORE `new IndexedDBStore(...).startup()` — once the store
  * (or its worker) has read the record, the in-memory accumulator is the source
  * of truth and would just write everything back.
+ *
+ * In `auto` mode the decision is made here, from the number of saved chats.
  */
 export const pruneDormantRooms = async (
   options: LiteOptions,
@@ -217,17 +280,56 @@ export const pruneDormantRooms = async (
 ): Promise<LitePruneResult> => {
   const started = performance.now();
   const previous = getSkippedRooms();
+  const choice = choiceOf(options);
+  const off = (report: LiteReport, windowDays = options.windowDays): LitePruneResult => ({
+    skippedRooms: previous,
+    report,
+    enabled: false,
+    windowDays,
+  });
 
-  if (!options.enabled) {
-    return { skippedRooms: previous, report: skip('lite mode off', options.windowDays) };
+  if (choice === 'off') {
+    return off(skip('lite mode off', options.windowDays));
   }
   if (isLiteBypassed()) {
     // one-shot "show everything": also forget the list so the server filter is
     // not applied either
+    try {
+      localStorage.removeItem(LAST_PRUNE_KEY);
+    } catch {
+      // ignore
+    }
     return {
       skippedRooms: [],
       report: skip('showing all chats for this load', options.windowDays),
+      enabled: false,
+      windowDays: options.windowDays,
     };
+  }
+
+  // Tidied recently with the same settings: nothing new can have gone quiet
+  // yet, so do not pay for reading the whole store again.
+  const wantAuto = choice === 'auto';
+  const last = readJson<LastPrune | undefined>(LAST_PRUNE_KEY, undefined);
+  if (
+    last &&
+    Date.now() - last.at < PRUNE_EVERY_MS &&
+    last.at <= Date.now() &&
+    last.auto === wantAuto
+  ) {
+    const resolved = resolveAutoLite(options, last.totalRooms);
+    if (resolved.windowDays === last.windowDays) {
+      const lastReport = getLiteReport();
+      if (!resolved.enabled) {
+        return off(lastReport ?? skip('small account — everything is loaded', resolved.windowDays));
+      }
+      return {
+        skippedRooms: previous,
+        report: lastReport ?? skip('tidied recently', resolved.windowDays),
+        enabled: true,
+        windowDays: resolved.windowDays,
+      };
+    }
   }
 
   let db: IDBDatabase | undefined;
@@ -239,6 +341,8 @@ export const pruneDormantRooms = async (
     return {
       skippedRooms: previous,
       report: skip('could not open the saved chats', options.windowDays),
+      enabled: choice === 'on' || previous.length > 0,
+      windowDays: options.windowDays,
     };
   }
   if (!db) {
@@ -247,15 +351,14 @@ export const pruneDormantRooms = async (
     return {
       skippedRooms: previous,
       report: skip('nothing saved yet — first load is always the slow one', options.windowDays),
+      enabled: choice === 'on',
+      windowDays: options.windowDays,
     };
   }
 
   try {
     if (!db.objectStoreNames.contains(SYNC_STORE)) {
-      return {
-        skippedRooms: previous,
-        report: skip('saved chats not in the expected shape', options.windowDays),
-      };
+      return off(skip('saved chats not in the expected shape', options.windowDays));
     }
 
     const readTx = db.transaction([SYNC_STORE], 'readonly');
@@ -270,12 +373,36 @@ export const pruneDormantRooms = async (
       return {
         skippedRooms: previous,
         report: skip('nothing saved yet — first load is always the slow one', options.windowDays),
+        enabled: choice === 'on',
+        windowDays: options.windowDays,
       };
     }
 
-    const totalRooms = Object.keys(record.roomsData.join).length;
+    const { join } = record.roomsData;
+    const totalRooms = Object.keys(join).length;
+    // chats skipped on earlier loads are no longer in the record, but they are
+    // still part of the account
+    const accountRooms = totalRooms + previous.filter((id) => !(id in join)).length;
+    const resolved = resolveAutoLite(options, accountRooms);
+    const lastPrune: LastPrune = {
+      at: Date.now(),
+      windowDays: resolved.windowDays,
+      auto: resolved.auto,
+      totalRooms: accountRooms,
+    };
+    if (!resolved.enabled) {
+      writeJson(LAST_PRUNE_KEY, lastPrune);
+      return off(
+        skip(
+          `${accountRooms.toLocaleString()} chats — few enough to load them all`,
+          resolved.windowDays
+        ),
+        resolved.windowDays
+      );
+    }
+
     const classification = classifyRooms(record.roomsData, {
-      windowDays: options.windowDays,
+      windowDays: resolved.windowDays,
       protect,
     });
 
@@ -292,10 +419,13 @@ export const pruneDormantRooms = async (
       await txDone(writeTx);
       setSkippedRooms(skippedRooms);
     }
+    writeJson(LAST_PRUNE_KEY, lastPrune);
 
     const report: LiteReport = {
       at: Date.now(),
-      windowDays: options.windowDays,
+      windowDays: resolved.windowDays,
+      auto: resolved.auto,
+      skippedTotal: skippedRooms.length,
       totalRooms,
       keptRooms: classification.kept.length,
       skippedRooms: classification.dormant.length,
@@ -305,13 +435,15 @@ export const pruneDormantRooms = async (
       ms: Math.round(performance.now() - started),
     };
     setLiteReport(report);
-    return { skippedRooms, report };
+    return { skippedRooms, report, enabled: true, windowDays: resolved.windowDays };
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('lite mode: prune failed, loading everything', err);
     return {
       skippedRooms: previous,
       report: skip('could not skip the old chats this time', options.windowDays),
+      enabled: previous.length > 0,
+      windowDays: options.windowDays,
     };
   } finally {
     db.close();

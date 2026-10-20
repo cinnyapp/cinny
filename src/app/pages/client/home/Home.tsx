@@ -1,4 +1,11 @@
-import React, { MouseEventHandler, forwardRef, useMemo, useRef, useState } from 'react';
+import React, {
+  MouseEventHandler,
+  forwardRef,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Avatar,
@@ -16,7 +23,7 @@ import {
   toRem,
 } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtom, useAtomValue, useStore } from 'jotai';
 import FocusTrap from '../../../components/focus-trap';
 import {
   NavButton,
@@ -60,15 +67,18 @@ import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
 import {
   getRoomNotificationMode,
+  RoomNotificationMode,
   useRoomsNotificationPreferencesContext,
 } from '../../../hooks/useRoomsNotificationPreferences';
 import { UseStateProvider } from '../../../components/UseStateProvider';
 import { JoinAddressPrompt } from '../../../components/join-address-prompt';
 import { _RoomSearchParams } from '../../paths';
-import { loadAllChatsOnce } from '../../../../client/initMatrix';
-import { getLiteReport } from '../../../../client/lite-store';
+import { getLiteState, loadAllChatsOnce } from '../../../../client/initMatrix';
+import { isLiteNoticeSeen, markLiteNoticeSeen } from '../../../../client/lite-store';
 import { ChatListNoMatch, ChatListToolbar, useChatList } from '../../../features/chat-list';
 import { DimmedRow } from '../../../features/chat-list/styles.css';
+import { useStartupSnapshotWriter } from '../../../features/startup-snapshot/useStartupSnapshotWriter';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 
 type HomeMenuProps = {
   requestClose: () => void;
@@ -215,9 +225,22 @@ export function Home() {
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
   const [showChatFilters] = useSetting(settingsAtom, 'chatListShowFilters');
   const [showAllRooms] = useSetting(settingsAtom, 'homeShowsAllRooms');
-  const [liteMode] = useSetting(settingsAtom, 'liteMode');
-  // How many chats lite mode left out of this load (see client/lite-store.ts).
-  const skippedChats = useMemo(() => getLiteReport()?.skippedRooms ?? 0, []);
+  // Lite mode (see client/lite-store.ts): how many quiet chats are left out, and
+  // whether this account got it automatically. Read once — it is fixed per load.
+  const lite = useMemo(() => {
+    const { options, skippedRooms, report } = getLiteState();
+    return {
+      on: options.enabled,
+      skipped: skippedRooms.length,
+      windowDays: options.windowDays,
+      auto: report?.auto === true,
+    };
+  }, []);
+  const [noticeSeen, setNoticeSeen] = useState(isLiteNoticeSeen);
+  const dismissNotice = () => {
+    markLiteNoticeSeen();
+    setNoticeSeen(true);
+  };
 
   const categoryClosed = closedCategories.has(DEFAULT_CATEGORY_ID);
 
@@ -226,6 +249,23 @@ export function Home() {
   // arrives or a setting changes — never on navigation or profile/member noise.
   const chatList = useChatList(rooms, 'home', selectedRoomId, categoryClosed);
   const sortedRooms = chatList.items;
+
+  // Save the top of this list so the next start can show it instantly, before
+  // the saved chats have been rebuilt (features/startup-snapshot).
+  const jotaiStore = useStore();
+  const mediaAuth = useMediaAuthentication();
+  useStartupSnapshotWriter(
+    mx,
+    sortedRooms,
+    mDirects,
+    useCallback(() => jotaiStore.get(roomToUnreadAtom), [jotaiStore]),
+    useCallback(
+      (roomId: string) =>
+        getRoomNotificationMode(notificationPreferences, roomId) === RoomNotificationMode.Mute,
+      [notificationPreferences]
+    ),
+    mediaAuth
+  );
 
   const virtualizer = useVirtualizer({
     count: sortedRooms.length,
@@ -318,7 +358,39 @@ export function Home() {
                   </NavItemContent>
                 </NavLink>
               </NavItem>
-              {liteMode && skippedChats > 0 && (
+              {lite.on && lite.skipped > 0 && !noticeSeen && (
+                <Box
+                  direction="Column"
+                  gap="200"
+                  style={{ padding: '8px 12px' }}
+                  data-testid="lite-notice"
+                >
+                  <Text size="T200" priority="300">
+                    {`To start faster, chats with no new message in the last ${lite.windowDays} days are not loaded. They come back by themselves when someone writes.`}
+                  </Text>
+                  <Box gap="200" wrap="Wrap">
+                    <Button
+                      size="300"
+                      variant="Secondary"
+                      fill="Soft"
+                      radii="300"
+                      onClick={dismissNotice}
+                    >
+                      <Text size="B300">OK</Text>
+                    </Button>
+                    <Button
+                      size="300"
+                      variant="Secondary"
+                      fill="None"
+                      radii="300"
+                      onClick={() => loadAllChatsOnce(mx)}
+                    >
+                      <Text size="B300">Show older chats</Text>
+                    </Button>
+                  </Box>
+                </Box>
+              )}
+              {lite.on && lite.skipped > 0 && (
                 <NavItem variant="Background" radii="400">
                   <NavButton onClick={() => loadAllChatsOnce(mx)}>
                     <NavItemContent>
@@ -328,7 +400,7 @@ export function Home() {
                         </Avatar>
                         <Box as="span" grow="Yes">
                           <Text as="span" size="Inherit" truncate>
-                            {`Show ${skippedChats.toLocaleString()} older chats`}
+                            {`Show ${lite.skipped.toLocaleString()} older chats`}
                           </Text>
                         </Box>
                       </Box>
