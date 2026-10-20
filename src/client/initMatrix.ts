@@ -19,6 +19,7 @@ import {
 } from './staged-replay';
 import { readSnapshot } from '../app/features/startup-snapshot/snapshot';
 import { getSettings } from '../app/state/settings';
+import { installSyncStoreKeeper, noteSavedToken } from './sync-store-keeper';
 import { buildLiteFilterDefinition, LITE_FILTER_INLINE_SAFE_ROOMS, LiteOptions } from './lite-mode';
 import {
   bypassLiteOnce,
@@ -160,15 +161,26 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
   let indexedDBStore = createSyncStore(true);
   let mx = createClientWithStore(session, indexedDBStore);
 
+  // The sync store (worker reads the saved record) and the rust crypto init
+  // (wasm compile + its own IndexedDB database) are independent: run them in
+  // parallel instead of one after the other — ~1 s off a warm start.
+  const cryptoReady = mx.initRustCrypto();
   try {
-    await indexedDBStore.startup();
+    await Promise.all([indexedDBStore.startup(), cryptoReady]);
   } catch (err) {
     // The worker could not be started (unsupported runtime, blocked by a CSP,
-    // failed chunk load, ...). Fall back to the previous main-thread store
-    // rather than failing to load the app at all. Nothing has used `mx` yet —
-    // `createClient` does no I/O — so it is safe to rebuild both.
+    // failed chunk load, ...) — or crypto failed. Fall back to the previous
+    // main-thread store rather than failing to load the app at all. Nothing
+    // has synced yet, so it is safe to rebuild both; the in-flight crypto init
+    // is awaited and stopped first so two crypto backends never share a store.
     // eslint-disable-next-line no-console
     console.error('initMatrix: IndexedDB worker store failed, falling back to main thread', err);
+    await cryptoReady.catch(() => undefined);
+    try {
+      mx.stopClient();
+    } catch {
+      // ignore
+    }
     try {
       await indexedDBStore.destroy();
     } catch {
@@ -177,9 +189,15 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     indexedDBStore = createSyncStore(false);
     mx = createClientWithStore(session, indexedDBStore);
     await indexedDBStore.startup();
+    await mx.initRustCrypto();
   }
 
-  await mx.initRustCrypto();
+  // save the record when the tab goes away; remember a degraded store; start-up report
+  installSyncStoreKeeper(mx, indexedDBStore);
+  indexedDBStore
+    .getSavedSyncToken()
+    .then((token) => noteSavedToken(!!token))
+    .catch(() => noteSavedToken(false));
 
   mx.setMaxListeners(50);
 
