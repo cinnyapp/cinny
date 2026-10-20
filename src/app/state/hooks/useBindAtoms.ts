@@ -5,6 +5,9 @@ import { mDirectAtom, useBindMDirectAtom } from '../mDirectList';
 import { roomToUnreadAtom, useBindRoomToUnreadAtom } from '../room/roomToUnread';
 import { markedUnreadAtom, useBindMarkedUnreadAtom } from '../room/markedUnread';
 import { roomToParentsAtom, useBindRoomToParentsAtom } from '../room/roomToParents';
+import { roomActivityAtom, useBindRoomActivityAtom } from '../room/roomActivity';
+import { useSetting } from './settings';
+import { settingsAtom } from '../settings';
 import { roomIdToTypingMembersAtom, useBindRoomIdToTypingMembersAtom } from '../typingMembers';
 
 export const useBindAtoms = (mx: MatrixClient) => {
@@ -14,6 +17,8 @@ export const useBindAtoms = (mx: MatrixClient) => {
   useBindRoomToParentsAtom(mx, roomToParentsAtom);
   useBindRoomToUnreadAtom(mx, roomToUnreadAtom);
   useBindMarkedUnreadAtom(mx, markedUnreadAtom);
+  const [chatListServerLookup] = useSetting(settingsAtom, 'chatListServerLookup');
+  useBindRoomActivityAtom(mx, roomActivityAtom, chatListServerLookup);
 
   useBindRoomIdToTypingMembersAtom(mx, roomIdToTypingMembersAtom);
 };
