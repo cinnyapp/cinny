@@ -18,8 +18,8 @@ import {
   Spinner,
 } from 'folds';
 import { useFocusWithin, useHover } from 'react-aria';
-import FocusTrap from 'focus-trap-react';
 import { useAtom, useAtomValue } from 'jotai';
+import FocusTrap from '../../components/focus-trap';
 import { NavItem, NavItemContent, NavItemOptions, NavLink } from '../../components/nav';
 import { MarkedUnreadBadge, UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';

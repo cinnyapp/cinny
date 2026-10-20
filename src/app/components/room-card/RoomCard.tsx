@@ -18,7 +18,7 @@ import {
   config,
 } from 'folds';
 import classNames from 'classnames';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from '../focus-trap';
 import * as css from './style.css';
 import { RoomAvatar } from '../room-avatar';
 import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';

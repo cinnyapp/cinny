@@ -1,4 +1,3 @@
-import FocusTrap from 'focus-trap-react';
 import {
   Badge,
   Box,
@@ -19,6 +18,7 @@ import {
 } from 'folds';
 import React, { MouseEventHandler, ReactNode, useState } from 'react';
 import { ReactEditor, useSlate } from 'slate-react';
+import FocusTrap from '../focus-trap';
 import {
   headingLevel,
   isAnyMarkActive,

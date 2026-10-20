@@ -17,7 +17,7 @@ import {
 } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom, useAtomValue } from 'jotai';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from '../../../components/focus-trap';
 import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
 import {
   NavButton,

@@ -10,8 +10,8 @@
 
 import React, { MouseEventHandler, useState } from 'react';
 import { Box, Icon, Icons, Menu, MenuItem, PopOut, RectCords, Spinner, Text, config } from 'folds';
-import FocusTrap from 'focus-trap-react';
 import { MatrixEvent } from 'matrix-js-sdk';
+import FocusTrap from '../../components/focus-trap';
 import { useEventTranslation } from './useTranslation';
 import { TRANSLATION_LANGUAGES, langFlag, langName } from './languages';
 import { stopPropagation } from '../../utils/keyboard';

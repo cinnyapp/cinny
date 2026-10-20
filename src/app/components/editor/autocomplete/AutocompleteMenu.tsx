@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
-import FocusTrap from 'focus-trap-react';
 import { isKeyHotkey } from 'is-hotkey';
 import { Header, Menu, Scroll, config } from 'folds';
+import FocusTrap from '../../focus-trap';
 
 import * as css from './AutocompleteMenu.css';
 import { preventScrollWithArrowKey, stopPropagation } from '../../../utils/keyboard';

@@ -1,4 +1,3 @@
-import FocusTrap from 'focus-trap-react';
 import {
   Avatar,
   Box,
@@ -30,6 +29,7 @@ import React, {
 import { useAtomValue } from 'jotai';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Room } from 'matrix-js-sdk';
+import FocusTrap from '../../components/focus-trap';
 import { stopPropagation } from '../../utils/keyboard';
 import { useDirects, useRooms, useSpaces } from '../../state/hooks/roomList';
 import { useMatrixClient } from '../../hooks/useMatrixClient';

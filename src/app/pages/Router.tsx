@@ -70,13 +70,16 @@ import { SearchModalRenderer } from '../features/search';
 import { getFallbackSession } from '../state/sessions';
 import { CallStatusRenderer } from './CallStatusRenderer';
 import { CallEmbedProvider } from '../components/CallEmbedProvider';
+import { RouteErrorPage } from '../components/error-boundary/AppErrorPage';
 
 export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize) => {
   const { hashRouter } = clientConfig;
   const mobile = screenSize === ScreenSize.Mobile;
 
   const routes = createRoutesFromElements(
-    <Route>
+    // Last resort only: every popup, message, room view and settings page has its
+    // own <SafeBoundary>, so an error reaching this page escaped all of them.
+    <Route errorElement={<RouteErrorPage />}>
       <Route
         index
         loader={() => {

@@ -24,7 +24,7 @@ import {
   config,
   Spinner,
 } from 'folds';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from '../../../components/focus-trap';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';

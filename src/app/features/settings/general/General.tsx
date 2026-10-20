@@ -28,7 +28,7 @@ import {
   toRem,
 } from 'folds';
 import { isKeyHotkey } from 'is-hotkey';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from '../../../components/focus-trap';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { SequenceCard } from '../../../components/sequence-card';
 import { useSetting } from '../../../state/hooks/settings';

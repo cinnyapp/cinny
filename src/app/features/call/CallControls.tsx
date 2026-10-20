@@ -14,7 +14,7 @@ import {
   Text,
   toRem,
 } from 'folds';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from '../../components/focus-trap';
 import { SequenceCard } from '../../components/sequence-card';
 import * as css from './styles.css';
 import {

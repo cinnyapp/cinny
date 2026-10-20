@@ -38,7 +38,7 @@ import {
 } from '@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item';
 import { autoScrollForElements } from '@atlaskit/pragmatic-drag-and-drop-auto-scroll/element';
 import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from '../../../components/focus-trap';
 import {
   useOrphanSpaces,
   useRecursiveChildScopeFactory,

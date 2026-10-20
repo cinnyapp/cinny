@@ -20,8 +20,8 @@ import {
   as,
   config,
 } from 'folds';
-import FocusTrap from 'focus-trap-react';
 import FileSaver from 'file-saver';
+import FocusTrap from '../focus-trap';
 import * as css from './PdfViewer.css';
 import { AsyncStatus } from '../../hooks/useAsyncCallback';
 import { useZoom } from '../../hooks/useZoom';

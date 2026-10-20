@@ -2,6 +2,7 @@
 import React, {
   Dispatch,
   MouseEventHandler,
+  ReactNode,
   RefObject,
   SetStateAction,
   useCallback,
@@ -127,6 +128,8 @@ import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '../../hooks/u
 import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
+import { MessageRenderFailed, SafeBoundary } from '../../components/error-boundary/SafeBoundary';
+import { recordError } from '../../components/error-boundary/errorReport';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -1682,9 +1685,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       prevEvent.getType() === mEvent.getType() &&
       minuteDifference(prevEvent.getTs(), mEvent.getTs()) < 2;
 
-    const eventJSX = reactionOrEditEvent(mEvent)
-      ? null
-      : renderMatrixEvent(
+    let rawEventJSX: ReactNode = null;
+    if (!reactionOrEditEvent(mEvent)) {
+      try {
+        rawEventJSX = renderMatrixEvent(
           mEvent.getType(),
           typeof mEvent.getStateKey() === 'string',
           mEventId,
@@ -1693,6 +1697,23 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           timelineSet,
           collapsed
         );
+      } catch (err) {
+        // The renderer itself threw (before any component mounted) — show the
+        // per-message fallback instead of taking the whole timeline down.
+        recordError(`message ${mEventId}`, err);
+        rawEventJSX = (
+          <MessageRenderFailed key={mEventId} where={`message ${mEventId}`} error={err} />
+        );
+      }
+    }
+    // Each message gets its own boundary: a component that throws while
+    // rendering one message replaces only that message with a one-line
+    // "could not be shown — Retry / Report", its siblings keep rendering.
+    const eventJSX = rawEventJSX ? (
+      <SafeBoundary key={mEventId} where={`message ${mEventId}`} variant="message">
+        {rawEventJSX}
+      </SafeBoundary>
+    ) : null;
     prevEvent = mEvent;
     isPrevRendered = !!eventJSX;
 

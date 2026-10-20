@@ -13,8 +13,8 @@ import {
   config,
 } from 'folds';
 import { useNavigate } from 'react-router-dom';
-import FocusTrap from 'focus-trap-react';
 import { AuthDict, AuthType, MatrixError, createClient } from 'matrix-js-sdk';
+import FocusTrap from '../../../components/focus-trap';
 import { useAutoDiscoveryInfo } from '../../../hooks/useAutoDiscoveryInfo';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useAuthServer } from '../../../hooks/useAuthServer';

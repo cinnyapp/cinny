@@ -1,7 +1,7 @@
 import React, { MouseEventHandler, useState } from 'react';
 import { Box, config, Icon, Icons, Menu, PopOut, RectCords, Text } from 'folds';
-import FocusTrap from 'focus-trap-react';
 import { useNavigate } from 'react-router-dom';
+import FocusTrap from '../../../components/focus-trap';
 import { SidebarAvatar, SidebarItem, SidebarItemTooltip } from '../../../components/sidebar';
 import { stopPropagation } from '../../../utils/keyboard';
 import { SequenceCard } from '../../../components/sequence-card';

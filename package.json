@@ -22,7 +22,8 @@
     "semantic-release": "semantic-release",
     "test:settings-search": "node --experimental-strip-types --import ./scripts/ts-resolve-hook.mjs scripts/test-settings-search.mjs",
     "build:settings-index": "node scripts/build-settings-index.mjs",
-    "test": "npm run test:lite && npm run test:settings-search && npm run test:transcribe-popover && npm run test:media-cache",
+    "test": "npm run test:lite && npm run test:settings-search && npm run test:transcribe-popover && npm run test:media-cache && npm run test:error-boundaries",
+    "test:error-boundaries": "node scripts/test-error-boundaries.mjs",
     "test:transcribe-popover": "node scripts/test-transcribe-popover.mjs",
     "test:media-cache": "node --experimental-strip-types --import ./scripts/ts-resolve-hook.mjs scripts/test-media-cache.mjs"
   },
@@ -154,6 +155,7 @@
     "eslint-plugin-react": "7.31.11",
     "eslint-plugin-react-hooks": "4.6.0",
     "husky": "9.1.7",
+    "jsdom": "26.1.0",
     "lint-staged": "16.3.2",
     "prettier": "2.8.1",
     "semantic-release": "25.0.3",

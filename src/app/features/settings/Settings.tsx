@@ -14,7 +14,7 @@ import {
   OverlayCenter,
   Text,
 } from 'folds';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from '../../components/focus-trap';
 import { General } from './general';
 import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '../../components/page';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
@@ -35,6 +35,7 @@ import { UseStateProvider } from '../../components/UseStateProvider';
 import { stopPropagation } from '../../utils/keyboard';
 import { LogoutDialog } from '../../components/LogoutDialog';
 import { SettingsPages } from './pages';
+import { SafeBoundary } from '../../components/error-boundary/SafeBoundary';
 import {
   SettingsHighlightProvider,
   SettingsSearchInput,
@@ -250,28 +251,36 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
       }
     >
       <SettingsHighlightProvider value={highlight}>
-        {activePage === SettingsPages.GeneralPage && (
-          <General requestClose={handlePageRequestClose} />
-        )}
-        {activePage === SettingsPages.AccountPage && (
-          <Account requestClose={handlePageRequestClose} />
-        )}
-        {activePage === SettingsPages.NotificationPage && (
-          <Notifications requestClose={handlePageRequestClose} />
-        )}
-        {activePage === SettingsPages.DevicesPage && (
-          <Devices requestClose={handlePageRequestClose} />
-        )}
-        {activePage === SettingsPages.EmojisStickersPage && (
-          <EmojisStickers requestClose={handlePageRequestClose} />
-        )}
-        {activePage === SettingsPages.TranslationPage && (
-          <Translation requestClose={handlePageRequestClose} />
-        )}
-        {activePage === SettingsPages.DeveloperToolsPage && (
-          <DeveloperTools requestClose={handlePageRequestClose} />
-        )}
-        {activePage === SettingsPages.AboutPage && <About requestClose={handlePageRequestClose} />}
+        <SafeBoundary
+          where={`settings page ${activePage ?? 'menu'}`}
+          variant="panel"
+          resetKeys={[activePage]}
+        >
+          {activePage === SettingsPages.GeneralPage && (
+            <General requestClose={handlePageRequestClose} />
+          )}
+          {activePage === SettingsPages.AccountPage && (
+            <Account requestClose={handlePageRequestClose} />
+          )}
+          {activePage === SettingsPages.NotificationPage && (
+            <Notifications requestClose={handlePageRequestClose} />
+          )}
+          {activePage === SettingsPages.DevicesPage && (
+            <Devices requestClose={handlePageRequestClose} />
+          )}
+          {activePage === SettingsPages.EmojisStickersPage && (
+            <EmojisStickers requestClose={handlePageRequestClose} />
+          )}
+          {activePage === SettingsPages.TranslationPage && (
+            <Translation requestClose={handlePageRequestClose} />
+          )}
+          {activePage === SettingsPages.DeveloperToolsPage && (
+            <DeveloperTools requestClose={handlePageRequestClose} />
+          )}
+          {activePage === SettingsPages.AboutPage && (
+            <About requestClose={handlePageRequestClose} />
+          )}
+        </SafeBoundary>
       </SettingsHighlightProvider>
     </PageRoot>
   );

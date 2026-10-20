@@ -18,8 +18,8 @@ import {
 } from 'folds';
 import classNames from 'classnames';
 import { BlurhashCanvas } from 'react-blurhash';
-import FocusTrap from 'focus-trap-react';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
+import FocusTrap from '../../focus-trap';
 import { IImageInfo, MATRIX_BLUR_HASH_PROPERTY_NAME } from '../../../../types/matrix/common';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';

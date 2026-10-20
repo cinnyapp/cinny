@@ -13,7 +13,7 @@ import {
   color,
   config,
 } from 'folds';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from '../../components/focus-trap';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { useClientConfig } from '../../hooks/useClientConfig';

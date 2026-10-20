@@ -12,6 +12,7 @@ import './index.css';
 
 import { trimTrailingSlash } from './app/utils/common';
 import App from './app/pages/App';
+import { RootErrorBoundary } from './app/components/error-boundary/AppErrorPage';
 
 // import i18n (needs to be bundled ;))
 import './app/i18n';
@@ -63,7 +64,11 @@ const mountApp = () => {
   }
 
   const root = createRoot(rootContainer);
-  root.render(<App />);
+  root.render(
+    <RootErrorBoundary>
+      <App />
+    </RootErrorBoundary>
+  );
 };
 
 mountApp();
