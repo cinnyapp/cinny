@@ -1,5 +1,5 @@
 import { MatrixClient, SyncState } from 'matrix-js-sdk';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Box, config, Line, Text } from 'folds';
 import { useSyncState } from '../../hooks/useSyncState';
 import { ContainerColor } from '../../styles/ContainerColor.css';
@@ -12,6 +12,8 @@ type StateData = {
 type SyncStatusProps = {
   mx: MatrixClient;
 };
+
+const CONNECTING_DELAY_MS = 1500;
 export function SyncStatus({ mx }: SyncStatusProps) {
   const [stateData, setStateData] = useState<StateData>({
     current: null,
@@ -30,12 +32,25 @@ export function SyncStatus({ mx }: SyncStatusProps) {
     }, [])
   );
 
-  if (
+  const connecting =
     (stateData.current === SyncState.Prepared ||
       stateData.current === SyncState.Syncing ||
       stateData.current === SyncState.Catchup) &&
-    stateData.previous !== SyncState.Syncing
-  ) {
+    stateData.previous !== SyncState.Syncing;
+
+  // A fast catch-up (the normal case with a fresh sync token) should show
+  // nothing at all: only say "Connecting..." when it takes longer than this.
+  const [connectingShown, setConnectingShown] = useState(false);
+  useEffect(() => {
+    if (!connecting) {
+      setConnectingShown(false);
+      return undefined;
+    }
+    const id = setTimeout(() => setConnectingShown(true), CONNECTING_DELAY_MS);
+    return () => clearTimeout(id);
+  }, [connecting]);
+
+  if (connecting && connectingShown) {
     return (
       <Box direction="Column" shrink="No">
         <Box
