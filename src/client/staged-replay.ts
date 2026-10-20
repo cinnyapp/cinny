@@ -33,6 +33,8 @@ export const REPLAY_EVENT = 'cinny.replay';
 export const REPLAY_CHUNK_THRESHOLD = 120;
 export const REPLAY_DEFAULT_FIRST = 40;
 export const REPLAY_DEFAULT_CHUNK = 150;
+/** The cold initial sync carries full state per room (6-8× heavier): smaller chunks keep it smooth. */
+export const REPLAY_COLD_CHUNK = 50;
 /** A space with more state events than this is a giant "one m.space.child per chat" space: stage 2. */
 export const REPLAY_MAX_SPACE_STATE_EVENTS = 200;
 
@@ -261,6 +263,8 @@ type SyncApiPrototypeLike = {
 export type StagedReplayOptions = {
   getHints: () => ReplayHints;
   chunkSize?: number;
+  /** chunk size for the cold initial sync (not from cache) */
+  coldChunkSize?: number;
   threshold?: number;
   /** test hook; defaults to a real macrotask yield */
   yieldFn?: () => Promise<void>;
@@ -281,6 +285,7 @@ export const installStagedReplay = (
   }
   const original = proto.processSyncResponse;
   const chunkSize = options.chunkSize ?? REPLAY_DEFAULT_CHUNK;
+  const coldChunkSize = options.coldChunkSize ?? REPLAY_COLD_CHUNK;
   const threshold = options.threshold ?? REPLAY_CHUNK_THRESHOLD;
   const doYield = options.yieldFn ?? yieldToMain;
 
@@ -314,7 +319,7 @@ export const installStagedReplay = (
       return;
     }
     const plan = planReplayOrder(join!, options.getHints());
-    const chunks = splitSyncResponse(data, plan, chunkSize, threshold);
+    const chunks = splitSyncResponse(data, plan, fromCache ? chunkSize : coldChunkSize, threshold);
     let done = 0;
     let catching: boolean | undefined;
     try {

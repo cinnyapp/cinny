@@ -241,7 +241,12 @@ test('installStagedReplay: cached replay is chunked, yields, and emits first →
 
 test('installStagedReplay: the cold initial sync (no old token) is chunked newest-first too', async () => {
   const { proto, api, calls, events } = fakeSyncApi();
-  installStagedReplay(proto, { getHints: hints, chunkSize: 100, yieldFn: async () => {} });
+  installStagedReplay(proto, {
+    getHints: hints,
+    chunkSize: 999,
+    coldChunkSize: 100,
+    yieldFn: async () => {},
+  });
   const join = manyRooms(250, (i) => room({ daysAgo: 250 - i })); // last key = newest
   await api.processSyncResponse({ nextSyncToken: 'nb' }, { next_batch: 'nb', rooms: { join } });
   assert.deepEqual(
@@ -291,6 +296,7 @@ test('installStagedReplay: a small cached replay runs once and still emits done'
 test('installStagedReplay: a chunk that throws still ends with done (listeners never hang)', async () => {
   const { proto, api, calls, events } = fakeSyncApi({ throwOnCall: 2 });
   installStagedReplay(proto, { getHints: hints, chunkSize: 100, yieldFn: async () => {} });
+  // (cached replay → chunkSize applies)
   await assert.rejects(
     api.processSyncResponse(
       { fromCache: true },
