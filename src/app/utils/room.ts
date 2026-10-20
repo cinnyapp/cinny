@@ -29,6 +29,7 @@ import {
   StateEvent,
   UnreadInfo,
 } from '../../types/matrix/room';
+import { getDmAvatarMxc } from './dmAvatar';
 
 export const getStateEvent = (
   room: Room,
@@ -327,15 +328,13 @@ export const getDirectRoomAvatarUrl = (
   size: 32 | 96 = 32,
   useAuthentication = false
 ): string | undefined => {
-  const mxcUrl = room.getAvatarFallbackMember()?.getMxcAvatarUrl();
+  // Prefers the other person's live picture over the room's copy (bridged
+  // 1:1 chats included) — see utils/dmAvatar.ts.
+  const mxcUrl = getDmAvatarMxc(room);
 
-  if (!mxcUrl) {
-    return getRoomAvatarUrl(mx, room, size, useAuthentication);
-  }
-
-  return (
-    mx.mxcUrlToHttp(mxcUrl, size, size, 'crop', undefined, false, useAuthentication) ?? undefined
-  );
+  return mxcUrl
+    ? mx.mxcUrlToHttp(mxcUrl, size, size, 'crop', undefined, false, useAuthentication) ?? undefined
+    : undefined;
 };
 
 export const trimReplyFromBody = (body: string): string => {
