@@ -30,6 +30,7 @@ import {
   UnreadInfo,
 } from '../../types/matrix/room';
 import { getDmAvatarMxc } from './dmAvatar';
+import { getSenderAvatarMxc } from './senderAvatar';
 
 export const getStateEvent = (
   room: Room,
@@ -385,10 +386,13 @@ export const getMemberSearchStr = (
   query.startsWith('@') || query.indexOf(':') > -1 ? member.userId : mxIdToName(member.userId),
 ];
 
-export const getMemberAvatarMxc = (room: Room, userId: string): string | undefined => {
-  const member = room.getMember(userId);
-  return member?.getMxcAvatarUrl();
-};
+/**
+ * The picture of a person inside a room. Same rule everywhere (utils/senderAvatar.ts):
+ * their own picture, and for the contact of a bridged 1:1 chat the chat's picture
+ * when they have none.
+ */
+export const getMemberAvatarMxc = (room: Room, userId: string): string | undefined =>
+  getSenderAvatarMxc(room, userId);
 
 export const isMembershipChanged = (mEvent: MatrixEvent): boolean =>
   mEvent.getContent().membership !== mEvent.getPrevContent().membership ||

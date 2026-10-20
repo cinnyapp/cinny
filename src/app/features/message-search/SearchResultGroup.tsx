@@ -2,7 +2,7 @@
 import React, { MouseEventHandler, useMemo } from 'react';
 import { IEventWithRoomId, JoinRule, RelationType, Room } from 'matrix-js-sdk';
 import { HTMLReactParserOptions } from 'html-react-parser';
-import { Avatar, Box, Chip, Header, Icon, Icons, Text, config } from 'folds';
+import { Avatar, Box, Chip, Header, Text, config } from 'folds';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
@@ -35,7 +35,7 @@ import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
 import { getMemberAvatarMxc, getMemberDisplayName, getRoomAvatarUrl } from '../../utils/room';
 import { ResultItem } from './useMessageSearch';
 import { SequenceCard } from '../../components/sequence-card';
-import { UserAvatar } from '../../components/user-avatar';
+import { UserAvatar, UserInitials } from '../../components/user-avatar';
 import { useMentionClickHandler } from '../../hooks/useMentionClickHandler';
 import { useSpoilerClickHandler } from '../../hooks/useSpoilerClickHandler';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
@@ -274,7 +274,7 @@ export function SearchResultGroup({
                             : undefined
                         }
                         alt={displayName}
-                        renderFallback={() => <Icon size="200" src={Icons.User} filled />}
+                        renderFallback={() => <UserInitials name={displayName} />}
                       />
                     </Avatar>
                   </AvatarBase>

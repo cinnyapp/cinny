@@ -19,7 +19,8 @@ import { getMemberDisplayName } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import * as css from './EventReaders.css';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { UserAvatar } from '../user-avatar';
+import { UserAvatar, UserInitials } from '../user-avatar';
+import { getSenderAvatar } from '../../hooks/useSenderAvatar';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '../../hooks/useSpace';
@@ -61,18 +62,7 @@ export const EventReaders = as<'div', EventReadersProps>(
             <Box className={css.Content} direction="Column">
               {latestEventReaders.map((readerId) => {
                 const name = getName(readerId);
-                const avatarMxcUrl = room.getMember(readerId)?.getMxcAvatarUrl();
-                const avatarUrl = avatarMxcUrl
-                  ? mx.mxcUrlToHttp(
-                      avatarMxcUrl,
-                      100,
-                      100,
-                      'crop',
-                      undefined,
-                      false,
-                      useAuthentication
-                    )
-                  : undefined;
+                const avatar = getSenderAvatar(mx, room, readerId, useAuthentication, 100);
 
                 return (
                   <MenuItem
@@ -92,9 +82,10 @@ export const EventReaders = as<'div', EventReadersProps>(
                       <Avatar size="200">
                         <UserAvatar
                           userId={readerId}
-                          src={avatarUrl ?? undefined}
+                          src={avatar.src}
+                          fallbackSrc={avatar.fallbackSrc}
                           alt={name}
-                          renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+                          renderFallback={() => <UserInitials name={name} size="T200" />}
                         />
                       </Avatar>
                     }

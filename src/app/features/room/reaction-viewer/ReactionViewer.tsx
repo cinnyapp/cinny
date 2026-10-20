@@ -23,7 +23,8 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRelations } from '../../../hooks/useRelations';
 import { Reaction } from '../../../components/message';
 import { getHexcodeForEmoji, getShortcodeFor } from '../../../plugins/emoji';
-import { UserAvatar } from '../../../components/user-avatar';
+import { UserAvatar, UserInitials } from '../../../components/user-avatar';
+import { getSenderAvatar } from '../../../hooks/useSenderAvatar';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { useOpenUserRoomProfile } from '../../../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '../../../hooks/useSpace';
@@ -114,18 +115,7 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
                   const member = room.getMember(senderId);
                   const name = (member ? getName(member) : getMxIdLocalPart(senderId)) ?? senderId;
 
-                  const avatarMxcUrl = member?.getMxcAvatarUrl();
-                  const avatarUrl = avatarMxcUrl
-                    ? mx.mxcUrlToHttp(
-                        avatarMxcUrl,
-                        100,
-                        100,
-                        'crop',
-                        undefined,
-                        false,
-                        useAuthentication
-                      )
-                    : undefined;
+                  const avatar = getSenderAvatar(mx, room, senderId, useAuthentication, 100);
 
                   return (
                     <MenuItem
@@ -145,9 +135,10 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
                         <Avatar size="200">
                           <UserAvatar
                             userId={senderId}
-                            src={avatarUrl ?? undefined}
+                            src={avatar.src}
+                            fallbackSrc={avatar.fallbackSrc}
                             alt={name}
-                            renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+                            renderFallback={() => <UserInitials name={name} size="T200" />}
                           />
                         </Avatar>
                       }
