@@ -42,6 +42,14 @@ export type TranscribeRequest = {
   mxc: string;
   /** Optional ISO-639-1 code; empty/undefined => backend auto-detects. */
   language?: string;
+  /**
+   * For voice notes in ENCRYPTED rooms: the attachment's key material
+   * (content.file). Synapse only holds the ciphertext of such events, so the
+   * backend cannot find the key itself; without this it would run Whisper on
+   * encrypted bytes. Sent only to the configured (on-box, Bearer-protected)
+   * transcription backend over HTTPS.
+   */
+  file?: { url: string; key: { k: string }; iv: string; hashes?: Record<string, string> };
 };
 
 export type TranscribeResponse = {
@@ -110,13 +118,22 @@ export const requestTranscription = async (
   if (language) {
     body.language = language;
   }
+  const payload: Record<string, unknown> = { ...body };
+  if (req.file) {
+    payload.file = {
+      url: req.file.url,
+      key: { k: req.file.key.k },
+      iv: req.file.iv,
+      ...(req.file.hashes ? { hashes: req.file.hashes } : {}),
+    };
+  }
 
   let res: Response;
   try {
     res = await fetch(url, {
       method: 'POST',
       headers,
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
       // Include the browser session so the backend's Basic-auth fallback works
       // when no bearer secret is configured.
       credentials: 'include',

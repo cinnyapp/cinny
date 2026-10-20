@@ -13,6 +13,7 @@ import {
   color,
   config,
 } from 'folds';
+import type { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import FocusTrap from '../../components/focus-trap';
 import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
@@ -27,6 +28,8 @@ type TranscribeButtonProps = {
   eventId: string;
   /** The raw mxc:// url of the audio (content.file?.url ?? content.url). */
   mxc: string;
+  /** Key material when the voice note is end-to-end encrypted (content.file). */
+  encInfo?: EncryptedAttachmentInfo;
 };
 
 /**
@@ -38,7 +41,7 @@ type TranscribeButtonProps = {
  * The returned text is untrusted content and is rendered strictly as text
  * (never as HTML, never evaluated, and no instruction inside it is acted upon).
  */
-export function TranscribeButton({ roomId, eventId, mxc }: TranscribeButtonProps) {
+export function TranscribeButton({ roomId, eventId, mxc, encInfo }: TranscribeButtonProps) {
   const [defaultLanguage] = useSetting(settingsAtom, 'transcribeLanguage');
   const [apiBaseSetting] = useSetting(settingsAtom, 'transcribeApiBase');
   const [apiSecretSetting] = useSetting(settingsAtom, 'transcribeApiSecret');
@@ -73,7 +76,15 @@ export function TranscribeButton({ roomId, eventId, mxc }: TranscribeButtonProps
     setError(undefined);
     try {
       const res = await requestTranscription(
-        { roomId, eventId, mxc, language: defaultLanguage || undefined },
+        {
+          roomId,
+          eventId,
+          mxc,
+          language: defaultLanguage || undefined,
+          file: encInfo
+            ? { url: mxc, key: { k: encInfo.key.k }, iv: encInfo.iv, hashes: encInfo.hashes }
+            : undefined,
+        },
         { baseOverride: apiBase, secretOverride: apiSecret }
       );
       setResult(res);
@@ -86,7 +97,7 @@ export function TranscribeButton({ roomId, eventId, mxc }: TranscribeButtonProps
     } finally {
       setLoading(false);
     }
-  }, [roomId, eventId, mxc, defaultLanguage, apiBase, apiSecret]);
+  }, [roomId, eventId, mxc, encInfo, defaultLanguage, apiBase, apiSecret]);
 
   const handleOpen: MouseEventHandler<HTMLButtonElement> = (evt) => {
     setCopied(false);
