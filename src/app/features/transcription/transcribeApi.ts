@@ -1,9 +1,13 @@
 /**
  * Client for the local Whisper transcription backend.
  *
- * The backend exposes `POST /transcribe`. It downloads and (for E2EE rooms)
- * decrypts the audio itself using @me's server-side access, so the frontend
- * only needs to pass identifiers: { room_id, event_id, mxc, language? }.
+ * The backend exposes `POST /transcribe`. It is LOOKUP FIRST: the server's
+ * automatic transcription (the resident daemon) has usually already
+ * transcribed the note, and that stored transcript comes back instantly
+ * (`source: "daemon"`). Only when nothing is stored does it download (and for
+ * E2EE rooms decrypt) the audio and run Whisper live (`source: "live"`).
+ * `GET /transcript?event_id=…` is the cheap lookup-only poll used while the
+ * daemon is still improving a draft (`status: "improving"`).
  *
  * Configuration (no code change required to re-point at the final URL):
  *   - VITE_TRANSCRIBE_API_BASE   Base URL of the backend, e.g.
@@ -52,9 +56,57 @@ export type TranscribeRequest = {
   file?: { url: string; key: { k: string }; iv: string; hashes?: Record<string, string> };
 };
 
+/** Where a transcript came from (see the backend's lookup order). */
+export type TranscriptSource = 'daemon' | 'app' | 'live';
+
+/**
+ * done      final text
+ * improving a draft; a better version is being made (poll /transcript)
+ * pending   the automatic transcription has started but stored nothing yet
+ * none      nothing stored (only from /transcript)
+ * skipped   the automatic transcription will never do this note
+ */
+export type TranscriptStatus = 'done' | 'improving' | 'pending' | 'none' | 'skipped';
+
 export type TranscribeResponse = {
   text: string;
   detectedLanguage?: string;
+  source?: TranscriptSource;
+  /** Whisper model of the stored/returned text, e.g. "large-v3". */
+  model?: string;
+  /** True when the text went through the server's clean-up pass. */
+  polished?: boolean;
+  /** When the transcript was made (epoch ms). */
+  ts?: number;
+  status: TranscriptStatus;
+};
+
+const SOURCES: TranscriptSource[] = ['daemon', 'app', 'live'];
+const STATUSES: TranscriptStatus[] = ['done', 'improving', 'pending', 'none', 'skipped'];
+
+/**
+ * Shape-check a backend JSON payload into a TranscribeResponse. Unknown or
+ * malformed fields are dropped; an older backend that only sends
+ * {text, detected_language} reads as a finished live transcript.
+ */
+export const parseTranscriptPayload = (data: unknown): TranscribeResponse => {
+  const obj = (data && typeof data === 'object' ? data : {}) as Record<string, unknown>;
+  const text = typeof obj.text === 'string' ? obj.text : '';
+  const source = SOURCES.find((s) => s === obj.source);
+  const rawStatus = STATUSES.find((s) => s === obj.status);
+  const status: TranscriptStatus = rawStatus ?? (text ? 'done' : 'none');
+  return {
+    text,
+    detectedLanguage:
+      typeof obj.detected_language === 'string' && obj.detected_language
+        ? obj.detected_language
+        : undefined,
+    source,
+    model: typeof obj.model === 'string' && obj.model ? obj.model : undefined,
+    polished: obj.polished === true,
+    ts: typeof obj.ts === 'number' && Number.isFinite(obj.ts) ? obj.ts : undefined,
+    status,
+  };
 };
 
 export type TranscribeConfig = {
@@ -95,6 +147,15 @@ export class TranscribeError extends Error {
  * non-2xx response or network failure; the caller is expected to catch and
  * render an error state (never crash the app).
  */
+const authHeaders = (config?: TranscribeConfig): Record<string, string> => {
+  const headers: Record<string, string> = {};
+  const secret = getTranscribeApiSecret(config);
+  if (secret) {
+    headers.Authorization = `Bearer ${secret}`;
+  }
+  return headers;
+};
+
 export const requestTranscription = async (
   req: TranscribeRequest,
   config?: TranscribeConfig
@@ -103,11 +164,8 @@ export const requestTranscription = async (
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    ...authHeaders(config),
   };
-  const secret = getTranscribeApiSecret(config);
-  if (secret) {
-    headers.Authorization = `Bearer ${secret}`;
-  }
 
   const body: Record<string, string> = {
     room_id: req.roomId,
@@ -164,14 +222,35 @@ export const requestTranscription = async (
     throw new TranscribeError('Transcription backend returned an invalid response');
   }
 
-  const obj = (data ?? {}) as Record<string, unknown>;
-  const text = typeof obj.text === 'string' ? obj.text : '';
-  const detectedLanguage =
-    typeof obj.detected_language === 'string' ? obj.detected_language : undefined;
-
-  if (!text) {
+  const parsed = parseTranscriptPayload(data);
+  if (!parsed.text) {
     throw new TranscribeError('Transcription backend returned no text');
   }
+  return parsed;
+};
 
-  return { text, detectedLanguage };
+/**
+ * Lookup-only poll: what the server has stored for this note right now. Never
+ * triggers a transcription. Returns undefined on any failure (the caller just
+ * keeps the text it already shows).
+ */
+export const fetchStoredTranscript = async (
+  eventId: string,
+  roomId: string,
+  config?: TranscribeConfig
+): Promise<TranscribeResponse | undefined> => {
+  const params = new URLSearchParams({ event_id: eventId });
+  if (roomId) params.set('room_id', roomId);
+  const url = `${getTranscribeApiBase(config)}/transcript?${params.toString()}`;
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: authHeaders(config),
+      credentials: 'include',
+    });
+    if (!res.ok) return undefined;
+    return parseTranscriptPayload(await res.json());
+  } catch {
+    return undefined;
+  }
 };
