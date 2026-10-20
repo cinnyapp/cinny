@@ -102,6 +102,12 @@ const EMPTY_ACTIVITY: RoomActivityMap = new Map();
 
 export type ChatListView = {
   items: string[];
+  /**
+   * The whole "All" list in order, before the name filter / chips narrow it. The
+   * startup snapshot is saved from this one: saving `items` would save whatever the
+   * user had typed in the filter box at that moment.
+   */
+  sorted: string[];
   facts: Map<string, ChatFacts>;
   /** Networks that actually have chats in this list, in display order. */
   networks: ChatNetwork[];
@@ -267,6 +273,14 @@ export const useChatList = (
     rooms,
   ]);
 
+  // The "All" list as the user sees it with nothing typed and no chip picked — what the
+  // startup snapshot saves (it must not depend on the filter box or the chip).
+  const wholeList = useMemo(
+    () =>
+      mutedMode === 'hide' ? sorted.filter((roomId) => !isQuietChat(facts.get(roomId))) : sorted,
+    [sorted, facts, mutedMode]
+  );
+
   const setFilter = useCallback((next: ChatFilter) => setStoredFilter(next), [setStoredFilter]);
 
   const isDimmed = useCallback(
@@ -276,6 +290,7 @@ export const useChatList = (
 
   return {
     items,
+    sorted: wholeList,
     facts,
     networks,
     filter,

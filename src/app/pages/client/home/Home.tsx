@@ -261,7 +261,7 @@ export function Home() {
   const mediaAuth = useMediaAuthentication();
   useStartupSnapshotWriter(
     mx,
-    sortedRooms,
+    chatList.sorted,
     mDirects,
     useCallback(() => jotaiStore.get(roomToUnreadAtom), [jotaiStore]),
     useCallback(
