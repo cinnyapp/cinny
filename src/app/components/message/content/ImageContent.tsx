@@ -67,6 +67,8 @@ export type ImageContentProps = {
   spoilerReason?: string;
   renderViewer: (props: RenderViewerProps) => ReactNode;
   renderImage: (props: RenderImageProps) => ReactNode;
+  /** Open the chat-wide gallery viewer instead of the single-image one. */
+  onOpenViewer?: () => void;
 };
 export const ImageContent = as<'div', ImageContentProps>(
   (
@@ -82,6 +84,7 @@ export const ImageContent = as<'div', ImageContentProps>(
       spoilerReason,
       renderViewer,
       renderImage,
+      onOpenViewer,
       ...props
     },
     ref
@@ -219,7 +222,7 @@ export const ImageContent = as<'div', ImageContentProps>(
               src: imageSrc,
               onLoad: handleLoad,
               onError: handleError,
-              onClick: () => setViewer(true),
+              onClick: () => (onOpenViewer ? onOpenViewer() : setViewer(true)),
               tabIndex: 0,
             })}
           </Box>
