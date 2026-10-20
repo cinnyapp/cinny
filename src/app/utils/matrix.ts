@@ -17,6 +17,8 @@ import to from 'await-to-js';
 import { IImageInfo, IThumbnailContent, IVideoInfo } from '../../types/matrix/common';
 import { AccountDataEvent } from '../../types/matrix/accountData';
 import { getStateEvent } from './room';
+import { fetchMediaResponse } from './mediaAuth';
+import { getFallbackSession } from '../state/sessions';
 import { Membership, StateEvent } from '../../types/matrix/room';
 
 const DOMAIN_REGEX = /\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\b/;
@@ -296,16 +298,24 @@ export const mxcUrlToHttp = (
     useAuthentication
   );
 
+const pageHasNoServiceWorker = (): boolean =>
+  typeof navigator !== 'undefined' &&
+  'serviceWorker' in navigator &&
+  !navigator.serviceWorker.controller;
+
 export const downloadMedia = async (src: string): Promise<Blob> => {
-  // this request is authenticated by service worker
-  const res = await fetch(src, { method: 'GET' });
-  if (!res.ok) {
-    // Without this check an error body (a 401 M_MISSING_TOKEN when the service
-    // worker could not authenticate the request, for example) would be wrapped in
-    // an object URL and handed to the player/viewer as if it were the file, which
-    // just spins forever. Throwing surfaces it as a retryable error instead.
-    throw new Error(`Failed to download media! Status: ${res.status}`);
-  }
+  // Normally authenticated by the service worker; when the page is not
+  // controlled by it (hard reload) the 401 is retried with the page's own token.
+  // A failed response always throws (MediaLoadError) - an error body must never
+  // be wrapped in an object URL and handed to a player/viewer as if it were the
+  // file, which just spins forever.
+  const res = await fetchMediaResponse(
+    src,
+    getFallbackSession,
+    {},
+    fetch,
+    pageHasNoServiceWorker()
+  );
   const blob = await res.blob();
   return blob;
 };
@@ -322,11 +332,14 @@ export const downloadMediaWithProgress = async (
   src: string,
   onProgress?: (loaded: number, total?: number) => void
 ): Promise<Blob> => {
-  // this request is authenticated by service worker
-  const res = await fetch(src, { method: 'GET' });
-  if (!res.ok) {
-    throw new Error(`Failed to download media! Status: ${res.status}`);
-  }
+  // authenticated by the service worker, or by the page itself on a 401
+  const res = await fetchMediaResponse(
+    src,
+    getFallbackSession,
+    {},
+    fetch,
+    pageHasNoServiceWorker()
+  );
   if (!onProgress || !res.body) return res.blob();
 
   const lengthHeader = res.headers.get('content-length');

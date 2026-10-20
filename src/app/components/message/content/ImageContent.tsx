@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Badge,
   Box,
@@ -27,7 +27,17 @@ import * as css from './style.css';
 import { bytesToSize } from '../../../utils/common';
 import { FALLBACK_MIMETYPE } from '../../../utils/mimeTypes';
 import { stopPropagation } from '../../../utils/keyboard';
-import { decryptFile, downloadEncryptedMedia, mxcUrlToHttp } from '../../../utils/matrix';
+import {
+  decryptFile,
+  downloadEncryptedMedia,
+  downloadMedia,
+  mxcUrlToHttp,
+} from '../../../utils/matrix';
+import {
+  describeMediaFailure,
+  getMediaFailureKind,
+  MediaFailureKind,
+} from '../../../utils/mediaAuth';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { ModalWide } from '../../../styles/Modal.css';
 import { validBlurHash } from '../../../utils/blurHash';
@@ -82,6 +92,12 @@ export const ImageContent = as<'div', ImageContentProps>(
 
     const [load, setLoad] = useState(false);
     const [error, setError] = useState(false);
+    const [errorKind, setErrorKind] = useState<MediaFailureKind>();
+    // When the <img> could not load the URL directly (no service worker to add
+    // the token, e.g. after a hard reload) the picture is fetched once by the
+    // page itself and shown from a blob URL instead.
+    const [fallbackSrc, setFallbackSrc] = useState<string>();
+    const triedFallback = useRef(false);
     const [viewer, setViewer] = useState(false);
     const [blurred, setBlurred] = useState(markedAsSpoiler ?? false);
 
@@ -102,18 +118,46 @@ export const ImageContent = as<'div', ImageContentProps>(
     const handleLoad = () => {
       setLoad(true);
     };
+    useEffect(
+      () => () => {
+        if (fallbackSrc) URL.revokeObjectURL(fallbackSrc);
+      },
+      [fallbackSrc]
+    );
+
     const handleError = () => {
       setLoad(false);
+      if (srcState.status === AsyncStatus.Success && !encInfo && !triedFallback.current) {
+        triedFallback.current = true;
+        const directSrc = srcState.data;
+        downloadMedia(directSrc)
+          .then((blob) => setFallbackSrc(URL.createObjectURL(blob)))
+          .catch((err) => {
+            setErrorKind(getMediaFailureKind(err));
+            setError(true);
+          });
+        return;
+      }
       setError(true);
     };
 
     const handleRetry = () => {
       setError(false);
+      setErrorKind(undefined);
+      setFallbackSrc(undefined);
+      triedFallback.current = false;
       loadSrc();
     };
 
+    const imageSrc = fallbackSrc ?? (srcState.status === AsyncStatus.Success ? srcState.data : '');
+    const failureKind: MediaFailureKind =
+      errorKind ??
+      (srcState.status === AsyncStatus.Error ? getMediaFailureKind(srcState.error) : 'network');
+    const failureText = describeMediaFailure(failureKind, 'picture');
+
     useEffect(() => {
-      if (autoPlay) loadSrc();
+      // The failure is shown by the error state; not also as an unhandled rejection.
+      if (autoPlay) loadSrc().catch(() => undefined);
     }, [autoPlay, loadSrc]);
 
     return (
@@ -135,7 +179,7 @@ export const ImageContent = as<'div', ImageContentProps>(
                   onContextMenu={(evt: any) => evt.stopPropagation()}
                 >
                   {renderViewer({
-                    src: srcState.data,
+                    src: imageSrc,
                     alt: body,
                     requestClose: () => setViewer(false),
                   })}
@@ -172,7 +216,7 @@ export const ImageContent = as<'div', ImageContentProps>(
             {renderImage({
               alt: body,
               title: body,
-              src: srcState.data,
+              src: imageSrc,
               onLoad: handleLoad,
               onError: handleError,
               onClick: () => setViewer(true),
@@ -221,11 +265,18 @@ export const ImageContent = as<'div', ImageContentProps>(
             </Box>
           )}
         {(error || srcState.status === AsyncStatus.Error) && (
-          <Box className={css.AbsoluteContainer} alignItems="Center" justifyContent="Center">
+          <Box
+            className={css.AbsoluteContainer}
+            direction="Column"
+            alignItems="Center"
+            justifyContent="Center"
+            gap="200"
+            data-media-error={failureKind}
+          >
             <TooltipProvider
               tooltip={
                 <Tooltip variant="Critical">
-                  <Text>Failed to load image!</Text>
+                  <Text>{failureText}</Text>
                 </Tooltip>
               }
               position="Top"
@@ -242,10 +293,13 @@ export const ImageContent = as<'div', ImageContentProps>(
                   onClick={handleRetry}
                   before={<Icon size="Inherit" src={Icons.Warning} filled />}
                 >
-                  <Text size="B300">Retry</Text>
+                  <Text size="B300">{failureKind === 'missing' ? 'Try again' : 'Retry'}</Text>
                 </Button>
               )}
             </TooltipProvider>
+            <Text size="T200" align="Center" style={{ maxWidth: '90%' }}>
+              {failureText}
+            </Text>
           </Box>
         )}
         {!load && typeof info?.size === 'number' && (

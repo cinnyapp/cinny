@@ -4,7 +4,9 @@
 export const sanitizeForRegex = (unsafeText: string): string =>
   unsafeText.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&').replace(/-/g, '\\x2d');
 
-export const HTTP_URL_PATTERN = `https?:\\/\\/(?:www\\.)?(?:[^\\s)]*)(?<![.,:;!/?()[\\]\\s]+)`;
+// A URL ends at whitespace, `)` or `]` (so the `](` of a Markdown link is never
+// swallowed into it), and never ends in trailing punctuation.
+export const HTTP_URL_PATTERN = `https?:\\/\\/(?:www\\.)?(?:[^\\s)\\]]*)(?<![.,:;!/?()[\\]\\s]+)`;
 
 export const URL_REG = new RegExp(HTTP_URL_PATTERN, 'g');
 

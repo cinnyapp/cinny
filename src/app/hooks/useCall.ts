@@ -7,6 +7,12 @@ import { CallMembership } from 'matrix-js-sdk/lib/matrixrtc/CallMembership';
 import { useEffect, useState } from 'react';
 import { MatrixRTCSessionManagerEvents } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSessionManager';
 import { useMatrixClient } from './useMatrixClient';
+import { SessionEventEmitter, subscribeRoomCallSession } from '../utils/callSessionSubscription';
+
+const SESSION_EVENTS = [
+  MatrixRTCSessionManagerEvents.SessionStarted,
+  MatrixRTCSessionManagerEvents.SessionEnded,
+] as const;
 
 export const useCallSession = (room: Room): MatrixRTCSession => {
   const mx = useMatrixClient();
@@ -14,20 +20,16 @@ export const useCallSession = (room: Room): MatrixRTCSession => {
   const [session, setSession] = useState(mx.matrixRTC.getRoomSession(room));
 
   useEffect(() => {
-    const start = (roomId: string) => {
-      if (roomId !== room.roomId) return;
-      setSession(mx.matrixRTC.getRoomSession(room));
-    };
-    const end = (roomId: string) => {
-      if (roomId !== room.roomId) return;
-      setSession(mx.matrixRTC.getRoomSession(room));
-    };
-    mx.matrixRTC.on(MatrixRTCSessionManagerEvents.SessionStarted, start);
-    mx.matrixRTC.on(MatrixRTCSessionManagerEvents.SessionEnded, end);
-    return () => {
-      mx.matrixRTC.off(MatrixRTCSessionManagerEvents.SessionStarted, start);
-      mx.matrixRTC.off(MatrixRTCSessionManagerEvents.SessionEnded, end);
-    };
+    // The room may have changed since the initial state was taken.
+    setSession(mx.matrixRTC.getRoomSession(room));
+    // One shared subscription per client (not one per room row) - see
+    // callSessionSubscription.ts for why.
+    return subscribeRoomCallSession(
+      mx.matrixRTC as unknown as SessionEventEmitter,
+      SESSION_EVENTS,
+      room.roomId,
+      () => setSession(mx.matrixRTC.getRoomSession(room))
+    );
   }, [mx, room]);
 
   return session;
