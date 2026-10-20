@@ -46,18 +46,8 @@ import {
   Username,
   UsernameBold,
 } from '../../../components/message';
-import {
-  canEditEvent,
-  getEventEdits,
-  getMemberAvatarMxc,
-  getMemberDisplayName,
-} from '../../../utils/room';
-import {
-  getCanonicalAliasOrRoomId,
-  getMxIdLocalPart,
-  isRoomAlias,
-  mxcUrlToHttp,
-} from '../../../utils/matrix';
+import { canEditEvent, getEventEdits, getMemberDisplayName } from '../../../utils/room';
+import { getCanonicalAliasOrRoomId, getMxIdLocalPart, isRoomAlias } from '../../../utils/matrix';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
@@ -68,7 +58,8 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { EmojiBoard } from '../../../components/emoji-board';
 import { ReactionViewer } from '../reaction-viewer';
 import { MessageEditor } from './MessageEditor';
-import { UserAvatar } from '../../../components/user-avatar';
+import { UserAvatar, UserInitials } from '../../../components/user-avatar';
+import { useSenderAvatar } from '../../../hooks/useSenderAvatar';
 import { copyToClipboard } from '../../../utils/dom';
 import { stopPropagation } from '../../../utils/keyboard';
 import { getMatrixToRoomEvent } from '../../../plugins/matrix-to';
@@ -741,7 +732,9 @@ export const Message = as<'div', MessageProps>(
 
     const senderDisplayName =
       getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
-    const senderAvatarMxc = getMemberAvatarMxc(room, senderId);
+    // Live: re-reads when the member event or the chat picture changes, and falls
+    // back to the chat's picture for the contact of a bridged 1:1 chat.
+    const senderAvatar = useSenderAvatar(room, senderId, 48);
 
     const tagColor = memberPowerTag?.color
       ? accessibleTagColors?.get(memberPowerTag.color)
@@ -812,13 +805,10 @@ export const Message = as<'div', MessageProps>(
         >
           <UserAvatar
             userId={senderId}
-            src={
-              senderAvatarMxc
-                ? mxcUrlToHttp(mx, senderAvatarMxc, useAuthentication, 48, 48, 'crop') ?? undefined
-                : undefined
-            }
+            src={senderAvatar.src}
+            fallbackSrc={senderAvatar.fallbackSrc}
             alt={senderDisplayName}
-            renderFallback={() => <Icon size="200" src={Icons.User} filled />}
+            renderFallback={() => <UserInitials name={senderDisplayName} />}
           />
         </Avatar>
       </AvatarBase>

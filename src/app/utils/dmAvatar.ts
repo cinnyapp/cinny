@@ -57,6 +57,8 @@ export type BridgeInfo = {
   /** Remote id of the account the portal belongs to (mautrix `fi.mau.receiver`). */
   receiver?: string;
   channelName?: string;
+  /** Remote id of the chat, e.g. "447896145370@s.whatsapp.net" or "1234@lid". */
+  channelId?: string;
 };
 
 const asString = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
@@ -84,6 +86,7 @@ export const getBridgeInfo = (room: DmRoomLike): BridgeInfo | undefined => {
       roomType: asString(content['com.beeper.room_type']),
       receiver: asString(channel['fi.mau.receiver']),
       channelName: asString(channel.displayname),
+      channelId: asString(channel.id),
     };
   }
   return undefined;
@@ -124,6 +127,20 @@ export const getDmPartnerMember = (room: DmRoomLike): RoomMember | undefined => 
       );
       if (named.length === 1) candidates = named;
     }
+    if (candidates.length > 1 && bridge.roomType === 'dm') {
+      // Still several: in a bridged 1:1 chat these are ghosts of the SAME person
+      // (WhatsApp moved contacts to new "LID" ids, so a chat can hold the old
+      // phone-number ghost and the new one). Pick the one the chat belongs to,
+      // else the one that has a picture, else the first — never give up.
+      const remoteId = bridge.channelId?.split('@')[0];
+      const byId = remoteId
+        ? candidates.filter(
+            (m) => m.userId.includes(`_${remoteId}:`) || m.userId.includes(`_lid-${remoteId}:`)
+          )
+        : [];
+      if (byId.length === 1) return byId[0];
+      return candidates.find((m) => !!m.getMxcAvatarUrl()) ?? candidates[0];
+    }
   }
 
   if (candidates.length === 1) return candidates[0];
@@ -138,9 +155,8 @@ export const getDmPartnerMember = (room: DmRoomLike): RoomMember | undefined => 
 /**
  * mxc:// of the picture to show for a 1:1 chat.
  *
- * preferContact (default): the person's own current picture when we know who
- * they are — even if they have none (then the initials placeholder shows, as
- * in WhatsApp) for bridged chats; otherwise the room picture.
+ * preferContact (default): the person's own current picture, else the room
+ * picture (it stands in for the person), else the initials placeholder.
  * !preferContact: the room picture first, the person's picture as fallback.
  */
 export const getDmAvatarMxc = (
@@ -152,11 +168,10 @@ export const getDmAvatarMxc = (
   const partnerMxc = partner?.getMxcAvatarUrl() || undefined;
 
   if (!preferContact) return roomMxc ?? partnerMxc;
-  if (partnerMxc) return partnerMxc;
-  // The person is loaded and has no picture: for a bridged chat the room copy is
-  // a leftover (the bridge does not always clear it), so show the placeholder.
-  if (partner && isBridgedDm(room)) return undefined;
-  return roomMxc;
+  // The person's own picture first; when they have none (WhatsApp privacy, a new
+  // ghost id, not loaded yet) the chat's picture stands in for them — the same
+  // rule the sender picture next to messages uses (utils/senderAvatar.ts).
+  return partnerMxc ?? roomMxc;
 };
 
 /** User id to colour the placeholder with, so list, header and timeline match. */
