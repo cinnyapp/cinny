@@ -150,12 +150,14 @@ test('contact not lazy-loaded yet: uses SDK heroes, then the room photo', () => 
   assert.equal(getDmAvatarMxc(heroIsBot), 'mxc://x/room');
 });
 
-test('contact removed / hides their photo: placeholder, not the leftover room copy', () => {
+test('contact has no own photo: the chat photo stands in for them (2026-10-20 rule)', () => {
   const room = fakeRoom({
     members: [member(ME), member(BOT), member(MOLLY, undefined)],
-    roomAvatar: 'mxc://x/leftover',
+    roomAvatar: 'mxc://x/chat',
   });
-  assert.equal(getDmAvatarMxc(room), undefined);
+  assert.equal(getDmAvatarMxc(room), 'mxc://x/chat');
+  const none = fakeRoom({ members: [member(ME), member(BOT), member(MOLLY, undefined)] });
+  assert.equal(getDmAvatarMxc(none), undefined);
   // …but a plain (non-bridged) DM keeps its room picture as a fallback
   const plain = fakeRoom({
     bridged: false,
