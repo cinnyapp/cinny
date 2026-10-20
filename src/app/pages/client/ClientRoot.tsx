@@ -37,8 +37,9 @@ import { stopPropagation } from '../../utils/keyboard';
 import { SyncStatus } from './SyncStatus';
 import { AuthMetadataProvider } from '../../hooks/useAuthMetadata';
 import { getFallbackSession } from '../../state/sessions';
+import { getSettings } from '../../state/settings';
 import { AutoDiscovery } from './AutoDiscovery';
-import { readSnapshot } from '../../features/startup-snapshot/snapshot';
+import { readSnapshot, snapshotForHome } from '../../features/startup-snapshot/snapshot';
 import { StartupRoomList } from '../../features/startup-snapshot/StartupRoomList';
 
 function ClientRootLoading({ mx }: { mx?: MatrixClient }) {
@@ -52,7 +53,10 @@ function ClientRootLoading({ mx }: { mx?: MatrixClient }) {
   // (features/startup-snapshot) — instead of a bare spinner.
   const [snapshot] = useState(() => {
     const userId = getFallbackSession()?.userId;
-    return userId ? readSnapshot(userId) : undefined;
+    // only what the real Home will show with today's settings, so nothing flashes and vanishes
+    return userId
+      ? snapshotForHome(readSnapshot(userId), getSettings().homeShowsAllRooms)
+      : undefined;
   });
 
   useEffect(() => {

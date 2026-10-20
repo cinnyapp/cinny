@@ -75,7 +75,12 @@ import { JoinAddressPrompt } from '../../../components/join-address-prompt';
 import { _RoomSearchParams } from '../../paths';
 import { getLiteState, loadAllChatsOnce } from '../../../../client/initMatrix';
 import { isLiteNoticeSeen, markLiteNoticeSeen } from '../../../../client/lite-store';
-import { ChatListNoMatch, ChatListToolbar, useChatList } from '../../../features/chat-list';
+import {
+  ChatListNoMatch,
+  ChatListToolbar,
+  OlderChatsGroup,
+  useChatList,
+} from '../../../features/chat-list';
 import { DimmedRow } from '../../../features/chat-list/styles.css';
 import { useStartupSnapshotWriter } from '../../../features/startup-snapshot/useStartupSnapshotWriter';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
@@ -462,6 +467,7 @@ export function Home() {
               </div>
               {sortedRooms.length === 0 && !categoryClosed && <ChatListNoMatch view={chatList} />}
             </NavCategory>
+            <OlderChatsGroup view={chatList} scope="home" />
           </Box>
         </PageNavContent>
       )}

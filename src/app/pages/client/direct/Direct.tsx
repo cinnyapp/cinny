@@ -50,7 +50,12 @@ import {
   useRoomsNotificationPreferencesContext,
 } from '../../../hooks/useRoomsNotificationPreferences';
 import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected';
-import { ChatListNoMatch, ChatListToolbar, useChatList } from '../../../features/chat-list';
+import {
+  ChatListNoMatch,
+  ChatListToolbar,
+  OlderChatsGroup,
+  useChatList,
+} from '../../../features/chat-list';
 import { DimmedRow } from '../../../features/chat-list/styles.css';
 
 type DirectMenuProps = {
@@ -277,6 +282,7 @@ export function Direct() {
               </div>
               {sortedDirects.length === 0 && !categoryClosed && <ChatListNoMatch view={chatList} />}
             </NavCategory>
+            <OlderChatsGroup view={chatList} scope="direct" />
           </Box>
         </PageNavContent>
       )}

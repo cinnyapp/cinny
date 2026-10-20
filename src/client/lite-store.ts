@@ -18,6 +18,7 @@
  */
 
 import { getSettings } from '../app/state/settings';
+import { addToLiteIndex, makeIndexRow } from './lite-index';
 import {
   classifyRooms,
   LiteOptions,
@@ -409,6 +410,14 @@ export const pruneDormantRooms = async (
     const skippedRooms = unionRoomIds(previous, classification.dormant);
 
     if (classification.dormant.length > 0) {
+      // Remember who these chats are (name, picture, last message) BEFORE their
+      // data is dropped, so "Filter by name" can still find them.
+      try {
+        addToLiteIndex(classification.dormant.map((roomId) => makeIndexRow(roomId, join[roomId])));
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('lite mode: could not index the skipped chats', err);
+      }
       const prunedRoomsData = pruneRoomsData(record.roomsData, classification.dormant);
       const writeTx = db.transaction([SYNC_STORE], 'readwrite');
       writeTx.objectStore(SYNC_STORE).put({

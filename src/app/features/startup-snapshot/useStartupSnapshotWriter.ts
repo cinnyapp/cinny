@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { MatrixClient } from 'matrix-js-sdk';
 import { RoomToUnread } from '../../../types/matrix/room';
-import { getDirectRoomAvatarUrl } from '../../utils/room';
+import { getDirectRoomAvatarUrl, getRoomToParents, isRoom } from '../../utils/room';
+import { getSettings } from '../../state/settings';
+import { chatListMembership } from '../../utils/chatList';
 import {
   buildSnapshot,
   readSnapshot,
@@ -35,24 +37,36 @@ export const useStartupSnapshotWriter = (
     if (!userId || sortedRoomIds.length === 0) return;
     const roomToUnread = getRoomToUnread();
     const rooms: SnapshotRoom[] = [];
+    // Decide membership here, from fresh facts, with the SAME rule the real list
+    // uses (chatListMembership): the list handed in can be a moment older than the
+    // space structure (e.g. while the app is still starting), and must not leak a
+    // space's chats into the saved Home list.
+    const showAllRooms = getSettings().homeShowsAllRooms;
+    const parents = getRoomToParents(mx);
     for (let i = 0; i < sortedRoomIds.length && rooms.length < SNAPSHOT_MAX_ROOMS; i += 1) {
       const roomId = sortedRoomIds[i];
       const room = mx.getRoom(roomId);
-      if (room) {
-        const dm = mDirects.has(roomId);
+      const dm = mDirects.has(roomId);
+      const parent = parents.has(roomId);
+      if (
+        room &&
+        isRoom(room) &&
+        chatListMembership('home', { direct: dm, hasParent: parent, showAllRooms })
+      ) {
         const unread = roomToUnread.get(roomId);
         rooms.push({
           id: roomId,
           name: room.name,
           avatar: dm ? getDirectRoomAvatarUrl(mx, room, 96, useAuthentication) : undefined,
           dm,
+          parent,
           unread: unread?.total,
           highlight: unread?.highlight,
           muted: isMuted(roomId),
         });
       }
     }
-    const snap = buildSnapshot(userId, rooms, mx.getRooms().length);
+    const snap = buildSnapshot(userId, rooms, mx.getRooms().length, Date.now(), showAllRooms);
     if (sameSnapshot(readSnapshot(userId), snap)) return;
     writeSnapshot(snap);
   };

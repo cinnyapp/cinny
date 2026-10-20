@@ -268,3 +268,20 @@ export const isChatFilter = (value: unknown): value is ChatFilter =>
   typeof value === 'string' &&
   (CHAT_FILTERS.includes(value as ChatFilter) ||
     (value.startsWith('net:') && CHAT_NETWORKS.includes(value.slice(4) as ChatNetwork)));
+
+/**
+ * Which chats a list contains — ONE rule, used by the loaded list, by the
+ * "Older chats" search results and by the startup snapshot, so they cannot
+ * disagree (QA 2026-10-20: the snapshot flashed space rooms on Home).
+ *
+ * Direct holds the 1:1 chats. Home holds the rest without space children;
+ * with "show all chats in Home" it holds everything. Pure.
+ */
+export const chatListMembership = (
+  scope: 'home' | 'direct',
+  facts: { direct: boolean; hasParent: boolean; showAllRooms: boolean }
+): boolean => {
+  if (scope === 'direct') return facts.direct;
+  if (facts.showAllRooms) return true;
+  return !facts.direct && !facts.hasParent;
+};

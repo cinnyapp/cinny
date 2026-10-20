@@ -4,6 +4,13 @@ import { MatrixClient, Room, RoomEvent } from 'matrix-js-sdk';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { roomActivityAtom, RoomActivityMap } from '../../state/room/roomActivity';
 import { roomToUnreadAtom } from '../../state/room/roomToUnread';
+import { roomToParentsAtom } from '../../state/room/roomToParents';
+import {
+  LiteIndexEntry,
+  readLiteIndex,
+  searchLiteIndex,
+  subscribeLiteIndex,
+} from '../../../client/lite-index';
 import { markedUnreadAtom } from '../../state/room/markedUnread';
 import { mDirectAtom } from '../../state/mDirectList';
 import { useSetting } from '../../state/hooks/settings';
@@ -18,6 +25,7 @@ import {
   MutedMode,
   detectChatNetwork,
   isChatFilter,
+  chatListMembership,
   isQuietChat,
   makeChatFilter,
   sortChats,
@@ -107,6 +115,11 @@ export type ChatListView = {
   setMutedMode: (mode: MutedMode) => void;
   /** Should this row be shown faded (muted/archived)? */
   isDimmed: (roomId: string) => boolean;
+  /**
+   * Chats that lite mode left out of this load and whose name matches the name
+   * filter (see client/lite-index.ts). Empty unless a name is being searched.
+   */
+  older: LiteIndexEntry[];
 };
 
 export const useChatList = (
@@ -126,6 +139,8 @@ export const useChatList = (
   const [sort, setSort] = useSetting(settingsAtom, 'chatListSort');
   const [mutedMode, setMutedMode] = useSetting(settingsAtom, 'chatListMuted');
   const [query, setQuery] = useState('');
+  const roomToParents = useAtomValue(roomToParentsAtom);
+  const [showAllRooms] = useSetting(settingsAtom, 'homeShowsAllRooms');
   const tagsVersion = useRoomTagsVersion(mx);
 
   const facts = useMemo(
@@ -218,6 +233,40 @@ export const useChatList = (
     hideActivityDots,
   ]);
 
+  // Skipped ("older") chats are not in `rooms`, so the name filter also looks in the
+  // local index lite mode keeps of them. Same membership rule as the real list:
+  // Direct = 1:1s; Home = no 1:1s and no space children (unless "all chats in Home").
+  const [indexVersion, setIndexVersion] = useState(0);
+  useEffect(() => {
+    if (!searching) return undefined;
+    return subscribeLiteIndex(() => setIndexVersion((v) => v + 1));
+  }, [searching]);
+  const older = useMemo(() => {
+    if (!searching || filter !== 'all') return [];
+    return searchLiteIndex(readLiteIndex(), query, {
+      isLoaded: (roomId) => !!mx.getRoom(roomId),
+      accept: (entry) =>
+        chatListMembership(scope, {
+          direct: mDirects.has(entry.id),
+          hasParent: roomToParents.has(entry.id),
+          showAllRooms,
+        }),
+    });
+    // indexVersion: rows arrive in the background; rooms: a chat that was just loaded is no longer "older"
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    searching,
+    filter,
+    query,
+    mx,
+    scope,
+    mDirects,
+    roomToParents,
+    showAllRooms,
+    indexVersion,
+    rooms,
+  ]);
+
   const setFilter = useCallback((next: ChatFilter) => setStoredFilter(next), [setStoredFilter]);
 
   const isDimmed = useCallback(
@@ -238,5 +287,6 @@ export const useChatList = (
     mutedMode,
     setMutedMode,
     isDimmed,
+    older,
   };
 };

@@ -19,6 +19,15 @@
 
 import { ClientEvent, MatrixClient, MatrixEvent, Method, Room } from 'matrix-js-sdk';
 import { getSkippedRooms, isSkippedRoom, setSkippedRooms } from './lite-store';
+import {
+  addToLiteIndex,
+  isIndexFilled,
+  markIndexFilled,
+  planIndexFill,
+  readLiteIndex,
+  rowsFromNameSnapshot,
+} from './lite-index';
+import { isReviving, requestNameIndexSnapshot } from './lite-room-load';
 
 const NOTIFICATIONS_POLL_MS = 5 * 60 * 1000;
 
@@ -67,6 +76,56 @@ const pollNotificationsForWokenRooms = async (mx: MatrixClient): Promise<string[
   }
 };
 
+/* ------------------------------------------------------------------------- */
+/* Filling the name index for chats skipped before the index existed          */
+/* ------------------------------------------------------------------------- */
+
+const BACKFILL_START_DELAY_MS = 30_000;
+const BACKFILL_RETRY_MS = 5 * 60 * 1000;
+const BACKFILL_MAX_ATTEMPTS = 3;
+
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+/**
+ * Chats skipped on an earlier load were dropped without a note of their name.
+ * Learn them once, in the background, with ONE plain read of the homeserver that
+ * carries only names, pictures and the newest message (see
+ * `requestNameIndexSnapshot`). Starts well after the app has settled, never runs
+ * twice (a later load that finds the index complete does nothing), retries a
+ * failure a couple of times, and stops when the app closes.
+ */
+export const startLiteIndexBackfill = (mx: MatrixClient): (() => void) => {
+  let stopped = false;
+  const run = async () => {
+    await sleep(BACKFILL_START_DELAY_MS);
+    for (let attempt = 1; attempt <= BACKFILL_MAX_ATTEMPTS; attempt += 1) {
+      if (stopped) return;
+      const plan = planIndexFill(getSkippedRooms(), readLiteIndex(), isIndexFilled());
+      if (!plan.run) return;
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const data = await requestNameIndexSnapshot(mx);
+        if (stopped) return;
+        addToLiteIndex(rowsFromNameSnapshot(plan.ids, data.rooms?.join ?? {}));
+        markIndexFilled();
+        return;
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('lite mode: could not learn the names of the skipped chats', err);
+        // eslint-disable-next-line no-await-in-loop
+        await sleep(BACKFILL_RETRY_MS);
+      }
+    }
+  };
+  run();
+  return () => {
+    stopped = true;
+  };
+};
+
 /**
  * Install both reactivation paths. Returns a teardown function.
  *
@@ -82,12 +141,13 @@ export const watchSkippedRooms = (
   const handleRoom = (room: Room) => {
     // During the replay of the saved chats every room fires this; skipped rooms
     // are not in the saved copy, so only a genuine wake-up matches.
-    if (!isSkippedRoom(room.roomId)) return;
+    if (!isSkippedRoom(room.roomId) || isReviving(room.roomId)) return;
     unskip(room.roomId);
     refillRoomState(mx, room);
   };
 
   mx.on(ClientEvent.Room, handleRoom);
+  const stopBackfill = startLiteIndexBackfill(mx);
 
   let timer: ReturnType<typeof setInterval> | undefined;
   if (serverFilter) {
@@ -102,6 +162,7 @@ export const watchSkippedRooms = (
 
   return () => {
     mx.removeListener(ClientEvent.Room, handleRoom);
+    stopBackfill();
     if (timer) clearInterval(timer);
   };
 };

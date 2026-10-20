@@ -204,6 +204,8 @@ export function ChatListToolbar({ view, scope }: ChatListToolbarProps) {
 }
 
 export function ChatListNoMatch({ view }: { view: ChatListView }) {
+  // "Older chats" has matches for this name: do not claim there are none.
+  if (view.query && view.older.length > 0) return null;
   return (
     <Box direction="Column" gap="200" alignItems="Center" style={{ padding: config.space.S400 }}>
       <Text size="T300" align="Center" priority="300">

@@ -1,3 +1,5 @@
+import { chatListMembership } from '../../utils/chatList';
+
 /**
  * Startup snapshot: a tiny copy of the top of the chat list, saved while the app
  * runs and shown the instant the app opens — before matrix-js-sdk has finished
@@ -16,6 +18,8 @@ export type SnapshotRoom = {
   /** http(s) thumbnail URL, already resolved */
   avatar?: string;
   dm?: boolean;
+  /** the chat is a child of a space (so Home leaves it out unless "all chats in Home" is on) */
+  parent?: boolean;
   /** unread count / highlight count at the time of saving */
   unread?: number;
   highlight?: number;
@@ -28,6 +32,8 @@ export type StartupSnapshot = {
   at: number;
   /** how many chats the app had loaded when this was saved */
   total: number;
+  /** "show all chats in Home" at the time of saving */
+  all?: boolean;
   rooms: SnapshotRoom[];
 };
 
@@ -41,6 +47,7 @@ const cleanRoom = (r: SnapshotRoom): SnapshotRoom => {
   const out: SnapshotRoom = { id: r.id, name: (r.name || '').slice(0, 80) };
   if (r.avatar && /^https?:\/\//.test(r.avatar) && r.avatar.length < 600) out.avatar = r.avatar;
   if (r.dm) out.dm = true;
+  if (r.parent) out.parent = true;
   if (r.unread && r.unread > 0) out.unread = Math.min(Math.floor(r.unread), 9999);
   if (r.highlight && r.highlight > 0) out.highlight = Math.min(Math.floor(r.highlight), 9999);
   if (r.muted) out.muted = true;
@@ -52,13 +59,21 @@ export const buildSnapshot = (
   userId: string,
   rooms: SnapshotRoom[],
   total: number,
-  now = Date.now()
+  now?: number,
+  all?: boolean
 ): StartupSnapshot => {
   let list = rooms
     .filter((r) => r && typeof r.id === 'string')
     .slice(0, SNAPSHOT_MAX_ROOMS)
     .map(cleanRoom);
-  let snap: StartupSnapshot = { v: 1, userId, at: now, total, rooms: list };
+  let snap: StartupSnapshot = {
+    v: 1,
+    userId,
+    at: now ?? Date.now(),
+    total,
+    ...(all === undefined ? {} : { all }),
+    rooms: list,
+  };
   while (list.length > 10 && JSON.stringify(snap).length > SNAPSHOT_MAX_BYTES) {
     list = list.slice(0, Math.floor(list.length * 0.8));
     snap = { ...snap, rooms: list };
@@ -84,9 +99,35 @@ export const parseSnapshot = (raw: string | null, userId: string): StartupSnapsh
   }
 };
 
+/**
+ * Keep only the chats the real Home list will show with the CURRENT setting —
+ * the same rule (`chatListMembership`) the real list uses: 1:1 chats belong to
+ * Direct, space children are left out of Home, unless "show all chats in Home"
+ * is on. Without this the instant list showed rooms (e.g. a space's chats) that
+ * vanished the moment the real list loaded (QA 2026-10-20). Pure.
+ */
+export const snapshotForHome = (
+  snap: StartupSnapshot | undefined,
+  showAllRooms: boolean
+): StartupSnapshot | undefined => {
+  if (!snap) return undefined;
+  const rooms = snap.rooms.filter((r) =>
+    chatListMembership('home', {
+      direct: !!r.dm,
+      hasParent: !!r.parent,
+      showAllRooms,
+    })
+  );
+  if (rooms.length === 0) return undefined;
+  return { ...snap, rooms };
+};
+
 /** Same content as last time (ignoring the timestamp)? Then do not rewrite it. */
 export const sameSnapshot = (a: StartupSnapshot | undefined, b: StartupSnapshot): boolean =>
-  !!a && a.total === b.total && JSON.stringify(a.rooms) === JSON.stringify(b.rooms);
+  !!a &&
+  a.total === b.total &&
+  a.all === b.all &&
+  JSON.stringify(a.rooms) === JSON.stringify(b.rooms);
 
 export const readSnapshot = (userId: string): StartupSnapshot | undefined => {
   try {
