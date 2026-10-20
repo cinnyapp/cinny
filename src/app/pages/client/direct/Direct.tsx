@@ -1,5 +1,5 @@
-import React, { MouseEventHandler, forwardRef, useMemo, useRef, useState } from 'react';
-import { useAtom, useAtomValue } from 'jotai';
+import React, { MouseEventHandler, forwardRef, useRef, useState } from 'react';
+import { useAtom } from 'jotai';
 import {
   Avatar,
   Box,
@@ -19,7 +19,6 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useNavigate } from 'react-router-dom';
 import FocusTrap from '../../../components/focus-trap';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { factoryRoomIdByActivity } from '../../../utils/sort';
 import {
   NavButton,
   NavCategory,
@@ -51,6 +50,8 @@ import {
   useRoomsNotificationPreferencesContext,
 } from '../../../hooks/useRoomsNotificationPreferences';
 import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected';
+import { ChatListNoMatch, ChatListToolbar, useChatList } from '../../../features/chat-list';
+import { DimmedRow } from '../../../features/chat-list/styles.css';
 
 type DirectMenuProps = {
   requestClose: () => void;
@@ -174,7 +175,6 @@ export function Direct() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const directs = useDirectRooms();
   const notificationPreferences = useRoomsNotificationPreferencesContext();
-  const roomToUnread = useAtomValue(roomToUnreadAtom);
   const navigate = useNavigate();
 
   const createDirectSelected = useDirectCreateSelected();
@@ -182,28 +182,13 @@ export function Direct() {
   const selectedRoomId = useSelectedRoom();
   const noRoomToDisplay = directs.length === 0;
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
-  const [hideActivityDots] = useSetting(settingsAtom, 'hideUnreadActivityDots');
+  const [showChatFilters] = useSetting(settingsAtom, 'chatListShowFilters');
+  const categoryClosed = closedCategories.has(DEFAULT_CATEGORY_ID);
 
-  // Recency order and the unread set are computed together, so opening another chat
-  // (which only changes `selectedRoomId`) no longer re-sorts the whole list.
-  const orderedDirects = useMemo(() => {
-    const items = Array.from(directs).sort(factoryRoomIdByActivity(mx));
-    const unread = new Set(
-      items.filter((rId) => {
-        const u = roomToUnread.get(rId);
-        return hideActivityDots
-          ? u !== undefined && (u.total > 0 || u.highlight > 0)
-          : roomToUnread.has(rId);
-      })
-    );
-    return { items, unread };
-  }, [mx, directs, roomToUnread, hideActivityDots]);
-
-  const sortedDirects = useMemo(() => {
-    if (!closedCategories.has(DEFAULT_CATEGORY_ID)) return orderedDirects.items;
-    const { items, unread } = orderedDirects;
-    return items.filter((rId) => unread.has(rId) || rId === selectedRoomId);
-  }, [orderedDirects, closedCategories, selectedRoomId]);
+  // Last real message first (see features/chat-list); opening another chat does
+  // not re-sort anything.
+  const chatList = useChatList(directs, 'direct', selectedRoomId, categoryClosed);
+  const sortedDirects = chatList.items;
 
   const virtualizer = useVirtualizer({
     count: sortedDirects.length,
@@ -219,6 +204,7 @@ export function Direct() {
   return (
     <PageNav>
       <DirectHeader />
+      {!noRoomToDisplay && showChatFilters && <ChatListToolbar view={chatList} scope="direct" />}
       {noRoomToDisplay ? (
         <DirectEmpty />
       ) : (
@@ -245,7 +231,7 @@ export function Direct() {
             <NavCategory>
               <NavCategoryHeader>
                 <RoomNavCategoryButton
-                  closed={closedCategories.has(DEFAULT_CATEGORY_ID)}
+                  closed={categoryClosed}
                   data-category-id={DEFAULT_CATEGORY_ID}
                   onClick={handleCategoryClick}
                 >
@@ -270,21 +256,26 @@ export function Direct() {
                       key={vItem.index}
                       ref={virtualizer.measureElement}
                     >
-                      <RoomNavItem
-                        room={room}
-                        selected={selected}
-                        showAvatar
-                        direct
-                        linkPath={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
-                        notificationMode={getRoomNotificationMode(
-                          notificationPreferences,
-                          room.roomId
-                        )}
-                      />
+                      <div
+                        className={!selected && chatList.isDimmed(roomId) ? DimmedRow : undefined}
+                      >
+                        <RoomNavItem
+                          room={room}
+                          selected={selected}
+                          showAvatar
+                          direct
+                          linkPath={getDirectRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
+                          notificationMode={getRoomNotificationMode(
+                            notificationPreferences,
+                            room.roomId
+                          )}
+                        />
+                      </div>
                     </VirtualTile>
                   );
                 })}
               </div>
+              {sortedDirects.length === 0 && !categoryClosed && <ChatListNoMatch view={chatList} />}
             </NavCategory>
           </Box>
         </PageNavContent>
