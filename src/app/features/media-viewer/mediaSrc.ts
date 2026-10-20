@@ -8,9 +8,15 @@
  *    LRU (current ±1) and thumbnails in a bounded one; object URLs are revoked
  *    the moment they fall out, and the full-size ones when the viewer closes.
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MatrixClient } from 'matrix-js-sdk';
-import { decryptFile, downloadEncryptedMedia, mxcUrlToHttp } from '../../utils/matrix';
+import {
+  decryptFile,
+  downloadEncryptedMedia,
+  downloadMedia,
+  mxcUrlToHttp,
+} from '../../utils/matrix';
+import { getMediaFailureKind, MediaFailureKind } from '../../utils/mediaAuth';
 import { GalleryItem } from './galleryWalker';
 
 class BlobLru {
@@ -114,7 +120,12 @@ export const thumbnailUrl = (
   return mxcUrlToHttp(mx, src, useAuthentication, size, size, 'scale') ?? undefined;
 };
 
-export type ResolvedSrc = { src?: string; loading: boolean; error?: boolean };
+export type ResolvedSrc = {
+  src?: string;
+  loading: boolean;
+  error?: boolean;
+  failureKind?: MediaFailureKind;
+};
 
 /** Resolves a string-or-promise source into React state. */
 export const useResolvedSrc = (
@@ -137,7 +148,8 @@ export const useResolvedSrc = (
     setState({ loading: true });
     v.then(
       (src) => alive && setState({ src, loading: false }),
-      () => alive && setState({ loading: false, error: true })
+      (err) =>
+        alive && setState({ loading: false, error: true, failureKind: getMediaFailureKind(err) })
     );
     return () => {
       alive = false;
@@ -145,6 +157,46 @@ export const useResolvedSrc = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
   return state;
+};
+
+/**
+ * An <img>/<video> pointed straight at an authenticated media URL fails when no
+ * service worker adds the token (e.g. after a hard reload). Same recovery as
+ * the timeline: on the first error fetch it once from the page (which retries
+ * a 401 with the token) and show it from a blob URL; only then give up, with
+ * the reason ("no longer on the server", …).
+ */
+export const useMediaFallback = (src: string | undefined) => {
+  const [fallback, setFallback] = useState<string>();
+  const [failureKind, setFailureKind] = useState<MediaFailureKind>();
+  const tried = useRef(false);
+  useEffect(() => {
+    tried.current = false;
+    setFallback(undefined);
+    setFailureKind(undefined);
+  }, [src]);
+  useEffect(
+    () => () => {
+      if (fallback) URL.revokeObjectURL(fallback);
+    },
+    [fallback]
+  );
+  const onError = useCallback(() => {
+    if (!src || src.startsWith('blob:') || tried.current) {
+      setFailureKind((k) => k ?? 'network');
+      return;
+    }
+    tried.current = true;
+    downloadMedia(src)
+      .then((blob) => setFallback(URL.createObjectURL(blob)))
+      .catch((err) => setFailureKind(getMediaFailureKind(err)));
+  }, [src]);
+  const reset = useCallback(() => {
+    tried.current = false;
+    setFallback(undefined);
+    setFailureKind(undefined);
+  }, []);
+  return { src: fallback ?? src, onError, failureKind, reset };
 };
 
 /** Warm the browser cache / blob cache for the neighbours of the current item. */

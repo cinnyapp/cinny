@@ -16,7 +16,7 @@ import { getMemberDisplayName } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
 import { GalleryCategory, GalleryItem, GalleryWalker } from './galleryWalker';
 import { getRoomWalker } from './roomWalker';
-import { thumbnailUrl, useResolvedSrc } from './mediaSrc';
+import { thumbnailUrl, useMediaFallback, useResolvedSrc } from './mediaSrc';
 import { useOpenMediaViewer } from './state';
 import { formatViewerDate } from './MediaViewer';
 
@@ -87,11 +87,12 @@ function GridTile({ item, onOpen }: { item: GalleryItem; onOpen: () => void }) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const { ref, inView } = useInView<HTMLButtonElement>();
-  const { src } = useResolvedSrc(
+  const resolved = useResolvedSrc(
     () => (inView ? thumbnailUrl(mx, item, 240, useAuthentication) : undefined),
     [inView, mx, item.eventId, useAuthentication]
   );
-  const [failed, setFailed] = useState(false);
+  const { src, onError, failureKind } = useMediaFallback(resolved.src);
+  const failed = !!failureKind;
   return (
     <button
       ref={ref}
@@ -121,7 +122,7 @@ function GridTile({ item, onOpen }: { item: GalleryItem; onOpen: () => void }) {
           alt=""
           loading="lazy"
           draggable={false}
-          onError={() => setFailed(true)}
+          onError={onError}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
         />
       ) : (

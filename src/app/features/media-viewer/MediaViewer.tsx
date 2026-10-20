@@ -35,8 +35,10 @@ import {
   fullSizeUrl,
   preloadItem,
   thumbnailUrl,
+  useMediaFallback,
   useResolvedSrc,
 } from './mediaSrc';
+import { describeMediaFailure } from '../../utils/mediaAuth';
 import * as css from './MediaViewer.css';
 
 export type ViewerItem = GalleryItem & {
@@ -122,11 +124,12 @@ function ViewerThumb({
 }) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
-  const { src } = useResolvedSrc(
+  const resolved = useResolvedSrc(
     () => thumbnailUrl(mx, item, 96, useAuthentication),
     [mx, item.eventId, item.mxc, useAuthentication]
   );
-  const [failed, setFailed] = useState(false);
+  const { src, onError, failureKind } = useMediaFallback(resolved.src);
+  const failed = !!failureKind;
   return (
     <button
       type="button"
@@ -138,7 +141,7 @@ function ViewerThumb({
       data-media-thumb={item.eventId}
     >
       {src && !failed ? (
-        <img src={src} alt="" loading="lazy" draggable={false} onError={() => setFailed(true)} />
+        <img src={src} alt="" loading="lazy" draggable={false} onError={onError} />
       ) : (
         <Icon size="200" src={item.kind === 'video' ? Icons.Vlc : Icons.Photo} />
       )}
@@ -235,15 +238,15 @@ function Slide({
     () => thumbnailUrl(mx, item, 320, useAuthentication),
     [mx, item.eventId, item.mxc, useAuthentication]
   );
-  const [failed, setFailed] = useState(false);
+  const media = useMediaFallback(resolved.src);
   const [loaded, setLoaded] = useState(false);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    setFailed(false);
     setLoaded(false);
   }, [item.eventId, item.mxc]);
 
-  const broken = failed || resolved.error;
+  const failureKind = media.failureKind ?? (resolved.error ? resolved.failureKind : undefined);
+  const broken = !!failureKind || !!resolved.error;
   const slideStyle: React.CSSProperties = {
     transform: dragX ? `translateX(${dragX}px)` : undefined,
     transition: animate ? 'transform 180ms ease-out' : undefined,
@@ -265,14 +268,17 @@ function Slide({
               : 'This picture is not available'}
           </div>
           <div>
-            The server no longer has it (it may have expired), or it could not be loaded right now.
+            {describeMediaFailure(
+              failureKind ?? 'network',
+              item.kind === 'video' ? 'video' : 'picture'
+            )}
             {when ? ` ${when}.` : ''}
           </div>
           <button
             type="button"
             className={css.Chip}
             onClick={() => {
-              setFailed(false);
+              media.reset();
               setAttempt((a) => a + 1);
             }}
           >
@@ -296,12 +302,12 @@ function Slide({
           height={item.height}
         />
       )}
-      {resolved.src && item.kind === 'video' && (
+      {media.src && item.kind === 'video' && (
         // eslint-disable-next-line jsx-a11y/media-has-caption
         <video
           key={`${item.eventId}-${attempt}`}
           className={css.Video}
-          src={resolved.src}
+          src={media.src}
           poster={thumb.src}
           controls
           autoPlay
@@ -310,16 +316,16 @@ function Slide({
           onLoadedMetadata={() => setLoaded(true)}
           onError={(e) => {
             // poster failures fire `error` without a MediaError: ignore those
-            if (e.currentTarget.error) setFailed(true);
+            if (e.currentTarget.error) media.onError();
           }}
           data-media-current={item.eventId}
         />
       )}
-      {resolved.src && item.kind !== 'video' && (
+      {media.src && item.kind !== 'video' && (
         <img
           key={`${item.eventId}-${attempt}`}
           className={css.Media}
-          src={resolved.src}
+          src={media.src}
           alt={item.body || item.title}
           draggable={false}
           style={{ ...mediaStyle, opacity: loaded ? 1 : 0 }}
@@ -327,7 +333,7 @@ function Slide({
             setLoaded(true);
             onLoaded(e.currentTarget.naturalWidth, e.currentTarget.naturalHeight);
           }}
-          onError={() => setFailed(true)}
+          onError={media.onError}
           data-media-current={item.eventId}
         />
       )}
