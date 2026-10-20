@@ -54,6 +54,7 @@ export function LiteModeSettings() {
   const [liteModeChoice, setLiteModeChoice] = useSetting(settingsAtom, 'liteModeChoice');
   const [liteWindowDays, setLiteWindowDays] = useSetting(settingsAtom, 'liteWindowDays');
   const [liteServerFilter, setLiteServerFilter] = useSetting(settingsAtom, 'liteServerFilter');
+  const [stagedStartup, setStagedStartup] = useSetting(settingsAtom, 'stagedStartup');
 
   const choice = liteChoiceFromSettings(liteModeChoice, liteMode);
   const auto = choice === 'auto';
@@ -87,6 +88,20 @@ export function LiteModeSettings() {
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">Loading Speed</Text>
+
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Open as soon as recent chats are ready"
+          description="The app opens the moment your most recent chats are rebuilt; the older ones keep loading in the background with a small progress line. Off = wait for every chat before opening (the classic way). Takes effect on the next reload."
+          after={
+            <Switch
+              variant="Primary"
+              value={stagedStartup !== 'off'}
+              onChange={(on) => setStagedStartup(on ? 'on' : 'off')}
+            />
+          }
+        />
+      </SequenceCard>
 
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile

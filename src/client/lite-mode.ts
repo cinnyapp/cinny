@@ -317,10 +317,16 @@ export const pruneRoomsData = (
   const skipSet = skip instanceof Set ? skip : new Set(skip);
   const join = rooms.join ?? {};
   const nextJoin: Record<string, LiteRoomSyncData> = {};
-  Object.keys(join).forEach((roomId) => {
-    if (skipSet.has(roomId)) return;
-    nextJoin[roomId] = join[roomId];
-  });
+  // Kept rooms are written newest-first (stable for ties): the SDK replays the
+  // saved record in key order, so the most recent chats come back first
+  // (see client/staged-replay.ts).
+  Object.keys(join)
+    .filter((roomId) => !skipSet.has(roomId))
+    .map((roomId, index) => ({ roomId, index, ts: lastAnyTs(join[roomId]) }))
+    .sort((a, b) => b.ts - a.ts || a.index - b.index)
+    .forEach(({ roomId }) => {
+      nextJoin[roomId] = join[roomId];
+    });
   return { ...rooms, join: nextJoin };
 };
 

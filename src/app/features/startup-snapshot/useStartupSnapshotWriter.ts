@@ -4,6 +4,7 @@ import { RoomToUnread } from '../../../types/matrix/room';
 import { getDirectRoomAvatarUrl, getRoomToParents, isRoom } from '../../utils/room';
 import { getSettings } from '../../state/settings';
 import { chatListMembership } from '../../utils/chatList';
+import { getReplayState } from '../../../client/staged-replay';
 import {
   buildSnapshot,
   readSnapshot,
@@ -33,6 +34,9 @@ export const useStartupSnapshotWriter = (
   const latest = useRef<() => void>();
 
   latest.current = () => {
+    // never persist a half-rebuilt list / total while the staged start-up is
+    // still streaming the older chats in
+    if (getReplayState().active) return;
     const userId = mx.getUserId();
     if (!userId || sortedRoomIds.length === 0) return;
     const roomToUnread = getRoomToUnread();

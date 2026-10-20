@@ -33,6 +33,8 @@ type StartupRoomListProps = {
   snapshot: StartupSnapshot;
   loaded: number;
   skipped: number;
+  /** extra line under the progress text (e.g. the one-time full load notice) */
+  note?: string;
 };
 
 /**
@@ -42,7 +44,7 @@ type StartupRoomListProps = {
  * app is ready (the route changes right away; the real app takes over on the
  * same URL).
  */
-export function StartupRoomList({ snapshot, loaded, skipped }: StartupRoomListProps) {
+export function StartupRoomList({ snapshot, loaded, skipped, note }: StartupRoomListProps) {
   const navigate = useNavigate();
   const [pending, setPending] = useState<string>();
   const target = Math.max(snapshot.total, 1);
@@ -96,6 +98,11 @@ export function StartupRoomList({ snapshot, loaded, skipped }: StartupRoomListPr
               {skipped > 0 ? ` · ${skipped.toLocaleString()} old ones skipped` : ''}
             </Text>
           </Box>
+          {note && (
+            <Text size="T200" priority="300" data-testid="startup-note">
+              {note}
+            </Text>
+          )}
           <div
             style={{
               height: 2,
