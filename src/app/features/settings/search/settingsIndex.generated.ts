@@ -198,7 +198,7 @@ export const GENERATED_SETTINGS_INDEX: SettingsIndexEntry[] = [
     section: 'Loading Speed',
     title: 'Do not load old chats',
     description:
-      'Chats where nobody has written for a long time are skipped completely when the app starts, instead of being rebuilt every time. They come back on their own as soon as someone writes in them. Anything unread, favourited, a space, or a bridge admin chat is always loaded.',
+      'Chats where nobody has written for a long time are skipped completely when the app starts, instead of being rebuilt every time. They come back on their own as soon as someone writes in them. Anything unread, favourited, a space, or a bridge admin chat is always loaded. Automatic for big accounts.',
   },
   {
     page: SettingsPages.GeneralPage,

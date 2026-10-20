@@ -38,13 +38,22 @@ import { SyncStatus } from './SyncStatus';
 import { AuthMetadataProvider } from '../../hooks/useAuthMetadata';
 import { getFallbackSession } from '../../state/sessions';
 import { AutoDiscovery } from './AutoDiscovery';
+import { readSnapshot } from '../../features/startup-snapshot/snapshot';
+import { StartupRoomList } from '../../features/startup-snapshot/StartupRoomList';
 
 function ClientRootLoading({ mx }: { mx?: MatrixClient }) {
   // On accounts with a very large number of rooms, restoring the persisted
   // /sync data can take a long time. Show how many rooms have been restored so
   // far so that the splash screen does not look stuck.
   const [roomCount, setRoomCount] = useState(0);
-  const skippedCount = getLiteState().report?.skippedRooms ?? 0;
+  const { options, skippedRooms } = getLiteState();
+  const skippedCount = options.enabled ? skippedRooms.length : 0;
+  // The chat list from last time, drawn in the very first render
+  // (features/startup-snapshot) — instead of a bare spinner.
+  const [snapshot] = useState(() => {
+    const userId = getFallbackSession()?.userId;
+    return userId ? readSnapshot(userId) : undefined;
+  });
 
   useEffect(() => {
     if (!mx) return undefined;
@@ -53,6 +62,10 @@ function ClientRootLoading({ mx }: { mx?: MatrixClient }) {
     const intervalId = setInterval(update, 1000);
     return () => clearInterval(intervalId);
   }, [mx]);
+
+  if (snapshot) {
+    return <StartupRoomList snapshot={snapshot} loaded={roomCount} skipped={skippedCount} />;
+  }
 
   return (
     <SplashScreen>

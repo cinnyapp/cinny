@@ -5,13 +5,19 @@ import { SettingTile } from '../../../components/setting-tile';
 import { useSetting } from '../../../state/hooks/settings';
 import { settingsAtom } from '../../../state/settings';
 import { SequenceCardStyle } from '../styles.css';
-import { LITE_WINDOW_DAYS } from '../../../../client/lite-mode';
+import {
+  LITE_AUTO_MIN_ROOMS,
+  LITE_AUTO_WINDOW_DAYS,
+  LITE_WINDOW_DAYS,
+  liteChoiceFromSettings,
+} from '../../../../client/lite-mode';
 import { getLiteReport } from '../../../../client/lite-store';
-import { loadAllChatsOnce } from '../../../../client/initMatrix';
+import { getLiteState, loadAllChatsOnce } from '../../../../client/initMatrix';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 
 const windowLabel = (days: number): string => {
   if (days === 365) return '1 year';
+  if (days === 30) return '1 month';
   if (days % 30 === 0) return `${days / 30} months`;
   return `${days} days`;
 };
@@ -45,12 +51,38 @@ function LiteStatus() {
 export function LiteModeSettings() {
   const mx = useMatrixClient();
   const [liteMode, setLiteMode] = useSetting(settingsAtom, 'liteMode');
+  const [liteModeChoice, setLiteModeChoice] = useSetting(settingsAtom, 'liteModeChoice');
   const [liteWindowDays, setLiteWindowDays] = useSetting(settingsAtom, 'liteWindowDays');
   const [liteServerFilter, setLiteServerFilter] = useSetting(settingsAtom, 'liteServerFilter');
+
+  const choice = liteChoiceFromSettings(liteModeChoice, liteMode);
+  const auto = choice === 'auto';
+  // What this load actually did — in auto mode it depends on the account size.
+  const effective = auto ? getLiteState().options.enabled : choice === 'on';
+  const shownWindow = auto ? LITE_AUTO_WINDOW_DAYS : liteWindowDays;
 
   const handleShowOlderChats = () => {
     loadAllChatsOnce(mx);
   };
+  const handleSwitch = (on: boolean) => {
+    setLiteModeChoice(on ? 'on' : 'off');
+    setLiteMode(on);
+    if (on && auto) setLiteWindowDays(LITE_AUTO_WINDOW_DAYS);
+  };
+  const handleWindow = (days: number) => {
+    setLiteWindowDays(days);
+    setLiteModeChoice('on');
+    setLiteMode(true);
+  };
+  const handleAuto = () => {
+    setLiteModeChoice('auto');
+    setLiteMode(false);
+  };
+
+  let autoNote = `Automatic: on for accounts with more than ${LITE_AUTO_MIN_ROOMS.toLocaleString()} chats.`;
+  if (auto) {
+    autoNote += effective ? ' It is on for you.' : ' It is off for you.';
+  }
 
   return (
     <Box direction="Column" gap="100">
@@ -59,12 +91,25 @@ export function LiteModeSettings() {
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
           title="Do not load old chats"
-          description="Chats where nobody has written for a long time are skipped completely when the app starts, instead of being rebuilt every time. They come back on their own as soon as someone writes in them. Anything unread, favourited, a space, or a bridge admin chat is always loaded."
-          after={<Switch variant="Primary" value={liteMode} onChange={setLiteMode} />}
-        />
+          description="Chats where nobody has written for a long time are skipped completely when the app starts, instead of being rebuilt every time. They come back on their own as soon as someone writes in them. Anything unread, favourited, a space, or a bridge admin chat is always loaded. Automatic for big accounts."
+          after={<Switch variant="Primary" value={effective} onChange={handleSwitch} />}
+        >
+          <Box direction="Column" gap="200">
+            <Text size="T200" priority="300">
+              {auto ? autoNote : 'You set this yourself.'}
+            </Text>
+            {!auto && (
+              <Box gap="200" wrap="Wrap">
+                <Button size="300" variant="Secondary" fill="Soft" radii="300" onClick={handleAuto}>
+                  <Text size="B300">Back to automatic</Text>
+                </Button>
+              </Box>
+            )}
+          </Box>
+        </SettingTile>
       </SequenceCard>
 
-      {liteMode && (
+      {effective && (
         <>
           <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
             <SettingTile
@@ -75,12 +120,12 @@ export function LiteModeSettings() {
                 {LITE_WINDOW_DAYS.map((days) => (
                   <Chip
                     key={days}
-                    variant={liteWindowDays === days ? 'Primary' : 'Secondary'}
+                    variant={shownWindow === days ? 'Primary' : 'Secondary'}
                     fill="Soft"
-                    outlined={liteWindowDays === days}
+                    outlined={shownWindow === days}
                     radii="Pill"
-                    aria-pressed={liteWindowDays === days}
-                    onClick={() => setLiteWindowDays(days)}
+                    aria-pressed={shownWindow === days}
+                    onClick={() => handleWindow(days)}
                   >
                     <Text size="B300">{windowLabel(days)}</Text>
                   </Chip>

@@ -45,9 +45,17 @@ export type LiteRoomsSyncData = {
   leave?: Record<string, unknown>;
 };
 
+export type LiteChoice = 'auto' | 'on' | 'off';
+
 export type LiteOptions = {
-  /** Skip loading quiet chats at all. */
+  /**
+   * Skip loading quiet chats at all. With `choice: 'auto'` this is only the
+   * starting value — the real decision is made once the saved chats are counted
+   * (see `resolveAutoLite`).
+   */
   enabled: boolean;
+  /** What the user picked. `auto` = on for big accounts, off for small ones. */
+  choice?: LiteChoice;
   /** A chat is "quiet" when its newest message is older than this many days. */
   windowDays: number;
   /**
@@ -62,8 +70,36 @@ export const LITE_WINDOW_DAYS = [30, 90, 180, 365] as const;
 
 export const DEFAULT_LITE_OPTIONS: LiteOptions = {
   enabled: false,
+  choice: 'auto',
   windowDays: 90,
   serverFilter: false,
+};
+
+/**
+ * Automatic lite mode. Measured on his real account (9,000 chats, 2026-10-20):
+ * the reload spends most of its time rebuilding chats nobody has written in for
+ * months. So above this many saved chats lite mode switches itself on, with a
+ * short window; small accounts load everything as before.
+ */
+export const LITE_AUTO_MIN_ROOMS = 2000;
+export const LITE_AUTO_WINDOW_DAYS = 30;
+
+/**
+ * Decide, once the saved chats have been counted, whether lite mode applies to
+ * this load and with which window. Pure, for the tests.
+ */
+export const resolveAutoLite = (
+  options: LiteOptions,
+  savedRooms: number
+): { enabled: boolean; windowDays: number; auto: boolean } => {
+  const choice = options.choice ?? (options.enabled ? 'on' : 'off');
+  if (choice === 'on') return { enabled: true, windowDays: options.windowDays, auto: false };
+  if (choice === 'off') return { enabled: false, windowDays: options.windowDays, auto: false };
+  return {
+    enabled: savedRooms >= LITE_AUTO_MIN_ROOMS,
+    windowDays: LITE_AUTO_WINDOW_DAYS,
+    auto: true,
+  };
 };
 
 /** Event types that count as "someone actually said something". */
@@ -147,16 +183,30 @@ const BOT_USER = /^@[^:]*(bot|bridge)[^:]*:/i;
  * Bridge management / admin rooms (`@whatsappbot:…`, `@telegrambot:…`). There
  * are only a handful of them and losing them means losing the way to talk to
  * the bridge, so they are always kept.
+ *
+ * Careful: the bridge bot is ALSO a member of every bridged 1:1 chat (you, the
+ * contact's puppet, the bot = 3 members). Measured on the real account: the
+ * old "a bot is a member" test kept 6,013 of 9,032 chats. A management room is
+ * one where nobody but you and bots is in it — judged from the room summary's
+ * heroes (the other members), falling back to the stored member events.
  */
 const isBotRoom = (room: LiteRoomSyncData): boolean => {
   const memberCount = Number(room.summary?.['m.joined_member_count'] ?? 0);
   if (memberCount > 3) return false;
-  return stateEvents(room).some(
+  const heroes = room.summary?.['m.heroes'];
+  if (Array.isArray(heroes) && heroes.length > 0) {
+    const ids = heroes.filter((h): h is string => typeof h === 'string');
+    return ids.some((id) => BOT_USER.test(id)) && ids.every((id) => BOT_USER.test(id));
+  }
+  const joined = stateEvents(room).filter(
     (event) =>
       event.type === 'm.room.member' &&
       typeof event.state_key === 'string' &&
-      BOT_USER.test(event.state_key)
+      (event.content as { membership?: string } | undefined)?.membership === 'join'
   );
+  const bots = joined.filter((event) => BOT_USER.test(event.state_key as string)).length;
+  // you are the one non-bot member (your own member event may or may not be stored)
+  return bots > 0 && joined.length - bots <= 1;
 };
 
 /** One-member rooms are notes-to-self; there are very few and they matter. */
@@ -306,10 +356,27 @@ export const buildLiteFilterDefinition = (
  */
 export const LITE_FILTER_INLINE_SAFE_ROOMS = 40;
 
+const CHOICES: LiteChoice[] = ['auto', 'on', 'off'];
+
+/**
+ * `liteMode: true` from before the automatic mode existed still means "on".
+ * `liteMode: false` was the old default and is saved in everyone's settings, so
+ * it cannot mean "the user switched it off" — it maps to `auto`.
+ */
+export const liteChoiceFromSettings = (choice: unknown, legacyEnabled: unknown): LiteChoice => {
+  if (CHOICES.includes(choice as LiteChoice) && choice !== 'auto') return choice as LiteChoice;
+  if (legacyEnabled === true) return 'on';
+  return 'auto';
+};
+
 export const normalizeLiteOptions = (raw: Partial<LiteOptions> | undefined): LiteOptions => {
   const windowDays = Number(raw?.windowDays);
+  const choice = CHOICES.includes(raw?.choice as LiteChoice)
+    ? (raw?.choice as LiteChoice)
+    : undefined;
   return {
-    enabled: raw?.enabled === true,
+    enabled: raw?.enabled === true || choice === 'on',
+    ...(choice ? { choice } : {}),
     windowDays: LITE_WINDOW_DAYS.includes(windowDays as typeof LITE_WINDOW_DAYS[number])
       ? windowDays
       : DEFAULT_LITE_OPTIONS.windowDays,
