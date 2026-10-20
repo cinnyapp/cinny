@@ -70,6 +70,8 @@ import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { RoomSettingsPage } from '../../state/roomSettings';
+import { getDmColorKey } from '../../utils/dmAvatar';
+import { nameInitials } from '../../utils/common';
 
 type RoomMenuProps = {
   room: Room;
@@ -350,12 +352,18 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
           {screenSize !== ScreenSize.Mobile && (
             <Avatar size="300">
               <RoomAvatar
-                roomId={room.roomId}
+                roomId={direct ? getDmColorKey(room) : room.roomId}
                 src={avatarUrl}
                 alt={name}
-                renderFallback={() => (
-                  <RoomIcon size="200" joinRule={room.getJoinRule()} roomType={room.getType()} />
-                )}
+                renderFallback={() =>
+                  direct ? (
+                    <Text as="span" size="H6">
+                      {nameInitials(name)}
+                    </Text>
+                  ) : (
+                    <RoomIcon size="200" joinRule={room.getJoinRule()} roomType={room.getType()} />
+                  )
+                }
               />
             </Avatar>
           )}

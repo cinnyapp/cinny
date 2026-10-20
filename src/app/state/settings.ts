@@ -44,6 +44,11 @@ export interface Settings {
   isNotificationSounds: boolean;
   hideUnreadActivityDots: boolean;
 
+  // 1:1 chats: show the other person's own (live) profile picture instead of
+  // the room's picture. Bridges copy the contact's photo onto the room once and
+  // do not always keep it current (see utils/dmAvatar.ts).
+  preferContactPhoto: boolean;
+
   // Home lists every joined chat (rooms *and* direct chats), including the ones
   // that are a child of a space — e.g. the bridge "WhatsApp"/"Telegram" spaces.
   // When false, Home keeps upstream Cinny's behaviour and only lists rooms that
@@ -104,6 +109,7 @@ const defaultSettings: Settings = {
   showNotifications: true,
   isNotificationSounds: true,
   hideUnreadActivityDots: false,
+  preferContactPhoto: true,
 
   homeShowsAllRooms: true,
 

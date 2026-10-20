@@ -30,6 +30,15 @@ const KEYWORDS: Record<string, string[]> = {
   'Hide Typing & Read Receipts': ['privacy', 'typing indicator', 'blue ticks', 'seen'],
   'Hide Unread Activity Dots': ['badge', 'grey dot', 'notification dot'],
   'Show Pinned Message Banner': ['pin', 'pinned', 'banner', 'bar'],
+  'Prefer Contact Photo in 1:1 Chats': [
+    'avatar',
+    'profile picture',
+    'photo',
+    'picture',
+    'whatsapp',
+    'dm',
+    'direct',
+  ],
   'Show All Chats in Home': ['home', 'spaces', 'folders', 'whatsapp', 'telegram'],
   'Do not load old chats': [
     'lite',

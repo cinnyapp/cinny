@@ -62,6 +62,7 @@ import { useCallPreferencesAtom } from '../../state/hooks/callPreferences';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
 import { livekitSupport } from '../../hooks/useLivekitSupport';
 import { StateEvent } from '../../../types/matrix/room';
+import { getDmColorKey } from '../../utils/dmAvatar';
 
 type RoomNavItemMenuProps = {
   room: Room;
@@ -363,7 +364,7 @@ export function RoomNavItem({
             <Avatar size="200" radii="400">
               {showAvatar ? (
                 <RoomAvatar
-                  roomId={room.roomId}
+                  roomId={direct ? getDmColorKey(room) : room.roomId}
                   src={
                     direct
                       ? getDirectRoomAvatarUrl(mx, room, 96, useAuthentication)

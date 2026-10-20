@@ -310,6 +310,10 @@ function Appearance() {
   const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
   const [showPinnedBanner, setShowPinnedBanner] = useSetting(settingsAtom, 'showPinnedBanner');
+  const [preferContactPhoto, setPreferContactPhoto] = useSetting(
+    settingsAtom,
+    'preferContactPhoto'
+  );
 
   return (
     <Box direction="Column" gap="100">
@@ -360,6 +364,16 @@ function Appearance() {
           description="Show a small bar above the timeline with the room's pinned messages, with arrows to step through them and a tap to jump to the message. The pin button in the room header and the Pinned Messages list are unaffected."
           after={
             <Switch variant="Primary" value={showPinnedBanner} onChange={setShowPinnedBanner} />
+          }
+        />
+      </SequenceCard>
+
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Prefer Contact Photo in 1:1 Chats"
+          description="In one-to-one chats (including WhatsApp and other bridged chats), show the person's own current profile picture instead of the chat's picture, which bridges copy once and may not keep up to date. People without a picture get a coloured initial."
+          after={
+            <Switch variant="Primary" value={preferContactPhoto} onChange={setPreferContactPhoto} />
           }
         />
       </SequenceCard>
