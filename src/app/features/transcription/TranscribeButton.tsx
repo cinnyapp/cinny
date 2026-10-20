@@ -1,4 +1,4 @@
-import React, { MouseEventHandler, useCallback, useRef, useState } from 'react';
+import React, { MouseEventHandler, useCallback, useEffect, useRef, useState } from 'react';
 import {
   Box,
   Chip,
@@ -21,7 +21,16 @@ import { useClientConfig } from '../../hooks/useClientConfig';
 import { copyToClipboard } from '../../utils/dom';
 import { stopPropagation } from '../../utils/keyboard';
 import { getTranscribeLanguageName } from './languages';
-import { TranscribeError, TranscribeResponse, requestTranscription } from './transcribeApi';
+import {
+  TranscribeError,
+  TranscribeResponse,
+  fetchStoredTranscript,
+  requestTranscription,
+} from './transcribeApi';
+import { describeTranscript, pollForBetter, runTranscriptFlow } from './transcriptFlow';
+
+/** After this long without an answer the request is a live transcription, not a lookup. */
+const SLOW_AFTER_MS = 1500;
 
 type TranscribeButtonProps = {
   roomId: string;
@@ -33,8 +42,11 @@ type TranscribeButtonProps = {
 };
 
 /**
- * A per-message action that transcribes a voice/audio message locally via the
- * Whisper backend and shows the transcript in an app-only popover.
+ * A per-message action that shows the transcript of a voice/audio message in an
+ * app-only popover. The server's automatic transcription has usually already
+ * done the note, so its stored text appears instantly; only when nothing is
+ * stored does the backend run local Whisper on the spot. A stored draft is
+ * swapped for the better version as soon as the server has it.
  *
  * IMPORTANT: the transcript is displayed ONLY inside this client-side popover.
  * It is NEVER sent as a message, posted into the chat, or forwarded anywhere.
@@ -70,42 +82,110 @@ export function TranscribeButton({ roomId, eventId, mxc, encInfo }: TranscribeBu
   // Cache the transcript in component state so re-opening does not re-request.
   const [result, setResult] = useState<TranscribeResponse>();
   const [copied, setCopied] = useState(false);
+  // Set when the request is taking long enough that it must be a live transcription.
+  const [slow, setSlow] = useState(false);
+  const [polling, setPolling] = useState(false);
+  const unmountedRef = useRef(false);
+  useEffect(() => {
+    unmountedRef.current = false;
+    return () => {
+      unmountedRef.current = true;
+    };
+  }, []);
+
+  const poll = useCallback(
+    () =>
+      fetchStoredTranscript(eventId, roomId, { baseOverride: apiBase, secretOverride: apiSecret }),
+    [eventId, roomId, apiBase, apiSecret]
+  );
+  const onUpdate = useCallback((r: TranscribeResponse) => {
+    if (!unmountedRef.current) setResult(r);
+  }, []);
+  const isCancelled = useCallback(() => unmountedRef.current, []);
 
   const runTranscription = useCallback(async () => {
     setLoading(true);
+    setSlow(false);
     setError(undefined);
+    const slowTimer = setTimeout(() => setSlow(true), SLOW_AFTER_MS);
     try {
-      const res = await requestTranscription(
-        {
-          roomId,
-          eventId,
-          mxc,
-          language: defaultLanguage || undefined,
-          file: encInfo
-            ? { url: mxc, key: { k: encInfo.key.k }, iv: encInfo.iv, hashes: encInfo.hashes }
-            : undefined,
+      await runTranscriptFlow({
+        request: async () => {
+          try {
+            // The default-language setting only matters if the server has to
+            // transcribe on the spot; a stored transcript is returned as is.
+            return await requestTranscription(
+              {
+                roomId,
+                eventId,
+                mxc,
+                language: defaultLanguage || undefined,
+                file: encInfo
+                  ? { url: mxc, key: { k: encInfo.key.k }, iv: encInfo.iv, hashes: encInfo.hashes }
+                  : undefined,
+              },
+              { baseOverride: apiBase, secretOverride: apiSecret }
+            );
+          } finally {
+            clearTimeout(slowTimer);
+            if (!unmountedRef.current) {
+              setLoading(false);
+              setPolling(true);
+            }
+          }
         },
-        { baseOverride: apiBase, secretOverride: apiSecret }
-      );
-      setResult(res);
+        poll,
+        onUpdate,
+        isCancelled,
+      });
     } catch (e) {
       const message =
         e instanceof TranscribeError
           ? e.message
           : 'Could not transcribe this message. Please try again.';
-      setError(message);
+      if (!unmountedRef.current) setError(message);
     } finally {
-      setLoading(false);
+      clearTimeout(slowTimer);
+      if (!unmountedRef.current) {
+        setLoading(false);
+        setPolling(false);
+      }
     }
-  }, [roomId, eventId, mxc, encInfo, defaultLanguage, apiBase, apiSecret]);
+  }, [
+    roomId,
+    eventId,
+    mxc,
+    encInfo,
+    defaultLanguage,
+    apiBase,
+    apiSecret,
+    poll,
+    onUpdate,
+    isCancelled,
+  ]);
+
+  const resumePolling = useCallback(
+    async (from: TranscribeResponse) => {
+      setPolling(true);
+      try {
+        await pollForBetter(from, { poll, onUpdate, isCancelled });
+      } finally {
+        if (!unmountedRef.current) setPolling(false);
+      }
+    },
+    [poll, onUpdate, isCancelled]
+  );
 
   const handleOpen: MouseEventHandler<HTMLButtonElement> = (evt) => {
     setCopied(false);
     setAnchor(evt.currentTarget.getBoundingClientRect());
     // Only fetch the first time (cache afterwards). Errors are retryable via
-    // the retry button inside the popover.
+    // the retry button inside the popover. A draft whose polling window ran out
+    // picks up polling again when the popover is reopened.
     if (!result && !loading) {
       runTranscription();
+    } else if (result?.status === 'improving' && !polling && !loading) {
+      resumePolling(result);
     }
   };
 
@@ -123,6 +203,8 @@ export function TranscribeButton({ roomId, eventId, mxc, encInfo }: TranscribeBu
   const detectedName = result?.detectedLanguage
     ? getTranscribeLanguageName(result.detectedLanguage)
     : undefined;
+  const described = result ? describeTranscript(result, { polling }) : undefined;
+  const busy = loading || (polling && result?.status === 'improving');
 
   return (
     <PopOut
@@ -156,7 +238,7 @@ export function TranscribeButton({ roomId, eventId, mxc, encInfo }: TranscribeBu
               <Box alignItems="Center" justifyContent="SpaceBetween" gap="200">
                 <Box alignItems="Center" gap="200">
                   <Text size="L400">Transcript</Text>
-                  {loading && <Spinner size="100" variant="Secondary" />}
+                  {busy && <Spinner size="100" variant="Secondary" />}
                 </Box>
                 <IconButton
                   ref={closeBtnRef}
@@ -173,7 +255,7 @@ export function TranscribeButton({ roomId, eventId, mxc, encInfo }: TranscribeBu
 
               {loading && (
                 <Text size="T200" priority="300">
-                  Transcribing…
+                  {slow ? 'Transcribing now…' : 'Looking up the automatic transcript…'}
                 </Text>
               )}
 
@@ -199,6 +281,16 @@ export function TranscribeButton({ roomId, eventId, mxc, encInfo }: TranscribeBu
                   <Text size="T300" style={{ whiteSpace: 'pre-wrap' }}>
                     {result.text}
                   </Text>
+                  {described?.progress && (
+                    <Text size="T200" priority="300">
+                      {described.progress}
+                    </Text>
+                  )}
+                  {described && (
+                    <Text size="T200" priority="300">
+                      {described.origin}
+                    </Text>
+                  )}
                   <Box alignItems="Center" justifyContent="SpaceBetween" gap="200">
                     {detectedName ? (
                       <Text size="T200" priority="300">
