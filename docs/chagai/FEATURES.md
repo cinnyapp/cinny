@@ -13,16 +13,14 @@ The weekly `~/matrix-os/bin/upstream-sync.py` reads this file. After any upstrea
 npm ci
 NODE_OPTIONS=--max_old_space_size=4096 npm run build
 npm test
-python3 ~/cinny-consolidated-lab/smoke.py <out>                      # serve dist on :4173
-python3 ~/cinny-chat-list-lab/smoke_regression.py <out>              # serve dist on :4292
-python3 ~/cinny-chat-list-lab/chatlist_check.py http://127.0.0.1:<port> <out>
-python3 ~/cinny-consolidated-lab/media_viewer_smoke.py <out> http://127.0.0.1:4191
-python3 ~/cinny-consolidated-lab/smoke_dm_avatars.py http://127.0.0.1:<port> <out> <label>
-python3 ~/cinny-consolidated-lab/transcribe_reuse_smoke.py http://127.0.0.1:<port> <out>
-python3 ~/cinny-consolidated-lab/video_bench.py http://127.0.0.1:<port> <label>   # needs media_server.py sample.webm 4299
-python3 ~/cinny-consolidated-lab/worker_check.py http://127.0.0.1:<port>             # /sync store runs in the worker
-python3 ~/cinny-consolidated-lab/smoke_cinny_dev.py http://127.0.0.1:<port>/cinny-dev/ <out> --real-login   # hash-router subpath build
+bash ~/cinny-consolidated-lab/run-all-smokes.sh dist <out-dir>
 ```
+
+`run-all-smokes.sh` starts the servers each smoke needs and runs, in order: `smoke.py` (18),
+`smoke_regression.py` (18), `chatlist_check.py` (24), `media_viewer_smoke.py` (42),
+`smoke_dm_avatars.py` (expected pictures), `transcribe_reuse_smoke.py` (19), `worker_check.py`,
+`video_bench.py` (must stream, first frame < 1 s) and `smoke_cinny_dev.py` on a
+`--base=/cinny-dev/` hash-router build (21). Prints `# pass|fail <name>`; ~4 min.
 
 Serve a built `dist/` with SPA fallback: `python3 ~/cinny-chat-list-lab/spa_server.py dist <port>`.
 All browser smokes use a **fully mocked homeserver** (nothing real is touched); `--real-login`
