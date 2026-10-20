@@ -183,16 +183,30 @@ const BOT_USER = /^@[^:]*(bot|bridge)[^:]*:/i;
  * Bridge management / admin rooms (`@whatsappbot:…`, `@telegrambot:…`). There
  * are only a handful of them and losing them means losing the way to talk to
  * the bridge, so they are always kept.
+ *
+ * Careful: the bridge bot is ALSO a member of every bridged 1:1 chat (you, the
+ * contact's puppet, the bot = 3 members). Measured on the real account: the
+ * old "a bot is a member" test kept 6,013 of 9,032 chats. A management room is
+ * one where nobody but you and bots is in it — judged from the room summary's
+ * heroes (the other members), falling back to the stored member events.
  */
 const isBotRoom = (room: LiteRoomSyncData): boolean => {
   const memberCount = Number(room.summary?.['m.joined_member_count'] ?? 0);
   if (memberCount > 3) return false;
-  return stateEvents(room).some(
+  const heroes = room.summary?.['m.heroes'];
+  if (Array.isArray(heroes) && heroes.length > 0) {
+    const ids = heroes.filter((h): h is string => typeof h === 'string');
+    return ids.some((id) => BOT_USER.test(id)) && ids.every((id) => BOT_USER.test(id));
+  }
+  const joined = stateEvents(room).filter(
     (event) =>
       event.type === 'm.room.member' &&
       typeof event.state_key === 'string' &&
-      BOT_USER.test(event.state_key)
+      (event.content as { membership?: string } | undefined)?.membership === 'join'
   );
+  const bots = joined.filter((event) => BOT_USER.test(event.state_key as string)).length;
+  // you are the one non-bot member (your own member event may or may not be stored)
+  return bots > 0 && joined.length - bots <= 1;
 };
 
 /** One-member rooms are notes-to-self; there are very few and they matter. */

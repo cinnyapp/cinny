@@ -7,7 +7,11 @@ import { nameInitial, SnapshotRoom, StartupSnapshot } from './snapshot';
 function SnapshotAvatar({ room }: { room: SnapshotRoom }) {
   const [broken, setBroken] = useState(false);
   return (
-    <Avatar size="200" radii={room.dm ? '400' : '300'}>
+    <Avatar
+      size="200"
+      radii={room.dm ? '400' : '300'}
+      style={{ backgroundColor: color.SurfaceVariant.Container }}
+    >
       {room.avatar && !broken ? (
         <img
           src={room.avatar}
@@ -56,6 +60,16 @@ export function StartupRoomList({ snapshot, loaded, skipped }: StartupRoomListPr
       style={{ height: '100dvh', minHeight: '100%', backgroundColor: color.Background.Container }}
       data-testid="startup-snapshot"
     >
+      {!narrow && (
+        // where the spaces bar will be, so the list does not jump sideways
+        <div
+          style={{
+            width: toRem(66),
+            flexShrink: 0,
+            borderRight: `1px solid ${color.Background.ContainerLine}`,
+          }}
+        />
+      )}
       <Box
         direction="Column"
         style={{

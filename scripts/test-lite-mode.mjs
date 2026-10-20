@@ -177,6 +177,33 @@ test('unread, favourite, space, notes-to-self and bridge-bot chats are always ke
   });
 });
 
+test('a bridged 1:1 chat is NOT a bot room just because the bridge bot is in it', () => {
+  // you + the contact's puppet + the bridge bot — 6,013 of his chats looked like this
+  const dm = room({
+    messageDaysAgo: 900,
+    members: ['@me:hs', '@whatsapp_4179:hs', '@whatsappbot:hs'],
+    memberCount: 3,
+  });
+  assert.equal(roomKeepReason(dm), undefined);
+  dm.summary['m.heroes'] = ['@whatsapp_4179:hs', '@whatsappbot:hs'];
+  assert.equal(roomKeepReason(dm), undefined);
+  // the real management room: you + the bot
+  const admin = room({ messageDaysAgo: 900, members: ['@me:hs', '@whatsappbot:hs'] });
+  assert.equal(roomKeepReason(admin), 'bot');
+  admin.summary['m.heroes'] = ['@whatsappbot:hs'];
+  assert.equal(roomKeepReason(admin), 'bot');
+  // own member event not stored (lazy loading): still a management room
+  assert.equal(roomKeepReason(room({ messageDaysAgo: 900, members: ['@telegrambot:hs'] })), 'bot');
+  // a bot that left does not count
+  const left = room({ messageDaysAgo: 900, members: ['@me:hs', '@them:hs'] });
+  left.state.events.push({
+    type: 'm.room.member',
+    state_key: '@whatsappbot:hs',
+    content: { membership: 'leave' },
+  });
+  assert.equal(roomKeepReason(left), undefined);
+});
+
 test('roomKeepReason returns the specific reason', () => {
   assert.equal(roomKeepReason(room({ messageDaysAgo: 900, unread: 1 })), 'unread');
   assert.equal(roomKeepReason(room({ messageDaysAgo: 900, spaceRoom: true })), 'space');

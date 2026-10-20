@@ -11,7 +11,7 @@ import {
   writeSnapshot,
 } from './snapshot';
 
-const SAVE_DELAY_MS = 5000;
+const SAVE_DELAY_MS = 4000;
 // Unread counts are read from the jotai store at save time (not subscribed), so
 // the chat list does not re-render on every unread change because of this.
 
@@ -57,10 +57,22 @@ export const useStartupSnapshotWriter = (
     writeSnapshot(snap);
   };
 
+  // Throttle, not debounce: right after start the list keeps changing (activity
+  // lookups land one by one), and a debounce would never get to save.
+  const timer = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => {
-    const t = setTimeout(() => latest.current?.(), SAVE_DELAY_MS);
-    return () => clearTimeout(t);
+    if (timer.current) return;
+    timer.current = setTimeout(() => {
+      timer.current = undefined;
+      latest.current?.();
+    }, SAVE_DELAY_MS);
   }, [sortedRoomIds, mDirects]);
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    []
+  );
 
   useEffect(() => {
     const save = () => latest.current?.();
