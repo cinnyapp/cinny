@@ -13,6 +13,7 @@ import {
   Button,
   Chip,
   Icon,
+  IconButton,
   Icons,
   Spinner,
   Text,
@@ -64,6 +65,8 @@ type VideoContentProps = {
   spoilerReason?: string;
   renderThumbnail?: () => ReactNode;
   renderVideo: (props: RenderVideoProps) => ReactNode;
+  /** Open the chat-wide gallery viewer on this video. */
+  onOpenViewer?: () => void;
 };
 export const VideoContent = as<'div', VideoContentProps>(
   (
@@ -79,6 +82,7 @@ export const VideoContent = as<'div', VideoContentProps>(
       spoilerReason,
       renderThumbnail,
       renderVideo,
+      onOpenViewer,
       ...props
     },
     ref
@@ -287,6 +291,22 @@ export const VideoContent = as<'div', VideoContentProps>(
                 </Text>
               </Badge>
             )}
+          </Box>
+        )}
+        {onOpenViewer && !blurred && (
+          <Box style={{ position: 'absolute', top: 6, right: 6, zIndex: 1 }}>
+            <IconButton
+              size="300"
+              variant="Secondary"
+              fill="Soft"
+              radii="Pill"
+              onClick={onOpenViewer}
+              aria-label="Open in full-screen viewer"
+              title="Open in full-screen viewer"
+              data-media-open-viewer
+            >
+              <Icon size="50" src={Icons.External} />
+            </IconButton>
           </Box>
         )}
         {(error || srcState.status === AsyncStatus.Error) && (

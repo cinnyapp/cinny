@@ -55,6 +55,7 @@ import { useGetMemberPowerLevel, usePowerLevelsContext } from '../../hooks/usePo
 import { MembershipFilterMenu } from '../../components/MembershipFilterMenu';
 import { MemberSortMenu } from '../../components/MemberSortMenu';
 import { useOpenUserRoomProfile, useUserRoomProfileState } from '../../state/hooks/userRoomProfile';
+import { useOpenMediaViewer } from '../media-viewer/state';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { useFlattenPowerTagMembers, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
@@ -135,7 +136,7 @@ function MemberItem({
       radii="400"
       onClick={onClick}
       before={
-        <Avatar size="200">
+        <Avatar size="200" data-member-avatar title="Profile pictures">
           <UserAvatar
             userId={member.userId}
             src={avatarUrl ?? undefined}
@@ -237,10 +238,17 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
     { wait: 200 }
   );
 
+  const openMediaViewer = useOpenMediaViewer();
   const handleMemberClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
     const btn = evt.currentTarget as HTMLButtonElement;
     const userId = btn.getAttribute('data-user-id');
     if (!userId) return;
+    // A tap on the member's picture itself opens their picture history;
+    // the rest of the row opens the profile as before.
+    if ((evt.target as HTMLElement).closest?.('[data-member-avatar]')) {
+      openMediaViewer({ mode: 'avatars', roomId: room.roomId, userId });
+      return;
+    }
     openUserRoomProfile(room.roomId, space?.roomId, userId, btn.getBoundingClientRect(), 'Left');
   };
 

@@ -22,6 +22,7 @@ import { useMemberPowerCompare } from '../../hooks/useMemberPowerCompare';
 import { CreatorChip } from './CreatorChip';
 import { getDirectCreatePath, withSearchParam } from '../../pages/pathUtils';
 import { DirectCreateSearchParams } from '../../pages/paths';
+import { useOpenMediaViewer } from '../../features/media-viewer/state';
 
 type UserRoomProfileProps = {
   userId: string;
@@ -58,6 +59,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
   const avatarUrl = (avatarMxc && mxcUrlToHttp(mx, avatarMxc, useAuthentication)) ?? undefined;
 
   const presence = useUserPresence(userId);
+  const openMediaViewer = useOpenMediaViewer();
 
   const handleMessage = () => {
     closeUserRoomProfile();
@@ -73,6 +75,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
         userId={userId}
         avatarUrl={avatarUrl}
         presence={presence && presence.lastActiveTs !== 0 ? presence : undefined}
+        onAvatarClick={() => openMediaViewer({ mode: 'avatars', roomId: room.roomId, userId })}
       />
       <Box direction="Column" gap="500" style={{ padding: config.space.S400 }}>
         <Box direction="Column" gap="400">
