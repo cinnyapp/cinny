@@ -40,6 +40,10 @@ const KEYWORDS: Record<string, string[]> = {
     'direct',
   ],
   'Show All Chats in Home': ['home', 'spaces', 'folders', 'whatsapp', 'telegram'],
+  'Sort chats by': ['sort', 'sorting', 'order', 'recent', 'latest', 'chat list', 'a-z'],
+  'Muted & archived chats': ['mute', 'muted', 'archive', 'low priority', 'on top', 'sink'],
+  'Show Chat Filters': ['filter', 'chips', 'unread', 'people', 'groups', 'network', 'whatsapp'],
+  'Find the last message of quiet chats': ['sort', 'order', 'server', 'lookup', 'last message'],
   'Do not load old chats': [
     'lite',
     'lite mode',
