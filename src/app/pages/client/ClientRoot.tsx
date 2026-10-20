@@ -14,8 +14,8 @@ import {
   Text,
 } from 'folds';
 import { HttpApiEvent, HttpApiEventHandlerMap, MatrixClient } from 'matrix-js-sdk';
-import FocusTrap from 'focus-trap-react';
 import React, { MouseEventHandler, ReactNode, useCallback, useEffect, useState } from 'react';
+import FocusTrap from '../../components/focus-trap';
 import {
   clearCacheAndReload,
   clearLoginData,

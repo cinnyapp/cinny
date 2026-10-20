@@ -21,7 +21,7 @@ import {
   Spinner,
   Text,
 } from 'folds';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from './focus-trap';
 import {
   useVerificationRequestPhase,
   useVerificationRequestReceived,

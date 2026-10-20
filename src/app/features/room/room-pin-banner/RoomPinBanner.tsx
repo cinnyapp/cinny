@@ -1,7 +1,7 @@
 import React, { KeyboardEventHandler, MouseEventHandler, useMemo, useState } from 'react';
 import { Room } from 'matrix-js-sdk';
 import { Box, Icon, IconButton, Icons, PopOut, RectCords, Text, color } from 'folds';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from '../../../components/focus-trap';
 import { useRoomPinnedEvents } from '../../../hooks/useRoomPinnedEvents';
 import { useRoomEvent } from '../../../hooks/useRoomEvent';
 import { useRoomNavigate } from '../../../hooks/useRoomNavigate';

@@ -28,7 +28,7 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { JoinRule, Room } from 'matrix-js-sdk';
 import { RoomJoinRulesEventContent } from 'matrix-js-sdk/lib/types';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from '../../../components/focus-trap';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { mDirectAtom } from '../../../state/mDirectList';
 import {
@@ -418,7 +418,8 @@ export function Space() {
         const isUnread = hideActivityDots
           ? u !== undefined && (u.total > 0 || u.highlight > 0)
           : roomToUnread.has(roomId);
-        const showRoomAnyway = isUnread || roomId === selectedRoomId || callEmbed?.roomId === roomId;
+        const showRoomAnyway =
+          isUnread || roomId === selectedRoomId || callEmbed?.roomId === roomId;
         return !showRoomAnyway;
       },
       [space.roomId, closedCategories, roomToUnread, selectedRoomId, callEmbed, hideActivityDots]

@@ -18,8 +18,8 @@ import {
   Menu,
   MenuItem,
 } from 'folds';
-import FocusTrap from 'focus-trap-react';
 import { CryptoApi, VerificationRequest } from 'matrix-js-sdk/lib/crypto-api';
+import FocusTrap from '../../../components/focus-trap';
 import { VerificationStatus } from '../../../hooks/useDeviceVerificationStatus';
 import { InfoCard } from '../../../components/info-card';
 import { ManualVerificationTile } from '../../../components/ManualVerification';

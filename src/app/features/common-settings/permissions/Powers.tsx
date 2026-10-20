@@ -1,6 +1,5 @@
 /* eslint-disable react/no-array-index-key */
 import React, { useState, MouseEventHandler, ReactNode } from 'react';
-import FocusTrap from 'focus-trap-react';
 import {
   Box,
   Button,
@@ -14,6 +13,7 @@ import {
   config,
   color,
 } from 'folds';
+import FocusTrap from '../../../components/focus-trap';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { getPowers, usePowerLevelTags } from '../../../hooks/usePowerLevelTags';

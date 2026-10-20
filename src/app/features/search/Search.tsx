@@ -1,4 +1,3 @@
-import FocusTrap from 'focus-trap-react';
 import {
   Avatar,
   Box,
@@ -28,6 +27,7 @@ import React, {
 import { isKeyHotkey } from 'is-hotkey';
 import { useAtom, useAtomValue } from 'jotai';
 import { Room } from 'matrix-js-sdk';
+import FocusTrap from '../../components/focus-trap';
 import { useDirects, useOrphanSpaces, useRooms, useSpaces } from '../../state/hooks/roomList';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { mDirectAtom } from '../../state/mDirectList';

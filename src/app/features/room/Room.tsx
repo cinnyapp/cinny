@@ -19,6 +19,7 @@ import { CallView } from '../call/CallView';
 import { RoomViewHeader } from './RoomViewHeader';
 import { callChatAtom } from '../../state/callEmbed';
 import { CallChatView } from './CallChatView';
+import { SafeBoundary } from '../../components/error-boundary/SafeBoundary';
 
 export function Room() {
   const { eventId } = useParams();
@@ -61,17 +62,25 @@ export function Room() {
       <Box grow="Yes">
         {callView && (screenSize === ScreenSize.Desktop || !chat) && (
           <Box grow="Yes" direction="Column">
-            <RoomViewHeader callView />
+            <SafeBoundary where="room header" resetKeys={[room.roomId]}>
+              <RoomViewHeader callView />
+            </SafeBoundary>
             <Box grow="Yes">
-              <CallView />
+              <SafeBoundary where="call view" variant="panel" resetKeys={[room.roomId]}>
+                <CallView />
+              </SafeBoundary>
             </Box>
           </Box>
         )}
         {!callView && (
           <Box grow="Yes" direction="Column">
-            <RoomViewHeader />
+            <SafeBoundary where="room header" resetKeys={[room.roomId]}>
+              <RoomViewHeader />
+            </SafeBoundary>
             <Box grow="Yes">
-              <RoomView eventId={eventId} />
+              <SafeBoundary where="room view" variant="panel" resetKeys={[room.roomId]}>
+                <RoomView eventId={eventId} />
+              </SafeBoundary>
             </Box>
           </Box>
         )}
@@ -81,13 +90,17 @@ export function Room() {
             {screenSize === ScreenSize.Desktop && (
               <Line variant="Background" direction="Vertical" size="300" />
             )}
-            <CallChatView />
+            <SafeBoundary where="call chat" variant="panel" resetKeys={[room.roomId]}>
+              <CallChatView />
+            </SafeBoundary>
           </>
         )}
         {!callView && screenSize === ScreenSize.Desktop && isDrawer && (
           <>
             <Line variant="Background" direction="Vertical" size="300" />
-            <MembersDrawer key={room.roomId} room={room} members={members} />
+            <SafeBoundary where="members drawer" variant="panel" resetKeys={[room.roomId]}>
+              <MembersDrawer key={room.roomId} room={room} members={members} />
+            </SafeBoundary>
           </>
         )}
       </Box>

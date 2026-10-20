@@ -168,7 +168,9 @@ export function AudioContent({
     ),
     rightControl: (
       <>
-        {roomId && eventId && <TranscribeButton roomId={roomId} eventId={eventId} mxc={url} />}
+        {roomId && eventId && (
+          <TranscribeButton roomId={roomId} eventId={eventId} mxc={url} encInfo={encInfo} />
+        )}
         <IconButton
           variant="SurfaceVariant"
           size="300"

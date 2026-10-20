@@ -1,5 +1,4 @@
 import React, { MouseEventHandler, useCallback, useEffect, useState } from 'react';
-import FocusTrap from 'focus-trap-react';
 import {
   Box,
   IconButton,
@@ -15,6 +14,7 @@ import {
   Spinner,
   toRem,
 } from 'folds';
+import FocusTrap from '../../components/focus-trap';
 import { HierarchyItem } from '../../hooks/useSpaceHierarchy';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { MSpaceChildContent, StateEvent } from '../../../types/matrix/room';
