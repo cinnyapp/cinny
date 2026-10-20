@@ -91,23 +91,21 @@ export function LiteModeSettings() {
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile
           title="Do not load old chats"
-          description={
-            <>
-              Chats where nobody has written for a long time are skipped completely when the app
-              starts, instead of being rebuilt every time. They come back on their own as soon as
-              someone writes in them. Anything unread, favourited, a space, or a bridge admin chat
-              is always loaded. {auto ? autoNote : 'You set this yourself.'}
-            </>
-          }
+          description="Chats where nobody has written for a long time are skipped completely when the app starts, instead of being rebuilt every time. They come back on their own as soon as someone writes in them. Anything unread, favourited, a space, or a bridge admin chat is always loaded. Automatic for big accounts."
           after={<Switch variant="Primary" value={effective} onChange={handleSwitch} />}
         >
-          {!auto && (
-            <Box gap="200" wrap="Wrap">
-              <Button size="300" variant="Secondary" fill="Soft" radii="300" onClick={handleAuto}>
-                <Text size="B300">Back to automatic</Text>
-              </Button>
-            </Box>
-          )}
+          <Box direction="Column" gap="200">
+            <Text size="T200" priority="300">
+              {auto ? autoNote : 'You set this yourself.'}
+            </Text>
+            {!auto && (
+              <Box gap="200" wrap="Wrap">
+                <Button size="300" variant="Secondary" fill="Soft" radii="300" onClick={handleAuto}>
+                  <Text size="B300">Back to automatic</Text>
+                </Button>
+              </Box>
+            )}
+          </Box>
         </SettingTile>
       </SequenceCard>
 
