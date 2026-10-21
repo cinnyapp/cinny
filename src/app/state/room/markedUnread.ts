@@ -5,6 +5,7 @@ import { Membership } from '../../../types/matrix/room';
 import { isMarkedUnreadType, isRoomMarkedUnread } from '../../utils/markedUnread';
 import { ChunkedRun, runChunked } from '../../utils/batch';
 import { useSyncState } from '../../hooks/useSyncState';
+import { onReplayProgress } from '../../../client/staged-replay';
 
 /**
  * The set of rooms the user has explicitly marked unread (MSC2867 /
@@ -132,6 +133,17 @@ export const useBindMarkedUnreadAtom = (
       },
       [scanner]
     )
+  );
+
+  // Staged start-up: PREPARED fires after stage 1 (the ~40 hottest chats); the
+  // rest streams in behind the open app and is ignored above while the replay
+  // is active — so scan once more when the replay is done.
+  useEffect(
+    () =>
+      onReplayProgress(mx, (p) => {
+        if (p.stage === 'done') scanner.scanAll();
+      }),
+    [mx, scanner]
   );
 
   // matrix-js-sdk re-emits `RoomEvent.AccountData` on the client (see

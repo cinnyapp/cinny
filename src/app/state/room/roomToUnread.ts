@@ -30,7 +30,7 @@ import { useStateEventCallback } from '../../hooks/useStateEventCallback';
 import { useSyncState } from '../../hooks/useSyncState';
 import { useRoomsNotificationPreferencesContext } from '../../hooks/useRoomsNotificationPreferences';
 import { ChunkedRun, Coalescer, createCoalescer, runChunked } from '../../utils/batch';
-import { isReplayActive } from '../../../client/staged-replay';
+import { isReplayActive, onReplayProgress } from '../../../client/staged-replay';
 
 /** A single room-scoped change that can be applied as part of a `BULK` action. */
 export type RoomToUnreadUpdate =
@@ -334,6 +334,17 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
       },
       [scheduler]
     )
+  );
+
+  // Staged start-up: PREPARED fires after stage 1 (the ~40 hottest chats); the
+  // rest streams in behind the open app and is ignored above while the replay
+  // is active — so scan once more when the replay is done.
+  useEffect(
+    () =>
+      onReplayProgress(mx, (p) => {
+        if (p.stage === 'done') scheduler.scanAll();
+      }),
+    [mx, scheduler]
   );
 
   useEffect(() => {

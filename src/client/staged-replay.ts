@@ -14,13 +14,22 @@
  *   stage 2 = the remaining rooms, in chunks, with a macrotask yield between
  *             chunks and a `cinny.replay` progress event after each one.
  *
+ * Stage 1 is all the SDK waits for: PREPARED fires right after it and the first
+ * live /sync (sent in parallel at start-up) is applied immediately, so a
+ * message that arrived while the tab was closed shows up seconds earlier than
+ * after the whole replay. Stage 2 streams behind the open app in ONE serial
+ * lane shared with live responses: a live /sync that mentions a room still in
+ * stage 2 gets that room's cached copy replayed first, so per-room order
+ * (saved history, then the live delta) always holds. Chunk sizes adapt to the
+ * device (~120 ms of work per chunk) so a phone paints between chunks too.
+ *
  * Safe because: everything that must be processed exactly once (account_data,
  * presence, to_device, device_lists, one-time-key counts, invite/leave/knock)
  * travels in chunk 0 only; `notifEvents` is reset per call and only flushed for
  * live gappy syncs (`oldSyncToken` set), which are never chunked; the store /
  * accumulator is untouched (`doSync` persists the whole live response itself);
- * and `SyncApi.sync()` still awaits the whole cached replay before the first
- * live /sync is applied, so sending and receiving keep today's ordering.
+ * cached events are flagged `fromCache` by the SDK, so nothing in the app
+ * treats them as live (`liveEvent` is false for them).
  *
  * Kept free of app and SDK imports (types only) so it can be unit tested in
  * node: `npm run test:staged-replay`.
@@ -32,7 +41,8 @@ export const REPLAY_EVENT = 'cinny.replay';
 /** Responses with this many joined rooms or fewer are handed through untouched. */
 export const REPLAY_CHUNK_THRESHOLD = 120;
 export const REPLAY_DEFAULT_FIRST = 40;
-export const REPLAY_DEFAULT_CHUNK = 150;
+/** stage-2 chunk size to START with; it then adapts to ~REPLAY_TARGET_CHUNK_MS of work per chunk */
+export const REPLAY_DEFAULT_CHUNK = 60;
 /** The cold initial sync carries full state per room (6-8× heavier): smaller chunks keep it smooth. */
 export const REPLAY_COLD_CHUNK = 50;
 /** A space with more state events than this is a giant "one m.space.child per chat" space: stage 2. */
@@ -245,6 +255,13 @@ export type ReplayState = {
   chunkStartedAt?: number;
   chunkRooms?: string[];
   slowChunks?: number;
+  /** stage 2 streams behind the open app while the live /sync is already applied */
+  background?: boolean;
+  /** rooms the first live /sync touched and that were replayed ahead of their turn */
+  pulledForward?: number;
+  /** last stage-2 chunk: rooms and ms (the adaptive size is derived from these) */
+  lastChunkRooms?: number;
+  lastChunkMs?: number;
 };
 
 const replayState: ReplayState = { active: false, done: 0, total: 0, fromCache: false };
@@ -252,6 +269,11 @@ const replayState: ReplayState = { active: false, done: 0, total: 0, fromCache: 
 (globalThis as { __cinnyReplay?: ReplayState }).__cinnyReplay = replayState;
 /** a chunk that takes longer than this is reported on the console (never expected) */
 const SLOW_CHUNK_MS = 15_000;
+/** stage-2 chunk sizes adapt between these bounds (rooms per chunk) */
+export const REPLAY_MIN_CHUNK = 15;
+export const REPLAY_MAX_CHUNK = 300;
+/** aim for this much main-thread work per stage-2 chunk (a phone is 3-4× slower than the box) */
+export const REPLAY_TARGET_CHUNK_MS = 120;
 
 /** Current replay progress for consumers that mount after the events were emitted. */
 export const getReplayState = (): ReplayState => replayState;
@@ -260,7 +282,7 @@ export const getReplayState = (): ReplayState => replayState;
  * True while the staged replay is streaming rooms in behind the open app.
  * Every room that arrives then is brand new, so per-event listeners (which the
  * unstaged path never ran during the replay — the atoms mounted only after
- * PREPARED) can skip their work and rebuild once per chunk / at PREPARED.
+ * PREPARED) can skip their work and rebuild once per chunk / at 'done'.
  */
 export const isReplayActive = (): boolean => replayState.active;
 
@@ -289,7 +311,10 @@ const applyProgress = (p: ReplayProgress) => {
   replayState.done = p.done;
   replayState.total = p.total;
   replayState.fromCache = p.fromCache;
-  if (p.stage === 'done') replayState.finishedAt = now();
+  if (p.stage === 'done') {
+    replayState.finishedAt = now();
+    replayState.background = false;
+  }
 };
 
 /** The part of `SyncApi` (instance side) the wrapper touches. */
@@ -310,19 +335,96 @@ type SyncApiPrototypeLike = {
 
 export type StagedReplayOptions = {
   getHints: () => ReplayHints;
+  /** stage-2 chunk size to start with (cached replay); adapts towards `targetChunkMs` */
   chunkSize?: number;
   /** chunk size for the cold initial sync (not from cache) */
   coldChunkSize?: number;
+  /** ms of work to aim for per stage-2 chunk; 0 = keep `chunkSize` fixed */
+  targetChunkMs?: number;
   threshold?: number;
   /** test hook; defaults to a real macrotask yield */
   yieldFn?: () => Promise<void>;
+  /** test hook; defaults to performance.now() */
+  nowFn?: () => number;
 };
+
+/**
+ * The stage-2 work still to do for the current cached replay. While this is set
+ * the SDK has already moved on (PREPARED fired, the first live /sync is being
+ * applied) and the remaining rooms stream in behind the open app.
+ */
+type PendingReplay = {
+  api: SyncApiLike;
+  /** the cached syncEventData (fromCache: true, no oldSyncToken) */
+  syncEventData: SyncEventDataLike;
+  nextBatch: string;
+  join: Record<string, LiteRoomSyncData>;
+  /** rooms not replayed yet, in plan order */
+  pending: string[];
+  done: number;
+  total: number;
+};
+
+let pendingReplay: PendingReplay | undefined;
+/**
+ * One lane for everything that goes through `processSyncResponse` while stage 2
+ * is pending: background chunks and live responses never overlap, so per-room
+ * order (cached copy first, then the live delta) always holds.
+ */
+let lane: Promise<void> = Promise.resolve();
+const serial = <T>(fn: () => Promise<T>): Promise<T> => {
+  const run = lane.then(fn, fn);
+  lane = run.then(
+    () => undefined,
+    () => undefined
+  );
+  return run;
+};
+let idleWaiters: (() => void)[] = [];
+
+/** Resolves once no stage-2 replay is streaming (immediately when none is). Tests + harness. */
+export const whenReplayIdle = (): Promise<void> =>
+  pendingReplay
+    ? new Promise((resolve) => {
+        idleWaiters.push(resolve);
+      })
+    : Promise.resolve();
+
+/** The rooms of a live /sync response that are still waiting in stage 2. */
+export const roomsStillPending = (
+  data: SyncResponseLike,
+  pending: Iterable<string>
+): string[] => {
+  const { rooms } = data;
+  if (!rooms) return [];
+  const touched = new Set<string>();
+  (['join', 'leave', 'invite', 'knock'] as const).forEach((k) => {
+    const bucket = rooms[k];
+    if (bucket) Object.keys(bucket).forEach((id) => touched.add(id));
+  });
+  if (touched.size === 0) return [];
+  return Array.from(pending).filter((id) => touched.has(id));
+};
+
+const clampChunk = (n: number) =>
+  Math.max(REPLAY_MIN_CHUNK, Math.min(REPLAY_MAX_CHUNK, Math.round(n)));
 
 /**
  * Wrap `SyncApi.prototype.processSyncResponse` (pass the real prototype, or a
  * fake in tests). Feature-detected: returns false and leaves today's path
  * untouched when the method is missing (an upstream SDK bump moved it) or when
  * it is already wrapped.
+ *
+ * Cached replay (a normal refresh): stage 1 (the ~40 hottest rooms + everything
+ * that is not a joined room) is processed and the call RETURNS — the SDK emits
+ * PREPARED and applies the first live /sync (sent in parallel at start-up), so
+ * a message that arrived while the tab was closed shows up right after the
+ * cached ones. Stage 2 streams the remaining rooms behind the open app in
+ * yielding, size-adapting chunks. A live response that mentions a room still
+ * in stage 2 gets that room's cached copy replayed FIRST (same lane), so no
+ * room ever sees its live delta before its saved history.
+ *
+ * Cold initial sync: chunked for a ticking counter, but awaited whole.
  */
 export const installStagedReplay = (
   proto: SyncApiPrototypeLike | undefined,
@@ -334,8 +436,10 @@ export const installStagedReplay = (
   const original = proto.processSyncResponse;
   const chunkSize = options.chunkSize ?? REPLAY_DEFAULT_CHUNK;
   const coldChunkSize = options.coldChunkSize ?? REPLAY_COLD_CHUNK;
+  const targetChunkMs = options.targetChunkMs ?? REPLAY_TARGET_CHUNK_MS;
   const threshold = options.threshold ?? REPLAY_CHUNK_THRESHOLD;
   const doYield = options.yieldFn ?? yieldToMain;
+  const clock = options.nowFn ?? now;
 
   const emit = (api: SyncApiLike, p: ReplayProgress) => {
     applyProgress(p);
@@ -343,6 +447,114 @@ export const installStagedReplay = (
       api.client.emit(REPLAY_EVENT, p);
     } catch {
       // a listener threw — never let that break the sync loop
+    }
+  };
+
+  const finish = (state: PendingReplay) => {
+    if (pendingReplay !== state) return;
+    pendingReplay = undefined;
+    emit(state.api, {
+      stage: 'done',
+      done: state.done,
+      total: state.total,
+      fromCache: true,
+      chunked: true,
+    });
+    const waiters = idleWaiters;
+    idleWaiters = [];
+    waiters.forEach((resolve) => resolve());
+  };
+
+  /** Replay `ids` from the saved record (cached syncEventData); catchingUp is left as it was. */
+  const replayCached = async (state: PendingReplay, ids: string[]): Promise<void> => {
+    const { api } = state;
+    const before = api.catchingUp;
+    replayState.chunkStartedAt = clock();
+    replayState.chunkRooms = ids.slice(0, 3);
+    const watchdog = setTimeout(() => {
+      replayState.slowChunks = (replayState.slowChunks ?? 0) + 1;
+      // eslint-disable-next-line no-console
+      console.warn(
+        `staged startup: a chunk of ${ids.length} rooms (from ${ids[0]}) is taking more than ${SLOW_CHUNK_MS} ms`
+      );
+    }, SLOW_CHUNK_MS);
+    try {
+      await original.call(api, state.syncEventData, {
+        next_batch: state.nextBatch,
+        rooms: { join: pick(state.join, ids) },
+      });
+    } catch (err) {
+      // the unstaged SDK would have dropped the WHOLE cached replay here; we lose one chunk
+      // eslint-disable-next-line no-console
+      console.error('staged startup: a replay chunk failed, continuing with the next', err);
+    } finally {
+      clearTimeout(watchdog);
+      // the saved record carries no to_device events, so the SDK would flip
+      // catchingUp to false after every chunk — the live /sync decides that now
+      if (before !== undefined) api.catchingUp = before;
+    }
+    // eslint-disable-next-line no-param-reassign
+    state.done += ids.length;
+  };
+
+  /** A live response while stage 2 streams: replay the cached copy of every room it touches first. */
+  const pullForward = async (state: PendingReplay, data: SyncResponseLike): Promise<void> => {
+    const ids = roomsStillPending(data, state.pending);
+    if (ids.length === 0) return;
+    const set = new Set(ids);
+    // eslint-disable-next-line no-param-reassign
+    state.pending = state.pending.filter((id) => !set.has(id));
+    replayState.pulledForward = (replayState.pulledForward ?? 0) + ids.length;
+    await replayCached(state, ids);
+    emit(state.api, {
+      stage: 'progress',
+      done: state.done,
+      total: state.total,
+      fromCache: true,
+      chunked: true,
+    });
+  };
+
+  /** One stage-2 chunk, taken inside the lane (a live response queued ahead may have pulled rooms forward). */
+  const processNextChunk = async (
+    state: PendingReplay,
+    ctl: { size: number; index: number }
+  ): Promise<void> => {
+    const ids = state.pending.splice(0, ctl.size);
+    if (ids.length === 0) return;
+    // eslint-disable-next-line no-param-reassign
+    ctl.index += 1;
+    replayState.chunk = ctl.index;
+    const t0 = clock();
+    await replayCached(state, ids);
+    const elapsed = Math.max(1, clock() - t0);
+    replayState.lastChunkRooms = ids.length;
+    replayState.lastChunkMs = Math.round(elapsed);
+    // eslint-disable-next-line no-param-reassign
+    if (targetChunkMs > 0) ctl.size = clampChunk((ids.length * targetChunkMs) / elapsed);
+    if (state.pending.length > 0) {
+      emit(state.api, {
+        stage: 'progress',
+        done: state.done,
+        total: state.total,
+        fromCache: true,
+        chunked: true,
+      });
+    }
+  };
+
+  /** Stage 2: the remaining rooms, newest-first, in yielding chunks sized to ~targetChunkMs. */
+  const runBackground = async (state: PendingReplay): Promise<void> => {
+    const ctl = { size: clampChunk(chunkSize), index: 0 };
+    try {
+      while (pendingReplay === state && state.pending.length > 0) {
+        // eslint-disable-next-line no-await-in-loop
+        await doYield();
+        // eslint-disable-next-line no-await-in-loop
+        await serial(() => processNextChunk(state, ctl));
+      }
+    } finally {
+      finish(state);
     }
   };
 
@@ -360,6 +572,15 @@ export const installStagedReplay = (
     // a live gappy sync with a saved token flushes notifEvents and must stay whole.
     const chunkable = total > threshold && (fromCache || !syncEventData?.oldSyncToken);
     if (!chunkable) {
+      const state = pendingReplay;
+      if (!fromCache && state) {
+        // live /sync while stage 2 streams: same lane, cached copies first
+        await serial(async () => {
+          await pullForward(state, data);
+          await original.call(this, syncEventData, data);
+        });
+        return;
+      }
       await original.call(this, syncEventData, data);
       if (fromCache) {
         emit(this, { stage: 'done', done: total, total, fromCache, chunked: false });
@@ -367,16 +588,52 @@ export const installStagedReplay = (
       return;
     }
     const plan = planReplayOrder(join!, options.getHints());
-    const chunks = splitSyncResponse(data, plan, fromCache ? chunkSize : coldChunkSize, threshold);
+
+    if (fromCache) {
+      const chunks = splitSyncResponse(data, plan, Number.MAX_SAFE_INTEGER, threshold);
+      const first = chunks[0];
+      const rest = chunks.slice(1).flatMap((c) => Object.keys(c.rooms?.join ?? {}));
+      if (pendingReplay) finish(pendingReplay); // a client restart mid-replay: start clean
+      replayState.chunks = undefined;
+      replayState.slowChunks = 0;
+      replayState.pulledForward = 0;
+      replayState.chunk = 0;
+      // stage 1 is what the SDK waits for: PREPARED and the first live /sync follow it
+      await serial(() => original.call(this, syncEventData, first));
+      const done = Object.keys(first.rooms?.join ?? {}).length;
+      const state: PendingReplay = {
+        api: this,
+        syncEventData,
+        nextBatch: data.next_batch,
+        join: join!,
+        pending: rest,
+        done,
+        total,
+      };
+      pendingReplay = state;
+      replayState.background = true;
+      emit(this, { stage: 'first', done, total, fromCache, chunked: true });
+      if (rest.length === 0) {
+        finish(state);
+        return;
+      }
+      // never awaited by the SDK: the rest streams in behind the open app
+      runBackground(state).catch(() => undefined);
+      return;
+    }
+
+    // cold initial sync: chunked (ticking counter, paints between chunks) but awaited whole
+    const chunks = splitSyncResponse(data, plan, coldChunkSize, threshold);
     let done = 0;
     let catching: boolean | undefined;
     replayState.chunks = chunks.length;
     replayState.slowChunks = 0;
+    replayState.background = false;
     try {
       for (let i = 0; i < chunks.length; i += 1) {
         const rooms = Object.keys(chunks[i].rooms?.join ?? {});
         replayState.chunk = i;
-        replayState.chunkStartedAt = now();
+        replayState.chunkStartedAt = clock();
         replayState.chunkRooms = rooms.slice(0, 3);
         const watchdog = setTimeout(() => {
           replayState.slowChunks = (replayState.slowChunks ?? 0) + 1;
@@ -396,18 +653,12 @@ export const installStagedReplay = (
         if (i === 0) catching = this.catchingUp;
         // later chunks carry no to_device: keep chunk 0's catching-up decision
         else if (catching !== undefined) this.catchingUp = catching;
-        done += Object.keys(chunks[i].rooms?.join ?? {}).length;
+        done += rooms.length;
         const last = i === chunks.length - 1;
         let stage: ReplayStage = 'progress';
         if (i === 0) stage = 'first';
         else if (last) stage = 'done';
-        emit(this, {
-          stage,
-          done,
-          total,
-          fromCache,
-          chunked: true,
-        });
+        emit(this, { stage, done, total, fromCache, chunked: true });
         // eslint-disable-next-line no-await-in-loop
         if (!last) await doYield();
       }

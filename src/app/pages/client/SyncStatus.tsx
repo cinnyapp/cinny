@@ -40,6 +40,9 @@ export function SyncStatus({ mx }: SyncStatusProps) {
 
   // A fast catch-up (the normal case with a fresh sync token) should show
   // nothing at all: only say "Connecting..." when it takes longer than this.
+  // PREPARED → first SYNCING covers applying the first live /sync AND the
+  // crypto module's post-sync work (key queries), which can take seconds — the
+  // open chat may still be a few seconds stale until this banner goes.
   const [connectingShown, setConnectingShown] = useState(false);
   useEffect(() => {
     if (!connecting) {
@@ -59,7 +62,7 @@ export function SyncStatus({ mx }: SyncStatusProps) {
           alignItems="Center"
           justifyContent="Center"
         >
-          <Text size="L400">Connecting...</Text>
+          <Text size="L400">Connecting... checking for new messages</Text>
         </Box>
         <Line variant="Success" size="300" />
       </Box>

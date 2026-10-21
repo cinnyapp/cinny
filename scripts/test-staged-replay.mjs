@@ -17,7 +17,11 @@ const {
   REPLAY_CHUNK_THRESHOLD,
   REPLAY_DEFAULT_FIRST,
   REPLAY_EVENT,
+  REPLAY_MIN_CHUNK,
+  REPLAY_MAX_CHUNK,
   defaultReplayHints,
+  whenReplayIdle,
+  roomsStillPending,
 } = await import('../src/client/staged-replay.ts');
 
 const DAY = 86_400_000;
@@ -201,12 +205,13 @@ test('installStagedReplay: feature-detected, idempotent', () => {
   assert.equal(proto.__cinnyStaged, true);
 });
 
-test('installStagedReplay: cached replay is chunked, yields, and emits first → progress → done', async () => {
+test('installStagedReplay: cached replay returns after stage 1, streams the rest, emits first → progress… → done', async () => {
   const { proto, api, calls, events } = fakeSyncApi();
   let yields = 0;
   installStagedReplay(proto, {
     getHints: () => hints({ urlRoomId: '!r399:hs', firstCount: 40 }),
     chunkSize: 150,
+    targetChunkMs: 0, // fixed size for a deterministic test
     yieldFn: async () => {
       yields += 1;
     },
@@ -219,14 +224,23 @@ test('installStagedReplay: cached replay is chunked, yields, and emits first →
     rooms: { join },
   };
   await api.processSyncResponse({ fromCache: true, nextSyncToken: 'nb' }, data);
+  // the SDK gets control back after stage 1: PREPARED + the first live /sync follow at once
+  assert.equal(calls.length, 1, 'only stage 1 was processed when the call resolved');
+  assert.equal(calls[0].join.length, 40);
+  assert.equal(calls[0].join[0], '!r399:hs', 'the URL room is in stage 1');
+  assert.deepEqual(calls[0].extras.sort(), ['account_data', 'to_device']);
+  assert.equal(getReplayState().active, true);
+  assert.equal(getReplayState().background, true);
+  await whenReplayIdle();
   assert.deepEqual(
     calls.map((c) => c.join.length),
     [40, 150, 150, 60]
   );
-  assert.equal(calls[0].join[0], '!r399:hs', 'the URL room is in stage 1');
-  assert.deepEqual(calls[0].extras.sort(), ['account_data', 'to_device']);
-  calls.slice(1).forEach((c) => assert.deepEqual(c.extras, []));
-  assert.equal(yields, 3, 'one yield between chunks, none after the last');
+  calls.slice(1).forEach((c) => {
+    assert.deepEqual(c.extras, []);
+    assert.equal(c.fromCache, true);
+  });
+  assert.equal(yields, 3, 'one yield before every stage-2 chunk');
   assert.deepEqual(
     events.map((e) => [e.ev, e.stage, e.done, e.total, e.fromCache, e.chunked]),
     [
@@ -236,7 +250,10 @@ test('installStagedReplay: cached replay is chunked, yields, and emits first →
       [REPLAY_EVENT, 'done', 400, 400, true, true],
     ]
   );
-  // chunk 0 had to_device → catching up; later chunks must not flip it back
+  // every room exactly once, in plan order
+  const all = calls.flatMap((c) => c.join);
+  assert.deepEqual([...all].sort(), Object.keys(join).sort());
+  // chunk 0 had to_device → catching up; the saved record's chunks must not flip it back
   assert.equal(api.catchingUp, true);
   const state = getReplayState();
   assert.equal(state.active, false);
@@ -244,6 +261,83 @@ test('installStagedReplay: cached replay is chunked, yields, and emits first →
   assert.equal(state.total, 400);
   assert.equal(typeof state.startedAt, 'number');
   assert.equal(typeof state.finishedAt, 'number');
+  assert.equal(state.lastChunkRooms, 60);
+});
+
+test('installStagedReplay: a live /sync during stage 2 replays the rooms it touches first, in one lane', async () => {
+  const { proto, api, calls, events } = fakeSyncApi();
+  let release;
+  const gate = new Promise((r) => {
+    release = r;
+  });
+  let yields = 0;
+  installStagedReplay(proto, {
+    getHints: () => hints({ firstCount: 40 }),
+    chunkSize: 100,
+    targetChunkMs: 0,
+    // the first stage-2 chunk waits until the test lets it go
+    yieldFn: async () => {
+      yields += 1;
+      if (yields === 1) await gate;
+    },
+  });
+  const join = manyRooms(300); // !r0 newest … !r299 oldest → stage 1 = r0..r39
+  await api.processSyncResponse({ fromCache: true, nextSyncToken: 'nb' }, { next_batch: 'nb', rooms: { join } });
+  assert.equal(calls.length, 1);
+  // the live catch-up arrives: it mentions a stage-1 room, two stage-2 rooms and a left room
+  const live = {
+    next_batch: 'nb2',
+    rooms: {
+      join: { '!r5:hs': room(), '!r250:hs': room(), '!r120:hs': room() },
+      leave: { '!r299:hs': {} },
+    },
+  };
+  assert.deepEqual(roomsStillPending(live, Object.keys(join).slice(40)), ['!r120:hs', '!r250:hs', '!r299:hs']);
+  const livePromise = api.processSyncResponse({ oldSyncToken: 'nb', nextSyncToken: 'nb2' }, live);
+  release();
+  await livePromise;
+  // cached copies of the three pending rooms were replayed BEFORE the live delta
+  const liveIndex = calls.findIndex((c) => c.oldSyncToken === 'nb');
+  assert.ok(liveIndex > 0);
+  const pulled = calls[liveIndex - 1];
+  assert.equal(pulled.fromCache, true);
+  assert.deepEqual([...pulled.join].sort(), ['!r120:hs', '!r250:hs', '!r299:hs']);
+  assert.deepEqual(calls[liveIndex].join.sort(), ['!r120:hs', '!r250:hs', '!r5:hs']);
+  await whenReplayIdle();
+  // every cached room exactly once; the pulled-forward ones are not replayed again
+  const cached = calls.filter((c) => c.fromCache).flatMap((c) => c.join);
+  assert.deepEqual([...cached].sort(), Object.keys(join).sort());
+  assert.equal(new Set(cached).size, cached.length);
+  assert.equal(events.at(-1).stage, 'done');
+  assert.equal(events.at(-1).done, 300);
+  assert.equal(getReplayState().pulledForward, 3);
+  assert.equal(getReplayState().active, false);
+});
+
+test('installStagedReplay: stage-2 chunk size adapts to the measured work per chunk', async () => {
+  const { proto, api, calls } = fakeSyncApi();
+  let t = 0;
+  const costPerRoom = 4; // ms "measured" per room → 120 ms target = 30 rooms
+  const base = proto.processSyncResponse;
+  proto.processSyncResponse = async function timedProcessSyncResponse(ev, data) {
+    t += Object.keys(data.rooms?.join ?? {}).length * costPerRoom;
+    return base.call(this, ev, data);
+  };
+  installStagedReplay(proto, {
+    getHints: () => hints({ firstCount: 10 }),
+    chunkSize: 60,
+    targetChunkMs: 120,
+    yieldFn: async () => {},
+    nowFn: () => t,
+  });
+  await api.processSyncResponse({ fromCache: true }, { next_batch: 'nb', rooms: { join: manyRooms(400) } });
+  await whenReplayIdle();
+  const sizes = calls.slice(1).map((c) => c.join.length);
+  assert.equal(sizes[0], 60, 'starts with chunkSize');
+  // 60 rooms took 240 ms → 30; 30 rooms took 120 ms → stays 30
+  assert.deepEqual(sizes.slice(1, 4), [30, 30, 30]);
+  sizes.forEach((n) => assert.ok(n >= REPLAY_MIN_CHUNK && n <= REPLAY_MAX_CHUNK));
+  assert.equal(sizes.reduce((a, b) => a + b, 0), 390);
 });
 
 test('installStagedReplay: the cold initial sync (no old token) is chunked newest-first too', async () => {
@@ -300,15 +394,40 @@ test('installStagedReplay: a small cached replay runs once and still emits done'
   assert.equal(getReplayState().active, false);
 });
 
-test('installStagedReplay: a chunk that throws still ends with done (listeners never hang)', async () => {
+test('installStagedReplay: a stage-2 chunk that throws is skipped, the rest still streams, done is emitted', async () => {
   const { proto, api, calls, events } = fakeSyncApi({ throwOnCall: 2 });
-  installStagedReplay(proto, { getHints: hints, chunkSize: 100, yieldFn: async () => {} });
-  // (cached replay → chunkSize applies)
+  installStagedReplay(proto, {
+    getHints: hints,
+    chunkSize: 100,
+    targetChunkMs: 0,
+    yieldFn: async () => {},
+  });
+  const errors = [];
+  const origError = console.error;
+  console.error = (...a) => errors.push(a[0]);
+  try {
+    await api.processSyncResponse({ fromCache: true }, { next_batch: 'nb', rooms: { join: manyRooms(300) } });
+    await whenReplayIdle();
+  } finally {
+    console.error = origError;
+  }
+  assert.deepEqual(
+    calls.map((c) => c.join.length),
+    [40, 100, 100, 60]
+  );
+  assert.equal(errors.length, 1);
+  assert.deepEqual(
+    events.map((e) => e.stage),
+    ['first', 'progress', 'progress', 'done']
+  );
+  assert.equal(getReplayState().active, false);
+});
+
+test('installStagedReplay: the cold initial sync that throws still ends with done (listeners never hang)', async () => {
+  const { proto, api, calls, events } = fakeSyncApi({ throwOnCall: 2 });
+  installStagedReplay(proto, { getHints: hints, coldChunkSize: 100, yieldFn: async () => {} });
   await assert.rejects(
-    api.processSyncResponse(
-      { fromCache: true },
-      { next_batch: 'nb', rooms: { join: manyRooms(300) } }
-    ),
+    api.processSyncResponse({ nextSyncToken: 'nb' }, { next_batch: 'nb', rooms: { join: manyRooms(300) } }),
     /boom/
   );
   assert.equal(calls.length, 2);

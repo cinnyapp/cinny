@@ -22,7 +22,7 @@ import {
 } from '../../utils/roomActivity';
 import { ChunkedRun, Coalescer, createCoalescer, runChunked } from '../../utils/batch';
 import { useSyncState } from '../../hooks/useSyncState';
-import { isReplayActive } from '../../../client/staged-replay';
+import { isReplayActive, onReplayProgress } from '../../../client/staged-replay';
 
 /**
  * Per-room "last real message" (see utils/roomActivity.ts), kept up to date from
@@ -367,6 +367,17 @@ export const useBindRoomActivityAtom = (
       },
       [scheduler]
     )
+  );
+
+  // Staged start-up: PREPARED fires after stage 1 (the ~40 hottest chats); the
+  // rest streams in behind the open app and is ignored above while the replay
+  // is active — so scan once more when the replay is done.
+  useEffect(
+    () =>
+      onReplayProgress(mx, (p) => {
+        if (p.stage === 'done') scheduler.scanAll();
+      }),
+    [mx, scheduler]
   );
 
   useEffect(() => {
