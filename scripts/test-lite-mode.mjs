@@ -205,6 +205,52 @@ test('a bridged 1:1 chat is NOT a bot room just because the bridge bot is in it'
   assert.equal(roomKeepReason(left), undefined);
 });
 
+test('bot rooms: the initial /sync shape and the saved-record shape agree', () => {
+  // A bridged 1:1 chat with a name (no heroes), lazy loading stored only you +
+  // the bridge bot: the initial /sync has them once (state_after), the saved
+  // record twice (state rolled back + state_after).
+  const initialShape = {
+    'org.matrix.msc4222.state_after': {
+      events: [
+        { type: 'm.room.create', state_key: '', content: {} },
+        { type: 'm.room.name', state_key: '', content: { name: 'Anna' } },
+        member('@me:hs'),
+        member('@whatsappbot:hs'),
+      ],
+    },
+    timeline: { events: [] },
+    summary: { 'm.joined_member_count': 3, 'm.invited_member_count': 0 },
+  };
+  assert.equal(roomKeepReason(initialShape), undefined);
+  const recordShape = {
+    ...initialShape,
+    state: { events: initialShape['org.matrix.msc4222.state_after'].events },
+  };
+  assert.equal(roomKeepReason(recordShape), undefined);
+  // the real management room (you + the bot) is a bot room in BOTH shapes
+  const adminInitial = {
+    ...initialShape,
+    summary: { 'm.joined_member_count': 2, 'm.invited_member_count': 0 },
+  };
+  assert.equal(roomKeepReason(adminInitial), 'bot');
+  assert.equal(
+    roomKeepReason({ ...adminInitial, state: { events: adminInitial['org.matrix.msc4222.state_after'].events } }),
+    'bot'
+  );
+  // a member who left later in the same list does not count
+  const leftBot = {
+    ...adminInitial,
+    'org.matrix.msc4222.state_after': {
+      events: [
+        member('@me:hs'),
+        member('@whatsappbot:hs'),
+        member('@whatsappbot:hs', { content: { membership: 'leave' } }),
+      ],
+    },
+  };
+  assert.equal(roomKeepReason(leftBot), undefined);
+});
+
 test('roomKeepReason returns the specific reason', () => {
   assert.equal(roomKeepReason(room({ messageDaysAgo: 900, unread: 1 })), 'unread');
   assert.equal(roomKeepReason(room({ messageDaysAgo: 900, spaceRoom: true })), 'space');
