@@ -10,6 +10,8 @@
  * syncs keep the SDK's own timeout. Feature-detected: when the http layer does
  * not look like the one we know, nothing is changed.
  */
+import { markStartup } from './startup-marks';
+
 export const INITIAL_SYNC_LOCAL_TIMEOUT_MS = 6 * 60_000;
 
 type AuthedRequest = (
@@ -56,8 +58,20 @@ export const installInitialSyncTimeout = (
     ...rest
   ) {
     const wanted = initialSyncTimeoutFor(path, queryParams, opts?.localTimeoutMs, minimum);
-    const nextOpts = wanted === opts?.localTimeoutMs ? opts : { ...(opts ?? {}), localTimeoutMs: wanted };
-    return original.call(this, method, path, queryParams, body, nextOpts, ...rest);
+    const nextOpts =
+      wanted === opts?.localTimeoutMs ? opts : { ...(opts ?? {}), localTimeoutMs: wanted };
+    const result = original.call(this, method, path, queryParams, body, nextOpts, ...rest);
+    if (path === '/sync') {
+      // start-up timeline (client/startup-marks.ts): the first /sync request and its answer
+      markStartup('sync1-sent');
+      if (result && typeof (result as Promise<unknown>).then === 'function') {
+        (result as Promise<unknown>).then(
+          () => markStartup('sync1-received'),
+          () => undefined
+        );
+      }
+    }
+    return result;
   };
   // eslint-disable-next-line no-param-reassign
   http.__cinnyInitialSyncTimeout = true;
