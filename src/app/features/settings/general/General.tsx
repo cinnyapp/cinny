@@ -303,6 +303,29 @@ function PageZoomInput() {
   );
 }
 
+function CustomFontInput() {
+  const [customFont, setCustomFont] = useSetting(settingsAtom, 'customFont');
+  const [currentFont, setCurrentFont] = useState(`${customFont}`);
+
+  const handleFontChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
+    setCurrentFont(evt.target.value);
+  };
+
+  const handleFontEnter: KeyboardEventHandler<HTMLInputElement> = (evt) => {
+    if (isKeyHotkey('escape', evt)) {
+      evt.stopPropagation();
+      setCurrentFont(customFont);
+    }
+    if (
+      isKeyHotkey('enter', evt) &&
+      'value' in evt.target &&
+      typeof evt.target.value === 'string'
+    ) {
+      setCustomFont(evt.target.value);
+      setCurrentFont(evt.target.value);
+    }
+  };
+
 function Appearance() {
   const [systemTheme, setSystemTheme] = useSetting(settingsAtom, 'useSystemTheme');
   const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
@@ -349,6 +372,10 @@ function Appearance() {
 
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile title="Page Zoom" after={<PageZoomInput />} />
+      </SequenceCard>
+
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile title="Custom Font" after={<CustomFontInput />} />
       </SequenceCard>
     </Box>
   );

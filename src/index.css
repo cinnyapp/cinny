@@ -1,6 +1,7 @@
 @font-face {
   font-family: Twemoji;
-  src: url('../public/font/Twemoji.Mozilla.v15.1.0.woff2'),
+  src:
+    url('../public/font/Twemoji.Mozilla.v15.1.0.woff2'),
     url('../public/font/Twemoji.Mozilla.v15.1.0.ttf');
   font-display: swap;
 }
@@ -19,7 +20,8 @@
   --mx-uc-8: hsl(94, 100%, 35%);
 
   --font-emoji: 'Twemoji_DISABLED';
-  --font-secondary: 'InterVariable', var(--font-emoji), sans-serif;
+  --custom-font: 'InterVariable';
+  --font-secondary: var(--custom-font), 'InterVariable', var(--font-emoji), sans-serif;
 }
 
 .dark-theme,
@@ -35,7 +37,7 @@
   --mx-uc-7: hsl(243, 100%, 80%);
   --mx-uc-8: hsl(94, 100%, 80%);
 
-  --font-secondary: 'InterVariable', var(--font-emoji), sans-serif;
+  --font-secondary: var(--custom-font), 'InterVariable', var(--font-emoji), sans-serif;
 }
 
 html {
