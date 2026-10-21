@@ -21,6 +21,7 @@ import {
 import { readSnapshot } from '../app/features/startup-snapshot/snapshot';
 import { getSettings } from '../app/state/settings';
 import { installSyncStoreKeeper, noteSavedToken } from './sync-store-keeper';
+import { installStagedTransfer } from './staged-transfer';
 import { markStartup } from './startup-marks';
 import { buildLiteFilterDefinition, LITE_FILTER_INLINE_SAFE_ROOMS, LiteOptions } from './lite-mode';
 import {
@@ -165,10 +166,14 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
   };
 
   markStartup('pruned');
-  setupStagedStartup(session);
+  const staged = setupStagedStartup(session);
 
   let indexedDBStore = createSyncStore(true);
   let mx = createClientWithStore(session, indexedDBStore);
+  // The worker sends the saved record in parts: the replay's stage 1 first, the
+  // rest while stage 2 streams (client/staged-transfer.ts). Only together with
+  // the replay wrapper — it is what fetches the rest.
+  if (staged) installStagedTransfer(indexedDBStore, () => replayHints);
   // One-time cold load: write the saved record lean right away, so the first
   // refresh is already a steady-state one (no main-thread prune on top).
   if (firstLoad) installColdPrune(indexedDBStore, liteOptions);

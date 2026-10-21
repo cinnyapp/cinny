@@ -36,6 +36,7 @@
  */
 import { lastAnyTs } from './lite-mode';
 import type { LiteRawEvent, LiteRoomSyncData } from './lite-mode';
+import { markStartup } from './startup-marks';
 
 export const REPLAY_EVENT = 'cinny.replay';
 /** Responses with this many joined rooms or fewer are handed through untouched. */
@@ -156,7 +157,10 @@ export const planReplayOrder = (
     .map((id, index) => ({ id, index, ts: lastAnyTs(join[id]) }))
     .sort((a, b) => b.ts - a.ts || a.index - b.index)
     .map((r) => r.id);
-  const ordered = front.concat(others, ids.filter((id) => giant.has(id)));
+  const ordered = front.concat(
+    others,
+    ids.filter((id) => giant.has(id))
+  );
   const firstCount = Math.max(0, Math.min(hints.firstCount, ordered.length));
   return { first: ordered.slice(0, firstCount), rest: ordered.slice(firstCount) };
 };
@@ -267,6 +271,8 @@ export type ReplayState = {
   /** last stage-2 chunk: rooms and ms (the adaptive size is derived from these) */
   lastChunkRooms?: number;
   lastChunkMs?: number;
+  /** 'staged': the store worker sent stage 1 only and the rest on demand (staged-transfer.ts) */
+  transfer?: 'staged' | 'whole';
 };
 
 const replayState: ReplayState = { active: false, done: 0, total: 0, fromCache: false };
@@ -284,6 +290,33 @@ export const REPLAY_MAX_CHUNK = 300;
  * the chunk and the size collapses (see REPLAY_DEFAULT_CHUNK).
  */
 export const REPLAY_TARGET_CHUNK_MS = 0;
+
+/**
+ * The stage-2 rooms the store worker still holds (client/staged-transfer.ts):
+ * the record arrived with stage 1 only, the rest is fetched chunk by chunk.
+ */
+export type RemoteRest = {
+  /** room ids not sent yet, in replay order */
+  rest: string[];
+  /** joined rooms in the whole record */
+  total: number;
+  fetchRooms: (ids: string[]) => Promise<Record<string, LiteRoomSyncData>>;
+  /** let the worker drop its copy (called once stage 2 is done) */
+  release?: () => void;
+};
+
+let remoteRest: RemoteRest | undefined;
+
+/** Called by the staged transfer right before the SDK gets the (partial) saved record. */
+export const setRemoteRest = (rest: RemoteRest | undefined): void => {
+  remoteRest = rest;
+};
+
+const takeRemoteRest = (): RemoteRest | undefined => {
+  const r = remoteRest;
+  remoteRest = undefined;
+  return r;
+};
 
 /** Current replay progress for consumers that mount after the events were emitted. */
 export const getReplayState = (): ReplayState => replayState;
@@ -368,7 +401,9 @@ type PendingReplay = {
   /** the cached syncEventData (fromCache: true, no oldSyncToken) */
   syncEventData: SyncEventDataLike;
   nextBatch: string;
-  join: Record<string, LiteRoomSyncData>;
+  /** the saved data of these rooms: from the response in hand, or from the store worker */
+  rooms: (ids: string[]) => Promise<Record<string, LiteRoomSyncData>>;
+  release?: () => void;
   /** rooms not replayed yet, in plan order */
   pending: string[];
   done: number;
@@ -401,10 +436,7 @@ export const whenReplayIdle = (): Promise<void> =>
     : Promise.resolve();
 
 /** The rooms of a live /sync response that are still waiting in stage 2. */
-export const roomsStillPending = (
-  data: SyncResponseLike,
-  pending: Iterable<string>
-): string[] => {
+export const roomsStillPending = (data: SyncResponseLike, pending: Iterable<string>): string[] => {
   const { rooms } = data;
   if (!rooms) return [];
   const touched = new Set<string>();
@@ -463,6 +495,12 @@ export const installStagedReplay = (
   const finish = (state: PendingReplay) => {
     if (pendingReplay !== state) return;
     pendingReplay = undefined;
+    try {
+      state.release?.();
+    } catch {
+      // the worker drops its copy on the next start anyway
+    }
+    markStartup('stage2-done');
     emit(state.api, {
       stage: 'done',
       done: state.done,
@@ -489,9 +527,10 @@ export const installStagedReplay = (
       );
     }, SLOW_CHUNK_MS);
     try {
+      const join = await state.rooms(ids);
       await original.call(api, state.syncEventData, {
         next_batch: state.nextBatch,
-        rooms: { join: pick(state.join, ids) },
+        rooms: { join },
       });
     } catch (err) {
       // the unstaged SDK would have dropped the WHOLE cached replay here; we lose one chunk
@@ -568,6 +607,57 @@ export const installStagedReplay = (
     }
   };
 
+  /**
+   * Stage 1 (`first`: everything that is not a joined room + the hottest
+   * rooms) is processed and awaited — it is all the SDK waits for: PREPARED and
+   * the first live /sync follow right after. The `rest` streams in behind the
+   * open app, never awaited by the SDK.
+   */
+  const startStaged = async (
+    api: SyncApiLike,
+    syncEventData: SyncEventDataLike,
+    first: SyncResponseLike,
+    rest: string[],
+    total: number,
+    source: Pick<PendingReplay, 'rooms' | 'release'>
+  ): Promise<void> => {
+    if (pendingReplay) finish(pendingReplay); // a client restart mid-replay: start clean
+    replayState.chunks = undefined;
+    replayState.slowChunks = 0;
+    replayState.pulledForward = 0;
+    replayState.chunk = 0;
+    replayState.transfer = source.release ? 'staged' : 'whole';
+    markStartup('stage1-start');
+    try {
+      await serial(() => original.call(api, syncEventData, first));
+    } catch (err) {
+      // the unstaged SDK would have dropped the WHOLE cached replay here
+      // eslint-disable-next-line no-console
+      console.error('staged startup: stage 1 failed, continuing with the older chats', err);
+    }
+    markStartup('stage1-end');
+    const done = Object.keys(first.rooms?.join ?? {}).length;
+    const state: PendingReplay = {
+      api,
+      syncEventData,
+      nextBatch: first.next_batch,
+      rooms: source.rooms,
+      release: source.release,
+      pending: rest,
+      done,
+      total,
+    };
+    pendingReplay = state;
+    replayState.background = true;
+    emit(api, { stage: 'first', done, total, fromCache: true, chunked: true });
+    if (rest.length === 0) {
+      finish(state);
+      return;
+    }
+    // never awaited by the SDK: the rest streams in behind the open app
+    runBackground(state).catch(() => undefined);
+  };
+
   const target = proto;
   // eslint-disable-next-line no-param-reassign
   target.processSyncResponse = async function stagedProcessSyncResponse(
@@ -578,6 +668,15 @@ export const installStagedReplay = (
     const join = data?.rooms?.join;
     const total = join ? Object.keys(join).length : 0;
     const fromCache = !!syncEventData?.fromCache;
+    const remote = fromCache ? takeRemoteRest() : undefined;
+    if (remote) {
+      // the store worker sent stage 1 only (client/staged-transfer.ts)
+      await startStaged(this, syncEventData, data, remote.rest, total + remote.rest.length, {
+        rooms: remote.fetchRooms,
+        release: remote.release,
+      });
+      return;
+    }
     // Only the cached replay and the very first (initial) live sync are chunked:
     // a live gappy sync with a saved token flushes notifEvents and must stay whole.
     const chunkable = total > threshold && (fromCache || !syncEventData?.oldSyncToken);
@@ -601,34 +700,11 @@ export const installStagedReplay = (
 
     if (fromCache) {
       const chunks = splitSyncResponse(data, plan, Number.MAX_SAFE_INTEGER, threshold);
-      const first = chunks[0];
       const rest = chunks.slice(1).flatMap((c) => Object.keys(c.rooms?.join ?? {}));
-      if (pendingReplay) finish(pendingReplay); // a client restart mid-replay: start clean
-      replayState.chunks = undefined;
-      replayState.slowChunks = 0;
-      replayState.pulledForward = 0;
-      replayState.chunk = 0;
-      // stage 1 is what the SDK waits for: PREPARED and the first live /sync follow it
-      await serial(() => original.call(this, syncEventData, first));
-      const done = Object.keys(first.rooms?.join ?? {}).length;
-      const state: PendingReplay = {
-        api: this,
-        syncEventData,
-        nextBatch: data.next_batch,
-        join: join!,
-        pending: rest,
-        done,
-        total,
-      };
-      pendingReplay = state;
-      replayState.background = true;
-      emit(this, { stage: 'first', done, total, fromCache, chunked: true });
-      if (rest.length === 0) {
-        finish(state);
-        return;
-      }
-      // never awaited by the SDK: the rest streams in behind the open app
-      runBackground(state).catch(() => undefined);
+      const local = join!;
+      await startStaged(this, syncEventData, chunks[0], rest, total, {
+        rooms: async (ids) => pick(local, ids),
+      });
       return;
     }
 

@@ -234,7 +234,10 @@ test('bot rooms: the initial /sync shape and the saved-record shape agree', () =
   };
   assert.equal(roomKeepReason(adminInitial), 'bot');
   assert.equal(
-    roomKeepReason({ ...adminInitial, state: { events: adminInitial['org.matrix.msc4222.state_after'].events } }),
+    roomKeepReason({
+      ...adminInitial,
+      state: { events: adminInitial['org.matrix.msc4222.state_after'].events },
+    }),
     'bot'
   );
   // a member who left later in the same list does not count

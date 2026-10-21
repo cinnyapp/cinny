@@ -282,7 +282,10 @@ test('installStagedReplay: a live /sync during stage 2 replays the rooms it touc
     },
   });
   const join = manyRooms(300); // !r0 newest … !r299 oldest → stage 1 = r0..r39
-  await api.processSyncResponse({ fromCache: true, nextSyncToken: 'nb' }, { next_batch: 'nb', rooms: { join } });
+  await api.processSyncResponse(
+    { fromCache: true, nextSyncToken: 'nb' },
+    { next_batch: 'nb', rooms: { join } }
+  );
   assert.equal(calls.length, 1);
   // the live catch-up arrives: it mentions a stage-1 room, two stage-2 rooms and a left room
   const live = {
@@ -292,7 +295,11 @@ test('installStagedReplay: a live /sync during stage 2 replays the rooms it touc
       leave: { '!r299:hs': {} },
     },
   };
-  assert.deepEqual(roomsStillPending(live, Object.keys(join).slice(40)), ['!r120:hs', '!r250:hs', '!r299:hs']);
+  assert.deepEqual(roomsStillPending(live, Object.keys(join).slice(40)), [
+    '!r120:hs',
+    '!r250:hs',
+    '!r299:hs',
+  ]);
   const livePromise = api.processSyncResponse({ oldSyncToken: 'nb', nextSyncToken: 'nb2' }, live);
   release();
   await livePromise;
@@ -330,14 +337,20 @@ test('installStagedReplay: stage-2 chunk size adapts to the measured work per ch
     yieldFn: async () => {},
     nowFn: () => t,
   });
-  await api.processSyncResponse({ fromCache: true }, { next_batch: 'nb', rooms: { join: manyRooms(400) } });
+  await api.processSyncResponse(
+    { fromCache: true },
+    { next_batch: 'nb', rooms: { join: manyRooms(400) } }
+  );
   await whenReplayIdle();
   const sizes = calls.slice(1).map((c) => c.join.length);
   assert.equal(sizes[0], 60, 'starts with chunkSize');
   // 60 rooms took 240 ms → 30; 30 rooms took 120 ms → stays 30
   assert.deepEqual(sizes.slice(1, 4), [30, 30, 30]);
   sizes.forEach((n) => assert.ok(n >= REPLAY_MIN_CHUNK && n <= REPLAY_MAX_CHUNK));
-  assert.equal(sizes.reduce((a, b) => a + b, 0), 390);
+  assert.equal(
+    sizes.reduce((a, b) => a + b, 0),
+    390
+  );
 });
 
 test('installStagedReplay: the cold initial sync (no old token) is chunked newest-first too', async () => {
@@ -406,7 +419,10 @@ test('installStagedReplay: a stage-2 chunk that throws is skipped, the rest stil
   const origError = console.error;
   console.error = (...a) => errors.push(a[0]);
   try {
-    await api.processSyncResponse({ fromCache: true }, { next_batch: 'nb', rooms: { join: manyRooms(300) } });
+    await api.processSyncResponse(
+      { fromCache: true },
+      { next_batch: 'nb', rooms: { join: manyRooms(300) } }
+    );
     await whenReplayIdle();
   } finally {
     console.error = origError;
@@ -427,7 +443,10 @@ test('installStagedReplay: the cold initial sync that throws still ends with don
   const { proto, api, calls, events } = fakeSyncApi({ throwOnCall: 2 });
   installStagedReplay(proto, { getHints: hints, coldChunkSize: 100, yieldFn: async () => {} });
   await assert.rejects(
-    api.processSyncResponse({ nextSyncToken: 'nb' }, { next_batch: 'nb', rooms: { join: manyRooms(300) } }),
+    api.processSyncResponse(
+      { nextSyncToken: 'nb' },
+      { next_batch: 'nb', rooms: { join: manyRooms(300) } }
+    ),
     /boom/
   );
   assert.equal(calls.length, 2);
@@ -436,6 +455,266 @@ test('installStagedReplay: the cold initial sync that throws still ends with don
     ['first', 'done']
   );
   assert.equal(getReplayState().active, false);
+});
+
+const { handleStagedCommand, installStagedTransfer, STAGED_GET, STAGED_ROOMS, STAGED_RELEASE } =
+  await import('../src/client/staged-transfer.ts');
+
+const tick = () => new Promise((r) => setTimeout(r, 0));
+
+/** A fake worker: the SDK's commands + ours, over the same cmd envelope. */
+const fakeWorker = (saved) => {
+  const backend = { getSavedSync: async () => saved };
+  const sent = [];
+  const doCmd = (command, args) =>
+    new Promise((resolve, reject) => {
+      sent.push(command);
+      const post = (m) =>
+        m.command === 'cmd_success' ? resolve(m.result) : reject(new Error(m.error.message));
+      if (handleStagedCommand({ command, seq: sent.length, args }, () => backend, post)) return;
+      if (command === 'getSavedSync') backend.getSavedSync().then(resolve, reject);
+      else reject(new Error('Unrecognised command'));
+    });
+  return { backend, sent, doCmd };
+};
+
+test('staged transfer (worker): stage 1 + ordered rest ids, rooms on demand, release', async () => {
+  const join = manyRooms(300); // !r0 newest … !r299 oldest
+  const saved = {
+    nextBatch: 'nb',
+    accountData: [{ type: 'm.push_rules', content: {} }],
+    roomsData: { join, invite: { '!inv:hs': {} }, leave: {} },
+  };
+  const backend = {
+    getSavedSync: async (copy) => {
+      assert.equal(copy, false, 'no deep copy: the reply is structured-cloned anyway');
+      return saved;
+    },
+  };
+  const posts = [];
+  const post = (m) => posts.push(m);
+  assert.equal(
+    handleStagedCommand({ command: 'getSavedSync', seq: 1 }, () => backend, post),
+    false
+  );
+  assert.equal(
+    handleStagedCommand(undefined, () => backend, post),
+    false
+  );
+  const opts = { hints: hints({ urlRoomId: '!r250:hs', firstCount: 40 }) };
+  assert.equal(
+    handleStagedCommand({ command: STAGED_GET, seq: 2, args: [opts] }, () => backend, post),
+    true
+  );
+  await tick();
+  const reply = posts.at(-1);
+  assert.equal(reply.command, 'cmd_success');
+  assert.equal(reply.seq, 2);
+  const res = reply.result;
+  const first = Object.keys(res.roomsData.join);
+  assert.equal(first.length, 40);
+  assert.equal(first[0], '!r250:hs', 'the URL room comes first');
+  assert.equal(first[1], '!r0:hs', 'then the newest');
+  assert.deepEqual(
+    res.roomsData.invite,
+    { '!inv:hs': {} },
+    'everything that is not a joined room goes in stage 1'
+  );
+  assert.equal(res.accountData, saved.accountData);
+  assert.equal(res.nextBatch, 'nb');
+  assert.equal(res.cinnyStaged.total, 300);
+  assert.equal(res.cinnyStaged.rest.length, 260);
+  assert.equal(res.cinnyStaged.rest[0], '!r39:hs');
+  assert.ok(!res.cinnyStaged.rest.includes('!r250:hs'));
+  assert.deepEqual([...first, ...res.cinnyStaged.rest].sort(), Object.keys(join).sort());
+  const { token } = res.cinnyStaged;
+  handleStagedCommand(
+    { command: STAGED_ROOMS, seq: 3, args: [token, ['!r100:hs', '!nope:hs']] },
+    () => backend,
+    post
+  );
+  assert.deepEqual(Object.keys(posts.at(-1).result), ['!r100:hs'], 'unknown ids are skipped');
+  assert.equal(posts.at(-1).result['!r100:hs'], join['!r100:hs']);
+  handleStagedCommand(
+    { command: STAGED_ROOMS, seq: 4, args: [token + 1, ['!r100:hs']] },
+    () => backend,
+    post
+  );
+  assert.equal(posts.at(-1).command, 'cmd_fail', 'a stale token is refused');
+  handleStagedCommand({ command: STAGED_RELEASE, seq: 5, args: [token] }, () => backend, post);
+  assert.equal(posts.at(-1).command, 'cmd_success');
+  handleStagedCommand(
+    { command: STAGED_ROOMS, seq: 6, args: [token, ['!r100:hs']] },
+    () => backend,
+    post
+  );
+  assert.equal(posts.at(-1).command, 'cmd_fail', 'released');
+});
+
+test('staged transfer (worker): small record whole, nothing saved → null, no backend → fail', async () => {
+  const posts = [];
+  const post = (m) => posts.push(m);
+  const small = {
+    nextBatch: 'nb',
+    accountData: [],
+    roomsData: { join: manyRooms(REPLAY_CHUNK_THRESHOLD) },
+  };
+  handleStagedCommand(
+    { command: STAGED_GET, seq: 1, args: [{ hints: hints() }] },
+    () => ({ getSavedSync: async () => small }),
+    post
+  );
+  await tick();
+  assert.equal(posts.at(-1).result, small);
+  handleStagedCommand(
+    { command: STAGED_GET, seq: 2, args: [{ hints: hints() }] },
+    () => ({ getSavedSync: async () => null }),
+    post
+  );
+  await tick();
+  assert.equal(posts.at(-1).result, null);
+  handleStagedCommand(
+    { command: STAGED_GET, seq: 3, args: [{ hints: hints() }] },
+    () => undefined,
+    post
+  );
+  assert.equal(posts.at(-1).command, 'cmd_fail');
+});
+
+test('staged transfer end to end: stage 1 only crosses first, the rest streams from the worker, each room once', async () => {
+  const join = manyRooms(400);
+  const saved = {
+    nextBatch: 'nb',
+    accountData: [{ type: 'm.direct', content: {} }],
+    roomsData: { join },
+  };
+  const worker = fakeWorker(saved);
+  const original = async () => {
+    throw new Error('the whole-record path must not be used');
+  };
+  const store = { backend: { doCmd: worker.doCmd }, getSavedSync: original };
+  const h = () => hints({ urlRoomId: '!r399:hs', firstCount: 40 });
+  assert.equal(
+    installStagedTransfer({ getSavedSync: original }, h),
+    false,
+    'no worker backend → not installed'
+  );
+  assert.equal(installStagedTransfer(store, h), true);
+  assert.equal(installStagedTransfer(store, h), false, 'idempotent');
+
+  const { proto, api, calls, events } = fakeSyncApi();
+  installStagedReplay(proto, {
+    getHints: h,
+    chunkSize: 150,
+    targetChunkMs: 0,
+    yieldFn: async () => undefined,
+  });
+  const got = await store.getSavedSync();
+  assert.equal(got.cinnyStaged, undefined, 'the SDK gets a plain ISavedSync');
+  assert.equal(Object.keys(got.roomsData.join).length, 40);
+  // what SyncApi.syncFromCache does with it
+  await api.processSyncResponse(
+    { fromCache: true, nextSyncToken: 'nb' },
+    { next_batch: got.nextBatch, rooms: got.roomsData, account_data: { events: got.accountData } }
+  );
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].join[0], '!r399:hs');
+  assert.deepEqual(calls[0].extras, ['account_data']);
+  assert.equal(events[0].stage, 'first');
+  assert.equal(events[0].total, 400, 'the total counts the rooms still in the worker');
+  assert.equal(getReplayState().transfer, 'staged');
+  await whenReplayIdle();
+  assert.deepEqual(
+    calls.map((c) => c.join.length),
+    [40, 150, 150, 60]
+  );
+  const all = calls.flatMap((c) => c.join);
+  assert.deepEqual([...all].sort(), Object.keys(join).sort());
+  assert.equal(new Set(all).size, 400);
+  assert.equal(events.at(-1).stage, 'done');
+  assert.equal(events.at(-1).done, 400);
+  assert.equal(worker.sent.filter((c) => c === STAGED_ROOMS).length, 3);
+  assert.equal(
+    worker.sent.at(-1),
+    STAGED_RELEASE,
+    'the worker drops its copy when stage 2 is done'
+  );
+});
+
+test('staged transfer: a live /sync pulls its pending rooms from the worker first; failures fall back', async () => {
+  const join = manyRooms(300);
+  const saved = { nextBatch: 'nb', accountData: [], roomsData: { join } };
+  const worker = fakeWorker(saved);
+  let failNextRooms = false;
+  const doCmd = (command, args) => {
+    if (command === STAGED_ROOMS && failNextRooms) {
+      failNextRooms = false;
+      return Promise.reject(new Error('worker hiccup'));
+    }
+    return worker.doCmd(command, args);
+  };
+  const store = { backend: { doCmd }, getSavedSync: async () => saved };
+  const h = () => hints({ firstCount: 40 });
+  installStagedTransfer(store, h);
+  const { proto, api, calls } = fakeSyncApi();
+  let release;
+  const gate = new Promise((r) => {
+    release = r;
+  });
+  let yields = 0;
+  installStagedReplay(proto, {
+    getHints: h,
+    chunkSize: 100,
+    targetChunkMs: 0,
+    yieldFn: async () => {
+      yields += 1;
+      if (yields === 1) await gate;
+    },
+  });
+  const got = await store.getSavedSync();
+  await api.processSyncResponse(
+    { fromCache: true, nextSyncToken: 'nb' },
+    { next_batch: 'nb', rooms: got.roomsData }
+  );
+  // the pull-forward fetch fails once: the rooms come from the whole record instead
+  failNextRooms = true;
+  const live = { next_batch: 'nb2', rooms: { join: { '!r250:hs': room(), '!r3:hs': room() } } };
+  const livePromise = api.processSyncResponse({ oldSyncToken: 'nb', nextSyncToken: 'nb2' }, live);
+  release();
+  await livePromise;
+  const liveIndex = calls.findIndex((c) => c.oldSyncToken === 'nb');
+  assert.deepEqual(
+    calls[liveIndex - 1].join,
+    ['!r250:hs'],
+    'cached copy first, fetched despite the failure'
+  );
+  assert.equal(calls[liveIndex - 1].fromCache, true);
+  assert.ok(worker.sent.includes('getSavedSync'), 'fell back to the whole record once');
+  await whenReplayIdle();
+  const cached = calls.filter((c) => c.fromCache).flatMap((c) => c.join);
+  assert.deepEqual([...cached].sort(), Object.keys(join).sort());
+  assert.equal(new Set(cached).size, cached.length);
+});
+
+test('staged transfer: the worker refusing the command means the SDK path, untouched', async () => {
+  const saved = { nextBatch: 'nb', accountData: [], roomsData: { join: manyRooms(300) } };
+  let originalCalls = 0;
+  const store = {
+    backend: { doCmd: () => Promise.reject(new Error('Unrecognised command')) },
+    getSavedSync: async () => {
+      originalCalls += 1;
+      return saved;
+    },
+  };
+  installStagedTransfer(store, () => hints());
+  const warn = console.warn;
+  console.warn = () => undefined;
+  try {
+    assert.equal(await store.getSavedSync(), saved);
+  } finally {
+    console.warn = warn;
+  }
+  assert.equal(originalCalls, 1);
 });
 
 test('roomIdFromLocation: hash router, path router, space routes, decoding', () => {
@@ -455,8 +734,14 @@ const { initialSyncTimeoutFor, installInitialSyncTimeout, INITIAL_SYNC_LOCAL_TIM
   await import('../src/client/initial-sync-timeout.ts');
 
 test('initial sync timeout: only /sync without since is raised; everything else untouched', () => {
-  assert.equal(initialSyncTimeoutFor('/sync', { filter: 'x', timeout: 0 }, 80_000), INITIAL_SYNC_LOCAL_TIMEOUT_MS);
-  assert.equal(initialSyncTimeoutFor('/sync', { filter: 'x', timeout: 0 }, undefined), INITIAL_SYNC_LOCAL_TIMEOUT_MS);
+  assert.equal(
+    initialSyncTimeoutFor('/sync', { filter: 'x', timeout: 0 }, 80_000),
+    INITIAL_SYNC_LOCAL_TIMEOUT_MS
+  );
+  assert.equal(
+    initialSyncTimeoutFor('/sync', { filter: 'x', timeout: 0 }, undefined),
+    INITIAL_SYNC_LOCAL_TIMEOUT_MS
+  );
   assert.equal(initialSyncTimeoutFor('/sync', { since: 's1', timeout: 30_000 }, 110_000), 110_000);
   assert.equal(initialSyncTimeoutFor('/sync', { filter: 'x' }, 900_000), 900_000);
   assert.equal(initialSyncTimeoutFor('/rooms/!a/messages', {}, 15_000), 15_000);
@@ -475,7 +760,17 @@ test('installInitialSyncTimeout: wraps once, feature-detected, passes other args
   assert.equal(installInitialSyncTimeout({ http: {} }), false);
   assert.equal(installInitialSyncTimeout({ http }), true);
   assert.equal(installInitialSyncTimeout({ http }), false, 'second install is a no-op');
-  assert.equal(http.authedRequest('GET', '/sync', { timeout: 0 }, undefined, { localTimeoutMs: 80_000, abortSignal: 'sig' }, 'x'), 'ok');
+  assert.equal(
+    http.authedRequest(
+      'GET',
+      '/sync',
+      { timeout: 0 },
+      undefined,
+      { localTimeoutMs: 80_000, abortSignal: 'sig' },
+      'x'
+    ),
+    'ok'
+  );
   assert.equal(calls[0].opts.localTimeoutMs, INITIAL_SYNC_LOCAL_TIMEOUT_MS);
   assert.equal(calls[0].opts.abortSignal, 'sig');
   assert.equal(calls[0].extra, 'x');
