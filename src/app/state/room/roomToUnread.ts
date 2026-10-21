@@ -30,6 +30,7 @@ import { useStateEventCallback } from '../../hooks/useStateEventCallback';
 import { useSyncState } from '../../hooks/useSyncState';
 import { useRoomsNotificationPreferencesContext } from '../../hooks/useRoomsNotificationPreferences';
 import { ChunkedRun, Coalescer, createCoalescer, runChunked } from '../../utils/batch';
+import { isReplayActive } from '../../../client/staged-replay';
 
 /** A single room-scoped change that can be applied as part of a `BULK` action. */
 export type RoomToUnreadUpdate =
@@ -344,6 +345,8 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
       data: IRoomTimelineData
     ) => {
       if (!room || !data.liveEvent || room.isSpaceRoom() || !isNotificationEvent(mEvent)) return;
+      // staged start-up: the full scan at PREPARED (right after the replay) covers these
+      if (isReplayActive()) return;
       if (getNotificationType(mx, room.roomId) === NotificationType.Mute) {
         scheduler.queue({
           type: 'DELETE',
@@ -366,6 +369,7 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
       const myUserId = mx.getUserId();
       if (!myUserId) return;
       if (room.isSpaceRoom()) return;
+      if (isReplayActive()) return;
       const content = mEvent.getContent<ReceiptContent>();
 
       const isMyReceipt = Object.keys(content).find((eventId) =>

@@ -90,21 +90,31 @@ export type SyncEventDataLike = {
 const stateEvents = (room: LiteRoomSyncData): LiteRawEvent[] =>
   room.state?.events ?? room['org.matrix.msc4222.state_after']?.events ?? [];
 
-/** A space room whose state is small enough to replay in stage 1 (keeps the sidebar stable). */
-export const isSmallSpace = (room: LiteRoomSyncData, maxStateEvents: number): boolean => {
-  const events = stateEvents(room);
-  if (events.length > maxStateEvents) return false;
-  return events.some(
+const isSpaceRoom = (room: LiteRoomSyncData): boolean =>
+  stateEvents(room).some(
     (ev) =>
       ev.type === 'm.room.create' &&
       ev.state_key === '' &&
       (ev.content as { type?: unknown } | undefined)?.type === 'm.space'
   );
-};
+
+/** A space room whose state is small enough to replay in stage 1 (keeps the sidebar stable). */
+export const isSmallSpace = (room: LiteRoomSyncData, maxStateEvents: number): boolean =>
+  stateEvents(room).length <= maxStateEvents && isSpaceRoom(room);
+
+/**
+ * A giant "one m.space.child per chat" space (the bridged WhatsApp space has
+ * 6,519 of them). Its timeline makes it look like the newest room, but every
+ * one of those state events costs the app work when it lands behind an open
+ * UI — it is always replayed LAST, in a chunk of its own.
+ */
+export const isGiantSpace = (room: LiteRoomSyncData, maxStateEvents: number): boolean =>
+  stateEvents(room).length > maxStateEvents && isSpaceRoom(room);
 
 /**
  * Rank the joined rooms of a /sync response for replay: URL room, snapshot rooms
- * (in order), small spaces, then everything else newest-first (stable for ties).
+ * (in order), small spaces, then everything else newest-first (stable for ties),
+ * and giant spaces at the very end.
  */
 export const planReplayOrder = (
   join: Record<string, LiteRoomSyncData>,
@@ -118,17 +128,20 @@ export const planReplayOrder = (
     seen.add(id);
     front.push(id);
   };
-  if (hints.urlRoomId) push(hints.urlRoomId);
-  hints.snapshotRoomIds.forEach(push);
+  const giant = new Set(ids.filter((id) => isGiantSpace(join[id], hints.maxSpaceStateEvents)));
+  if (hints.urlRoomId && !giant.has(hints.urlRoomId)) push(hints.urlRoomId);
+  hints.snapshotRoomIds.forEach((id) => {
+    if (!giant.has(id)) push(id);
+  });
   ids.forEach((id) => {
     if (!seen.has(id) && isSmallSpace(join[id], hints.maxSpaceStateEvents)) push(id);
   });
   const others = ids
-    .filter((id) => !seen.has(id))
+    .filter((id) => !seen.has(id) && !giant.has(id))
     .map((id, index) => ({ id, index, ts: lastAnyTs(join[id]) }))
     .sort((a, b) => b.ts - a.ts || a.index - b.index)
     .map((r) => r.id);
-  const ordered = front.concat(others);
+  const ordered = front.concat(others, ids.filter((id) => giant.has(id)));
   const firstCount = Math.max(0, Math.min(hints.firstCount, ordered.length));
   return { first: ordered.slice(0, firstCount), rest: ordered.slice(firstCount) };
 };
@@ -242,6 +255,31 @@ const SLOW_CHUNK_MS = 15_000;
 
 /** Current replay progress for consumers that mount after the events were emitted. */
 export const getReplayState = (): ReplayState => replayState;
+
+/**
+ * True while the staged replay is streaming rooms in behind the open app.
+ * Every room that arrives then is brand new, so per-event listeners (which the
+ * unstaged path never ran during the replay — the atoms mounted only after
+ * PREPARED) can skip their work and rebuild once per chunk / at PREPARED.
+ */
+export const isReplayActive = (): boolean => replayState.active;
+
+type EmitterLike = {
+  on: (ev: string, h: (p: ReplayProgress) => void) => unknown;
+  removeListener: (ev: string, h: (p: ReplayProgress) => void) => unknown;
+};
+
+/** Subscribe to the replay's chunk events (first / progress / done); returns the unsubscriber. */
+export const onReplayProgress = (
+  mx: unknown,
+  handler: (p: ReplayProgress) => void
+): (() => void) => {
+  const emitter = mx as EmitterLike;
+  emitter.on(REPLAY_EVENT, handler);
+  return () => {
+    emitter.removeListener(REPLAY_EVENT, handler);
+  };
+};
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 

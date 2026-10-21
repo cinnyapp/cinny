@@ -64,9 +64,16 @@ test('planReplayOrder: url room, snapshot rooms, small spaces, then newest-first
     })
   );
   assert.deepEqual(plan.first, ['!url:hs', '!snapA:hs', '!snapB:hs', '!space-small:hs']);
-  // the giant space (6,519 state events) is NOT promoted; recency decides the rest
-  assert.deepEqual(plan.rest, ['!newest:hs', '!space-giant:hs', '!mid:hs', '!old:hs']);
+  // the giant space (6,519 state events) is never promoted and always goes LAST,
+  // even though its timeline makes it look like one of the newest rooms
+  assert.deepEqual(plan.rest, ['!newest:hs', '!mid:hs', '!old:hs', '!space-giant:hs']);
   assert.equal(plan.first.length + plan.rest.length, Object.keys(join).length);
+  const forced = planReplayOrder(
+    join,
+    hints({ urlRoomId: '!space-giant:hs', snapshotRoomIds: ['!space-giant:hs'], firstCount: 2 })
+  );
+  assert.deepEqual(forced.first, ['!space-small:hs', '!newest:hs']);
+  assert.equal(forced.rest[forced.rest.length - 1], '!space-giant:hs');
 });
 
 test('planReplayOrder: recency is stable for ties and first has exactly firstCount', () => {
