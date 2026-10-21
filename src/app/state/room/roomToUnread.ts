@@ -30,7 +30,7 @@ import { useStateEventCallback } from '../../hooks/useStateEventCallback';
 import { useSyncState } from '../../hooks/useSyncState';
 import { useRoomsNotificationPreferencesContext } from '../../hooks/useRoomsNotificationPreferences';
 import { ChunkedRun, Coalescer, createCoalescer, runChunked } from '../../utils/batch';
-import { isReplayActive, onReplayProgress } from '../../../client/staged-replay';
+import { onReplayProgress } from '../../../client/staged-replay';
 
 /** A single room-scoped change that can be applied as part of a `BULK` action. */
 export type RoomToUnreadUpdate =
@@ -355,9 +355,11 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
       removed: boolean,
       data: IRoomTimelineData
     ) => {
+      // `liveEvent` is false for everything the staged start-up replays from the
+      // saved record (the SDK flags it `fromCache`), so this is the live traffic
+      // only — including the first live /sync, which is applied while the older
+      // chats are still streaming in (client/staged-replay.ts).
       if (!room || !data.liveEvent || room.isSpaceRoom() || !isNotificationEvent(mEvent)) return;
-      // staged start-up: the full scan at PREPARED (right after the replay) covers these
-      if (isReplayActive()) return;
       if (getNotificationType(mx, room.roomId) === NotificationType.Mute) {
         scheduler.queue({
           type: 'DELETE',
@@ -380,7 +382,11 @@ export const useBindRoomToUnreadAtom = (mx: MatrixClient, unreadAtom: typeof roo
       const myUserId = mx.getUserId();
       if (!myUserId) return;
       if (room.isSpaceRoom()) return;
-      if (isReplayActive()) return;
+      // Staged start-up: receipts replayed from the saved record land here too.
+      // They are harmless — a replayed room is not in the map before the scan at
+      // replay 'done' (DELETE is a no-op), and a live message for it is queued
+      // after its replayed receipt (the later PUT wins) — while a live receipt
+      // (read on another device while this tab was closed) must clear the badge now.
       const content = mEvent.getContent<ReceiptContent>();
 
       const isMyReceipt = Object.keys(content).find((eventId) =>

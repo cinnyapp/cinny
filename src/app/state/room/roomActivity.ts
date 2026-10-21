@@ -2,6 +2,7 @@ import { atom, useSetAtom } from 'jotai';
 import {
   ClientEvent,
   EventStatus,
+  IRoomTimelineData,
   MatrixClient,
   MatrixEvent,
   Method,
@@ -386,7 +387,8 @@ export const useBindRoomActivityAtom = (
       mEvent: MatrixEvent,
       room: Room | undefined,
       toStartOfTimeline: boolean | undefined,
-      removed: boolean
+      removed: boolean,
+      data?: IRoomTimelineData
     ) => {
       // Live AND paginated events are both fine: only the event's own timestamp
       // counts and the merge never moves a chat back, so old history loading in
@@ -394,8 +396,10 @@ export const useBindRoomActivityAtom = (
       // The same event can arrive through several timeline sets; merging is
       // idempotent, so duplicates cost nothing.
       if (!room || removed || room.isSpaceRoom()) return;
-      // staged start-up: the full scan at PREPARED (right after the replay) covers these
-      if (isReplayActive()) return;
+      // Staged start-up: events replayed from the saved record (`liveEvent` false)
+      // are covered by the full scan at replay 'done'; LIVE events — the first
+      // live /sync is applied while older chats still stream in — move the chat now.
+      if (isReplayActive() && !data?.liveEvent) return;
       const update = updateForEvent(mEvent, myUserId);
       if (update) scheduler.queue(room.roomId, update);
     };
