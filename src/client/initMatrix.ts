@@ -21,6 +21,7 @@ import {
 import { readSnapshot } from '../app/features/startup-snapshot/snapshot';
 import { getSettings } from '../app/state/settings';
 import { installSyncStoreKeeper, noteSavedToken } from './sync-store-keeper';
+import { markStartup } from './startup-marks';
 import { buildLiteFilterDefinition, LITE_FILTER_INLINE_SAFE_ROOMS, LiteOptions } from './lite-mode';
 import {
   bypassLiteOnce,
@@ -126,14 +127,16 @@ const setupStagedStartup = (session: Session): boolean => {
   const installed = installStagedReplay(proto as Parameters<typeof installStagedReplay>[0], {
     getHints: () => replayHints,
   });
-  if (!installed && !(proto as { __cinnyStaged?: boolean } | undefined)?.__cinnyStaged) {
+  const active = installed || !!(proto as { __cinnyStaged?: boolean } | undefined)?.__cinnyStaged;
+  if (!active) {
     // eslint-disable-next-line no-console
     console.warn('staged startup: SDK method missing, running unstaged');
   }
-  return installed;
+  return active;
 };
 
 export const initClient = async (session: Session): Promise<MatrixClient> => {
+  markStartup('init');
   // BEFORE the store is opened: delete the chats that have gone quiet from the
   // persisted /sync record, so the SDK never replays them. See client/lite-store.ts.
   const liteOptions = liteOptionsFromSettings();
@@ -161,6 +164,7 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     firstLoad: !!firstLoad,
   };
 
+  markStartup('pruned');
   setupStagedStartup(session);
 
   let indexedDBStore = createSyncStore(true);
@@ -174,7 +178,10 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
   // parallel instead of one after the other — ~1 s off a warm start.
   const cryptoReady = mx.initRustCrypto();
   try {
-    await Promise.all([indexedDBStore.startup(), cryptoReady]);
+    await Promise.all([
+      indexedDBStore.startup().then(() => markStartup('store-ready')),
+      cryptoReady.then(() => markStartup('crypto-ready')),
+    ]);
   } catch (err) {
     // The worker could not be started (unsupported runtime, blocked by a CSP,
     // failed chunk load, ...) — or crypto failed. Fall back to the previous
@@ -209,6 +216,7 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     .catch(() => noteSavedToken(false));
 
   mx.setMaxListeners(50);
+  markStartup('client-ready');
 
   return mx;
 };
@@ -237,6 +245,7 @@ const buildLiteSyncFilter = async (mx: MatrixClient): Promise<Filter | undefined
 };
 
 export const startClient = async (mx: MatrixClient) => {
+  markStartup('start-client');
   const filter = await buildLiteSyncFilter(mx);
   await mx.startClient({
     lazyLoadMembers: true,

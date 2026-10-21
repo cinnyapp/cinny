@@ -13,6 +13,7 @@
  */
 import type { IndexedDBStore, MatrixClient } from 'matrix-js-sdk';
 import { getReplayState } from './staged-replay';
+import { getStartupMarks } from './startup-marks';
 
 export const DEGRADED_AT_KEY = 'cinny_sync_store_degraded_at';
 
@@ -24,9 +25,11 @@ export type StartupReport = {
   firstSyncingAt?: number;
   replay?: ReturnType<typeof getReplayState>;
   degradedAt?: number;
+  /** start-up timeline, ms from navigation start (client/startup-marks.ts) */
+  marks?: Record<string, number>;
 };
 
-const report: StartupReport = { savedToken: false };
+const report: StartupReport = { savedToken: false, marks: getStartupMarks() };
 
 export const getStartupReport = (): StartupReport => report;
 

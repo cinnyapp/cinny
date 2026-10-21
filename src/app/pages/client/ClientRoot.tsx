@@ -46,6 +46,7 @@ import { useReplayProgress } from '../../hooks/useReplayProgress';
 import { ReplayStatus } from './ReplayStatus';
 import { getReplayState, REPLAY_EVENT, ReplayProgress } from '../../../client/staged-replay';
 import { DEGRADED_AT_KEY, noteFirstSyncing, notePrepared } from '../../../client/sync-store-keeper';
+import { markStartup } from '../../../client/startup-marks';
 
 const mmss = (ms: number) => {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -314,6 +315,11 @@ export function ClientRoot({ children }: ClientRootProps) {
       startMatrix(mx);
     }
   }, [mx, startMatrix]);
+
+  // start-up timeline: the real app (not the instant list) is committed to the DOM
+  useEffect(() => {
+    if (mx && !loading) markStartup('app-rendered');
+  }, [mx, loading]);
 
   useSyncState(
     mx,
