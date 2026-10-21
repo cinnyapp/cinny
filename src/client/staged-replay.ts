@@ -20,8 +20,8 @@
  * after the whole replay. Stage 2 streams behind the open app in ONE serial
  * lane shared with live responses: a live /sync that mentions a room still in
  * stage 2 gets that room's cached copy replayed first, so per-room order
- * (saved history, then the live delta) always holds. Chunk sizes adapt to the
- * device (~120 ms of work per chunk) so a phone paints between chunks too.
+ * (saved history, then the live delta) always holds. A macrotask yield between
+ * chunks lets the page paint and handle taps.
  *
  * Safe because: everything that must be processed exactly once (account_data,
  * presence, to_device, device_lists, one-time-key counts, invite/leave/knock)
@@ -41,8 +41,13 @@ export const REPLAY_EVENT = 'cinny.replay';
 /** Responses with this many joined rooms or fewer are handed through untouched. */
 export const REPLAY_CHUNK_THRESHOLD = 120;
 export const REPLAY_DEFAULT_FIRST = 40;
-/** stage-2 chunk size to START with; it then adapts to ~REPLAY_TARGET_CHUNK_MS of work per chunk */
-export const REPLAY_DEFAULT_CHUNK = 60;
+/**
+ * Stage-2 chunk size. Fixed on purpose: every chunk also costs one list rebuild
+ * + React render behind the open app (~100-800 ms with 3,000 chats), so fewer,
+ * larger chunks finish sooner — measured 2026-10-21: adaptive 8-15-room chunks
+ * turned a 3 s stage 2 into 35-50 s.
+ */
+export const REPLAY_DEFAULT_CHUNK = 150;
 /** The cold initial sync carries full state per room (6-8× heavier): smaller chunks keep it smooth. */
 export const REPLAY_COLD_CHUNK = 50;
 /** A space with more state events than this is a giant "one m.space.child per chat" space: stage 2. */
@@ -272,8 +277,13 @@ const SLOW_CHUNK_MS = 15_000;
 /** stage-2 chunk sizes adapt between these bounds (rooms per chunk) */
 export const REPLAY_MIN_CHUNK = 15;
 export const REPLAY_MAX_CHUNK = 300;
-/** aim for this much main-thread work per stage-2 chunk (a phone is 3-4× slower than the box) */
-export const REPLAY_TARGET_CHUNK_MS = 120;
+/**
+ * Opt-in (0 = off): adapt the stage-2 chunk size to this much wall-clock per
+ * chunk. OFF by default — the SDK awaits the crypto store while replaying
+ * encrypted rooms, so interleaved React renders and crypto work count against
+ * the chunk and the size collapses (see REPLAY_DEFAULT_CHUNK).
+ */
+export const REPLAY_TARGET_CHUNK_MS = 0;
 
 /** Current replay progress for consumers that mount after the events were emitted. */
 export const getReplayState = (): ReplayState => replayState;
@@ -335,11 +345,11 @@ type SyncApiPrototypeLike = {
 
 export type StagedReplayOptions = {
   getHints: () => ReplayHints;
-  /** stage-2 chunk size to start with (cached replay); adapts towards `targetChunkMs` */
+  /** stage-2 chunk size (cached replay); adapts only when `targetChunkMs` > 0 */
   chunkSize?: number;
   /** chunk size for the cold initial sync (not from cache) */
   coldChunkSize?: number;
-  /** ms of work to aim for per stage-2 chunk; 0 = keep `chunkSize` fixed */
+  /** ms of wall-clock to aim for per stage-2 chunk; 0 (default) = keep `chunkSize` fixed */
   targetChunkMs?: number;
   threshold?: number;
   /** test hook; defaults to a real macrotask yield */
