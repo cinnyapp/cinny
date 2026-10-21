@@ -259,6 +259,29 @@ const openExistingDb = (dbName: string): Promise<IDBDatabase | undefined> =>
   });
 
 /**
+ * Is the sync store's database in the browser's list of databases? `undefined`
+ * when the browser cannot list them (then the store is opened and counted).
+ */
+const isSyncDbListed = async (): Promise<boolean | undefined> => {
+  try {
+    if (typeof indexedDB?.databases !== 'function') return undefined;
+    const dbs = await indexedDB.databases();
+    return dbs.some((info) => info.name === SYNC_IDB_NAME);
+  } catch {
+    return undefined;
+  }
+};
+
+type OpenedStore = { db?: IDBDatabase; error?: unknown };
+const openStore = async (): Promise<OpenedStore> => {
+  try {
+    return { db: await openExistingDb(SYNC_IDB_NAME) };
+  } catch (error) {
+    return { error };
+  }
+};
+
+/**
  * Is the saved /sync record there? A key count: the 13-19 MB record itself is
  * not read.
  */
@@ -328,19 +351,20 @@ export const pruneDormantRooms = async (
   // Is anything saved? Checked before the "tidied recently" shortcut below: after
   // "Clear Cache" the store is gone but the notes in localStorage are not, and
   // the shortcut used to turn that one-time full load into a plain one (no cold
-  // prune, no note) — measured 72 s with no explanation.
-  let db: IDBDatabase | undefined;
-  let openError: unknown;
-  try {
-    db = await openExistingDb(SYNC_IDB_NAME);
-  } catch (err) {
-    openError = err;
-  }
+  // prune, no note) — measured 72 s with no explanation. The browser's list of
+  // databases answers without opening one; opening queues behind the previous
+  // page's last save (0.4-0.6 s right after a refresh). Browsers without the list
+  // open the store and count the record instead.
+  const listed = await isSyncDbListed();
+  let opened: OpenedStore | undefined;
+  if (listed === undefined) opened = await openStore();
 
   try {
-    const firstLoad =
-      !openError &&
-      (!db || (db.objectStoreNames.contains(SYNC_STORE) && !(await hasSavedRecord(db))));
+    let firstLoad = listed === false;
+    if (opened && !opened.error) {
+      const { db } = opened;
+      firstLoad = !db || (db.objectStoreNames.contains(SYNC_STORE) && !(await hasSavedRecord(db)));
+    }
     const first = firstLoad ? { firstLoad: true } : {};
 
     if (choice === 'off') {
@@ -362,17 +386,7 @@ export const pruneDormantRooms = async (
         ...first,
       };
     }
-    if (openError) {
-      // eslint-disable-next-line no-console
-      console.error('lite mode: could not open the sync store, loading everything', openError);
-      return {
-        skippedRooms: previous,
-        report: skip('could not open the saved chats', options.windowDays),
-        enabled: choice === 'on' || previous.length > 0,
-        windowDays: options.windowDays,
-      };
-    }
-    if (firstLoad || !db) {
+    if (firstLoad) {
       // nothing saved on this device (yet, or any more): nothing to skip. The cold
       // prune writes the record lean, so the next load is the fast one.
       return {
@@ -382,9 +396,6 @@ export const pruneDormantRooms = async (
         windowDays: options.windowDays,
         firstLoad: true,
       };
-    }
-    if (!db.objectStoreNames.contains(SYNC_STORE)) {
-      return off(skip('saved chats not in the expected shape', options.windowDays));
     }
 
     // Tidied recently with the same settings: nothing new can have gone quiet
@@ -412,6 +423,31 @@ export const pruneDormantRooms = async (
           windowDays: resolved.windowDays,
         };
       }
+    }
+
+    if (!opened) opened = await openStore();
+    const { db, error: openError } = opened;
+    if (openError) {
+      // eslint-disable-next-line no-console
+      console.error('lite mode: could not open the sync store, loading everything', openError);
+      return {
+        skippedRooms: previous,
+        report: skip('could not open the saved chats', options.windowDays),
+        enabled: choice === 'on' || previous.length > 0,
+        windowDays: options.windowDays,
+      };
+    }
+    if (!db) {
+      return {
+        skippedRooms: previous,
+        report: skip('nothing saved yet — first load is always the slow one', options.windowDays),
+        enabled: choice === 'on',
+        windowDays: options.windowDays,
+        firstLoad: true,
+      };
+    }
+    if (!db.objectStoreNames.contains(SYNC_STORE)) {
+      return off(skip('saved chats not in the expected shape', options.windowDays));
     }
 
     const readTx = db.transaction([SYNC_STORE], 'readonly');
@@ -509,7 +545,7 @@ export const pruneDormantRooms = async (
       windowDays: options.windowDays,
     };
   } finally {
-    db?.close();
+    opened?.db?.close();
   }
 };
 

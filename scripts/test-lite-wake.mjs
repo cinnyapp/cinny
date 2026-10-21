@@ -39,6 +39,14 @@ class FakeIDB {
     this.dbs = new Map();
     this.reads = 0;
     this.counts = 0;
+    this.opens = 0;
+    // Chrome / Firefox / Safari can list databases; older browsers cannot
+    this.canList = true;
+  }
+
+  get databases() {
+    if (!this.canList) return undefined;
+    return async () => [...this.dbs.keys()].map((name) => ({ name, version: 1 }));
   }
 
   seed(name, record) {
@@ -55,6 +63,7 @@ class FakeIDB {
   }
 
   open(name) {
+    this.opens += 1;
     const req = {};
     later(() => {
       if (!this.dbs.has(name)) {
@@ -172,10 +181,12 @@ const AUTO = { enabled: false, choice: 'auto', windowDays: 30, serverFilter: fal
 const ON = { enabled: true, choice: 'on', windowDays: 30, serverFilter: false };
 const OFF = { enabled: false, choice: 'off', windowDays: 30, serverFilter: false };
 
-const reset = () => {
+const reset = ({ canList = true } = {}) => {
   idb.dbs.clear();
+  idb.canList = canList;
   idb.reads = 0;
   idb.counts = 0;
+  idb.opens = 0;
   localStorage.clear();
   localStorage.resetWrites();
   sessionStorage.clear();
@@ -193,14 +204,22 @@ const skippedIds = (n, prefix = '!old') => Array.from({ length: n }, (_, i) => `
 // ---------------------------------------------------------------------------
 
 test('after Clear Cache (store gone, stamp 1 h old) the load is a first load, not "tidied recently"', async () => {
-  reset();
-  tidiedAgo(60 * 60 * 1000);
-  setSkippedRooms(skippedIds(5));
-  const res = await pruneDormantRooms(AUTO);
-  assert.equal(res.firstLoad, true, 'firstLoad → cold prune + one-time note');
-  assert.deepEqual(res.skippedRooms, skippedIds(5), 'the list from before is reported as is');
-  assert.equal(idb.dbs.has(DB), false, 'the probe never leaves an empty database behind');
-  assert.equal(idb.reads, 0);
+  for (const canList of [true, false]) {
+    reset({ canList });
+    tidiedAgo(60 * 60 * 1000);
+    setSkippedRooms(skippedIds(5));
+    // eslint-disable-next-line no-await-in-loop
+    const res = await pruneDormantRooms(AUTO);
+    assert.equal(
+      res.firstLoad,
+      true,
+      `firstLoad → cold prune + one-time note (canList ${canList})`
+    );
+    assert.deepEqual(res.skippedRooms, skippedIds(5), 'the list from before is reported as is');
+    assert.equal(idb.dbs.has(DB), false, 'the probe never leaves an empty database behind');
+    assert.equal(idb.reads, 0);
+    assert.equal(idb.opens, canList ? 0 : 1, 'listing the databases needs no open');
+  }
 });
 
 test('Clear Cache forgets the "tidied at" stamp but keeps the skipped list (name index)', () => {
@@ -212,25 +231,34 @@ test('Clear Cache forgets the "tidied at" stamp but keeps the skipped list (name
   assert.deepEqual(JSON.parse(localStorage.getItem(SKIPPED)), skippedIds(3));
 });
 
-test('a saved store + a fresh stamp still takes the cheap path (count only, no record read)', async () => {
-  reset();
-  idb.seed(DB, { clobber: '-', nextBatch: 's1', roomsData: { join: { '!a:hs': room(1) } } });
-  tidiedAgo(60 * 60 * 1000);
-  setSkippedRooms(skippedIds(4));
-  const res = await pruneDormantRooms(AUTO);
-  assert.equal(res.firstLoad, undefined);
-  assert.equal(res.enabled, true);
-  assert.deepEqual(res.skippedRooms, skippedIds(4));
-  assert.equal(idb.counts, 1, 'one key count');
-  assert.equal(idb.reads, 0, 'the 13-19 MB record is not read');
+test('a saved store + a fresh stamp still takes the cheap path (no open / count only, no read)', async () => {
+  for (const canList of [true, false]) {
+    reset({ canList });
+    idb.seed(DB, { clobber: '-', nextBatch: 's1', roomsData: { join: { '!a:hs': room(1) } } });
+    tidiedAgo(60 * 60 * 1000);
+    setSkippedRooms(skippedIds(4));
+    // eslint-disable-next-line no-await-in-loop
+    const res = await pruneDormantRooms(AUTO);
+    assert.equal(res.firstLoad, undefined);
+    assert.equal(res.enabled, true);
+    assert.deepEqual(res.skippedRooms, skippedIds(4));
+    // with the list the store is not even opened (an open waits for the last page's save)
+    assert.equal(idb.opens, canList ? 0 : 1);
+    assert.equal(idb.counts, canList ? 0 : 1, 'at most one key count');
+    assert.equal(idb.reads, 0, 'the 13-19 MB record is not read');
+  }
 });
 
 test('a database without the record (tab closed during the cold load) is a first load', async () => {
+  // no stamp (new browser / after Clear Cache): the full read finds no record
   reset();
   idb.seed(DB, undefined);
+  assert.equal((await pruneDormantRooms(AUTO)).firstLoad, true);
+  // a browser that cannot list databases counts the record even with a fresh stamp
+  reset({ canList: false });
+  idb.seed(DB, undefined);
   tidiedAgo(60 * 60 * 1000);
-  const res = await pruneDormantRooms(AUTO);
-  assert.equal(res.firstLoad, true);
+  assert.equal((await pruneDormantRooms(AUTO)).firstLoad, true);
 });
 
 test('lite mode off / "Show older chats" still report a first load (the note), skip nothing', async () => {
