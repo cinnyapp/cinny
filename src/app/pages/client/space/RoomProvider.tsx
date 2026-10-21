@@ -5,6 +5,8 @@ import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import { IsDirectRoomProvider, RoomProvider } from '../../../hooks/useRoom';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { JoinBeforeNavigate } from '../../../features/join-before-navigate';
+import { useReplayProgress } from '../../../hooks/useReplayProgress';
+import { RoomCatchingUp } from '../../../components/RoomCatchingUp';
 import { useSpace } from '../../../hooks/useSpace';
 import { getAllParents, getSpaceChildren } from '../../../utils/room';
 import { roomToParentsAtom } from '../../../state/room/roomToParents';
@@ -26,6 +28,14 @@ export function SpaceRouteRoomProvider({ children }: { children: ReactNode }) {
   const viaServers = useSearchParamsViaServers();
   const roomId = useSelectedRoom();
   const room = mx.getRoom(roomId);
+
+  // Staged start-up: while the older chats are still being rebuilt, a chat that
+  // has not landed yet is "catching up", never a "join this room" screen.
+  const replay = useReplayProgress(mx);
+  const membersList = allRooms;
+  if ((!room || !membersList.includes(room.roomId)) && replay.active) {
+    return <RoomCatchingUp done={replay.done} total={replay.total} />;
+  }
 
   if (!room || !allRooms.includes(room.roomId)) {
     // room is not joined

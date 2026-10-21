@@ -22,6 +22,7 @@ import {
 } from '../../utils/roomActivity';
 import { ChunkedRun, Coalescer, createCoalescer, runChunked } from '../../utils/batch';
 import { useSyncState } from '../../hooks/useSyncState';
+import { isReplayActive } from '../../../client/staged-replay';
 
 /**
  * Per-room "last real message" (see utils/roomActivity.ts), kept up to date from
@@ -382,6 +383,8 @@ export const useBindRoomActivityAtom = (
       // The same event can arrive through several timeline sets; merging is
       // idempotent, so duplicates cost nothing.
       if (!room || removed || room.isSpaceRoom()) return;
+      // staged start-up: the full scan at PREPARED (right after the replay) covers these
+      if (isReplayActive()) return;
       const update = updateForEvent(mEvent, myUserId);
       if (update) scheduler.queue(room.roomId, update);
     };
@@ -405,6 +408,7 @@ export const useBindRoomActivityAtom = (
     const myUserId = mx.getUserId();
     const handleRoom = (room: Room) => {
       if (room.isSpaceRoom()) return;
+      if (isReplayActive()) return;
       const computed = computeRoomActivity(roomEvents(room), myUserId, Date.now(), isHighlight);
       scheduler.queue(room.roomId, computed);
     };

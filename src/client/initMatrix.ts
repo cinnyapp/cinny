@@ -5,11 +5,22 @@ import {
   IndexedDBStore,
   IndexedDBCryptoStore,
 } from 'matrix-js-sdk';
+import { SyncApi } from 'matrix-js-sdk/lib/sync.js';
 
 import { cryptoCallbacks } from './secretStorageKeys';
 import { clearNavToActivePathStore } from '../app/state/navToActivePath';
 import { pushSessionToSW } from '../sw-session';
 import { installPushRuleIndex } from './pushRuleIndex';
+import { installInitialSyncTimeout } from './initial-sync-timeout';
+import {
+  defaultReplayHints,
+  installStagedReplay,
+  ReplayHints,
+  roomIdFromLocation,
+} from './staged-replay';
+import { readSnapshot } from '../app/features/startup-snapshot/snapshot';
+import { getSettings } from '../app/state/settings';
+import { installSyncStoreKeeper, noteSavedToken } from './sync-store-keeper';
 import { buildLiteFilterDefinition, LITE_FILTER_INLINE_SAFE_ROOMS, LiteOptions } from './lite-mode';
 import {
   bypassLiteOnce,
@@ -70,6 +81,9 @@ const createClientWithStore = (session: Session, store: IndexedDBStore): MatrixC
   // Push-rule matching was ~60 % of the reload on a 9,000-chat account with ~400
   // per-chat rules. Same results, only the rules that can match are checked.
   installPushRuleIndex(mx);
+  // The one-time initial /sync takes the server 55-80+ s on this account; the
+  // SDK would abort it at 80 s and start over. Only that request waits longer.
+  installInitialSyncTimeout(mx);
   return mx;
 };
 
@@ -77,19 +91,55 @@ const createClientWithStore = (session: Session, store: IndexedDBStore): MatrixC
  * What lite mode did on this load — read by the settings screen and by
  * `startClient` (which turns the skipped list into a /sync filter).
  */
-let liteState: { options: LiteOptions; skippedRooms: string[]; report?: LiteReport } = {
+let liteState: {
+  options: LiteOptions;
+  skippedRooms: string[];
+  report?: LiteReport;
+  /** nothing saved on this device yet: this load is the one-time full one */
+  firstLoad: boolean;
+} = {
   options: { enabled: false, windowDays: 90, serverFilter: false },
   skippedRooms: [],
+  firstLoad: false,
 };
 
 export const getLiteState = () => liteState;
+
+/**
+ * Staged start-up (client/staged-replay.ts): which rooms the SDK replays first.
+ * The hints are read when the replay runs, so they are kept module-level.
+ */
+let replayHints: ReplayHints = defaultReplayHints();
+
+export const stagedStartupEnabled = (): boolean => getSettings().stagedStartup !== 'off';
+
+const setupStagedStartup = (session: Session): boolean => {
+  if (!stagedStartupEnabled()) return false;
+  replayHints = {
+    ...defaultReplayHints(),
+    urlRoomId: roomIdFromLocation(),
+    snapshotRoomIds: readSnapshot(session.userId)?.rooms.map((r) => r.id) ?? [],
+  };
+  // Wraps a private SDK method; a no-op (today's path) when an upstream bump moved it.
+  const proto = (SyncApi as unknown as { prototype?: Record<string, unknown> }).prototype;
+  const installed = installStagedReplay(proto as Parameters<typeof installStagedReplay>[0], {
+    getHints: () => replayHints,
+  });
+  if (!installed && !(proto as { __cinnyStaged?: boolean } | undefined)?.__cinnyStaged) {
+    // eslint-disable-next-line no-console
+    console.warn('staged startup: SDK method missing, running unstaged');
+  }
+  return installed;
+};
 
 export const initClient = async (session: Session): Promise<MatrixClient> => {
   // BEFORE the store is opened: delete the chats that have gone quiet from the
   // persisted /sync record, so the SDK never replays them. See client/lite-store.ts.
   const liteOptions = liteOptionsFromSettings();
   const bypassed = isLiteBypassed();
-  const { skippedRooms, report, enabled, windowDays } = await pruneDormantRooms(liteOptions);
+  const { skippedRooms, report, enabled, windowDays, firstLoad } = await pruneDormantRooms(
+    liteOptions
+  );
   if (bypassed) {
     // "Show older chats" was a one-shot: everything is loaded this time, and the
     // skipped list is dropped so nothing is filtered out either.
@@ -107,20 +157,34 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     },
     skippedRooms,
     report,
+    firstLoad: !!firstLoad,
   };
+
+  setupStagedStartup(session);
 
   let indexedDBStore = createSyncStore(true);
   let mx = createClientWithStore(session, indexedDBStore);
 
+  // The sync store (worker reads the saved record) and the rust crypto init
+  // (wasm compile + its own IndexedDB database) are independent: run them in
+  // parallel instead of one after the other — ~1 s off a warm start.
+  const cryptoReady = mx.initRustCrypto();
   try {
-    await indexedDBStore.startup();
+    await Promise.all([indexedDBStore.startup(), cryptoReady]);
   } catch (err) {
     // The worker could not be started (unsupported runtime, blocked by a CSP,
-    // failed chunk load, ...). Fall back to the previous main-thread store
-    // rather than failing to load the app at all. Nothing has used `mx` yet —
-    // `createClient` does no I/O — so it is safe to rebuild both.
+    // failed chunk load, ...) — or crypto failed. Fall back to the previous
+    // main-thread store rather than failing to load the app at all. Nothing
+    // has synced yet, so it is safe to rebuild both; the in-flight crypto init
+    // is awaited and stopped first so two crypto backends never share a store.
     // eslint-disable-next-line no-console
     console.error('initMatrix: IndexedDB worker store failed, falling back to main thread', err);
+    await cryptoReady.catch(() => undefined);
+    try {
+      mx.stopClient();
+    } catch {
+      // ignore
+    }
     try {
       await indexedDBStore.destroy();
     } catch {
@@ -129,9 +193,15 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     indexedDBStore = createSyncStore(false);
     mx = createClientWithStore(session, indexedDBStore);
     await indexedDBStore.startup();
+    await mx.initRustCrypto();
   }
 
-  await mx.initRustCrypto();
+  // save the record when the tab goes away; remember a degraded store; start-up report
+  installSyncStoreKeeper(mx, indexedDBStore);
+  indexedDBStore
+    .getSavedSyncToken()
+    .then((token) => noteSavedToken(!!token))
+    .catch(() => noteSavedToken(false));
 
   mx.setMaxListeners(50);
 

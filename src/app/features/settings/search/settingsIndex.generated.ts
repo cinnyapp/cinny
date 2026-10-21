@@ -3,7 +3,7 @@
  * GENERATED FILE — do not edit by hand.
  * Run `node scripts/build-settings-index.mjs` after adding a setting.
  *
- * 60 settings indexed for the Settings search field.
+ * 61 settings indexed for the Settings search field.
  */
 import { SettingsPages } from '../pages';
 import type { SettingsIndexEntry } from './settingsIndex';
@@ -191,6 +191,14 @@ export const GENERATED_SETTINGS_INDEX: SettingsIndexEntry[] = [
     pageName: 'General',
     section: 'Messages',
     title: 'Show Hidden Events',
+  },
+  {
+    page: SettingsPages.GeneralPage,
+    pageName: 'General',
+    section: 'Loading Speed',
+    title: 'Open as soon as recent chats are ready',
+    description:
+      'The app opens the moment your most recent chats are rebuilt; the older ones keep loading in the background with a small progress line. Off = wait for every chat before opening (the classic way). Takes effect on the next reload.',
   },
   {
     page: SettingsPages.GeneralPage,

@@ -83,6 +83,10 @@ export interface Settings {
   liteModeChoice: 'auto' | 'on' | 'off';
   liteWindowDays: number;
   liteServerFilter: boolean;
+  // stagedStartup: 'on' (default) opens the app as soon as the most recent chats
+  // are rebuilt and streams the older ones in behind it; 'off' = wait for all of
+  // them (the plain matrix-js-sdk path). See client/staged-replay.ts.
+  stagedStartup: 'on' | 'off';
 
   hour24Clock: boolean;
   dateFormatString: string;
@@ -141,6 +145,7 @@ const defaultSettings: Settings = {
   liteModeChoice: 'auto',
   liteWindowDays: 90,
   liteServerFilter: false,
+  stagedStartup: 'on',
 
   hour24Clock: false,
   dateFormatString: 'D MMM YYYY',

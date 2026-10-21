@@ -262,6 +262,8 @@ export type LitePruneResult = {
   /** Whether lite mode actually applies to this load (auto mode decides here). */
   enabled: boolean;
   windowDays: number;
+  /** Nothing saved on this device yet: this load is the one-time full one. */
+  firstLoad?: boolean;
 };
 
 const choiceOf = (options: LiteOptions) => options.choice ?? (options.enabled ? 'on' : 'off');
@@ -354,6 +356,7 @@ export const pruneDormantRooms = async (
       report: skip('nothing saved yet — first load is always the slow one', options.windowDays),
       enabled: choice === 'on',
       windowDays: options.windowDays,
+      firstLoad: true,
     };
   }
 
@@ -376,6 +379,7 @@ export const pruneDormantRooms = async (
         report: skip('nothing saved yet — first load is always the slow one', options.windowDays),
         enabled: choice === 'on',
         windowDays: options.windowDays,
+        firstLoad: true,
       };
     }
 
