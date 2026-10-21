@@ -1,7 +1,7 @@
 import { Badge, Box, Icon, IconButton, Icons, Spinner, Text, as, toRem } from 'folds';
 import React, { ReactNode, useCallback } from 'react';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
-import FileSaver from 'file-saver';
+import { saveFile } from '../../utils/file-saver';
 import { mimeTypeToExt } from '../../utils/mimeTypes';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
@@ -33,9 +33,7 @@ export function FileDownloadButton({ filename, url, mimeType, encInfo }: FileDow
         ? await downloadEncryptedMedia(mediaUrl, (encBuf) => decryptFile(encBuf, mimeType, encInfo))
         : await downloadMedia(mediaUrl);
 
-      const fileURL = URL.createObjectURL(fileContent);
-      FileSaver.saveAs(fileURL, filename);
-      return fileURL;
+      await saveFile(fileContent, filename);
     }, [mx, url, useAuthentication, mimeType, encInfo, filename])
   );
 
