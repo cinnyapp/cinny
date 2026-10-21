@@ -226,9 +226,19 @@ export type ReplayState = {
   /** ms, performance.now() of the first stage-1 emit of the current/last replay */
   startedAt?: number;
   finishedAt?: number;
+  /** diagnostics: which chunk is being processed right now */
+  chunk?: number;
+  chunks?: number;
+  chunkStartedAt?: number;
+  chunkRooms?: string[];
+  slowChunks?: number;
 };
 
 const replayState: ReplayState = { active: false, done: 0, total: 0, fromCache: false };
+// readable from the console / a measurement harness
+(globalThis as { __cinnyReplay?: ReplayState }).__cinnyReplay = replayState;
+/** a chunk that takes longer than this is reported on the console (never expected) */
+const SLOW_CHUNK_MS = 15_000;
 
 /** Current replay progress for consumers that mount after the events were emitted. */
 export const getReplayState = (): ReplayState => replayState;
@@ -322,10 +332,29 @@ export const installStagedReplay = (
     const chunks = splitSyncResponse(data, plan, fromCache ? chunkSize : coldChunkSize, threshold);
     let done = 0;
     let catching: boolean | undefined;
+    replayState.chunks = chunks.length;
+    replayState.slowChunks = 0;
     try {
       for (let i = 0; i < chunks.length; i += 1) {
-        // eslint-disable-next-line no-await-in-loop
-        await original.call(this, syncEventData, chunks[i]);
+        const rooms = Object.keys(chunks[i].rooms?.join ?? {});
+        replayState.chunk = i;
+        replayState.chunkStartedAt = now();
+        replayState.chunkRooms = rooms.slice(0, 3);
+        const watchdog = setTimeout(() => {
+          replayState.slowChunks = (replayState.slowChunks ?? 0) + 1;
+          // eslint-disable-next-line no-console
+          console.warn(
+            `staged startup: chunk ${i + 1}/${chunks.length} (${rooms.length} rooms, from ${
+              rooms[0]
+            }) is taking more than ${SLOW_CHUNK_MS} ms`
+          );
+        }, SLOW_CHUNK_MS);
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          await original.call(this, syncEventData, chunks[i]);
+        } finally {
+          clearTimeout(watchdog);
+        }
         if (i === 0) catching = this.catchingUp;
         // later chunks carry no to_device: keep chunk 0's catching-up decision
         else if (catching !== undefined) this.catchingUp = catching;
