@@ -879,6 +879,51 @@ test('fast versions: fast server answers directly; a failure falls back and retr
   assert.equal(await noCache.getVersions(), real, 'nothing cached: waits for the server as before');
 });
 
+test('MatrixRTC starts after the replay, not during it', async () => {
+  const { deferMatrixRtcDuringReplay: defer } = await import('../src/client/staged-replay.ts');
+  assert.equal(defer(undefined), false);
+  assert.equal(defer({}), false);
+  let started = 0;
+  const listeners = [];
+  const mx = {
+    clientRunning: true,
+    matrixRTC: { start: () => (started += 1) },
+    on: (ev, h) => listeners.push(h),
+    removeListener: (ev, h) => listeners.splice(listeners.indexOf(h), 1),
+  };
+  assert.equal(defer(mx), true);
+  assert.equal(defer(mx), false, 'idempotent');
+  // no replay running: starts at once
+  mx.matrixRTC.start();
+  assert.equal(started, 1);
+  // while a replay streams: waits for 'done'
+  const { proto, api } = fakeSyncApi();
+  let release;
+  const gate = new Promise((r) => {
+    release = r;
+  });
+  installStagedReplay(proto, {
+    getHints: () => hints({ firstCount: 40 }),
+    chunkSize: 150,
+    targetChunkMs: 0,
+    yieldFn: async () => undefined,
+    beforeStage2: () => gate,
+  });
+  await api.processSyncResponse(
+    { fromCache: true },
+    { next_batch: 'nb', rooms: { join: manyRooms(200) } }
+  );
+  assert.equal(getReplayState().active, true);
+  mx.matrixRTC.start();
+  assert.equal(started, 1, 'deferred');
+  // the replay's events reach the deferral through the client emitter
+  api.client.emit = (ev, p) => listeners.slice().forEach((h) => h(p));
+  release();
+  await whenReplayIdle();
+  assert.equal(started, 2, 'started once the replay was done');
+  assert.equal(listeners.length, 0, 'listener removed');
+});
+
 test('roomIdFromLocation: hash router, path router, space routes, decoding', () => {
   assert.equal(roomIdFromLocation({ hash: '#/home/!abc:hs', pathname: '/cinny-dev/' }), '!abc:hs');
   assert.equal(roomIdFromLocation({ hash: '', pathname: '/direct/%21abc%3Ahs/$ev' }), '!abc:hs');

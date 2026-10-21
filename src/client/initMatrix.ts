@@ -14,6 +14,7 @@ import { installPushRuleIndex } from './pushRuleIndex';
 import { installInitialSyncTimeout } from './initial-sync-timeout';
 import {
   defaultReplayHints,
+  deferMatrixRtcDuringReplay,
   installStagedReplay,
   ReplayHints,
   roomIdFromLocation,
@@ -208,7 +209,10 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
   let mx = createClientWithStore(session, indexedDBStore);
   // startClient() awaits GET /versions before it reads the saved chats: ask now,
   // and fall back to the cached answer if the server is slow (client/fast-versions.ts)
-  if (staged) installFastVersions(mx, readCachedVersions(session.baseUrl));
+  if (staged) {
+    installFastVersions(mx, readCachedVersions(session.baseUrl));
+    deferMatrixRtcDuringReplay(mx);
+  }
   // The worker sends the saved record in parts: the replay's stage 1 first, the
   // rest while stage 2 streams (client/staged-transfer.ts). Only together with
   // the replay wrapper — it is what fetches the rest.
@@ -247,7 +251,10 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     }
     indexedDBStore = createSyncStore(false);
     mx = createClientWithStore(session, indexedDBStore);
-    if (staged) installFastVersions(mx, readCachedVersions(session.baseUrl));
+    if (staged) {
+      installFastVersions(mx, readCachedVersions(session.baseUrl));
+      deferMatrixRtcDuringReplay(mx);
+    }
     if (firstLoad) installColdPrune(indexedDBStore, liteOptions);
     await indexedDBStore.startup();
     await mx.initRustCrypto();

@@ -776,6 +776,38 @@ export const installStagedReplay = (
   return true;
 };
 
+type RtcClientLike = {
+  clientRunning?: boolean;
+  matrixRTC?: { start?: () => void; __cinnyDeferred?: boolean };
+};
+
+/**
+ * matrix-js-sdk starts its MatrixRTC session manager on the first PREPARED,
+ * which now comes right after stage 1: every stage-2 room with call state then
+ * logged "Got room state event for unknown room" (its state is applied before
+ * the room is stored) and was refreshed one by one. Start it once the replay
+ * is done instead — it scans all rooms then anyway. Feature-detected.
+ */
+export const deferMatrixRtcDuringReplay = (mx: unknown): boolean => {
+  const client = mx as RtcClientLike | undefined;
+  const rtc = client?.matrixRTC;
+  if (!rtc || typeof rtc.start !== 'function' || rtc.__cinnyDeferred) return false;
+  const start = rtc.start.bind(rtc);
+  rtc.start = () => {
+    if (!isReplayActive()) {
+      start();
+      return;
+    }
+    const off = onReplayProgress(mx, (p) => {
+      if (p.stage !== 'done') return;
+      off();
+      if (client?.clientRunning !== false) start();
+    });
+  };
+  rtc.__cinnyDeferred = true;
+  return true;
+};
+
 /**
  * The room id in the current URL — matches both the hash router
  * (`/#/home/!room`) and the path router (`/home/!room`).
