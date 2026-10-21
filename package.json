@@ -24,7 +24,7 @@
     "commit": "git-cz",
     "test:settings-search": "node --experimental-strip-types --import ./scripts/ts-resolve-hook.mjs scripts/test-settings-search.mjs",
     "build:settings-index": "node scripts/build-settings-index.mjs",
-    "test": "npm run test:lite && npm run test:lite-older && npm run test:staged-replay && npm run test:push-rules && npm run test:startup-snapshot && npm run test:settings-search && npm run test:transcribe-popover && npm run test:transcript-flow && npm run test:media-cache && npm run test:error-boundaries && npm run test:dm-avatar && npm run test:sender-avatar && npm run test:media-errors && npm run test:chat-list && npm run test:media-gallery",
+    "test": "npm run test:lite && npm run test:lite-older && npm run test:lite-wake && npm run test:staged-replay && npm run test:push-rules && npm run test:startup-snapshot && npm run test:settings-search && npm run test:transcribe-popover && npm run test:transcript-flow && npm run test:media-cache && npm run test:error-boundaries && npm run test:dm-avatar && npm run test:sender-avatar && npm run test:media-errors && npm run test:chat-list && npm run test:media-gallery",
     "test:chat-list": "node --experimental-strip-types --import ./scripts/ts-resolve-hook.mjs scripts/test-chat-list.mjs",
     "test:error-boundaries": "node scripts/test-error-boundaries.mjs",
     "test:media-errors": "node scripts/test-media-errors.mjs",
@@ -35,7 +35,8 @@
     "test:media-gallery": "node --experimental-strip-types --import ./scripts/ts-resolve-hook.mjs scripts/test-media-gallery.mjs",
     "test:transcript-flow": "node --experimental-strip-types --import ./scripts/ts-resolve-hook.mjs --test scripts/test-transcript-flow.mjs",
     "bump": "node scripts/update-version.js",
-    "test:lite-older": "node --experimental-strip-types --import ./scripts/ts-resolve-hook.mjs scripts/test-lite-older-chats.mjs"
+    "test:lite-older": "node --experimental-strip-types --import ./scripts/ts-resolve-hook.mjs scripts/test-lite-older-chats.mjs",
+    "test:lite-wake": "node --experimental-strip-types --import ./scripts/ts-resolve-hook.mjs scripts/test-lite-wake.mjs"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": "eslint",

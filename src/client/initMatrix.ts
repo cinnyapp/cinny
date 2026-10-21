@@ -27,7 +27,13 @@ import { installSyncPrefetch, prefetchFirstSync } from './sync-prefetch';
 import { installFastVersions } from './fast-versions';
 import { readCachedVersions } from '../app/utils/specVersionsCache';
 import { getStartupMarks, markStartup, whenStartupMark } from './startup-marks';
-import { buildLiteFilterDefinition, LITE_FILTER_INLINE_SAFE_ROOMS, LiteOptions } from './lite-mode';
+import {
+  buildLiteFilterDefinition,
+  LITE_FILTER_INLINE_SAFE_ROOMS,
+  liteChoiceFromSettings,
+  LiteOptions,
+  normalizeLiteOptions,
+} from './lite-mode';
 import {
   bypassLiteOnce,
   clearLiteBypass,
@@ -35,11 +41,21 @@ import {
   getSkippedRooms,
   installColdPrune,
   isLiteBypassed,
-  liteOptionsFromSettings,
   LiteReport,
+  noteCacheCleared,
   pruneDormantRooms,
   SYNC_DB_NAME,
 } from './lite-store';
+
+export const liteOptionsFromSettings = (): LiteOptions => {
+  const settings = getSettings();
+  return normalizeLiteOptions({
+    enabled: settings.liteMode,
+    choice: liteChoiceFromSettings(settings.liteModeChoice, settings.liteMode),
+    windowDays: settings.liteWindowDays,
+    serverFilter: settings.liteServerFilter,
+  });
+};
 
 type Session = {
   baseUrl: string;
@@ -217,9 +233,11 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
   // rest while stage 2 streams (client/staged-transfer.ts). Only together with
   // the replay wrapper — it is what fetches the rest.
   if (staged) installStagedTransfer(indexedDBStore, () => replayHints);
-  // One-time cold load: write the saved record lean right away, so the first
-  // refresh is already a steady-state one (no main-thread prune on top).
-  if (firstLoad) installColdPrune(indexedDBStore, liteOptions);
+  // One-time cold load (new browser, or after "Clear Cache"): write the saved
+  // record lean right away, so the first refresh is already a steady-state one
+  // (no main-thread prune on top). Not for "Show older chats", which keeps all.
+  const coldPrune = !!firstLoad && !bypassed;
+  if (coldPrune) installColdPrune(indexedDBStore, liteOptions);
 
   // The sync store (worker reads the saved record) and the rust crypto init
   // (wasm compile + its own IndexedDB database) are independent: run them in
@@ -255,7 +273,7 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
       installFastVersions(mx, readCachedVersions(session.baseUrl));
       deferMatrixRtcDuringReplay(mx);
     }
-    if (firstLoad) installColdPrune(indexedDBStore, liteOptions);
+    if (coldPrune) installColdPrune(indexedDBStore, liteOptions);
     await indexedDBStore.startup();
     await mx.initRustCrypto();
   }
@@ -319,6 +337,9 @@ export const startClient = async (mx: MatrixClient) => {
 export const clearCacheAndReload = async (mx: MatrixClient) => {
   mx.stopClient();
   clearNavToActivePathStore(mx.getSafeUserId());
+  // the saved chats go, so does the note that they were tidied recently: the
+  // next load is the one-time full one (cold prune + honest note), see lite-store.ts
+  noteCacheCleared();
   await mx.store.deleteAllData();
   window.location.reload();
 };

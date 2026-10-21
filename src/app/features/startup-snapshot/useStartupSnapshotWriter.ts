@@ -70,6 +70,10 @@ export const useStartupSnapshotWriter = (
         });
       }
     }
+    // Nothing to show is never saved over the last good list: "Clear Cache"
+    // empties the client's rooms right before the page goes away (pagehide),
+    // and an empty snapshot then hid the instant list for the whole one-time load.
+    if (rooms.length === 0) return;
     const snap = buildSnapshot(userId, rooms, mx.getRooms().length, Date.now(), showAllRooms);
     if (sameSnapshot(readSnapshot(userId), snap)) return;
     writeSnapshot(snap);

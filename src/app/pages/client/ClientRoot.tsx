@@ -65,13 +65,17 @@ const readDegradedAt = (): number | undefined => {
   }
 };
 
-/** Honest copy for the one-time full load (nothing saved in this browser yet). */
-const firstLoadNote = (elapsedMs: number, degraded: boolean) =>
-  `${
-    degraded
-      ? 'The saved copy had to be rebuilt: loading all your chats once'
-      : 'First time in this browser: loading all your chats once'
-  } (about a minute). Every later start takes seconds. ${mmss(elapsedMs)}`;
+type SlowLoadKind = 'first' | 'cleared' | 'degraded';
+const SLOW_LOAD_LEAD: Record<SlowLoadKind, string> = {
+  first: 'First time in this browser: loading all your chats once',
+  // nothing saved, but a chat list from last time: the app's "Clear Cache" (or
+  // the browser's site data) removed the saved chats
+  cleared: 'Cache cleared: loading all your chats once',
+  degraded: 'The saved copy had to be rebuilt: loading all your chats once',
+};
+/** Honest copy for the one-time full load (nothing saved in this browser). */
+const firstLoadNote = (elapsedMs: number, kind: SlowLoadKind) =>
+  `${SLOW_LOAD_LEAD[kind]} (a minute or two). Every later start takes seconds. ${mmss(elapsedMs)}`;
 
 function ClientRootLoading({ mx }: { mx?: MatrixClient }) {
   // On accounts with a very large number of rooms, restoring the persisted
@@ -79,7 +83,8 @@ function ClientRootLoading({ mx }: { mx?: MatrixClient }) {
   // far so that the splash screen does not look stuck.
   const [roomCount, setRoomCount] = useState(0);
   const { options, skippedRooms, firstLoad } = getLiteState();
-  const skippedCount = options.enabled ? skippedRooms.length : 0;
+  // a full load downloads every chat: nothing is "skipped" on screen
+  const skippedCount = options.enabled && !firstLoad ? skippedRooms.length : 0;
   const replay = useReplayProgress(mx);
   // one-time full load: say so, with a clock, instead of looking stuck
   const [startedAt] = useState(() => Date.now());
@@ -91,7 +96,6 @@ function ClientRootLoading({ mx }: { mx?: MatrixClient }) {
     const id = setInterval(() => setElapsed(Date.now() - startedAt), 1000);
     return () => clearInterval(id);
   }, [slowLoad, startedAt]);
-  const note = slowLoad ? firstLoadNote(elapsed, !firstLoad) : undefined;
   let progressLine: string | undefined;
   if (replay.total > 0) {
     progressLine = `${replay.done.toLocaleString()} of ${replay.total.toLocaleString()} chats`;
@@ -107,6 +111,9 @@ function ClientRootLoading({ mx }: { mx?: MatrixClient }) {
       ? snapshotForHome(readSnapshot(userId), getSettings().homeShowsAllRooms)
       : undefined;
   });
+  let slowKind: SlowLoadKind = 'degraded';
+  if (firstLoad) slowKind = snapshot ? 'cleared' : 'first';
+  const note = slowLoad ? firstLoadNote(elapsed, slowKind) : undefined;
 
   useEffect(() => {
     if (!mx) return undefined;

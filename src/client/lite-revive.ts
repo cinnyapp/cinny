@@ -15,9 +15,15 @@
  *    the room at all, so nothing above can fire. Push rules are server-side and
  *    unaffected, so `GET /notifications` still reports activity in excluded
  *    rooms; we poll it and un-exclude anything that shows up.
+ *
+ * A chat that arrives BEFORE the first PREPARED is never a wake-up: that is
+ * either the replay of the saved copy (skipped chats are not in it) or the
+ * one-time initial /sync, which brings every chat with its full state — after
+ * "Clear Cache" every skipped chat arrived there and each one was refetched
+ * (7,219 `GET /rooms/{id}/state` in one load, 2026-10-21).
  */
 
-import { ClientEvent, MatrixClient, MatrixEvent, Method, Room } from 'matrix-js-sdk';
+import { ClientEvent, MatrixClient, MatrixEvent, Method, Room, SyncState } from 'matrix-js-sdk';
 import { getSkippedRooms, isSkippedRoom, setSkippedRooms } from './lite-store';
 import {
   addToLiteIndex,
@@ -30,12 +36,8 @@ import {
 import { isReviving, requestNameIndexSnapshot } from './lite-room-load';
 
 const NOTIFICATIONS_POLL_MS = 5 * 60 * 1000;
-
-const unskip = (roomId: string): void => {
-  if (!isSkippedRoom(roomId)) return;
-  const skipped = getSkippedRooms();
-  setSkippedRooms(skipped.filter((id) => id !== roomId));
-};
+/** at most this many `GET /rooms/{id}/state` in flight: a burst of wake-ups queues */
+export const MAX_STATE_FETCHES = 4;
 
 const refillRoomState = async (mx: MatrixClient, room: Room): Promise<void> => {
   try {
@@ -84,11 +86,6 @@ const BACKFILL_START_DELAY_MS = 30_000;
 const BACKFILL_RETRY_MS = 5 * 60 * 1000;
 const BACKFILL_MAX_ATTEMPTS = 3;
 
-const sleep = (ms: number) =>
-  new Promise<void>((resolve) => {
-    setTimeout(resolve, ms);
-  });
-
 /**
  * Chats skipped on an earlier load were dropped without a note of their name.
  * Learn them once, in the background, with ONE plain read of the homeserver that
@@ -99,6 +96,12 @@ const sleep = (ms: number) =>
  */
 export const startLiteIndexBackfill = (mx: MatrixClient): (() => void) => {
   let stopped = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  // cancelled by the teardown: a stopped backfill leaves no timer behind
+  const sleep = (ms: number) =>
+    new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, ms);
+    });
   const run = async () => {
     await sleep(BACKFILL_START_DELAY_MS);
     for (let attempt = 1; attempt <= BACKFILL_MAX_ATTEMPTS; attempt += 1) {
@@ -123,6 +126,7 @@ export const startLiteIndexBackfill = (mx: MatrixClient): (() => void) => {
   run();
   return () => {
     stopped = true;
+    if (timer) clearTimeout(timer);
   };
 };
 
@@ -138,12 +142,56 @@ export const watchSkippedRooms = (
   serverFilter: boolean,
   onWoken?: (roomIds: string[]) => void
 ): (() => void) => {
+  // Wake-ups count only after the first PREPARED (see the top of this file).
+  const syncState = mx.getSyncState();
+  let live = syncState === SyncState.Prepared || syncState === SyncState.Syncing;
+  const handleSync = (state: SyncState) => {
+    if (state !== SyncState.Prepared && state !== SyncState.Syncing) return;
+    live = true;
+    mx.removeListener(ClientEvent.Sync, handleSync);
+  };
+  if (!live) mx.on(ClientEvent.Sync, handleSync);
+
+  // Woken chats leave the skipped list in one write per burst (rewriting the
+  // whole list per chat was quadratic), and their state is refetched a few at
+  // a time.
+  const woken = new Set<string>();
+  let flushQueued = false;
+  const flushWoken = () => {
+    flushQueued = false;
+    if (woken.size === 0) return;
+    setSkippedRooms(getSkippedRooms().filter((id) => !woken.has(id)));
+    woken.clear();
+  };
+  const queue: Room[] = [];
+  let inFlight = 0;
+  let stopped = false;
+  let pump: () => void = () => undefined;
+  const refillDone = () => {
+    inFlight -= 1;
+    pump();
+  };
+  pump = () => {
+    while (!stopped && inFlight < MAX_STATE_FETCHES && queue.length > 0) {
+      const room = queue.shift() as Room;
+      inFlight += 1;
+      refillRoomState(mx, room).finally(refillDone);
+    }
+  };
+
   const handleRoom = (room: Room) => {
-    // During the replay of the saved chats every room fires this; skipped rooms
+    if (!live) return;
+    // During stage 2 of the replay every saved room fires this; skipped rooms
     // are not in the saved copy, so only a genuine wake-up matches.
-    if (!isSkippedRoom(room.roomId) || isReviving(room.roomId)) return;
-    unskip(room.roomId);
-    refillRoomState(mx, room);
+    const { roomId } = room;
+    if (woken.has(roomId) || !isSkippedRoom(roomId) || isReviving(roomId)) return;
+    woken.add(roomId);
+    if (!flushQueued) {
+      flushQueued = true;
+      queueMicrotask(flushWoken);
+    }
+    queue.push(room);
+    pump();
   };
 
   mx.on(ClientEvent.Room, handleRoom);
@@ -152,8 +200,8 @@ export const watchSkippedRooms = (
   let timer: ReturnType<typeof setInterval> | undefined;
   if (serverFilter) {
     const tick = () => {
-      pollNotificationsForWokenRooms(mx).then((woken) => {
-        if (woken.length > 0) onWoken?.(woken);
+      pollNotificationsForWokenRooms(mx).then((ids) => {
+        if (ids.length > 0) onWoken?.(ids);
       });
     };
     tick();
@@ -161,7 +209,9 @@ export const watchSkippedRooms = (
   }
 
   return () => {
+    stopped = true;
     mx.removeListener(ClientEvent.Room, handleRoom);
+    mx.removeListener(ClientEvent.Sync, handleSync);
     stopBackfill();
     if (timer) clearInterval(timer);
   };
