@@ -17,20 +17,15 @@
  * A skipped room returns by itself the moment /sync mentions it again.
  */
 
-import { getSettings } from '../app/state/settings';
 import { addToLiteIndex, makeIndexRow } from './lite-index';
 import {
   classifyRooms,
-  LiteOptions,
-  LiteRoomSyncData,
-  LiteRoomsSyncData,
-  normalizeLiteOptions,
-  liteChoiceFromSettings,
   pruneInitialSyncRooms,
   pruneRoomsData,
   resolveAutoLite,
   unionRoomIds,
 } from './lite-mode';
+import type { LiteOptions, LiteRoomSyncData, LiteRoomsSyncData } from './lite-mode';
 
 export const SYNC_DB_NAME = 'web-sync-store';
 /**
@@ -75,16 +70,6 @@ export type LiteReport = {
   ms: number;
   /** Why nothing was done, when nothing was done. */
   note?: string;
-};
-
-export const liteOptionsFromSettings = (): LiteOptions => {
-  const settings = getSettings();
-  return normalizeLiteOptions({
-    enabled: settings.liteMode,
-    choice: liteChoiceFromSettings(settings.liteModeChoice, settings.liteMode),
-    windowDays: settings.liteWindowDays,
-    serverFilter: settings.liteServerFilter,
-  });
 };
 
 const readJson = <T>(key: string, fallback: T): T => {
@@ -138,6 +123,39 @@ export const forgetSkippedRooms = (): void => {
     // ignore
   }
 };
+
+/**
+ * "Clear Cache" deletes the saved chats but not these notes. The "tidied at"
+ * stamp must go with the saved chats (the next load is the one-time full one
+ * and tidies them again); the skipped list and the name index stay — they are
+ * what "Filter by name" finds the skipped chats by, and the cold prune
+ * rewrites the list from the full /sync anyway.
+ */
+export const noteCacheCleared = (): void => {
+  try {
+    localStorage.removeItem(LAST_PRUNE_KEY);
+  } catch {
+    // ignore
+  }
+};
+
+/**
+ * The skipped list after a prune: the chats now absent from the saved copy.
+ * A chat that IS in the saved copy is never "skipped" — otherwise replaying it
+ * would look like a wake-up (state refetched, list rewritten). Pure.
+ */
+export const nextSkippedList = (
+  previous: string[],
+  persisted: Record<string, unknown>,
+  dormant: string[]
+): string[] =>
+  unionRoomIds(
+    previous.filter((roomId) => !(roomId in persisted)),
+    dormant
+  );
+
+const sameList = (a: string[], b: string[]): boolean =>
+  a.length === b.length && a.every((v, i) => v === b[i]);
 
 /** The one-line "old chats are not loaded" notice is shown once. */
 export const isLiteNoticeSeen = (): boolean => {
@@ -240,6 +258,16 @@ const openExistingDb = (dbName: string): Promise<IDBDatabase | undefined> =>
     req.onblocked = () => resolve(undefined);
   });
 
+/**
+ * Is the saved /sync record there? A key count: the 13-19 MB record itself is
+ * not read.
+ */
+const hasSavedRecord = async (db: IDBDatabase): Promise<boolean> => {
+  const tx = db.transaction([SYNC_STORE], 'readonly');
+  const count = await idbRequest(tx.objectStore(SYNC_STORE).count(SYNC_KEY));
+  return count > 0;
+};
+
 const skip = (note: string, windowDays: number, ms = 0): LiteReport => {
   const report: LiteReport = {
     at: Date.now(),
@@ -278,6 +306,10 @@ const choiceOf = (options: LiteOptions) => options.choice ?? (options.enabled ? 
  * of truth and would just write everything back.
  *
  * In `auto` mode the decision is made here, from the number of saved chats.
+ *
+ * `firstLoad` (nothing saved on this device: a new browser, or the app's own
+ * "Clear Cache") is decided FIRST, whatever the settings — it turns on the
+ * cold prune and the honest one-time note.
  */
 export const pruneDormantRooms = async (
   options: LiteOptions,
@@ -293,78 +325,93 @@ export const pruneDormantRooms = async (
     windowDays,
   });
 
-  if (choice === 'off') {
-    return off(skip('lite mode off', options.windowDays));
-  }
-  if (isLiteBypassed()) {
-    // one-shot "show everything": also forget the list so the server filter is
-    // not applied either
-    try {
-      localStorage.removeItem(LAST_PRUNE_KEY);
-    } catch {
-      // ignore
-    }
-    return {
-      skippedRooms: [],
-      report: skip('showing all chats for this load', options.windowDays),
-      enabled: false,
-      windowDays: options.windowDays,
-    };
-  }
-
-  // Tidied recently with the same settings: nothing new can have gone quiet
-  // yet, so do not pay for reading the whole store again.
-  const wantAuto = choice === 'auto';
-  const last = readJson<LastPrune | undefined>(LAST_PRUNE_KEY, undefined);
-  if (
-    last &&
-    Date.now() - last.at < PRUNE_EVERY_MS &&
-    last.at <= Date.now() &&
-    last.auto === wantAuto
-  ) {
-    const resolved = resolveAutoLite(options, last.totalRooms);
-    if (resolved.windowDays === last.windowDays) {
-      const lastReport = getLiteReport();
-      if (!resolved.enabled) {
-        return off(lastReport ?? skip('small account — everything is loaded', resolved.windowDays));
-      }
-      return {
-        skippedRooms: previous,
-        report: lastReport ?? skip('tidied recently', resolved.windowDays),
-        enabled: true,
-        windowDays: resolved.windowDays,
-      };
-    }
-  }
-
+  // Is anything saved? Checked before the "tidied recently" shortcut below: after
+  // "Clear Cache" the store is gone but the notes in localStorage are not, and
+  // the shortcut used to turn that one-time full load into a plain one (no cold
+  // prune, no note) — measured 72 s with no explanation.
   let db: IDBDatabase | undefined;
+  let openError: unknown;
   try {
     db = await openExistingDb(SYNC_IDB_NAME);
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('lite mode: could not open the sync store, loading everything', err);
-    return {
-      skippedRooms: previous,
-      report: skip('could not open the saved chats', options.windowDays),
-      enabled: choice === 'on' || previous.length > 0,
-      windowDays: options.windowDays,
-    };
-  }
-  if (!db) {
-    // first ever load on this device: nothing saved yet, so there is nothing to
-    // skip. The next load will be the fast one.
-    return {
-      skippedRooms: previous,
-      report: skip('nothing saved yet — first load is always the slow one', options.windowDays),
-      enabled: choice === 'on',
-      windowDays: options.windowDays,
-      firstLoad: true,
-    };
+    openError = err;
   }
 
   try {
+    const firstLoad =
+      !openError &&
+      (!db || (db.objectStoreNames.contains(SYNC_STORE) && !(await hasSavedRecord(db))));
+    const first = firstLoad ? { firstLoad: true } : {};
+
+    if (choice === 'off') {
+      return { ...off(skip('lite mode off', options.windowDays)), ...first };
+    }
+    if (isLiteBypassed()) {
+      // one-shot "show everything": also forget the list so the server filter is
+      // not applied either
+      try {
+        localStorage.removeItem(LAST_PRUNE_KEY);
+      } catch {
+        // ignore
+      }
+      return {
+        skippedRooms: [],
+        report: skip('showing all chats for this load', options.windowDays),
+        enabled: false,
+        windowDays: options.windowDays,
+        ...first,
+      };
+    }
+    if (openError) {
+      // eslint-disable-next-line no-console
+      console.error('lite mode: could not open the sync store, loading everything', openError);
+      return {
+        skippedRooms: previous,
+        report: skip('could not open the saved chats', options.windowDays),
+        enabled: choice === 'on' || previous.length > 0,
+        windowDays: options.windowDays,
+      };
+    }
+    if (firstLoad || !db) {
+      // nothing saved on this device (yet, or any more): nothing to skip. The cold
+      // prune writes the record lean, so the next load is the fast one.
+      return {
+        skippedRooms: previous,
+        report: skip('nothing saved yet — first load is always the slow one', options.windowDays),
+        enabled: choice === 'on',
+        windowDays: options.windowDays,
+        firstLoad: true,
+      };
+    }
     if (!db.objectStoreNames.contains(SYNC_STORE)) {
       return off(skip('saved chats not in the expected shape', options.windowDays));
+    }
+
+    // Tidied recently with the same settings: nothing new can have gone quiet
+    // yet, so do not pay for reading the whole store again.
+    const wantAuto = choice === 'auto';
+    const last = readJson<LastPrune | undefined>(LAST_PRUNE_KEY, undefined);
+    if (
+      last &&
+      Date.now() - last.at < PRUNE_EVERY_MS &&
+      last.at <= Date.now() &&
+      last.auto === wantAuto
+    ) {
+      const resolved = resolveAutoLite(options, last.totalRooms);
+      if (resolved.windowDays === last.windowDays) {
+        const lastReport = getLiteReport();
+        if (!resolved.enabled) {
+          return off(
+            lastReport ?? skip('small account — everything is loaded', resolved.windowDays)
+          );
+        }
+        return {
+          skippedRooms: previous,
+          report: lastReport ?? skip('tidied recently', resolved.windowDays),
+          enabled: true,
+          windowDays: resolved.windowDays,
+        };
+      }
     }
 
     const readTx = db.transaction([SYNC_STORE], 'readonly');
@@ -413,7 +460,8 @@ export const pruneDormantRooms = async (
       protect,
     });
 
-    const skippedRooms = unionRoomIds(previous, classification.dormant);
+    // a chat that is in the saved copy is not skipped, whatever an older list says
+    const skippedRooms = nextSkippedList(previous, join, classification.dormant);
 
     if (classification.dormant.length > 0) {
       // Remember who these chats are (name, picture, last message) BEFORE their
@@ -432,8 +480,8 @@ export const pruneDormantRooms = async (
         roomsData: prunedRoomsData,
       });
       await txDone(writeTx);
-      setSkippedRooms(skippedRooms);
     }
+    if (!sameList(skippedRooms, previous)) setSkippedRooms(skippedRooms);
     writeJson(LAST_PRUNE_KEY, lastPrune);
 
     const report: LiteReport = {
@@ -461,7 +509,7 @@ export const pruneDormantRooms = async (
       windowDays: options.windowDays,
     };
   } finally {
-    db.close();
+    db?.close();
   }
 };
 
@@ -504,7 +552,13 @@ export const installColdPrune = (store: unknown, options: LiteOptions): boolean 
         auto: pruned.auto,
         totalRooms: pruned.totalRooms,
       };
+      // After "Clear Cache" the skipped list from before is still there: whatever
+      // this load saves is not skipped any more (or its replay would look like a
+      // wake-up), the newly quiet chats are.
+      const before = getSkippedRooms();
       if (!pruned.enabled) {
+        const next = nextSkippedList(before, data.rooms.join, []);
+        if (!sameList(next, before)) setSkippedRooms(next);
         writeJson(LAST_PRUNE_KEY, lastPrune);
         skip(
           `${pruned.totalRooms.toLocaleString()} chats — few enough to load them all`,
@@ -523,8 +577,9 @@ export const installColdPrune = (store: unknown, options: LiteOptions): boolean 
           // eslint-disable-next-line no-console
           console.error('lite mode: could not index the skipped chats', err);
         }
-        setSkippedRooms(unionRoomIds(getSkippedRooms(), classification.dormant));
       }
+      const next = nextSkippedList(before, pruned.rooms.join ?? {}, classification.dormant);
+      if (!sameList(next, before)) setSkippedRooms(next);
       writeJson(LAST_PRUNE_KEY, lastPrune);
       setLiteReport({
         at: Date.now(),
@@ -542,9 +597,9 @@ export const installColdPrune = (store: unknown, options: LiteOptions): boolean 
       });
       // eslint-disable-next-line no-console
       console.info(
-        `lite mode: saved record written lean during the first load — ${classification.kept.length} of ${pruned.totalRooms} chats kept (${Math.round(
-          performance.now() - started
-        )} ms)`
+        `lite mode: saved record written lean during the first load — ${
+          classification.kept.length
+        } of ${pruned.totalRooms} chats kept (${Math.round(performance.now() - started)} ms)`
       );
       return original.call(this, { ...data, rooms: pruned.rooms });
     } catch (err) {
