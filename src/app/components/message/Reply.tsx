@@ -10,6 +10,7 @@ import * as css from './Reply.css';
 import { MessageBadEncryptedContent, MessageDeletedContent, MessageFailedContent } from './content';
 import { scaleSystemEmoji } from '../../plugins/react-custom-html-parser';
 import { useRoomEvent } from '../../hooks/useRoomEvent';
+import { useMatrixClient } from '../../hooks/useMatrixClient';
 import colorMXID from '../../../util/colorMXID';
 import { GetMemberPowerTag } from '../../hooks/useMemberPowerTag';
 
@@ -56,6 +57,7 @@ type ReplyProps = {
   timelineSet?: EventTimelineSet | undefined;
   replyEventId: string;
   threadRootId?: string | undefined;
+  replier?: string | undefined,
   onClick?: MouseEventHandler | undefined;
   getMemberPowerTag?: GetMemberPowerTag;
   accessibleTagColors?: Map<string, string>;
@@ -69,6 +71,7 @@ export const Reply = as<'div', ReplyProps>(
       timelineSet,
       replyEventId,
       threadRootId,
+      replier,
       onClick,
       getMemberPowerTag,
       accessibleTagColors,
@@ -91,6 +94,8 @@ export const Reply = as<'div', ReplyProps>(
 
     const usernameColor = legacyUsernameColor ? colorMXID(sender ?? replyEventId) : tagColor;
 
+    const mx = useMatrixClient();
+
     const fallbackBody = replyEvent?.isRedacted() ? (
       <MessageDeletedContent />
     ) : (
@@ -101,7 +106,7 @@ export const Reply = as<'div', ReplyProps>(
     const bodyJSX = body ? scaleSystemEmoji(trimReplyFromBody(body)) : fallbackBody;
 
     return (
-      <Box direction="Row" gap="200" alignItems="Center" {...props} ref={ref}>
+      <Box direction="Row" gap="200" alignItems="Center" {...props} ref={ref} data-reply-highlight={mx.getUserId() === sender && sender !== replier}>
         {threadRootId && (
           <ThreadIndicator as="button" data-event-id={threadRootId} onClick={onClick} />
         )}
