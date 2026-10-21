@@ -323,3 +323,40 @@ test('roomIdFromLocation: hash router, path router, space routes, decoding', () 
   assert.equal(roomIdFromLocation({ hash: '#/space/!sp:hs', pathname: '/' }), undefined);
   assert.equal(roomIdFromLocation(undefined), undefined);
 });
+
+// --- initial-sync timeout (client/initial-sync-timeout.ts) -------------------
+const { initialSyncTimeoutFor, installInitialSyncTimeout, INITIAL_SYNC_LOCAL_TIMEOUT_MS } =
+  await import('../src/client/initial-sync-timeout.ts');
+
+test('initial sync timeout: only /sync without since is raised; everything else untouched', () => {
+  assert.equal(initialSyncTimeoutFor('/sync', { filter: 'x', timeout: 0 }, 80_000), INITIAL_SYNC_LOCAL_TIMEOUT_MS);
+  assert.equal(initialSyncTimeoutFor('/sync', { filter: 'x', timeout: 0 }, undefined), INITIAL_SYNC_LOCAL_TIMEOUT_MS);
+  assert.equal(initialSyncTimeoutFor('/sync', { since: 's1', timeout: 30_000 }, 110_000), 110_000);
+  assert.equal(initialSyncTimeoutFor('/sync', { filter: 'x' }, 900_000), 900_000);
+  assert.equal(initialSyncTimeoutFor('/rooms/!a/messages', {}, 15_000), 15_000);
+  assert.equal(initialSyncTimeoutFor('/rooms/!a/messages', {}, undefined), undefined);
+});
+
+test('installInitialSyncTimeout: wraps once, feature-detected, passes other args through', () => {
+  const calls = [];
+  const http = {
+    authedRequest(method, path, qps, body, opts, extra) {
+      calls.push({ method, path, qps, body, opts, extra, self: this });
+      return 'ok';
+    },
+  };
+  assert.equal(installInitialSyncTimeout({}), false);
+  assert.equal(installInitialSyncTimeout({ http: {} }), false);
+  assert.equal(installInitialSyncTimeout({ http }), true);
+  assert.equal(installInitialSyncTimeout({ http }), false, 'second install is a no-op');
+  assert.equal(http.authedRequest('GET', '/sync', { timeout: 0 }, undefined, { localTimeoutMs: 80_000, abortSignal: 'sig' }, 'x'), 'ok');
+  assert.equal(calls[0].opts.localTimeoutMs, INITIAL_SYNC_LOCAL_TIMEOUT_MS);
+  assert.equal(calls[0].opts.abortSignal, 'sig');
+  assert.equal(calls[0].extra, 'x');
+  assert.equal(calls[0].self, http);
+  const inc = { localTimeoutMs: 110_000 };
+  http.authedRequest('GET', '/sync', { since: 's', timeout: 30_000 }, undefined, inc);
+  assert.equal(calls[1].opts, inc, 'incremental sync: same opts object, untouched');
+  http.authedRequest('GET', '/profile/@a', {}, undefined, undefined);
+  assert.equal(calls[2].opts, undefined);
+});

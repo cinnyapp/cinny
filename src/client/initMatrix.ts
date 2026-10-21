@@ -11,6 +11,7 @@ import { cryptoCallbacks } from './secretStorageKeys';
 import { clearNavToActivePathStore } from '../app/state/navToActivePath';
 import { pushSessionToSW } from '../sw-session';
 import { installPushRuleIndex } from './pushRuleIndex';
+import { installInitialSyncTimeout } from './initial-sync-timeout';
 import {
   defaultReplayHints,
   installStagedReplay,
@@ -80,6 +81,9 @@ const createClientWithStore = (session: Session, store: IndexedDBStore): MatrixC
   // Push-rule matching was ~60 % of the reload on a 9,000-chat account with ~400
   // per-chat rules. Same results, only the rules that can match are checked.
   installPushRuleIndex(mx);
+  // The one-time initial /sync takes the server 55-80+ s on this account; the
+  // SDK would abort it at 80 s and start over. Only that request waits longer.
+  installInitialSyncTimeout(mx);
   return mx;
 };
 
