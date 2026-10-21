@@ -27,6 +27,7 @@ import {
   clearLiteBypass,
   forgetSkippedRooms,
   getSkippedRooms,
+  installColdPrune,
   isLiteBypassed,
   liteOptionsFromSettings,
   LiteReport,
@@ -164,6 +165,9 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
 
   let indexedDBStore = createSyncStore(true);
   let mx = createClientWithStore(session, indexedDBStore);
+  // One-time cold load: write the saved record lean right away, so the first
+  // refresh is already a steady-state one (no main-thread prune on top).
+  if (firstLoad) installColdPrune(indexedDBStore, liteOptions);
 
   // The sync store (worker reads the saved record) and the rust crypto init
   // (wasm compile + its own IndexedDB database) are independent: run them in
@@ -192,6 +196,7 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     }
     indexedDBStore = createSyncStore(false);
     mx = createClientWithStore(session, indexedDBStore);
+    if (firstLoad) installColdPrune(indexedDBStore, liteOptions);
     await indexedDBStore.startup();
     await mx.initRustCrypto();
   }

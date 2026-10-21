@@ -330,6 +330,53 @@ export const pruneRoomsData = (
   return { ...rooms, join: nextJoin };
 };
 
+export type InitialSyncPrune = {
+  rooms: LiteRoomsSyncData;
+  classification: LiteClassification;
+  /** auto-mode decision for this account size */
+  enabled: boolean;
+  windowDays: number;
+  auto: boolean;
+  totalRooms: number;
+};
+
+/**
+ * Lite mode applied to the one-time initial /sync response itself, BEFORE it is
+ * written to the saved record — so the first refresh after a cold load is
+ * already the steady-state one, instead of paying a main-thread prune (measured
+ * 1.9 s frozen, 1.4 GB heap, 9,032 → 1,808 rooms) on top of the replay.
+ *
+ * Pure: returns the rooms to persist (quiet rooms removed, kept rooms
+ * newest-first) and the classification. `enabled: false` means "persist as is".
+ */
+export const pruneInitialSyncRooms = (
+  rooms: LiteRoomsSyncData,
+  options: LiteOptions,
+  classify: Omit<ClassifyOptions, 'windowDays'> = {}
+): InitialSyncPrune => {
+  const totalRooms = Object.keys(rooms.join ?? {}).length;
+  const resolved = resolveAutoLite(options, totalRooms);
+  const classification = classifyRooms(rooms, { ...classify, windowDays: resolved.windowDays });
+  if (!resolved.enabled || classification.dormant.length === 0) {
+    return {
+      rooms,
+      classification,
+      enabled: resolved.enabled,
+      windowDays: resolved.windowDays,
+      auto: resolved.auto,
+      totalRooms,
+    };
+  }
+  return {
+    rooms: pruneRoomsData(rooms, classification.dormant),
+    classification,
+    enabled: true,
+    windowDays: resolved.windowDays,
+    auto: resolved.auto,
+    totalRooms,
+  };
+};
+
 /**
  * The /sync filter definition for lite mode.
  *
