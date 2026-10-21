@@ -387,6 +387,12 @@ export type StagedReplayOptions = {
   threshold?: number;
   /** test hook; defaults to a real macrotask yield */
   yieldFn?: () => Promise<void>;
+  /**
+   * Awaited once before the first stage-2 chunk (the live /sync is applied in
+   * the meantime): lets the freshly opened app paint its list and the open chat
+   * before older chats compete with it for the main thread.
+   */
+  beforeStage2?: () => Promise<void>;
   /** test hook; defaults to performance.now() */
   nowFn?: () => number;
 };
@@ -596,6 +602,13 @@ export const installStagedReplay = (
   const runBackground = async (state: PendingReplay): Promise<void> => {
     const ctl = { size: clampChunk(chunkSize), index: 0 };
     try {
+      if (options.beforeStage2) {
+        try {
+          await options.beforeStage2();
+        } catch {
+          // a gate that fails must never stop the older chats from loading
+        }
+      }
       while (pendingReplay === state && state.pending.length > 0) {
         // eslint-disable-next-line no-await-in-loop
         await doYield();

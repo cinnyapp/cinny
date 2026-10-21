@@ -8,6 +8,7 @@
  * and the app alike (and by the node unit tests).
  */
 const marks: Record<string, number> = {};
+const waiters: Record<string, (() => void)[]> = {};
 
 const now = (): number => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
@@ -19,6 +20,27 @@ export const markStartup = (name: string): void => {
   } catch {
     // no User Timing API (node tests, old browsers): the record above is enough
   }
+  const waiting = waiters[name];
+  if (waiting) {
+    delete waiters[name];
+    waiting.forEach((resolve) => resolve());
+  }
 };
 
 export const getStartupMarks = (): Record<string, number> => marks;
+
+/** Resolves once `name` has been marked, or after `timeoutMs` at the latest. */
+export const whenStartupMark = (name: string, timeoutMs: number): Promise<void> => {
+  if (marks[name] !== undefined) return Promise.resolve();
+  return new Promise((resolve) => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const finish = () => {
+      if (timer === undefined) return;
+      clearTimeout(timer);
+      timer = undefined;
+      resolve();
+    };
+    timer = setTimeout(finish, timeoutMs);
+    (waiters[name] = waiters[name] ?? []).push(finish);
+  });
+};

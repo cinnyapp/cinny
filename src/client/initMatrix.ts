@@ -22,7 +22,7 @@ import { readSnapshot } from '../app/features/startup-snapshot/snapshot';
 import { getSettings } from '../app/state/settings';
 import { installSyncStoreKeeper, noteSavedToken } from './sync-store-keeper';
 import { installStagedTransfer } from './staged-transfer';
-import { markStartup } from './startup-marks';
+import { getStartupMarks, markStartup, whenStartupMark } from './startup-marks';
 import { buildLiteFilterDefinition, LITE_FILTER_INLINE_SAFE_ROOMS, LiteOptions } from './lite-mode';
 import {
   bypassLiteOnce,
@@ -116,6 +116,28 @@ let replayHints: ReplayHints = defaultReplayHints();
 
 export const stagedStartupEnabled = (): boolean => getSettings().stagedStartup !== 'off';
 
+/**
+ * Stage 2 starts once the opened app has rendered (ClientRoot marks
+ * 'app-rendered') plus a grace as long as that first render took (100-500 ms),
+ * so the chat list and the open chat paint before older chats compete with
+ * them for the main thread — measured 2026-10-21: the first stage-2 chunks ran
+ * ahead of React and the open chat showed 0.1-0.45 s after the app rendered.
+ * The first live /sync is applied during the wait (same lane, it is not gated).
+ */
+const STAGE2_GATE_MAX_MS = 2500;
+const waitForFirstPaint = async (): Promise<void> => {
+  await whenStartupMark('app-rendered', STAGE2_GATE_MAX_MS);
+  const m = getStartupMarks();
+  const renderMs =
+    m['app-rendered'] !== undefined && m['stage1-end'] !== undefined
+      ? m['app-rendered'] - m['stage1-end']
+      : 200;
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, Math.min(500, Math.max(100, renderMs)));
+  });
+  markStartup('stage2-start');
+};
+
 const setupStagedStartup = (session: Session): boolean => {
   if (!stagedStartupEnabled()) return false;
   replayHints = {
@@ -127,6 +149,7 @@ const setupStagedStartup = (session: Session): boolean => {
   const proto = (SyncApi as unknown as { prototype?: Record<string, unknown> }).prototype;
   const installed = installStagedReplay(proto as Parameters<typeof installStagedReplay>[0], {
     getHints: () => replayHints,
+    beforeStage2: waitForFirstPaint,
   });
   const active = installed || !!(proto as { __cinnyStaged?: boolean } | undefined)?.__cinnyStaged;
   if (!active) {
