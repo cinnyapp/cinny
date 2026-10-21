@@ -111,14 +111,15 @@ function GlobalPackSelector({
           </Text>
         </Box>
         <Box shrink="No">
-          <Chip
-            radii="Pill"
-            variant={hasSelected ? 'Success' : 'SurfaceVariant'}
-            outlined={hasSelected}
+          <Button
+            size="300"
+            radii="300"
+            variant={hasSelected ? 'Success' : 'Secondary'}
+            fill={hasSelected ? 'Solid' : 'Soft'}
             onClick={() => onSelect(selected)}
           >
             <Text size="B300">{hasSelected ? 'Save' : 'Close'}</Text>
-          </Chip>
+          </Button>
         </Box>
       </Header>
       <Line variant="Surface" size="300" />
@@ -439,6 +440,7 @@ export function GlobalPacks({ onViewPack }: GlobalPacksProps) {
                   size="300"
                   radii="300"
                   outlined
+                  after={<Icon size="300" src={Icons.ChevronBottom} />}
                 >
                   <Text size="B300">Select</Text>
                 </Button>
