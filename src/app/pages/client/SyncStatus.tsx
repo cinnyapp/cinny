@@ -32,11 +32,14 @@ export function SyncStatus({ mx }: SyncStatusProps) {
     }, [])
   );
 
+  // "Connecting" = the saved chats are on screen (PREPARED) but the first live
+  // /sync has not been applied yet, or the client is catching up after a lost
+  // connection. Upstream also kept it up for the first SYNCING (previous state
+  // PREPARED) — i.e. until the SECOND /sync returned, a 30 s long-poll on a quiet
+  // account: measured 2026-10-21, 'Connecting...' for 14 s after a refresh that
+  // had already applied everything. Once SYNCING arrives the app is live.
   const connecting =
-    (stateData.current === SyncState.Prepared ||
-      stateData.current === SyncState.Syncing ||
-      stateData.current === SyncState.Catchup) &&
-    stateData.previous !== SyncState.Syncing;
+    stateData.current === SyncState.Prepared || stateData.current === SyncState.Catchup;
 
   // A fast catch-up (the normal case with a fresh sync token) should show
   // nothing at all: only say "Connecting..." when it takes longer than this.
