@@ -53,6 +53,13 @@ export const useBindRoomsWithMembershipsAtom = (
     });
 
     const handleMembershipChange = (room: Room) => {
+      // Every PUT recomputes the derived room lists over ALL rooms (isRoom /
+      // isSpace read each room's create event): one per replayed room was O(n²)
+      // — profiled 2026-10-21 at 3,000 chats: 8 of 12 busy seconds. Per chunk instead.
+      if (isReplayActive()) {
+        replayDirty = true;
+        return;
+      }
       if (satisfyMembership(room)) {
         setRoomsAtom({ type: 'PUT', roomId: room.roomId });
       } else {
