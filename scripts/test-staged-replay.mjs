@@ -717,6 +717,119 @@ test('staged transfer: the worker refusing the command means the SDK path, untou
   assert.equal(originalCalls, 1);
 });
 
+const {
+  installSyncPrefetch,
+  prefetchFirstSync,
+  sameQuery,
+  firstIncrementalSyncQuery,
+  resetSyncPrefetch,
+} = await import('../src/client/sync-prefetch.ts');
+
+const fakeHttp = () => {
+  const requests = [];
+  const http = {
+    authedRequest(method, path, qps, body, opts) {
+      requests.push({ method, path, qps, opts });
+      return Promise.resolve({ next_batch: `nb${requests.length}` });
+    },
+  };
+  return { http, requests };
+};
+
+test('sync prefetch: the SDK gets the early catch-up /sync for exactly the same query, once', async () => {
+  resetSyncPrefetch();
+  const { http, requests } = fakeHttp();
+  const mx = { http };
+  assert.equal(prefetchFirstSync('8', 'tok'), false, 'not installed yet');
+  assert.equal(installSyncPrefetch(mx), true);
+  assert.equal(installSyncPrefetch(mx), false, 'idempotent');
+  assert.equal(prefetchFirstSync(null, 'tok'), false, 'no stored filter id → nothing sent');
+  assert.equal(
+    prefetchFirstSync('8', undefined),
+    false,
+    'no saved token (cold start) → nothing sent'
+  );
+  assert.equal(prefetchFirstSync('8', 'tok'), true);
+  assert.equal(requests.length, 1);
+  assert.deepEqual(requests[0].qps, firstIncrementalSyncQuery('8', 'tok'));
+  assert.equal(requests[0].opts.localTimeoutMs, 80_000);
+  // other requests pass straight through
+  await mx.http.authedRequest('GET', '/pushrules/');
+  assert.equal(requests.length, 2);
+  // the SDK's own first /sync (same query, key order irrelevant): no new request
+  const sdkQuery = {
+    since: 'tok',
+    'org.matrix.msc4222.use_state_after': true,
+    timeout: 0,
+    filter: '8',
+  };
+  const ac = new AbortController();
+  const res = await mx.http.authedRequest('GET', '/sync', sdkQuery, undefined, {
+    abortSignal: ac.signal,
+  });
+  assert.equal(requests.length, 2);
+  assert.equal(res.next_batch, 'nb1');
+  // the prefetch is handed out once only
+  await mx.http.authedRequest('GET', '/sync', sdkQuery);
+  assert.equal(requests.length, 3);
+});
+
+test('sync prefetch: a different query (filter, token, params) gets its own request', async () => {
+  resetSyncPrefetch();
+  const { http, requests } = fakeHttp();
+  const mx = { http };
+  installSyncPrefetch(mx);
+  prefetchFirstSync('8', 'tok');
+  await mx.http.authedRequest('GET', '/sync', firstIncrementalSyncQuery('9', 'tok'));
+  await mx.http.authedRequest('GET', '/sync', {
+    ...firstIncrementalSyncQuery('8', 'tok'),
+    set_presence: 'offline',
+  });
+  await mx.http.authedRequest('GET', '/sync', {
+    ...firstIncrementalSyncQuery('8', 'tok'),
+    timeout: 30000,
+  });
+  assert.equal(requests.length, 4, 'every mismatch was sent for real');
+  assert.equal(sameQuery({ a: 1, b: undefined }, { a: '1' }), true);
+  assert.equal(sameQuery({ a: 1 }, { a: 1, b: 2 }), false);
+  assert.equal(sameQuery(undefined, {}), false);
+});
+
+test('sync prefetch: expired or failed prefetches are never handed out', async () => {
+  resetSyncPrefetch();
+  let t = 0;
+  const now = () => t;
+  const requests = [];
+  let fail = true;
+  const mx = {
+    http: {
+      authedRequest(method, path, qps) {
+        requests.push(qps);
+        if (fail) {
+          fail = false;
+          return Promise.reject(new Error('network'));
+        }
+        return Promise.resolve({ ok: true });
+      },
+    },
+  };
+  installSyncPrefetch(mx, now);
+  prefetchFirstSync('8', 'tok', now);
+  await tick();
+  // the failed one is gone: the SDK's request goes out and succeeds
+  assert.deepEqual(
+    await mx.http.authedRequest('GET', '/sync', firstIncrementalSyncQuery('8', 'tok')),
+    { ok: true }
+  );
+  assert.equal(requests.length, 2);
+  // a prefetch older than the TTL is not used
+  prefetchFirstSync('8', 'tok2', now);
+  t = 31_000;
+  await mx.http.authedRequest('GET', '/sync', firstIncrementalSyncQuery('8', 'tok2'));
+  assert.equal(requests.length, 4);
+  resetSyncPrefetch();
+});
+
 test('roomIdFromLocation: hash router, path router, space routes, decoding', () => {
   assert.equal(roomIdFromLocation({ hash: '#/home/!abc:hs', pathname: '/cinny-dev/' }), '!abc:hs');
   assert.equal(roomIdFromLocation({ hash: '', pathname: '/direct/%21abc%3Ahs/$ev' }), '!abc:hs');

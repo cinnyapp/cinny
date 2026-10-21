@@ -22,6 +22,7 @@ import { readSnapshot } from '../app/features/startup-snapshot/snapshot';
 import { getSettings } from '../app/state/settings';
 import { installSyncStoreKeeper, noteSavedToken } from './sync-store-keeper';
 import { installStagedTransfer } from './staged-transfer';
+import { installSyncPrefetch, prefetchFirstSync } from './sync-prefetch';
 import { getStartupMarks, markStartup, whenStartupMark } from './startup-marks';
 import { buildLiteFilterDefinition, LITE_FILTER_INLINE_SAFE_ROOMS, LiteOptions } from './lite-mode';
 import {
@@ -87,6 +88,8 @@ const createClientWithStore = (session: Session, store: IndexedDBStore): MatrixC
   // The one-time initial /sync takes the server 55-80+ s on this account; the
   // SDK would abort it at 80 s and start over. Only that request waits longer.
   installInitialSyncTimeout(mx);
+  // outermost http wrapper: hands the SDK the catch-up /sync sent early in initClient
+  installSyncPrefetch(mx);
   return mx;
 };
 
@@ -122,9 +125,12 @@ export const stagedStartupEnabled = (): boolean => getSettings().stagedStartup !
  * so the chat list and the open chat paint before older chats compete with
  * them for the main thread — measured 2026-10-21: the first stage-2 chunks ran
  * ahead of React and the open chat showed 0.1-0.45 s after the app rendered.
- * The first live /sync is applied during the wait (same lane, it is not gated).
+ * The first live /sync is applied during the wait (same lane, it is not gated)
+ * and stage 2 also waits for it (2 s cap), so it never queues behind a chunk.
  */
 const STAGE2_GATE_MAX_MS = 2500;
+/** how long stage 2 waits, at most, for the first live /sync after the app has rendered */
+const STAGE2_LIVE_GATE_MAX_MS = 2000;
 const waitForFirstPaint = async (): Promise<void> => {
   await whenStartupMark('app-rendered', STAGE2_GATE_MAX_MS);
   const m = getStartupMarks();
@@ -132,9 +138,14 @@ const waitForFirstPaint = async (): Promise<void> => {
     m['app-rendered'] !== undefined && m['stage1-end'] !== undefined
       ? m['app-rendered'] - m['stage1-end']
       : 200;
-  await new Promise<void>((resolve) => {
-    setTimeout(resolve, Math.min(500, Math.max(100, renderMs)));
-  });
+  await Promise.all([
+    new Promise<void>((resolve) => {
+      setTimeout(resolve, Math.min(500, Math.max(100, renderMs)));
+    }),
+    // the catch-up /sync (messages that came in while the tab was closed) must
+    // not queue behind a 150-room chunk: measured +150-400 ms under load
+    whenStartupMark('live1-applied', STAGE2_LIVE_GATE_MAX_MS),
+  ]);
   markStartup('stage2-start');
 };
 
@@ -240,7 +251,18 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
   installSyncStoreKeeper(mx, indexedDBStore);
   indexedDBStore
     .getSavedSyncToken()
-    .then((token) => noteSavedToken(!!token))
+    .then((token) => {
+      noteSavedToken(!!token);
+      // The catch-up /sync (messages that came in while the tab was closed) goes
+      // out now, not after the SDK's push-rules + filter round trips (client/sync-prefetch.ts).
+      if (token && stagedStartupEnabled()) {
+        const userId = mx.getUserId();
+        prefetchFirstSync(
+          userId ? mx.store.getFilterIdByName(`FILTER_SYNC_${userId}`) : null,
+          token
+        );
+      }
+    })
     .catch(() => noteSavedToken(false));
 
   mx.setMaxListeners(50);

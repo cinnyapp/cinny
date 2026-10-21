@@ -695,15 +695,18 @@ export const installStagedReplay = (
     const chunkable = total > threshold && (fromCache || !syncEventData?.oldSyncToken);
     if (!chunkable) {
       const state = pendingReplay;
+      if (!fromCache) markStartup('live1-queued');
       if (!fromCache && state) {
         // live /sync while stage 2 streams: same lane, cached copies first
         await serial(async () => {
           await pullForward(state, data);
           await original.call(this, syncEventData, data);
         });
+        markStartup('live1-applied');
         return;
       }
       await original.call(this, syncEventData, data);
+      if (!fromCache) markStartup('live1-applied');
       if (fromCache) {
         emit(this, { stage: 'done', done: total, total, fromCache, chunked: false });
       }
