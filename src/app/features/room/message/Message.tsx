@@ -28,6 +28,8 @@ import React, {
   MouseEventHandler,
   ReactNode,
   useCallback,
+  useEffect,
+  useRef,
   useState,
 } from 'react';
 import FocusTrap from 'focus-trap-react';
@@ -395,10 +397,12 @@ export const MessageDeleteItem = as<
     room: Room;
     mEvent: MatrixEvent;
     onClose?: () => void;
+    open: boolean;
+    setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   }
->(({ room, mEvent, onClose, ...props }, ref) => {
+>(({ room, mEvent, onClose, open, setOpen }) => {
   const mx = useMatrixClient();
-  const [open, setOpen] = useState(false);
+  // const [open, setOpen] = useState(false);
 
   const [deleteState, deleteMessage] = useAsyncCallback(
     useCallback(
@@ -407,6 +411,11 @@ export const MessageDeleteItem = as<
       [mx, room]
     )
   );
+
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (open && buttonRef.current) buttonRef.current.focus();
+  }, [open]);
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();
@@ -429,94 +438,100 @@ export const MessageDeleteItem = as<
   };
 
   return (
-    <>
-      <Overlay open={open} backdrop={<OverlayBackdrop />}>
-        <OverlayCenter>
-          <FocusTrap
-            focusTrapOptions={{
-              initialFocus: false,
-              onDeactivate: handleClose,
-              clickOutsideDeactivates: true,
-              escapeDeactivates: stopPropagation,
-            }}
-          >
-            <Dialog variant="Surface">
-              <Header
-                style={{
-                  padding: `0 ${config.space.S200} 0 ${config.space.S400}`,
-                  borderBottomWidth: config.borderWidth.B300,
-                }}
-                variant="Surface"
-                size="500"
-              >
-                <Box grow="Yes">
-                  <Text size="H4">Delete Message</Text>
-                </Box>
-                <IconButton size="300" onClick={handleClose} radii="300">
-                  <Icon src={Icons.Cross} />
-                </IconButton>
-              </Header>
-              <Box
-                as="form"
-                onSubmit={handleSubmit}
-                style={{ padding: config.space.S400 }}
-                direction="Column"
-                gap="400"
-              >
-                <Text priority="400">
-                  This action is irreversible! Are you sure that you want to delete this message?
-                </Text>
-                <Box direction="Column" gap="100">
-                  <Text size="L400">
-                    Reason{' '}
-                    <Text as="span" size="T200">
-                      (optional)
-                    </Text>
-                  </Text>
-                  <Input name="reasonInput" variant="Background" />
-                  {deleteState.status === AsyncStatus.Error && (
-                    <Text style={{ color: color.Critical.Main }} size="T300">
-                      Failed to delete message! Please try again.
-                    </Text>
-                  )}
-                </Box>
-                <Button
-                  type="submit"
-                  variant="Critical"
-                  before={
-                    deleteState.status === AsyncStatus.Loading ? (
-                      <Spinner fill="Solid" variant="Critical" size="200" />
-                    ) : undefined
-                  }
-                  aria-disabled={deleteState.status === AsyncStatus.Loading}
-                >
-                  <Text size="B400">
-                    {deleteState.status === AsyncStatus.Loading ? 'Deleting...' : 'Delete'}
-                  </Text>
-                </Button>
+    <Overlay open={open} backdrop={<OverlayBackdrop />}>
+      <OverlayCenter>
+        <FocusTrap
+          focusTrapOptions={{
+            initialFocus: false,
+            onDeactivate: handleClose,
+            clickOutsideDeactivates: true,
+            escapeDeactivates: stopPropagation,
+          }}
+        >
+          <Dialog variant="Surface">
+            <Header
+              style={{
+                padding: `0 ${config.space.S200} 0 ${config.space.S400}`,
+                borderBottomWidth: config.borderWidth.B300,
+              }}
+              variant="Surface"
+              size="500"
+            >
+              <Box grow="Yes">
+                <Text size="H4">Delete Message</Text>
               </Box>
-            </Dialog>
-          </FocusTrap>
-        </OverlayCenter>
-      </Overlay>
-      <Button
-        variant="Critical"
-        fill="None"
-        size="300"
-        after={<Icon size="100" src={Icons.Delete} />}
-        radii="300"
-        onClick={() => setOpen(true)}
-        aria-pressed={open}
-        {...props}
-        ref={ref}
-      >
-        <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
-          Delete
-        </Text>
-      </Button>
-    </>
+              <IconButton size="300" onClick={handleClose} radii="300">
+                <Icon src={Icons.Cross} />
+              </IconButton>
+            </Header>
+            <Box
+              as="form"
+              onSubmit={handleSubmit}
+              style={{ padding: config.space.S400 }}
+              direction="Column"
+              gap="400"
+            >
+              <Text priority="400">
+                This action is irreversible! Are you sure that you want to delete this message?
+              </Text>
+              <Box direction="Column" gap="100">
+                <Text size="L400">
+                  Reason{' '}
+                  <Text as="span" size="T200">
+                    (optional)
+                  </Text>
+                </Text>
+                <Input name="reasonInput" variant="Background" />
+                {deleteState.status === AsyncStatus.Error && (
+                  <Text style={{ color: color.Critical.Main }} size="T300">
+                    Failed to delete message! Please try again.
+                  </Text>
+                )}
+              </Box>
+              <Button
+                type="submit"
+                variant="Critical"
+                before={
+                  deleteState.status === AsyncStatus.Loading ? (
+                    <Spinner fill="Solid" variant="Critical" size="200" />
+                  ) : undefined
+                }
+                ref={buttonRef}
+                aria-disabled={deleteState.status === AsyncStatus.Loading}
+              >
+                <Text size="B400">
+                  {deleteState.status === AsyncStatus.Loading ? 'Deleting...' : 'Delete'}
+                </Text>
+              </Button>
+            </Box>
+          </Dialog>
+        </FocusTrap>
+      </OverlayCenter>
+    </Overlay>
   );
 });
+
+export const MessageDeleteButton = as<
+  'button',
+  {
+    deletionOpen: boolean;
+    setDeletionOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  }
+>(({ deletionOpen, setDeletionOpen }) => (
+  <Button
+    variant="Critical"
+    fill="None"
+    size="300"
+    after={<Icon size="100" src={Icons.Delete} />}
+    radii="300"
+    onClick={() => setDeletionOpen(true)}
+    aria-pressed={deletionOpen}
+  >
+    <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
+      Delete
+    </Text>
+  </Button>
+));
 
 export const MessageReportItem = as<
   'button',
@@ -727,6 +742,7 @@ export const Message = as<'div', MessageProps>(
     const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
     const [menuAnchor, setMenuAnchor] = useState<RectCords>();
     const [emojiBoardAnchor, setEmojiBoardAnchor] = useState<RectCords>();
+    const [deletionOpen, setDeletionOpen] = useState(false);
 
     const senderDisplayName =
       getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
@@ -826,6 +842,8 @@ export const Message = as<'div', MessageProps>(
             room={room}
             mEvent={mEvent}
             imagePackRooms={imagePackRooms}
+            canDeleteOwn={canDelete}
+            setDeletionOpen={setDeletionOpen}
             onCancel={() => onEditId()}
           />
         ) : (
@@ -1095,10 +1113,9 @@ export const Message = as<'div', MessageProps>(
                             <Line size="300" />
                             <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
                               {!mEvent.isRedacted() && canDelete && (
-                                <MessageDeleteItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
+                                <MessageDeleteButton
+                                  deletionOpen={deletionOpen}
+                                  setDeletionOpen={setDeletionOpen}
                                 />
                               )}
                               {mEvent.getSender() !== mx.getUserId() && (
@@ -1145,6 +1162,14 @@ export const Message = as<'div', MessageProps>(
             {msgContentJSX}
           </ModernLayout>
         )}
+
+        <MessageDeleteItem
+          room={room}
+          mEvent={mEvent}
+          onClose={closeMenu}
+          open={deletionOpen}
+          setOpen={setDeletionOpen}
+        />
       </MessageBase>
     );
   }
@@ -1180,6 +1205,7 @@ export const Event = as<'div', EventProps>(
     const { hoverProps } = useHover({ onHoverChange: setHover });
     const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
     const [menuAnchor, setMenuAnchor] = useState<RectCords>();
+    const [deletionOpen, setDeletionOpen] = useState(false);
     const stateEvent = typeof mEvent.getStateKey() === 'string';
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
@@ -1261,11 +1287,20 @@ export const Event = as<'div', EventProps>(
                             <Line size="300" />
                             <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
                               {!mEvent.isRedacted() && canDelete && (
-                                <MessageDeleteItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
-                                />
+                                <>
+                                  <MessageDeleteItem
+                                    room={room}
+                                    mEvent={mEvent}
+                                    onClose={closeMenu}
+                                    open={deletionOpen}
+                                    setOpen={setDeletionOpen}
+                                  />
+
+                                  <MessageDeleteButton
+                                    deletionOpen={deletionOpen}
+                                    setDeletionOpen={setDeletionOpen}
+                                  />
+                                </>
                               )}
                               {mEvent.getSender() !== mx.getUserId() && (
                                 <MessageReportItem
