@@ -23,6 +23,8 @@ import { getSettings } from '../app/state/settings';
 import { installSyncStoreKeeper, noteSavedToken } from './sync-store-keeper';
 import { installStagedTransfer } from './staged-transfer';
 import { installSyncPrefetch, prefetchFirstSync } from './sync-prefetch';
+import { installFastVersions } from './fast-versions';
+import { readCachedVersions } from '../app/utils/specVersionsCache';
 import { getStartupMarks, markStartup, whenStartupMark } from './startup-marks';
 import { buildLiteFilterDefinition, LITE_FILTER_INLINE_SAFE_ROOMS, LiteOptions } from './lite-mode';
 import {
@@ -204,6 +206,9 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
 
   let indexedDBStore = createSyncStore(true);
   let mx = createClientWithStore(session, indexedDBStore);
+  // startClient() awaits GET /versions before it reads the saved chats: ask now,
+  // and fall back to the cached answer if the server is slow (client/fast-versions.ts)
+  if (staged) installFastVersions(mx, readCachedVersions(session.baseUrl));
   // The worker sends the saved record in parts: the replay's stage 1 first, the
   // rest while stage 2 streams (client/staged-transfer.ts). Only together with
   // the replay wrapper — it is what fetches the rest.
@@ -242,6 +247,7 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     }
     indexedDBStore = createSyncStore(false);
     mx = createClientWithStore(session, indexedDBStore);
+    if (staged) installFastVersions(mx, readCachedVersions(session.baseUrl));
     if (firstLoad) installColdPrune(indexedDBStore, liteOptions);
     await indexedDBStore.startup();
     await mx.initRustCrypto();

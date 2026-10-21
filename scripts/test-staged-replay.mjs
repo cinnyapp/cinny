@@ -830,6 +830,55 @@ test('sync prefetch: expired or failed prefetches are never handed out', async (
   resetSyncPrefetch();
 });
 
+const { installFastVersions } = await import('../src/client/fast-versions.ts');
+
+test('fast versions: asked at once; a slow server is bridged by the cached answer, the real one still lands', async () => {
+  assert.equal(installFastVersions(undefined, undefined), false);
+  assert.equal(installFastVersions({}, undefined), false);
+  const real = { versions: ['v1.11'], unstable_features: { x: true } };
+  const cached = { versions: ['v1.10'] };
+  let calls = 0;
+  let resolveReal;
+  const mx = {
+    getVersions() {
+      calls += 1;
+      return new Promise((r) => {
+        resolveReal = () => r(real);
+      });
+    },
+  };
+  assert.equal(installFastVersions(mx, cached, 20), true);
+  assert.equal(installFastVersions(mx, cached, 20), false, 'idempotent');
+  assert.equal(calls, 1, 'the request starts at install time');
+  // slow server: startClient goes on with the cached answer after 20 ms
+  assert.equal(await mx.getVersions(), cached);
+  assert.equal(calls, 1, 'no second request while the first is in flight');
+  resolveReal();
+  await tick();
+  assert.equal(await mx.getVersions(), real, 'once answered, the real answer wins');
+});
+
+test('fast versions: fast server answers directly; a failure falls back and retries; no cache waits', async () => {
+  const real = { versions: ['v1.11'] };
+  const fast = { getVersions: () => Promise.resolve(real) };
+  installFastVersions(fast, { versions: ['old'] }, 50);
+  assert.equal(await fast.getVersions(), real);
+  let attempts = 0;
+  const flaky = {
+    getVersions() {
+      attempts += 1;
+      return attempts === 1 ? Promise.reject(new Error('502')) : Promise.resolve(real);
+    },
+  };
+  installFastVersions(flaky, { versions: ['cached'] }, 50);
+  assert.deepEqual(await flaky.getVersions(), { versions: ['cached'] });
+  await tick();
+  assert.equal(await flaky.getVersions(), real, 'asks again after a failure');
+  const noCache = { getVersions: () => new Promise((r) => setTimeout(() => r(real), 30)) };
+  installFastVersions(noCache, undefined, 5);
+  assert.equal(await noCache.getVersions(), real, 'nothing cached: waits for the server as before');
+});
+
 test('roomIdFromLocation: hash router, path router, space routes, decoding', () => {
   assert.equal(roomIdFromLocation({ hash: '#/home/!abc:hs', pathname: '/cinny-dev/' }), '!abc:hs');
   assert.equal(roomIdFromLocation({ hash: '', pathname: '/direct/%21abc%3Ahs/$ev' }), '!abc:hs');
