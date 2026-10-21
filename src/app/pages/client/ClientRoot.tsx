@@ -290,11 +290,16 @@ export function ClientRoot({ children }: ClientRootProps) {
   // Staged start-up: open the app as soon as the most recent chats are rebuilt
   // (stage 1); the rest streams in behind it. PREPARED below stays the fallback
   // (setting off, SDK wrapper not installed, or a small account).
+  // ONLY for the cached replay (a normal refresh): the one-time cold initial sync
+  // is chunked too, but there the splash must stay up until PREPARED — with the
+  // whole app mounted, every chunk became a multi-second task (9,032 rooms of
+  // full state fighting React for the main thread) and the load crawled.
   useEffect(() => {
     if (!mx || !stagedStartupEnabled()) return undefined;
-    if (getReplayState().active) setLoading(false);
+    const current = getReplayState();
+    if (current.active && current.fromCache) setLoading(false);
     const onReplay = (p: ReplayProgress) => {
-      if (p.stage === 'first') setLoading(false);
+      if (p.stage === 'first' && p.fromCache) setLoading(false);
     };
     const emitter = mx as unknown as {
       on: (ev: string, h: (p: ReplayProgress) => void) => void;
