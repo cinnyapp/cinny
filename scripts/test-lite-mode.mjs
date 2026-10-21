@@ -19,6 +19,7 @@ import {
   LITE_AUTO_WINDOW_DAYS,
   liteChoiceFromSettings,
   normalizeLiteOptions,
+  pruneInitialSyncRooms,
   resolveAutoLite,
   pruneRoomsData,
   roomKeepReason,
@@ -204,6 +205,55 @@ test('a bridged 1:1 chat is NOT a bot room just because the bridge bot is in it'
   assert.equal(roomKeepReason(left), undefined);
 });
 
+test('bot rooms: the initial /sync shape and the saved-record shape agree', () => {
+  // A bridged 1:1 chat with a name (no heroes), lazy loading stored only you +
+  // the bridge bot: the initial /sync has them once (state_after), the saved
+  // record twice (state rolled back + state_after).
+  const initialShape = {
+    'org.matrix.msc4222.state_after': {
+      events: [
+        { type: 'm.room.create', state_key: '', content: {} },
+        { type: 'm.room.name', state_key: '', content: { name: 'Anna' } },
+        member('@me:hs'),
+        member('@whatsappbot:hs'),
+      ],
+    },
+    timeline: { events: [] },
+    summary: { 'm.joined_member_count': 3, 'm.invited_member_count': 0 },
+  };
+  assert.equal(roomKeepReason(initialShape), undefined);
+  const recordShape = {
+    ...initialShape,
+    state: { events: initialShape['org.matrix.msc4222.state_after'].events },
+  };
+  assert.equal(roomKeepReason(recordShape), undefined);
+  // the real management room (you + the bot) is a bot room in BOTH shapes
+  const adminInitial = {
+    ...initialShape,
+    summary: { 'm.joined_member_count': 2, 'm.invited_member_count': 0 },
+  };
+  assert.equal(roomKeepReason(adminInitial), 'bot');
+  assert.equal(
+    roomKeepReason({
+      ...adminInitial,
+      state: { events: adminInitial['org.matrix.msc4222.state_after'].events },
+    }),
+    'bot'
+  );
+  // a member who left later in the same list does not count
+  const leftBot = {
+    ...adminInitial,
+    'org.matrix.msc4222.state_after': {
+      events: [
+        member('@me:hs'),
+        member('@whatsappbot:hs'),
+        member('@whatsappbot:hs', { content: { membership: 'leave' } }),
+      ],
+    },
+  };
+  assert.equal(roomKeepReason(leftBot), undefined);
+});
+
 test('roomKeepReason returns the specific reason', () => {
   assert.equal(roomKeepReason(room({ messageDaysAgo: 900, unread: 1 })), 'unread');
   assert.equal(roomKeepReason(room({ messageDaysAgo: 900, spaceRoom: true })), 'space');
@@ -330,4 +380,39 @@ test('old saved settings map onto the new choice', () => {
   assert.equal(liteChoiceFromSettings('bogus', false), 'auto');
   assert.equal(normalizeLiteOptions({ choice: 'on' }).enabled, true);
   assert.equal(normalizeLiteOptions({ choice: 'nope' }).choice, undefined);
+});
+
+test('pruneInitialSyncRooms: the cold initial sync is written lean, newest-first, auto decides', () => {
+  const join = {};
+  for (let i = 0; i < 2100; i += 1) {
+    // 100 active chats, 2,000 quiet ones
+    join[`!r${i}:hs`] = room({ messageDaysAgo: i < 100 ? i % 20 : 100 + (i % 300) });
+  }
+  const rooms = { join, invite: { '!i:hs': {} } };
+  const auto = normalizeLiteOptions({ choice: 'auto', windowDays: 90 });
+  const pruned = pruneInitialSyncRooms(rooms, auto, { now: NOW });
+  assert.equal(pruned.enabled, true);
+  assert.equal(pruned.auto, true);
+  assert.equal(pruned.windowDays, LITE_AUTO_WINDOW_DAYS);
+  assert.equal(pruned.totalRooms, 2100);
+  assert.equal(pruned.classification.dormant.length, 2000);
+  assert.equal(Object.keys(pruned.rooms.join).length, 100);
+  assert.equal(pruned.rooms.invite, rooms.invite);
+  const keys = Object.keys(pruned.rooms.join);
+  assert.equal(keys[0], '!r0:hs');
+  assert.equal(keys[1], '!r20:hs', 'newest-first, stable for ties');
+  // input untouched
+  assert.equal(Object.keys(join).length, 2100);
+  // a small account is persisted as is
+  const small = pruneInitialSyncRooms(
+    { join: Object.fromEntries(Object.entries(join).slice(0, 500)) },
+    auto,
+    { now: NOW }
+  );
+  assert.equal(small.enabled, false);
+  assert.equal(Object.keys(small.rooms.join).length, 500);
+  // lite off → as is, whatever the size
+  const off = pruneInitialSyncRooms(rooms, normalizeLiteOptions({ choice: 'off' }), { now: NOW });
+  assert.equal(off.enabled, false);
+  assert.equal(off.rooms, rooms);
 });

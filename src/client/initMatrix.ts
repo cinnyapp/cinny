@@ -14,6 +14,7 @@ import { installPushRuleIndex } from './pushRuleIndex';
 import { installInitialSyncTimeout } from './initial-sync-timeout';
 import {
   defaultReplayHints,
+  deferMatrixRtcDuringReplay,
   installStagedReplay,
   ReplayHints,
   roomIdFromLocation,
@@ -21,12 +22,18 @@ import {
 import { readSnapshot } from '../app/features/startup-snapshot/snapshot';
 import { getSettings } from '../app/state/settings';
 import { installSyncStoreKeeper, noteSavedToken } from './sync-store-keeper';
+import { installStagedTransfer } from './staged-transfer';
+import { installSyncPrefetch, prefetchFirstSync } from './sync-prefetch';
+import { installFastVersions } from './fast-versions';
+import { readCachedVersions } from '../app/utils/specVersionsCache';
+import { getStartupMarks, markStartup, whenStartupMark } from './startup-marks';
 import { buildLiteFilterDefinition, LITE_FILTER_INLINE_SAFE_ROOMS, LiteOptions } from './lite-mode';
 import {
   bypassLiteOnce,
   clearLiteBypass,
   forgetSkippedRooms,
   getSkippedRooms,
+  installColdPrune,
   isLiteBypassed,
   liteOptionsFromSettings,
   LiteReport,
@@ -84,6 +91,8 @@ const createClientWithStore = (session: Session, store: IndexedDBStore): MatrixC
   // The one-time initial /sync takes the server 55-80+ s on this account; the
   // SDK would abort it at 80 s and start over. Only that request waits longer.
   installInitialSyncTimeout(mx);
+  // outermost http wrapper: hands the SDK the catch-up /sync sent early in initClient
+  installSyncPrefetch(mx);
   return mx;
 };
 
@@ -113,6 +122,36 @@ let replayHints: ReplayHints = defaultReplayHints();
 
 export const stagedStartupEnabled = (): boolean => getSettings().stagedStartup !== 'off';
 
+/**
+ * Stage 2 starts once the opened app has rendered (ClientRoot marks
+ * 'app-rendered') plus a grace as long as that first render took (100-500 ms),
+ * so the chat list and the open chat paint before older chats compete with
+ * them for the main thread — measured 2026-10-21: the first stage-2 chunks ran
+ * ahead of React and the open chat showed 0.1-0.45 s after the app rendered.
+ * The first live /sync is applied during the wait (same lane, it is not gated)
+ * and stage 2 also waits for it (2 s cap), so it never queues behind a chunk.
+ */
+const STAGE2_GATE_MAX_MS = 2500;
+/** how long stage 2 waits, at most, for the first live /sync after the app has rendered */
+const STAGE2_LIVE_GATE_MAX_MS = 2000;
+const waitForFirstPaint = async (): Promise<void> => {
+  await whenStartupMark('app-rendered', STAGE2_GATE_MAX_MS);
+  const m = getStartupMarks();
+  const renderMs =
+    m['app-rendered'] !== undefined && m['stage1-end'] !== undefined
+      ? m['app-rendered'] - m['stage1-end']
+      : 200;
+  await Promise.all([
+    new Promise<void>((resolve) => {
+      setTimeout(resolve, Math.min(500, Math.max(100, renderMs)));
+    }),
+    // the catch-up /sync (messages that came in while the tab was closed) must
+    // not queue behind a 150-room chunk: measured +150-400 ms under load
+    whenStartupMark('live1-applied', STAGE2_LIVE_GATE_MAX_MS),
+  ]);
+  markStartup('stage2-start');
+};
+
 const setupStagedStartup = (session: Session): boolean => {
   if (!stagedStartupEnabled()) return false;
   replayHints = {
@@ -124,15 +163,18 @@ const setupStagedStartup = (session: Session): boolean => {
   const proto = (SyncApi as unknown as { prototype?: Record<string, unknown> }).prototype;
   const installed = installStagedReplay(proto as Parameters<typeof installStagedReplay>[0], {
     getHints: () => replayHints,
+    beforeStage2: waitForFirstPaint,
   });
-  if (!installed && !(proto as { __cinnyStaged?: boolean } | undefined)?.__cinnyStaged) {
+  const active = installed || !!(proto as { __cinnyStaged?: boolean } | undefined)?.__cinnyStaged;
+  if (!active) {
     // eslint-disable-next-line no-console
     console.warn('staged startup: SDK method missing, running unstaged');
   }
-  return installed;
+  return active;
 };
 
 export const initClient = async (session: Session): Promise<MatrixClient> => {
+  markStartup('init');
   // BEFORE the store is opened: delete the chats that have gone quiet from the
   // persisted /sync record, so the SDK never replays them. See client/lite-store.ts.
   const liteOptions = liteOptionsFromSettings();
@@ -160,17 +202,34 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     firstLoad: !!firstLoad,
   };
 
-  setupStagedStartup(session);
+  markStartup('pruned');
+  const staged = setupStagedStartup(session);
 
   let indexedDBStore = createSyncStore(true);
   let mx = createClientWithStore(session, indexedDBStore);
+  // startClient() awaits GET /versions before it reads the saved chats: ask now,
+  // and fall back to the cached answer if the server is slow (client/fast-versions.ts)
+  if (staged) {
+    installFastVersions(mx, readCachedVersions(session.baseUrl));
+    deferMatrixRtcDuringReplay(mx);
+  }
+  // The worker sends the saved record in parts: the replay's stage 1 first, the
+  // rest while stage 2 streams (client/staged-transfer.ts). Only together with
+  // the replay wrapper — it is what fetches the rest.
+  if (staged) installStagedTransfer(indexedDBStore, () => replayHints);
+  // One-time cold load: write the saved record lean right away, so the first
+  // refresh is already a steady-state one (no main-thread prune on top).
+  if (firstLoad) installColdPrune(indexedDBStore, liteOptions);
 
   // The sync store (worker reads the saved record) and the rust crypto init
   // (wasm compile + its own IndexedDB database) are independent: run them in
   // parallel instead of one after the other — ~1 s off a warm start.
   const cryptoReady = mx.initRustCrypto();
   try {
-    await Promise.all([indexedDBStore.startup(), cryptoReady]);
+    await Promise.all([
+      indexedDBStore.startup().then(() => markStartup('store-ready')),
+      cryptoReady.then(() => markStartup('crypto-ready')),
+    ]);
   } catch (err) {
     // The worker could not be started (unsupported runtime, blocked by a CSP,
     // failed chunk load, ...) — or crypto failed. Fall back to the previous
@@ -192,6 +251,11 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     }
     indexedDBStore = createSyncStore(false);
     mx = createClientWithStore(session, indexedDBStore);
+    if (staged) {
+      installFastVersions(mx, readCachedVersions(session.baseUrl));
+      deferMatrixRtcDuringReplay(mx);
+    }
+    if (firstLoad) installColdPrune(indexedDBStore, liteOptions);
     await indexedDBStore.startup();
     await mx.initRustCrypto();
   }
@@ -200,10 +264,22 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
   installSyncStoreKeeper(mx, indexedDBStore);
   indexedDBStore
     .getSavedSyncToken()
-    .then((token) => noteSavedToken(!!token))
+    .then((token) => {
+      noteSavedToken(!!token);
+      // The catch-up /sync (messages that came in while the tab was closed) goes
+      // out now, not after the SDK's push-rules + filter round trips (client/sync-prefetch.ts).
+      if (token && stagedStartupEnabled()) {
+        const userId = mx.getUserId();
+        prefetchFirstSync(
+          userId ? mx.store.getFilterIdByName(`FILTER_SYNC_${userId}`) : null,
+          token
+        );
+      }
+    })
     .catch(() => noteSavedToken(false));
 
   mx.setMaxListeners(50);
+  markStartup('client-ready');
 
   return mx;
 };
@@ -232,6 +308,7 @@ const buildLiteSyncFilter = async (mx: MatrixClient): Promise<Filter | undefined
 };
 
 export const startClient = async (mx: MatrixClient) => {
+  markStartup('start-client');
   const filter = await buildLiteSyncFilter(mx);
   await mx.startClient({
     lazyLoadMembers: true,

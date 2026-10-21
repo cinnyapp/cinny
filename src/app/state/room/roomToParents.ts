@@ -101,6 +101,7 @@ export const useBindRoomToParentsAtom = (
     };
 
     const handleMembershipChange = (room: Room, membership: string) => {
+      if (deferDuringReplay()) return;
       if (isSpace(room) && room.getMyMembership() === Membership.Leave) {
         setRoomToParents({ type: 'DELETE', roomId: room.roomId });
         return;

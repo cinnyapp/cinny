@@ -17,7 +17,11 @@ const {
   REPLAY_CHUNK_THRESHOLD,
   REPLAY_DEFAULT_FIRST,
   REPLAY_EVENT,
+  REPLAY_MIN_CHUNK,
+  REPLAY_MAX_CHUNK,
   defaultReplayHints,
+  whenReplayIdle,
+  roomsStillPending,
 } = await import('../src/client/staged-replay.ts');
 
 const DAY = 86_400_000;
@@ -201,12 +205,13 @@ test('installStagedReplay: feature-detected, idempotent', () => {
   assert.equal(proto.__cinnyStaged, true);
 });
 
-test('installStagedReplay: cached replay is chunked, yields, and emits first → progress → done', async () => {
+test('installStagedReplay: cached replay returns after stage 1, streams the rest, emits first → progress… → done', async () => {
   const { proto, api, calls, events } = fakeSyncApi();
   let yields = 0;
   installStagedReplay(proto, {
     getHints: () => hints({ urlRoomId: '!r399:hs', firstCount: 40 }),
     chunkSize: 150,
+    targetChunkMs: 0, // fixed size for a deterministic test
     yieldFn: async () => {
       yields += 1;
     },
@@ -219,14 +224,23 @@ test('installStagedReplay: cached replay is chunked, yields, and emits first →
     rooms: { join },
   };
   await api.processSyncResponse({ fromCache: true, nextSyncToken: 'nb' }, data);
+  // the SDK gets control back after stage 1: PREPARED + the first live /sync follow at once
+  assert.equal(calls.length, 1, 'only stage 1 was processed when the call resolved');
+  assert.equal(calls[0].join.length, 40);
+  assert.equal(calls[0].join[0], '!r399:hs', 'the URL room is in stage 1');
+  assert.deepEqual(calls[0].extras.sort(), ['account_data', 'to_device']);
+  assert.equal(getReplayState().active, true);
+  assert.equal(getReplayState().background, true);
+  await whenReplayIdle();
   assert.deepEqual(
     calls.map((c) => c.join.length),
     [40, 150, 150, 60]
   );
-  assert.equal(calls[0].join[0], '!r399:hs', 'the URL room is in stage 1');
-  assert.deepEqual(calls[0].extras.sort(), ['account_data', 'to_device']);
-  calls.slice(1).forEach((c) => assert.deepEqual(c.extras, []));
-  assert.equal(yields, 3, 'one yield between chunks, none after the last');
+  calls.slice(1).forEach((c) => {
+    assert.deepEqual(c.extras, []);
+    assert.equal(c.fromCache, true);
+  });
+  assert.equal(yields, 3, 'one yield before every stage-2 chunk');
   assert.deepEqual(
     events.map((e) => [e.ev, e.stage, e.done, e.total, e.fromCache, e.chunked]),
     [
@@ -236,7 +250,10 @@ test('installStagedReplay: cached replay is chunked, yields, and emits first →
       [REPLAY_EVENT, 'done', 400, 400, true, true],
     ]
   );
-  // chunk 0 had to_device → catching up; later chunks must not flip it back
+  // every room exactly once, in plan order
+  const all = calls.flatMap((c) => c.join);
+  assert.deepEqual([...all].sort(), Object.keys(join).sort());
+  // chunk 0 had to_device → catching up; the saved record's chunks must not flip it back
   assert.equal(api.catchingUp, true);
   const state = getReplayState();
   assert.equal(state.active, false);
@@ -244,6 +261,96 @@ test('installStagedReplay: cached replay is chunked, yields, and emits first →
   assert.equal(state.total, 400);
   assert.equal(typeof state.startedAt, 'number');
   assert.equal(typeof state.finishedAt, 'number');
+  assert.equal(state.lastChunkRooms, 60);
+});
+
+test('installStagedReplay: a live /sync during stage 2 replays the rooms it touches first, in one lane', async () => {
+  const { proto, api, calls, events } = fakeSyncApi();
+  let release;
+  const gate = new Promise((r) => {
+    release = r;
+  });
+  let yields = 0;
+  installStagedReplay(proto, {
+    getHints: () => hints({ firstCount: 40 }),
+    chunkSize: 100,
+    targetChunkMs: 0,
+    // the first stage-2 chunk waits until the test lets it go
+    yieldFn: async () => {
+      yields += 1;
+      if (yields === 1) await gate;
+    },
+  });
+  const join = manyRooms(300); // !r0 newest … !r299 oldest → stage 1 = r0..r39
+  await api.processSyncResponse(
+    { fromCache: true, nextSyncToken: 'nb' },
+    { next_batch: 'nb', rooms: { join } }
+  );
+  assert.equal(calls.length, 1);
+  // the live catch-up arrives: it mentions a stage-1 room, two stage-2 rooms and a left room
+  const live = {
+    next_batch: 'nb2',
+    rooms: {
+      join: { '!r5:hs': room(), '!r250:hs': room(), '!r120:hs': room() },
+      leave: { '!r299:hs': {} },
+    },
+  };
+  assert.deepEqual(roomsStillPending(live, Object.keys(join).slice(40)), [
+    '!r120:hs',
+    '!r250:hs',
+    '!r299:hs',
+  ]);
+  const livePromise = api.processSyncResponse({ oldSyncToken: 'nb', nextSyncToken: 'nb2' }, live);
+  release();
+  await livePromise;
+  // cached copies of the three pending rooms were replayed BEFORE the live delta
+  const liveIndex = calls.findIndex((c) => c.oldSyncToken === 'nb');
+  assert.ok(liveIndex > 0);
+  const pulled = calls[liveIndex - 1];
+  assert.equal(pulled.fromCache, true);
+  assert.deepEqual([...pulled.join].sort(), ['!r120:hs', '!r250:hs', '!r299:hs']);
+  assert.deepEqual(calls[liveIndex].join.sort(), ['!r120:hs', '!r250:hs', '!r5:hs']);
+  await whenReplayIdle();
+  // every cached room exactly once; the pulled-forward ones are not replayed again
+  const cached = calls.filter((c) => c.fromCache).flatMap((c) => c.join);
+  assert.deepEqual([...cached].sort(), Object.keys(join).sort());
+  assert.equal(new Set(cached).size, cached.length);
+  assert.equal(events.at(-1).stage, 'done');
+  assert.equal(events.at(-1).done, 300);
+  assert.equal(getReplayState().pulledForward, 3);
+  assert.equal(getReplayState().active, false);
+});
+
+test('installStagedReplay: stage-2 chunk size adapts to the measured work per chunk', async () => {
+  const { proto, api, calls } = fakeSyncApi();
+  let t = 0;
+  const costPerRoom = 4; // ms "measured" per room → 120 ms target = 30 rooms
+  const base = proto.processSyncResponse;
+  proto.processSyncResponse = async function timedProcessSyncResponse(ev, data) {
+    t += Object.keys(data.rooms?.join ?? {}).length * costPerRoom;
+    return base.call(this, ev, data);
+  };
+  installStagedReplay(proto, {
+    getHints: () => hints({ firstCount: 10 }),
+    chunkSize: 60,
+    targetChunkMs: 120,
+    yieldFn: async () => {},
+    nowFn: () => t,
+  });
+  await api.processSyncResponse(
+    { fromCache: true },
+    { next_batch: 'nb', rooms: { join: manyRooms(400) } }
+  );
+  await whenReplayIdle();
+  const sizes = calls.slice(1).map((c) => c.join.length);
+  assert.equal(sizes[0], 60, 'starts with chunkSize');
+  // 60 rooms took 240 ms → 30; 30 rooms took 120 ms → stays 30
+  assert.deepEqual(sizes.slice(1, 4), [30, 30, 30]);
+  sizes.forEach((n) => assert.ok(n >= REPLAY_MIN_CHUNK && n <= REPLAY_MAX_CHUNK));
+  assert.equal(
+    sizes.reduce((a, b) => a + b, 0),
+    390
+  );
 });
 
 test('installStagedReplay: the cold initial sync (no old token) is chunked newest-first too', async () => {
@@ -300,13 +407,44 @@ test('installStagedReplay: a small cached replay runs once and still emits done'
   assert.equal(getReplayState().active, false);
 });
 
-test('installStagedReplay: a chunk that throws still ends with done (listeners never hang)', async () => {
+test('installStagedReplay: a stage-2 chunk that throws is skipped, the rest still streams, done is emitted', async () => {
   const { proto, api, calls, events } = fakeSyncApi({ throwOnCall: 2 });
-  installStagedReplay(proto, { getHints: hints, chunkSize: 100, yieldFn: async () => {} });
-  // (cached replay → chunkSize applies)
+  installStagedReplay(proto, {
+    getHints: hints,
+    chunkSize: 100,
+    targetChunkMs: 0,
+    yieldFn: async () => {},
+  });
+  const errors = [];
+  const origError = console.error;
+  console.error = (...a) => errors.push(a[0]);
+  try {
+    await api.processSyncResponse(
+      { fromCache: true },
+      { next_batch: 'nb', rooms: { join: manyRooms(300) } }
+    );
+    await whenReplayIdle();
+  } finally {
+    console.error = origError;
+  }
+  assert.deepEqual(
+    calls.map((c) => c.join.length),
+    [40, 100, 100, 60]
+  );
+  assert.equal(errors.length, 1);
+  assert.deepEqual(
+    events.map((e) => e.stage),
+    ['first', 'progress', 'progress', 'done']
+  );
+  assert.equal(getReplayState().active, false);
+});
+
+test('installStagedReplay: the cold initial sync that throws still ends with done (listeners never hang)', async () => {
+  const { proto, api, calls, events } = fakeSyncApi({ throwOnCall: 2 });
+  installStagedReplay(proto, { getHints: hints, coldChunkSize: 100, yieldFn: async () => {} });
   await assert.rejects(
     api.processSyncResponse(
-      { fromCache: true },
+      { nextSyncToken: 'nb' },
       { next_batch: 'nb', rooms: { join: manyRooms(300) } }
     ),
     /boom/
@@ -317,6 +455,473 @@ test('installStagedReplay: a chunk that throws still ends with done (listeners n
     ['first', 'done']
   );
   assert.equal(getReplayState().active, false);
+});
+
+const { handleStagedCommand, installStagedTransfer, STAGED_GET, STAGED_ROOMS, STAGED_RELEASE } =
+  await import('../src/client/staged-transfer.ts');
+
+const tick = () => new Promise((r) => setTimeout(r, 0));
+
+/** A fake worker: the SDK's commands + ours, over the same cmd envelope. */
+const fakeWorker = (saved) => {
+  const backend = { getSavedSync: async () => saved };
+  const sent = [];
+  const doCmd = (command, args) =>
+    new Promise((resolve, reject) => {
+      sent.push(command);
+      const post = (m) =>
+        m.command === 'cmd_success' ? resolve(m.result) : reject(new Error(m.error.message));
+      if (handleStagedCommand({ command, seq: sent.length, args }, () => backend, post)) return;
+      if (command === 'getSavedSync') backend.getSavedSync().then(resolve, reject);
+      else reject(new Error('Unrecognised command'));
+    });
+  return { backend, sent, doCmd };
+};
+
+test('staged transfer (worker): stage 1 + ordered rest ids, rooms on demand, release', async () => {
+  const join = manyRooms(300); // !r0 newest … !r299 oldest
+  const saved = {
+    nextBatch: 'nb',
+    accountData: [{ type: 'm.push_rules', content: {} }],
+    roomsData: { join, invite: { '!inv:hs': {} }, leave: {} },
+  };
+  const backend = {
+    getSavedSync: async (copy) => {
+      assert.equal(copy, false, 'no deep copy: the reply is structured-cloned anyway');
+      return saved;
+    },
+  };
+  const posts = [];
+  const post = (m) => posts.push(m);
+  assert.equal(
+    handleStagedCommand({ command: 'getSavedSync', seq: 1 }, () => backend, post),
+    false
+  );
+  assert.equal(
+    handleStagedCommand(undefined, () => backend, post),
+    false
+  );
+  const opts = { hints: hints({ urlRoomId: '!r250:hs', firstCount: 40 }) };
+  assert.equal(
+    handleStagedCommand({ command: STAGED_GET, seq: 2, args: [opts] }, () => backend, post),
+    true
+  );
+  await tick();
+  const reply = posts.at(-1);
+  assert.equal(reply.command, 'cmd_success');
+  assert.equal(reply.seq, 2);
+  const res = reply.result;
+  const first = Object.keys(res.roomsData.join);
+  assert.equal(first.length, 40);
+  assert.equal(first[0], '!r250:hs', 'the URL room comes first');
+  assert.equal(first[1], '!r0:hs', 'then the newest');
+  assert.deepEqual(
+    res.roomsData.invite,
+    { '!inv:hs': {} },
+    'everything that is not a joined room goes in stage 1'
+  );
+  assert.equal(res.accountData, saved.accountData);
+  assert.equal(res.nextBatch, 'nb');
+  assert.equal(res.cinnyStaged.total, 300);
+  assert.equal(res.cinnyStaged.rest.length, 260);
+  assert.equal(res.cinnyStaged.rest[0], '!r39:hs');
+  assert.ok(!res.cinnyStaged.rest.includes('!r250:hs'));
+  assert.deepEqual([...first, ...res.cinnyStaged.rest].sort(), Object.keys(join).sort());
+  const { token } = res.cinnyStaged;
+  handleStagedCommand(
+    { command: STAGED_ROOMS, seq: 3, args: [token, ['!r100:hs', '!nope:hs']] },
+    () => backend,
+    post
+  );
+  assert.deepEqual(Object.keys(posts.at(-1).result), ['!r100:hs'], 'unknown ids are skipped');
+  assert.equal(posts.at(-1).result['!r100:hs'], join['!r100:hs']);
+  handleStagedCommand(
+    { command: STAGED_ROOMS, seq: 4, args: [token + 1, ['!r100:hs']] },
+    () => backend,
+    post
+  );
+  assert.equal(posts.at(-1).command, 'cmd_fail', 'a stale token is refused');
+  handleStagedCommand({ command: STAGED_RELEASE, seq: 5, args: [token] }, () => backend, post);
+  assert.equal(posts.at(-1).command, 'cmd_success');
+  handleStagedCommand(
+    { command: STAGED_ROOMS, seq: 6, args: [token, ['!r100:hs']] },
+    () => backend,
+    post
+  );
+  assert.equal(posts.at(-1).command, 'cmd_fail', 'released');
+});
+
+test('staged transfer (worker): small record whole, nothing saved → null, no backend → fail', async () => {
+  const posts = [];
+  const post = (m) => posts.push(m);
+  const small = {
+    nextBatch: 'nb',
+    accountData: [],
+    roomsData: { join: manyRooms(REPLAY_CHUNK_THRESHOLD) },
+  };
+  handleStagedCommand(
+    { command: STAGED_GET, seq: 1, args: [{ hints: hints() }] },
+    () => ({ getSavedSync: async () => small }),
+    post
+  );
+  await tick();
+  assert.equal(posts.at(-1).result, small);
+  handleStagedCommand(
+    { command: STAGED_GET, seq: 2, args: [{ hints: hints() }] },
+    () => ({ getSavedSync: async () => null }),
+    post
+  );
+  await tick();
+  assert.equal(posts.at(-1).result, null);
+  handleStagedCommand(
+    { command: STAGED_GET, seq: 3, args: [{ hints: hints() }] },
+    () => undefined,
+    post
+  );
+  assert.equal(posts.at(-1).command, 'cmd_fail');
+});
+
+test('staged transfer end to end: stage 1 only crosses first, the rest streams from the worker, each room once', async () => {
+  const join = manyRooms(400);
+  const saved = {
+    nextBatch: 'nb',
+    accountData: [{ type: 'm.direct', content: {} }],
+    roomsData: { join },
+  };
+  const worker = fakeWorker(saved);
+  const original = async () => {
+    throw new Error('the whole-record path must not be used');
+  };
+  const store = { backend: { doCmd: worker.doCmd }, getSavedSync: original };
+  const h = () => hints({ urlRoomId: '!r399:hs', firstCount: 40 });
+  assert.equal(
+    installStagedTransfer({ getSavedSync: original }, h),
+    false,
+    'no worker backend → not installed'
+  );
+  assert.equal(installStagedTransfer(store, h), true);
+  assert.equal(installStagedTransfer(store, h), false, 'idempotent');
+
+  const { proto, api, calls, events } = fakeSyncApi();
+  installStagedReplay(proto, {
+    getHints: h,
+    chunkSize: 150,
+    targetChunkMs: 0,
+    yieldFn: async () => undefined,
+  });
+  const got = await store.getSavedSync();
+  assert.equal(got.cinnyStaged, undefined, 'the SDK gets a plain ISavedSync');
+  assert.equal(Object.keys(got.roomsData.join).length, 40);
+  // what SyncApi.syncFromCache does with it
+  await api.processSyncResponse(
+    { fromCache: true, nextSyncToken: 'nb' },
+    { next_batch: got.nextBatch, rooms: got.roomsData, account_data: { events: got.accountData } }
+  );
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].join[0], '!r399:hs');
+  assert.deepEqual(calls[0].extras, ['account_data']);
+  assert.equal(events[0].stage, 'first');
+  assert.equal(events[0].total, 400, 'the total counts the rooms still in the worker');
+  assert.equal(getReplayState().transfer, 'staged');
+  await whenReplayIdle();
+  assert.deepEqual(
+    calls.map((c) => c.join.length),
+    [40, 150, 150, 60]
+  );
+  const all = calls.flatMap((c) => c.join);
+  assert.deepEqual([...all].sort(), Object.keys(join).sort());
+  assert.equal(new Set(all).size, 400);
+  assert.equal(events.at(-1).stage, 'done');
+  assert.equal(events.at(-1).done, 400);
+  assert.equal(worker.sent.filter((c) => c === STAGED_ROOMS).length, 3);
+  assert.equal(
+    worker.sent.at(-1),
+    STAGED_RELEASE,
+    'the worker drops its copy when stage 2 is done'
+  );
+});
+
+test('staged transfer: a live /sync pulls its pending rooms from the worker first; failures fall back', async () => {
+  const join = manyRooms(300);
+  const saved = { nextBatch: 'nb', accountData: [], roomsData: { join } };
+  const worker = fakeWorker(saved);
+  let failNextRooms = false;
+  const doCmd = (command, args) => {
+    if (command === STAGED_ROOMS && failNextRooms) {
+      failNextRooms = false;
+      return Promise.reject(new Error('worker hiccup'));
+    }
+    return worker.doCmd(command, args);
+  };
+  const store = { backend: { doCmd }, getSavedSync: async () => saved };
+  const h = () => hints({ firstCount: 40 });
+  installStagedTransfer(store, h);
+  const { proto, api, calls } = fakeSyncApi();
+  let release;
+  const gate = new Promise((r) => {
+    release = r;
+  });
+  let yields = 0;
+  installStagedReplay(proto, {
+    getHints: h,
+    chunkSize: 100,
+    targetChunkMs: 0,
+    yieldFn: async () => {
+      yields += 1;
+      if (yields === 1) await gate;
+    },
+  });
+  const got = await store.getSavedSync();
+  await api.processSyncResponse(
+    { fromCache: true, nextSyncToken: 'nb' },
+    { next_batch: 'nb', rooms: got.roomsData }
+  );
+  // the pull-forward fetch fails once: the rooms come from the whole record instead
+  failNextRooms = true;
+  const live = { next_batch: 'nb2', rooms: { join: { '!r250:hs': room(), '!r3:hs': room() } } };
+  const livePromise = api.processSyncResponse({ oldSyncToken: 'nb', nextSyncToken: 'nb2' }, live);
+  release();
+  await livePromise;
+  const liveIndex = calls.findIndex((c) => c.oldSyncToken === 'nb');
+  assert.deepEqual(
+    calls[liveIndex - 1].join,
+    ['!r250:hs'],
+    'cached copy first, fetched despite the failure'
+  );
+  assert.equal(calls[liveIndex - 1].fromCache, true);
+  assert.ok(worker.sent.includes('getSavedSync'), 'fell back to the whole record once');
+  await whenReplayIdle();
+  const cached = calls.filter((c) => c.fromCache).flatMap((c) => c.join);
+  assert.deepEqual([...cached].sort(), Object.keys(join).sort());
+  assert.equal(new Set(cached).size, cached.length);
+});
+
+test('staged transfer: the worker refusing the command means the SDK path, untouched', async () => {
+  const saved = { nextBatch: 'nb', accountData: [], roomsData: { join: manyRooms(300) } };
+  let originalCalls = 0;
+  const store = {
+    backend: { doCmd: () => Promise.reject(new Error('Unrecognised command')) },
+    getSavedSync: async () => {
+      originalCalls += 1;
+      return saved;
+    },
+  };
+  installStagedTransfer(store, () => hints());
+  const warn = console.warn;
+  console.warn = () => undefined;
+  try {
+    assert.equal(await store.getSavedSync(), saved);
+  } finally {
+    console.warn = warn;
+  }
+  assert.equal(originalCalls, 1);
+});
+
+const {
+  installSyncPrefetch,
+  prefetchFirstSync,
+  sameQuery,
+  firstIncrementalSyncQuery,
+  resetSyncPrefetch,
+} = await import('../src/client/sync-prefetch.ts');
+
+const fakeHttp = () => {
+  const requests = [];
+  const http = {
+    authedRequest(method, path, qps, body, opts) {
+      requests.push({ method, path, qps, opts });
+      return Promise.resolve({ next_batch: `nb${requests.length}` });
+    },
+  };
+  return { http, requests };
+};
+
+test('sync prefetch: the SDK gets the early catch-up /sync for exactly the same query, once', async () => {
+  resetSyncPrefetch();
+  const { http, requests } = fakeHttp();
+  const mx = { http };
+  assert.equal(prefetchFirstSync('8', 'tok'), false, 'not installed yet');
+  assert.equal(installSyncPrefetch(mx), true);
+  assert.equal(installSyncPrefetch(mx), false, 'idempotent');
+  assert.equal(prefetchFirstSync(null, 'tok'), false, 'no stored filter id → nothing sent');
+  assert.equal(
+    prefetchFirstSync('8', undefined),
+    false,
+    'no saved token (cold start) → nothing sent'
+  );
+  assert.equal(prefetchFirstSync('8', 'tok'), true);
+  assert.equal(requests.length, 1);
+  assert.deepEqual(requests[0].qps, firstIncrementalSyncQuery('8', 'tok'));
+  assert.equal(requests[0].opts.localTimeoutMs, 80_000);
+  // other requests pass straight through
+  await mx.http.authedRequest('GET', '/pushrules/');
+  assert.equal(requests.length, 2);
+  // the SDK's own first /sync (same query, key order irrelevant): no new request
+  const sdkQuery = {
+    since: 'tok',
+    'org.matrix.msc4222.use_state_after': true,
+    timeout: 0,
+    filter: '8',
+  };
+  const ac = new AbortController();
+  const res = await mx.http.authedRequest('GET', '/sync', sdkQuery, undefined, {
+    abortSignal: ac.signal,
+  });
+  assert.equal(requests.length, 2);
+  assert.equal(res.next_batch, 'nb1');
+  // the prefetch is handed out once only
+  await mx.http.authedRequest('GET', '/sync', sdkQuery);
+  assert.equal(requests.length, 3);
+});
+
+test('sync prefetch: a different query (filter, token, params) gets its own request', async () => {
+  resetSyncPrefetch();
+  const { http, requests } = fakeHttp();
+  const mx = { http };
+  installSyncPrefetch(mx);
+  prefetchFirstSync('8', 'tok');
+  await mx.http.authedRequest('GET', '/sync', firstIncrementalSyncQuery('9', 'tok'));
+  await mx.http.authedRequest('GET', '/sync', {
+    ...firstIncrementalSyncQuery('8', 'tok'),
+    set_presence: 'offline',
+  });
+  await mx.http.authedRequest('GET', '/sync', {
+    ...firstIncrementalSyncQuery('8', 'tok'),
+    timeout: 30000,
+  });
+  assert.equal(requests.length, 4, 'every mismatch was sent for real');
+  assert.equal(sameQuery({ a: 1, b: undefined }, { a: '1' }), true);
+  assert.equal(sameQuery({ a: 1 }, { a: 1, b: 2 }), false);
+  assert.equal(sameQuery(undefined, {}), false);
+});
+
+test('sync prefetch: expired or failed prefetches are never handed out', async () => {
+  resetSyncPrefetch();
+  let t = 0;
+  const now = () => t;
+  const requests = [];
+  let fail = true;
+  const mx = {
+    http: {
+      authedRequest(method, path, qps) {
+        requests.push(qps);
+        if (fail) {
+          fail = false;
+          return Promise.reject(new Error('network'));
+        }
+        return Promise.resolve({ ok: true });
+      },
+    },
+  };
+  installSyncPrefetch(mx, now);
+  prefetchFirstSync('8', 'tok', now);
+  await tick();
+  // the failed one is gone: the SDK's request goes out and succeeds
+  assert.deepEqual(
+    await mx.http.authedRequest('GET', '/sync', firstIncrementalSyncQuery('8', 'tok')),
+    { ok: true }
+  );
+  assert.equal(requests.length, 2);
+  // a prefetch older than the TTL is not used
+  prefetchFirstSync('8', 'tok2', now);
+  t = 31_000;
+  await mx.http.authedRequest('GET', '/sync', firstIncrementalSyncQuery('8', 'tok2'));
+  assert.equal(requests.length, 4);
+  resetSyncPrefetch();
+});
+
+const { installFastVersions } = await import('../src/client/fast-versions.ts');
+
+test('fast versions: asked at once; a slow server is bridged by the cached answer, the real one still lands', async () => {
+  assert.equal(installFastVersions(undefined, undefined), false);
+  assert.equal(installFastVersions({}, undefined), false);
+  const real = { versions: ['v1.11'], unstable_features: { x: true } };
+  const cached = { versions: ['v1.10'] };
+  let calls = 0;
+  let resolveReal;
+  const mx = {
+    getVersions() {
+      calls += 1;
+      return new Promise((r) => {
+        resolveReal = () => r(real);
+      });
+    },
+  };
+  assert.equal(installFastVersions(mx, cached, 20), true);
+  assert.equal(installFastVersions(mx, cached, 20), false, 'idempotent');
+  assert.equal(calls, 1, 'the request starts at install time');
+  // slow server: startClient goes on with the cached answer after 20 ms
+  assert.equal(await mx.getVersions(), cached);
+  assert.equal(calls, 1, 'no second request while the first is in flight');
+  resolveReal();
+  await tick();
+  assert.equal(await mx.getVersions(), real, 'once answered, the real answer wins');
+});
+
+test('fast versions: fast server answers directly; a failure falls back and retries; no cache waits', async () => {
+  const real = { versions: ['v1.11'] };
+  const fast = { getVersions: () => Promise.resolve(real) };
+  installFastVersions(fast, { versions: ['old'] }, 50);
+  assert.equal(await fast.getVersions(), real);
+  let attempts = 0;
+  const flaky = {
+    getVersions() {
+      attempts += 1;
+      return attempts === 1 ? Promise.reject(new Error('502')) : Promise.resolve(real);
+    },
+  };
+  installFastVersions(flaky, { versions: ['cached'] }, 50);
+  assert.deepEqual(await flaky.getVersions(), { versions: ['cached'] });
+  await tick();
+  assert.equal(await flaky.getVersions(), real, 'asks again after a failure');
+  const noCache = { getVersions: () => new Promise((r) => setTimeout(() => r(real), 30)) };
+  installFastVersions(noCache, undefined, 5);
+  assert.equal(await noCache.getVersions(), real, 'nothing cached: waits for the server as before');
+});
+
+test('MatrixRTC starts after the replay, not during it', async () => {
+  const { deferMatrixRtcDuringReplay: defer } = await import('../src/client/staged-replay.ts');
+  assert.equal(defer(undefined), false);
+  assert.equal(defer({}), false);
+  let started = 0;
+  const listeners = [];
+  const mx = {
+    clientRunning: true,
+    matrixRTC: { start: () => (started += 1) },
+    on: (ev, h) => listeners.push(h),
+    removeListener: (ev, h) => listeners.splice(listeners.indexOf(h), 1),
+  };
+  assert.equal(defer(mx), true);
+  assert.equal(defer(mx), false, 'idempotent');
+  // no replay running: starts at once
+  mx.matrixRTC.start();
+  assert.equal(started, 1);
+  // while a replay streams: waits for 'done'
+  const { proto, api } = fakeSyncApi();
+  let release;
+  const gate = new Promise((r) => {
+    release = r;
+  });
+  installStagedReplay(proto, {
+    getHints: () => hints({ firstCount: 40 }),
+    chunkSize: 150,
+    targetChunkMs: 0,
+    yieldFn: async () => undefined,
+    beforeStage2: () => gate,
+  });
+  await api.processSyncResponse(
+    { fromCache: true },
+    { next_batch: 'nb', rooms: { join: manyRooms(200) } }
+  );
+  assert.equal(getReplayState().active, true);
+  mx.matrixRTC.start();
+  assert.equal(started, 1, 'deferred');
+  // the replay's events reach the deferral through the client emitter
+  api.client.emit = (ev, p) => listeners.slice().forEach((h) => h(p));
+  release();
+  await whenReplayIdle();
+  assert.equal(started, 2, 'started once the replay was done');
+  assert.equal(listeners.length, 0, 'listener removed');
 });
 
 test('roomIdFromLocation: hash router, path router, space routes, decoding', () => {
@@ -336,8 +941,14 @@ const { initialSyncTimeoutFor, installInitialSyncTimeout, INITIAL_SYNC_LOCAL_TIM
   await import('../src/client/initial-sync-timeout.ts');
 
 test('initial sync timeout: only /sync without since is raised; everything else untouched', () => {
-  assert.equal(initialSyncTimeoutFor('/sync', { filter: 'x', timeout: 0 }, 80_000), INITIAL_SYNC_LOCAL_TIMEOUT_MS);
-  assert.equal(initialSyncTimeoutFor('/sync', { filter: 'x', timeout: 0 }, undefined), INITIAL_SYNC_LOCAL_TIMEOUT_MS);
+  assert.equal(
+    initialSyncTimeoutFor('/sync', { filter: 'x', timeout: 0 }, 80_000),
+    INITIAL_SYNC_LOCAL_TIMEOUT_MS
+  );
+  assert.equal(
+    initialSyncTimeoutFor('/sync', { filter: 'x', timeout: 0 }, undefined),
+    INITIAL_SYNC_LOCAL_TIMEOUT_MS
+  );
   assert.equal(initialSyncTimeoutFor('/sync', { since: 's1', timeout: 30_000 }, 110_000), 110_000);
   assert.equal(initialSyncTimeoutFor('/sync', { filter: 'x' }, 900_000), 900_000);
   assert.equal(initialSyncTimeoutFor('/rooms/!a/messages', {}, 15_000), 15_000);
@@ -356,7 +967,17 @@ test('installInitialSyncTimeout: wraps once, feature-detected, passes other args
   assert.equal(installInitialSyncTimeout({ http: {} }), false);
   assert.equal(installInitialSyncTimeout({ http }), true);
   assert.equal(installInitialSyncTimeout({ http }), false, 'second install is a no-op');
-  assert.equal(http.authedRequest('GET', '/sync', { timeout: 0 }, undefined, { localTimeoutMs: 80_000, abortSignal: 'sig' }, 'x'), 'ok');
+  assert.equal(
+    http.authedRequest(
+      'GET',
+      '/sync',
+      { timeout: 0 },
+      undefined,
+      { localTimeoutMs: 80_000, abortSignal: 'sig' },
+      'x'
+    ),
+    'ok'
+  );
   assert.equal(calls[0].opts.localTimeoutMs, INITIAL_SYNC_LOCAL_TIMEOUT_MS);
   assert.equal(calls[0].opts.abortSignal, 'sig');
   assert.equal(calls[0].extra, 'x');

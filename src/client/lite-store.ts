@@ -22,9 +22,11 @@ import { addToLiteIndex, makeIndexRow } from './lite-index';
 import {
   classifyRooms,
   LiteOptions,
+  LiteRoomSyncData,
   LiteRoomsSyncData,
   normalizeLiteOptions,
   liteChoiceFromSettings,
+  pruneInitialSyncRooms,
   pruneRoomsData,
   resolveAutoLite,
   unionRoomIds,
@@ -461,4 +463,96 @@ export const pruneDormantRooms = async (
   } finally {
     db.close();
   }
+};
+
+type SyncDataStoreLike = {
+  setSyncData?: (data: { rooms?: LiteRoomsSyncData; [k: string]: unknown }) => Promise<void>;
+  __cinnyColdPrune?: boolean;
+};
+
+/**
+ * One-time cold load: apply lite mode to the initial /sync response on its way
+ * INTO the saved record (see `pruneInitialSyncRooms`), then step aside. The
+ * skipped list, the name index and the "tidied at" stamp are written exactly as
+ * the start-up prune would have written them, so the next start takes the
+ * cheap "tidied recently" path and is a steady-state warm one.
+ *
+ * Only installed when nothing is saved yet (`firstLoad`) and lite mode is not
+ * off / bypassed; wraps an instance field, so an SDK bump cannot break it
+ * silently — a missing method means nothing is installed (returns false).
+ * This session keeps every room in memory (they were already processed); the
+ * saved copy is what gets lean.
+ */
+export const installColdPrune = (store: unknown, options: LiteOptions): boolean => {
+  const target = store as SyncDataStoreLike;
+  if (!target || typeof target.setSyncData !== 'function' || target.__cinnyColdPrune) return false;
+  if (choiceOf(options) === 'off' || isLiteBypassed()) return false;
+  const original = target.setSyncData;
+  let armed = true;
+  // eslint-disable-next-line no-param-reassign
+  target.setSyncData = async function coldPruneSetSyncData(data) {
+    if (!armed || !data?.rooms?.join) return original.call(this, data);
+    armed = false;
+    // eslint-disable-next-line no-param-reassign
+    target.setSyncData = original;
+    const started = performance.now();
+    try {
+      const pruned = pruneInitialSyncRooms(data.rooms, options);
+      const lastPrune: LastPrune = {
+        at: Date.now(),
+        windowDays: pruned.windowDays,
+        auto: pruned.auto,
+        totalRooms: pruned.totalRooms,
+      };
+      if (!pruned.enabled) {
+        writeJson(LAST_PRUNE_KEY, lastPrune);
+        skip(
+          `${pruned.totalRooms.toLocaleString()} chats — few enough to load them all`,
+          pruned.windowDays
+        );
+        return original.call(this, data);
+      }
+      const { classification } = pruned;
+      const join = data.rooms.join as Record<string, LiteRoomSyncData>;
+      if (classification.dormant.length > 0) {
+        try {
+          addToLiteIndex(
+            classification.dormant.map((roomId) => makeIndexRow(roomId, join[roomId]))
+          );
+        } catch (err) {
+          // eslint-disable-next-line no-console
+          console.error('lite mode: could not index the skipped chats', err);
+        }
+        setSkippedRooms(unionRoomIds(getSkippedRooms(), classification.dormant));
+      }
+      writeJson(LAST_PRUNE_KEY, lastPrune);
+      setLiteReport({
+        at: Date.now(),
+        windowDays: pruned.windowDays,
+        auto: pruned.auto,
+        skippedTotal: getSkippedRooms().length,
+        totalRooms: pruned.totalRooms,
+        keptRooms: classification.kept.length,
+        skippedRooms: classification.dormant.length,
+        skippedEvents: classification.dormantEvents,
+        keptEvents: classification.keptEvents,
+        keptBecause: classification.keptBecause,
+        ms: Math.round(performance.now() - started),
+        note: 'applied during the one-time full load',
+      });
+      // eslint-disable-next-line no-console
+      console.info(
+        `lite mode: saved record written lean during the first load — ${classification.kept.length} of ${pruned.totalRooms} chats kept (${Math.round(
+          performance.now() - started
+        )} ms)`
+      );
+      return original.call(this, { ...data, rooms: pruned.rooms });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('lite mode: could not tidy the first load, saving everything', err);
+      return original.call(this, data);
+    }
+  };
+  target.__cinnyColdPrune = true;
+  return true;
 };

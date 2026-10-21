@@ -198,15 +198,29 @@ const isBotRoom = (room: LiteRoomSyncData): boolean => {
     const ids = heroes.filter((h): h is string => typeof h === 'string');
     return ids.some((id) => BOT_USER.test(id)) && ids.every((id) => BOT_USER.test(id));
   }
-  const joined = stateEvents(room).filter(
-    (event) =>
-      event.type === 'm.room.member' &&
-      typeof event.state_key === 'string' &&
-      (event.content as { membership?: string } | undefined)?.membership === 'join'
-  );
-  const bots = joined.filter((event) => BOT_USER.test(event.state_key as string)).length;
+  // One entry per member: the saved record carries every state event twice
+  // (`state` rolled back to the timeline start + `state_after`), the initial
+  // /sync only once — counting events, not members, made the two disagree.
+  const joined = new Set<string>();
+  stateEvents(room).forEach((event) => {
+    if (event.type !== 'm.room.member' || typeof event.state_key !== 'string') return;
+    if ((event.content as { membership?: string } | undefined)?.membership === 'join') {
+      joined.add(event.state_key);
+    } else {
+      joined.delete(event.state_key);
+    }
+  });
+  const bots = Array.from(joined).filter((id) => BOT_USER.test(id)).length;
+  if (bots === 0) return false;
+  if (memberCount > joined.size) {
+    // Lazy loading stored only some members (typically you + the bot, when the
+    // contact's puppet has not spoken lately). A bridged 1:1 chat has 3 members;
+    // a management room is just you + the bot. Measured 2026-10-21: without this
+    // the one-time cold load kept 1,305 bridged chats as 'bot' (record-based: 48).
+    return memberCount <= 2;
+  }
   // you are the one non-bot member (your own member event may or may not be stored)
-  return bots > 0 && joined.length - bots <= 1;
+  return joined.size - bots <= 1;
 };
 
 /** One-member rooms are notes-to-self; there are very few and they matter. */
@@ -328,6 +342,53 @@ export const pruneRoomsData = (
       nextJoin[roomId] = join[roomId];
     });
   return { ...rooms, join: nextJoin };
+};
+
+export type InitialSyncPrune = {
+  rooms: LiteRoomsSyncData;
+  classification: LiteClassification;
+  /** auto-mode decision for this account size */
+  enabled: boolean;
+  windowDays: number;
+  auto: boolean;
+  totalRooms: number;
+};
+
+/**
+ * Lite mode applied to the one-time initial /sync response itself, BEFORE it is
+ * written to the saved record — so the first refresh after a cold load is
+ * already the steady-state one, instead of paying a main-thread prune (measured
+ * 1.9 s frozen, 1.4 GB heap, 9,032 → 1,808 rooms) on top of the replay.
+ *
+ * Pure: returns the rooms to persist (quiet rooms removed, kept rooms
+ * newest-first) and the classification. `enabled: false` means "persist as is".
+ */
+export const pruneInitialSyncRooms = (
+  rooms: LiteRoomsSyncData,
+  options: LiteOptions,
+  classify: Omit<ClassifyOptions, 'windowDays'> = {}
+): InitialSyncPrune => {
+  const totalRooms = Object.keys(rooms.join ?? {}).length;
+  const resolved = resolveAutoLite(options, totalRooms);
+  const classification = classifyRooms(rooms, { ...classify, windowDays: resolved.windowDays });
+  if (!resolved.enabled || classification.dormant.length === 0) {
+    return {
+      rooms,
+      classification,
+      enabled: resolved.enabled,
+      windowDays: resolved.windowDays,
+      auto: resolved.auto,
+      totalRooms,
+    };
+  }
+  return {
+    rooms: pruneRoomsData(rooms, classification.dormant),
+    classification,
+    enabled: true,
+    windowDays: resolved.windowDays,
+    auto: resolved.auto,
+    totalRooms,
+  };
 };
 
 /**

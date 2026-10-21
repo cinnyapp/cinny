@@ -2,6 +2,7 @@ import { atom, useSetAtom } from 'jotai';
 import {
   ClientEvent,
   EventStatus,
+  IRoomTimelineData,
   MatrixClient,
   MatrixEvent,
   Method,
@@ -22,7 +23,7 @@ import {
 } from '../../utils/roomActivity';
 import { ChunkedRun, Coalescer, createCoalescer, runChunked } from '../../utils/batch';
 import { useSyncState } from '../../hooks/useSyncState';
-import { isReplayActive } from '../../../client/staged-replay';
+import { isReplayActive, onReplayProgress } from '../../../client/staged-replay';
 
 /**
  * Per-room "last real message" (see utils/roomActivity.ts), kept up to date from
@@ -369,13 +370,25 @@ export const useBindRoomActivityAtom = (
     )
   );
 
+  // Staged start-up: PREPARED fires after stage 1 (the ~40 hottest chats); the
+  // rest streams in behind the open app and is ignored above while the replay
+  // is active — so scan once more when the replay is done.
+  useEffect(
+    () =>
+      onReplayProgress(mx, (p) => {
+        if (p.stage === 'done') scheduler.scanAll();
+      }),
+    [mx, scheduler]
+  );
+
   useEffect(() => {
     const myUserId = mx.getUserId();
     const handleTimeline = (
       mEvent: MatrixEvent,
       room: Room | undefined,
       toStartOfTimeline: boolean | undefined,
-      removed: boolean
+      removed: boolean,
+      data?: IRoomTimelineData
     ) => {
       // Live AND paginated events are both fine: only the event's own timestamp
       // counts and the merge never moves a chat back, so old history loading in
@@ -383,8 +396,10 @@ export const useBindRoomActivityAtom = (
       // The same event can arrive through several timeline sets; merging is
       // idempotent, so duplicates cost nothing.
       if (!room || removed || room.isSpaceRoom()) return;
-      // staged start-up: the full scan at PREPARED (right after the replay) covers these
-      if (isReplayActive()) return;
+      // Staged start-up: events replayed from the saved record (`liveEvent` false)
+      // are covered by the full scan at replay 'done'; LIVE events — the first
+      // live /sync is applied while older chats still stream in — move the chat now.
+      if (isReplayActive() && !data?.liveEvent) return;
       const update = updateForEvent(mEvent, myUserId);
       if (update) scheduler.queue(room.roomId, update);
     };
