@@ -5,6 +5,33 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: Vazirmatn;
+  src: url('../public/font/vazirmatn/Vazirmatn-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+@font-face {
+  font-family: Vazirmatn;
+  src: url('../public/font/vazirmatn/Vazirmatn-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+@font-face {
+  font-family: Vazirmatn;
+  src: url('../public/font/vazirmatn/Vazirmatn-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0600-06FF, U+0750-077F, U+08A0-08FF, U+FB50-FDFF, U+FE70-FEFF;
+}
+
 :root {
   --tc-link: hsl(213deg 100% 45%);
 
@@ -19,7 +46,7 @@
   --mx-uc-8: hsl(94, 100%, 35%);
 
   --font-emoji: 'Twemoji_DISABLED';
-  --font-secondary: 'InterVariable', var(--font-emoji), sans-serif;
+  --font-secondary: 'InterVariable', 'Vazirmatn', var(--font-emoji), sans-serif;
 }
 
 .dark-theme,
@@ -35,7 +62,7 @@
   --mx-uc-7: hsl(243, 100%, 80%);
   --mx-uc-8: hsl(94, 100%, 80%);
 
-  --font-secondary: 'InterVariable', var(--font-emoji), sans-serif;
+  --font-secondary: 'InterVariable', 'Vazirmatn', var(--font-emoji), sans-serif;
 }
 
 html {
