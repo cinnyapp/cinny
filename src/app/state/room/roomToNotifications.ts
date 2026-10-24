@@ -3,7 +3,7 @@ import { useCallback, useEffect } from 'react';
 import { UnreadNotificationCounts } from 'neurone/lib/api/types';
 import { useRoomsNotificationPreferencesContext } from '../../hooks/useRoomsNotificationPreferences';
 import { ClientContext } from '../../../client/context';
-import { AsyncStatus, useAsyncCallbackValue } from '../../hooks/useAsyncCallback';
+import { useObservableValue } from '../../hooks/useObservableValue';
 
 export type Notifications = UnreadNotificationCounts & {
   threads: Map<string, UnreadNotificationCounts>;
@@ -18,25 +18,10 @@ export const useBindRoomToNotificationsAtom = (
 ) => {
   const setNotificationAtom = useSetAtom(notificationsAtom);
   const roomsNotificationPreferences = useRoomsNotificationPreferencesContext();
-
-  const [unreadState] = useAsyncCallbackValue(
-    useCallback(async () => {
-      const notifications = await ct.storage.unreadNotifications.observableRead.getAll();
-      const threadNotifications =
-        await ct.storage.unreadThreadNotifications.observableRead.getAll();
-
-      return {
-        notifications,
-        threadNotifications,
-      };
-    }, [ct])
-  );
-
-  const unread = unreadState.status === AsyncStatus.Success ? unreadState.data : undefined;
+  const notifications = useObservableValue(ct.notifications);
+  const threadNotifications = useObservableValue(ct.threadNotifications);
 
   const processNotifications = useCallback(() => {
-    const notifications = unread?.notifications.read ?? [];
-    const threadNotifications = unread?.threadNotifications.read ?? [];
     const { mute } = roomsNotificationPreferences;
 
     const roomToThreadsNotifications = new Map<string, Map<string, UnreadNotificationCounts>>();
@@ -66,18 +51,9 @@ export const useBindRoomToNotificationsAtom = (
     });
 
     setNotificationAtom(roomToNotifications);
-  }, [unread, setNotificationAtom, roomsNotificationPreferences]);
+  }, [notifications, threadNotifications, setNotificationAtom, roomsNotificationPreferences]);
 
   useEffect(() => {
-    if (unread) {
-      processNotifications();
-    }
-
-    const unsubscribeN = unread?.notifications.subscribe(() => processNotifications());
-    const unsubscribeTn = unread?.threadNotifications.subscribe(() => processNotifications());
-    return () => {
-      unsubscribeN?.();
-      unsubscribeTn?.();
-    };
-  }, [unread, processNotifications]);
+    processNotifications();
+  }, [processNotifications]);
 };

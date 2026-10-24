@@ -21,6 +21,8 @@ import {
   LeaveRoomStateObject,
   ReadReceiptObject,
   sessionValue,
+  UnreadNotificationsObject,
+  UnreadThreadNotificationsObject,
 } from './storage/collections';
 import { Storage } from './storage';
 import { SyncContext, SyncValue } from './sync';
@@ -122,6 +124,8 @@ export type ClientContext = {
   roomToVersion: ObservableValue<Map<string, string>>;
   roomToLatestEvent: ObservableValue<Map<string, MessageEventWithoutRoomId>>;
   userReadReceipt: ObservableValue<ReadReceiptObject[]>;
+  notifications: ObservableValue<UnreadNotificationsObject[]>;
+  threadNotifications: ObservableValue<UnreadThreadNotificationsObject[]>;
   roomToTimeline: ObservableValue<Map<string, Timeline>>;
 
   pendingMemberRooms: ObservableValue<string[]>;
@@ -862,6 +866,18 @@ export const createUserReceiptObservable = async (
   disposer.collect(receiptObservable);
 
   return receiptObservable;
+};
+
+export const createNotificationsObservable = async (storage: Storage, disposer: Disposer) => {
+  const notifications = await storage.unreadNotifications.observableRead.getAll();
+  const threadNotifications = await storage.unreadThreadNotifications.observableRead.getAll();
+
+  disposer.collect(notifications, threadNotifications);
+
+  return {
+    notifications,
+    threadNotifications,
+  };
 };
 
 export const createLogoutObservable = (

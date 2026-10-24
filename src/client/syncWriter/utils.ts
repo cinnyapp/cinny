@@ -366,17 +366,22 @@ export const writeUnreadThreadNotifications = async (
   joinRooms: string[],
   join: Record<string, JoinRoom>
 ): Promise<void> => {
+  const notificationsToRemove: UnreadThreadNotificationsObject[] = [];
+
   const unreadThreadNotificationsObjects: UnreadThreadNotificationsObject[] = joinRooms.flatMap(
     (roomId) => {
       const joinRoom = join[roomId];
 
-      const unreadThreadNotifications = joinRoomUtil.roomUnreadThreadNotifications(joinRoom);
+      const unreadThreadNotifications = joinRoomUtil.roomUnreadThreadNotifications(joinRoom) ?? {};
 
-      if (!unreadThreadNotifications) {
-        return [];
-      }
+      const threadIds = Object.keys(unreadThreadNotifications);
 
-      return Object.keys(unreadThreadNotifications).map((threadId) => {
+      const toRemove = ct.threadNotifications.read.filter(
+        (n) => n.roomId === roomId && !threadIds.includes(n.threadId)
+      );
+      notificationsToRemove.push(...toRemove);
+
+      return threadIds.map((threadId) => {
         const unread = unreadThreadNotifications[threadId];
 
         const obj: UnreadThreadNotificationsObject = {
@@ -391,6 +396,10 @@ export const writeUnreadThreadNotifications = async (
     }
   );
 
+  const toRemoveKeys = notificationsToRemove.map((n) =>
+    getUnreadThreadNotificationId(n.roomId, n.threadId)
+  );
+  await ct.storage.unreadThreadNotifications.write.deleteMultiple(toRemoveKeys);
   await ct.storage.unreadThreadNotifications.write.putMultiple(unreadThreadNotificationsObjects);
 };
 

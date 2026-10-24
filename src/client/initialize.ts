@@ -27,6 +27,7 @@ import {
   createBackupInfoObservable,
   createUserReceiptObservable,
   createToDeviceEventsObservable,
+  createNotificationsObservable,
 } from './context';
 import { createStorage } from './storage';
 import { getAuthJSONRequest } from './request';
@@ -82,6 +83,10 @@ export const initializeClient = async (session: Session): Promise<InitializeClie
   const roomToReplacement = createRoomToReplacementObservable(state, disposer);
   const roomToLatestEvent = await createRoomToLatestEventObservable(storage, disposer);
   const userReadReceipt = await createUserReceiptObservable(session, storage, disposer);
+  const { notifications, threadNotifications } = await createNotificationsObservable(
+    storage,
+    disposer
+  );
 
   const syncTokenObservable = await createSyncTokenObservable(storage, disposer);
   const pendingMemberRooms = await createPendingMemberRoomObservable(storage, disposer);
@@ -147,6 +152,8 @@ export const initializeClient = async (session: Session): Promise<InitializeClie
     roomToReplacement,
     roomToLatestEvent,
     userReadReceipt,
+    notifications,
+    threadNotifications,
     roomToCreators,
     roomToVersion,
     roomToTimeline,
