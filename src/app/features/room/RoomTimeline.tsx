@@ -30,7 +30,6 @@ import { RoomIntro } from '../../components/room-intro';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { MessageEvent, StateEvent } from '../../../types/matrix/room';
 import { RenderMessageContent } from '../../components/RenderMessageContent';
-import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useIgnoredUsers } from '../../hooks/useIgnoredUsers';
 import { useImagePackRooms } from '../../hooks/useImagePackRooms';
 import { useIsDirectRoom, useRoom } from '../../hooks/useRoom';
@@ -52,6 +51,7 @@ import {
   useEditorResizeStickBottom,
   useEventCollapse,
   useEventDivider,
+  useMessageEditorOutOfViewFocus,
   useReplyClickHandler,
   useRestoreScrollToBottom,
   useTimelinePaginate,
@@ -139,17 +139,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   const canPinEvent = permissions.stateEvent(StateEvent.RoomPinnedEvents, ct.session.userId);
   const [editId, setEditId] = useState<string>();
 
-  // const roomToParents = useAtomValue(roomToParentsAtom);
-  // const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
-  const { navigateRoom } = useRoomNavigate();
-
   const imagePackRooms = useImagePackRooms(roomId);
-
-  // const [unreadInfo, setUnreadInfo] = useState(() => getRoomUnreadInfo(room, true));
-  const readUptoEventIdRef = useRef<string>();
-  // if (unreadInfo) {
-  //   readUptoEventIdRef.current = unreadInfo.readUptoEventId;
-  // }
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -182,6 +172,8 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
 
   const getScrollElement = useCallback(() => scrollRef.current, []);
 
+  const readReceipt = useUserReadReceipt();
+
   useTimelinePrefetch(timeline, PAGINATION_LIMIT);
   const handlePaginate = useTimelinePaginate(timeline, PAGINATION_LIMIT);
   useTimelineScrollRestore(timeline, scrollRef);
@@ -204,7 +196,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
     });
 
   const tryAutoMarkAsRead = useCallback(() => {
-    console.log('mark as read.');
+    console.log('%cmark as read.', 'background: blue; color: white; padding: 5px 10px;');
   }, []);
 
   const newDividerRef = useRef<HTMLDivElement>(null);
@@ -254,21 +246,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
     }, 2000);
   }, [alive, focusItem, scrollToItem]);
 
-  // scroll out of view msg editor in view.
-  useEffect(() => {
-    if (editId) {
-      const editMsgElement =
-        (scrollRef.current?.querySelector(`[data-message-id="${editId}"]`) as HTMLElement) ??
-        undefined;
-      if (editMsgElement) {
-        scrollToElement(editMsgElement, {
-          align: 'center',
-          behavior: 'smooth',
-          stopInView: true,
-        });
-      }
-    }
-  }, [scrollToElement, editId]);
+  useMessageEditorOutOfViewFocus(scrollRef, scrollToElement, editId);
 
   const stickToBottom = useCallback(() => {
     if (!atBottom) return;
@@ -282,7 +260,15 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   }, [getScrollElement, atBottom]);
 
   useObservableValueListener(timeline.outbox.senders, stickToBottom);
-  useObservableValueListener(timeline.range.info, stickToBottom);
+  useObservableValueListener(
+    timeline.range.info,
+    useCallback(() => {
+      const batchInfo = timeline.batch.read;
+      if (batchInfo.change.dir === 'f' && batchInfo.next.end) {
+        stickToBottom();
+      }
+    }, [stickToBottom, timeline])
+  );
 
   const handleOpenReply = useCallback(
     (replyId: string) => {
@@ -503,7 +489,6 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
     );
   };
 
-  const readReceipt = useUserReadReceipt();
   const { getDayDivider, getNewDivider, updateDivider, clearDayDivider, clearNewDivider } =
     useEventDivider(readReceipt?.ts);
   const { getCollapsed, updateCollapse } = useEventCollapse();

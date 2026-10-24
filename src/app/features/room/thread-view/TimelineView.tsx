@@ -1,12 +1,4 @@
-import React, {
-  RefObject,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { RefObject, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ReactEditor } from 'slate-react';
 import { Editor } from 'slate';
 import { Box, Scroll, Text, config } from 'folds';
@@ -52,6 +44,7 @@ import {
   useEditorResizeStickBottom,
   useEventCollapse,
   useEventDivider,
+  useMessageEditorOutOfViewFocus,
   useReplyClickHandler,
   useRestoreScrollToBottom,
   useTimelinePaginate,
@@ -242,21 +235,7 @@ export function TimelineView({ threadTimeline, threadInputRef, editor }: Timelin
     }
   }, [scrollToBottomCount]);
 
-  // scroll out of view msg editor in view.
-  useEffect(() => {
-    if (editId) {
-      const editMsgElement =
-        (scrollRef.current?.querySelector(`[data-message-id="${editId}"]`) as HTMLElement) ??
-        undefined;
-      if (editMsgElement) {
-        scrollToElement(editMsgElement, {
-          align: 'center',
-          behavior: 'smooth',
-          stopInView: true,
-        });
-      }
-    }
-  }, [scrollToElement, editId]);
+  useMessageEditorOutOfViewFocus(scrollRef, scrollToElement, editId);
 
   const handleOpenReply = useCallback((replyId: string) => {
     console.log(replyId);

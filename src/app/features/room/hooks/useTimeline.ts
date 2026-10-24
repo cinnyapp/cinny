@@ -35,7 +35,8 @@ import { useRoomMembersAPI } from '../../../hooks/useRoomMembers';
 import { useClient } from '../../../hooks/useClient';
 import { createMentionElement, moveCursor } from '../../../components/editor';
 import { inSameDay, minuteDifference } from '../../../utils/time';
-import { fallbackReply, getReplyId, getThreadId } from '../../../utils/room';
+import { getThreadId } from '../../../utils/room';
+import { ScrollToElement } from '../../../hooks/useVirtualPaginator';
 
 const TimelineViewContext = createContext<TimelineView | null>(null);
 export const TimelineViewProvider = TimelineViewContext.Provider;
@@ -77,6 +78,9 @@ export const useTimelinePaginate = (timeline: TimelineView, limit: number) =>
     [timeline, limit]
   );
 
+/**
+ * Restore timeline scrolling position on room open.
+ */
 export const useTimelineScrollRestore = (
   timeline: TimelineView,
   scrollRef: RefObject<HTMLDivElement>
@@ -88,7 +92,7 @@ export const useTimelineScrollRestore = (
       if (scrollTop) {
         scrollEl.scrollTo({ top: scrollTop, behavior: 'instant' });
       } else {
-        scrollToBottom(scrollEl);
+        scrollToBottom(scrollEl, 'instant');
       }
     }
     return () => {
@@ -160,7 +164,7 @@ export const useAtBottomToggle = (
   onBottom?: (bottom: boolean) => void
 ): [boolean, RefObject<HTMLElement>] => {
   const atBottomAnchorRef = useRef<HTMLElement>(null);
-  const [atBottom, setAtBottom] = useState<boolean>(true);
+  const [atBottom, setAtBottom] = useState<boolean>(atLiveEnd);
 
   const debounceSetAtBottom = useDebounce(
     useCallback(
@@ -180,7 +184,11 @@ export const useAtBottomToggle = (
         const target = atBottomAnchorRef.current;
         if (!target) return;
         const targetEntry = getIntersectionObserverEntry(target, entries);
+
+        // set to false with delay
         if (targetEntry) debounceSetAtBottom(targetEntry);
+
+        // set to true instantly
         if (targetEntry?.isIntersecting && atLiveEnd) {
           setAtBottom(true);
           onBottom?.(true);
@@ -344,8 +352,6 @@ export const useEventCollapse = (threadId?: string) => {
     newDivider: boolean,
     dayDivider: boolean
   ) => {
-    const replyEventId = fallbackReply(event.content) ? undefined : getReplyId(event.content);
-
     const collapsed =
       isPrevRendered &&
       !dayDivider &&
@@ -354,8 +360,7 @@ export const useEventCollapse = (threadId?: string) => {
       prevEvent.sender === event.sender &&
       prevEvent.type === event.type &&
       (threadId ? prevEvent.event_id !== threadId : !getThreadId(prevEvent)) &&
-      minuteDifference(prevEvent.origin_server_ts, event.origin_server_ts) < 2 &&
-      !replyEventId;
+      minuteDifference(prevEvent.origin_server_ts, event.origin_server_ts) < 2;
 
     return collapsed;
   };
@@ -366,4 +371,26 @@ export const useEventCollapse = (threadId?: string) => {
   };
 
   return { getCollapsed, updateCollapse };
+};
+
+export const useMessageEditorOutOfViewFocus = (
+  scrollRef: RefObject<HTMLDivElement>,
+  scrollToElement: ScrollToElement,
+  editId?: string
+) => {
+  // scroll out of view msg editor in view.
+  useEffect(() => {
+    if (editId) {
+      const editMsgElement =
+        (scrollRef.current?.querySelector(`[data-message-id="${editId}"]`) as HTMLElement) ??
+        undefined;
+      if (editMsgElement) {
+        scrollToElement(editMsgElement, {
+          align: 'center',
+          behavior: 'smooth',
+          stopInView: true,
+        });
+      }
+    }
+  }, [scrollRef, scrollToElement, editId]);
 };

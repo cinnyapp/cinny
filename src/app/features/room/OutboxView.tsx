@@ -273,8 +273,7 @@ export function OutboxView({
           !!prevMsg &&
           !dayDivider &&
           prevMsg.original.type === sender.localEvent.original.type &&
-          minuteDifference(prevMsg.ts, sender.localEvent.ts) < 2 &&
-          !replyEventId;
+          minuteDifference(prevMsg.ts, sender.localEvent.ts) < 2;
 
         prevMsg = sender.localEvent;
 
