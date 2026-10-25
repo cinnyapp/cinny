@@ -14,7 +14,7 @@ import {
   parseMatrixResp,
   printMatrixError,
 } from 'neurone/lib/matrix-request';
-import { TimelineView } from './TimelineView';
+import { JumpTarget, TimelineView } from './TimelineView';
 import { MessageRange, MessageBatch } from './messages';
 import { TimelineBatchManager } from './TimelineBatchManager';
 import { RelationsProcessor } from './relations';
@@ -24,6 +24,7 @@ import { TimelineUtils } from './TimelineUtils';
 import { LocalEventOutbox } from './local-event/LocalEventOutbox';
 import { EventSenderIdle, LocalEvent, LocalEventSender, LocalMessage } from './local-event';
 import { randomStr } from '../../app/utils/common';
+import { getThreadId } from '../../app/utils/room';
 
 export type ThreadSyncData = {
   events: MessageEventWithoutRoomId[];
@@ -253,7 +254,7 @@ export class ThreadTimeline implements TimelineView, Disposable {
     }
   }
 
-  public async jumpToEvent(eventId: string): Promise<void> {
+  public async jumpToEvent(eventId: string): Promise<JumpTarget> {
     const resp = await this.request(
       getContext({
         pathParams: {
@@ -280,7 +281,23 @@ export class ThreadTimeline implements TimelineView, Disposable {
     const events = [event];
     const messageEvents: MessageEventWithoutRoomId[] = this.relations.pickAndFilter(events);
 
+    const threadId = getThreadId(event);
+
+    // event is not a child of this thread
+    if (threadId && threadId !== this.threadId) {
+      return { type: 'thread', eventId, threadId };
+    }
+    // event is not the root of this thread
+    if (!threadId && event.event_id !== this.threadId) {
+      return { type: 'main', eventId };
+    }
+
     this.batchManager.loadEvents(messageEvents, start, end);
+    return {
+      type: 'thread',
+      eventId,
+      threadId: this.threadId,
+    };
   }
 
   public async jumpToLatest(): Promise<void> {
@@ -294,6 +311,29 @@ export class ThreadTimeline implements TimelineView, Disposable {
 
   public findEvent(eventId: string): MessageEventWithoutRoomId | undefined {
     return this.batch.read.messages.get(eventId);
+  }
+
+  public findIndex(eventId: string): number {
+    return this.batch.read.messages.getIndex(eventId);
+  }
+
+  public findFirstUnread(
+    userId: string,
+    readEventTs: number
+  ): MessageEventWithoutRoomId | undefined {
+    let index = -1;
+    const event = this.batch.read.messages.events.find((ev, idx) => {
+      index = idx;
+      return ev.origin_server_ts > readEventTs && ev.sender !== userId;
+    });
+
+    // index = 0: first event ts > readEventTs
+    // can't say the this is the first unread event.
+    // there could be more behind
+    if (index <= 0) {
+      return undefined;
+    }
+    return event;
   }
 
   public async sendMessage(

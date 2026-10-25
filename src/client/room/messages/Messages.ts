@@ -25,6 +25,10 @@ export class Messages {
     return this.events.find((event) => event.event_id === eventId);
   }
 
+  public getIndex(eventId: string): number {
+    return this.events.findIndex((event) => event.event_id === eventId);
+  }
+
   static sort(events: MessageEventWithoutRoomId[]): MessageEventWithoutRoomId[] {
     return [...events].sort((a, b) => a.origin_server_ts - b.origin_server_ts);
   }

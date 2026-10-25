@@ -1,10 +1,8 @@
-/* eslint-disable react/destructuring-assignment */
 import React, {
   MouseEventHandler,
   RefObject,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -14,8 +12,6 @@ import { Editor } from 'slate';
 import { Box, Scroll, config, toRem } from 'folds';
 import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { useVirtualPaginator } from '../../hooks/useVirtualPaginator';
-import { useAlive } from '../../hooks/useAlive';
-import { scrollToBottom } from '../../utils/dom';
 import {
   DefaultPlaceholder,
   CompactPlaceholder,
@@ -51,12 +47,19 @@ import {
   useEditorResizeStickBottom,
   useEventCollapse,
   useEventDivider,
+  useFocusItem,
+  useGetItemElement,
   useMessageEditorOutOfViewFocus,
+  useOnRangeChange,
   useReplyClickHandler,
   useRestoreScrollToBottom,
+  useTimelineBatch,
+  useTimelineContainerResizeStickBottom,
   useTimelinePaginate,
   useTimelinePrefetch,
+  useTimelineRelations,
   useTimelineScrollRestore,
+  useUnreadMarker,
   useUserClickHandler,
   useUsernameClickHandler,
 } from './hooks/useTimeline';
@@ -76,6 +79,7 @@ import { useMessageParserOptions } from '../../hooks/useMessageParserOptions';
 import { MessageContent } from '../../components/MessageContent';
 import { MessageEditor } from './message/MessageEditor';
 import { useSendReaction } from './hooks/useSendReaction';
+import { useWindowFocus } from '../../hooks/useWindowFocus';
 
 type RoomTimelineProps = {
   eventId?: string;
@@ -142,158 +146,113 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   const imagePackRooms = useImagePackRooms(roomId);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const [focusItem, setFocusItem] = useState<
-    | {
-        index: number;
-        scrollTo: boolean;
-        highlight: boolean;
-      }
-    | undefined
-  >();
-  const alive = useAlive();
+  const timelineContainerRef = useRef<HTMLDivElement>(null);
 
   const { linkifyOpts, htmlReactParserOptions, htmlReactParserInlineOptions } =
     useMessageParserOptions(roomId, getRoomName, membersAPI.getName);
 
   const activeThread = useObservableValue(timeline.activeThread);
   const threads = useObservableValue(timeline.threads);
-  const redacted = useObservableValue(timeline.relations.redacted);
-  const reactions = useObservableValue(timeline.relations.reactions.eventToRelations);
-  const edits = useObservableValue(timeline.relations.edits.eventToRelations);
+  const { redacted, reactions, edits } = useTimelineRelations(timeline);
 
-  const messageBatch = useObservableValue(timeline.batch);
   const localEventSenders = useObservableValue(timeline.outbox.senders);
-  const { events } = messageBatch.messages;
-
-  const range = useObservableValue(timeline.range.info);
-  const rangeAtStart = range.start === 0;
-  const rangeAtEnd = range.end === messageBatch.size;
+  const { messageBatch, events, range, rangeAtStart, rangeAtEnd, atLiveEnd } =
+    useTimelineBatch(timeline);
 
   const getScrollElement = useCallback(() => scrollRef.current, []);
 
   const readReceipt = useUserReadReceipt();
+  const lastReadEventInTimeline = useMemo(
+    () => !!readReceipt && !!messageBatch.messages.get(readReceipt.eventId),
+    [readReceipt, messageBatch]
+  );
 
-  useTimelinePrefetch(timeline, PAGINATION_LIMIT);
-  const handlePaginate = useTimelinePaginate(timeline, PAGINATION_LIMIT);
-  useTimelineScrollRestore(timeline, scrollRef);
-  useRestoreScrollToBottom(scrollRef, messageBatch);
+  const [eventLoading, setEventLoading] = useState(false);
+  useTimelinePrefetch(timeline, PAGINATION_LIMIT, !eventLoading);
+  const handlePaginate = useTimelinePaginate(timeline, PAGINATION_LIMIT, !eventLoading);
 
   const { getItems, scrollToItem, scrollToElement, observeBackAnchor, observeFrontAnchor } =
     useVirtualPaginator({
       count: messageBatch.size,
       limit: PAGINATION_LIMIT,
       range,
-      onRangeChange: useCallback((r) => timeline.range.setRange(r), [timeline]),
+      onRangeChange: useOnRangeChange(timeline),
       getScrollElement,
-      getItemElement: useCallback(
-        (index: number) =>
-          (scrollRef.current?.querySelector(`[data-message-item="${index}"]`) as HTMLElement) ??
-          undefined,
-        []
-      ),
+      getItemElement: useGetItemElement(scrollRef),
       onEnd: handlePaginate,
     });
 
-  const tryAutoMarkAsRead = useCallback(() => {
-    console.log('%cmark as read.', 'background: blue; color: white; padding: 5px 10px;');
-  }, []);
+  const { focusItem, setFocusItem } = useFocusItem(timeline, scrollToItem);
+  const focused = useWindowFocus();
+  useTimelineScrollRestore(timeline, scrollRef);
+  useRestoreScrollToBottom(scrollRef, messageBatch);
 
-  const newDividerRef = useRef<HTMLDivElement>(null);
-  // if new divider exist always start form here.
-  useEffect(() => {
-    const newDividerEl = newDividerRef.current;
-    if (newDividerEl) {
-      scrollToElement(newDividerEl, { align: 'center', behavior: 'instant' });
-    }
-  }, [scrollToElement]);
-
-  const [atBottom, atBottomAnchorRef] = useAtBottomToggle(
+  const { atBottomLazy, atBottomObservable, atBottomAnchorRef } = useAtBottomToggle(
     getScrollElement,
-    messageBatch.next.end ?? false,
-    useCallback(
-      (bottom: boolean) => {
-        if (bottom && document.hasFocus()) {
-          tryAutoMarkAsRead();
-        }
-      },
-      [tryAutoMarkAsRead]
-    )
+    atLiveEnd
   );
 
+  const tryAutoMarkAsRead = useCallback(() => {
+    if (!atBottomObservable.read) return;
+    console.log('%cmark as read.', 'background: blue; color: white; padding: 5px 10px;');
+  }, [atBottomObservable]);
+  useObservableValueListener(atBottomObservable, tryAutoMarkAsRead);
+
+  const { markerTs } = useUnreadMarker(atBottomLazy, focused, readReceipt?.ts);
+
+  useTimelineContainerResizeStickBottom(
+    getScrollElement,
+    useCallback(() => timelineContainerRef.current, []),
+    atBottomObservable,
+    !focusItem && atLiveEnd
+  );
   useEditorResizeStickBottom(
     getScrollElement,
     useCallback(() => roomInputRef.current, [roomInputRef]),
-    atBottom
+    atBottomObservable
   );
-
-  // scroll to focused message
-  useLayoutEffect(() => {
-    if (focusItem && focusItem.scrollTo) {
-      scrollToItem(focusItem.index, {
-        behavior: 'instant',
-        align: 'center',
-        stopInView: true,
-      });
-    }
-
-    setTimeout(() => {
-      if (!alive()) return;
-      setFocusItem((currentItem) => {
-        if (currentItem === focusItem) return undefined;
-        return currentItem;
-      });
-    }, 2000);
-  }, [alive, focusItem, scrollToItem]);
-
   useMessageEditorOutOfViewFocus(scrollRef, scrollToElement, editId);
 
-  const stickToBottom = useCallback(() => {
-    if (!atBottom) return;
-
-    setTimeout(() => {
-      const scrollEl = getScrollElement();
-      if (scrollEl) {
-        scrollToBottom(scrollEl, 'smooth');
-      }
-    }, 100);
-  }, [getScrollElement, atBottom]);
-
-  useObservableValueListener(timeline.outbox.senders, stickToBottom);
-  useObservableValueListener(
-    timeline.range.info,
-    useCallback(() => {
-      const batchInfo = timeline.batch.read;
-      if (batchInfo.change.dir === 'f' && batchInfo.next.end) {
-        stickToBottom();
-      }
-    }, [stickToBottom, timeline])
-  );
-
-  const handleOpenReply = useCallback(
-    (replyId: string) => {
-      const replyIndex = timeline.batch.read.messages.events.findIndex(
-        (e) => e.event_id === replyId
-      );
-      console.log(replyIndex);
-      if (replyIndex > -1) {
-        scrollToItem(replyIndex, {
-          behavior: 'smooth',
-          align: 'center',
-          stopInView: true,
-        });
-        setFocusItem({
-          index: replyIndex,
-          scrollTo: false,
-          highlight: true,
-        });
-
+  const handleOpenEvent = useCallback(
+    async (evtId: string) => {
+      const index = timeline.findIndex(evtId);
+      if (index === -1) {
+        setEventLoading(true);
+        await timeline.jumpToEvent(evtId);
+        setEventLoading(false);
+        setFocusItem({ eventId: evtId, highlight: true });
         return;
       }
-      timeline.jumpToEvent(replyId);
+
+      scrollToItem(index, { align: 'center', behavior: 'smooth', stopInView: true });
+      setFocusItem({ eventId: evtId, highlight: true, preventScroll: true });
     },
-    [scrollToItem, timeline]
+    [timeline, scrollToItem, setFocusItem]
   );
+
+  const handleJumpToUnread = useCallback(async () => {
+    if (!readReceipt) return;
+    const unreadEvent = timeline.findFirstUnread(ct.session.userId, readReceipt.ts);
+    if (!unreadEvent) {
+      setEventLoading(true);
+      await timeline.jumpToEvent(readReceipt.eventId);
+      setEventLoading(false);
+      const unreadEvId =
+        timeline.findFirstUnread(ct.session.userId, readReceipt.ts)?.event_id ??
+        readReceipt.eventId;
+      setFocusItem({ eventId: unreadEvId, highlight: false });
+      return;
+    }
+    const index = timeline.findIndex(unreadEvent.event_id);
+
+    scrollToItem(index, { align: 'center', behavior: 'instant', stopInView: true });
+  }, [ct, readReceipt, timeline, scrollToItem, setFocusItem]);
+
+  useEffect(() => {
+    if (eventId) {
+      handleOpenEvent(eventId);
+    }
+  }, [eventId, handleOpenEvent]);
 
   const handleUserClick = useUserClickHandler();
   const handleUsernameClick = useUsernameClickHandler(editor);
@@ -321,7 +280,6 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
     (evt) => {
       const targetId = evt.currentTarget.getAttribute('data-event-id');
       if (!targetId) return;
-      console.log(targetId);
 
       timeline.openThread(targetId);
     },
@@ -336,7 +294,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
 
     const editEvents = edits.get(event.event_id);
     const editedEvent = getLatestEditEvent(event, editEvents, redacted);
-    const highlighted = focusItem?.index === item && focusItem.highlight;
+    const highlighted = focusItem?.eventId === event.event_id && focusItem.highlight;
 
     const reactionJSX = (reactionSenderTarget ||
       (reactionEvents && reactionEvents?.length > 0)) && (
@@ -387,7 +345,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
         <Reply
           roomId={roomId}
           eventId={replyEventId}
-          onClick={handleOpenReply}
+          onClick={handleOpenEvent}
           onUserClick={handleUserClick}
           getMemberPowerTag={getMemberPowerTag}
           accessibleTagColors={accessiblePowerTagColors}
@@ -490,7 +448,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   };
 
   const { getDayDivider, getNewDivider, updateDivider, clearDayDivider, clearNewDivider } =
-    useEventDivider(readReceipt?.ts);
+    useEventDivider(markerTs);
   const { getCollapsed, updateCollapse } = useEventCollapse();
 
   const eventRenderer = (item: number) => {
@@ -522,7 +480,6 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
           messageSpacing={messageSpacing}
           ts={dayDivider ? event.origin_server_ts : undefined}
           unread={newDivider}
-          ref={newDivider ? newDividerRef : undefined}
         />
       ) : null;
 
@@ -539,14 +496,12 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
 
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
-      {readReceipt && (
-        <UnreadControls
-          onJumpToUnread={() => timeline.jumpToEvent(readReceipt.eventId)}
-          onMarkAsRead={() => undefined}
-        />
+      {readReceipt && !lastReadEventInTimeline && (
+        <UnreadControls onJumpToUnread={handleJumpToUnread} onMarkAsRead={() => undefined} />
       )}
       <Scroll ref={scrollRef} visibility="Hover">
         <Box
+          ref={timelineContainerRef}
           direction="Column"
           justifyContent="End"
           style={{ minHeight: '100%', padding: `${config.space.S600} 0` }}
@@ -571,7 +526,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
               }
             />
           )}
-          {getItems().map(eventRenderer)}
+          {!eventLoading && getItems().map(eventRenderer)}
           {(!messageBatch.next.end || !rangeAtEnd) && (
             <PlaceholderList
               ref={observeFrontAnchor}
@@ -606,7 +561,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
           <span ref={atBottomAnchorRef} />
         </Box>
       </Scroll>
-      {!atBottom && (
+      {!atBottomLazy && (
         <TimelineFloat position="Bottom">
           <JumpToLatestButton getScrollElement={getScrollElement} />
         </TimelineFloat>

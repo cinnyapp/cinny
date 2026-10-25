@@ -14,7 +14,7 @@ import {
   parseMatrixResp,
   printMatrixError,
 } from 'neurone/lib/matrix-request';
-import { TimelineView } from './TimelineView';
+import { JumpTarget, TimelineView } from './TimelineView';
 import { MessageRange, MessageBatch } from './messages';
 import { TimelineBatchManager } from './TimelineBatchManager';
 import { RelationsProcessor } from './relations';
@@ -244,7 +244,7 @@ export class Timeline implements TimelineView, Disposable {
     }
   }
 
-  public async jumpToEvent(eventId: string): Promise<void> {
+  public async jumpToEvent(eventId: string): Promise<JumpTarget> {
     const resp = await this.request(
       getContext({
         pathParams: {
@@ -273,7 +273,18 @@ export class Timeline implements TimelineView, Disposable {
     const messageEvents: MessageEventWithoutRoomId[] = this.relations.pickAndFilter(events);
 
     this.pickThreads(messageEvents);
+
     this.batchManager.loadEvents(messageEvents, start, end);
+
+    const threadId = getThreadId(event);
+    if (threadId) {
+      return { type: 'thread', threadId, eventId };
+    }
+
+    return {
+      type: 'main',
+      eventId,
+    };
   }
 
   public async jumpToLatest(): Promise<void> {
@@ -287,6 +298,29 @@ export class Timeline implements TimelineView, Disposable {
 
   public findEvent(eventId: string): MessageEventWithoutRoomId | undefined {
     return this.batch.read.messages.get(eventId);
+  }
+
+  public findIndex(eventId: string): number {
+    return this.batch.read.messages.getIndex(eventId);
+  }
+
+  public findFirstUnread(
+    userId: string,
+    readEventTs: number
+  ): MessageEventWithoutRoomId | undefined {
+    let index = -1;
+    const event = this.batch.read.messages.events.find((ev, idx) => {
+      index = idx;
+      return ev.origin_server_ts > readEventTs && ev.sender !== userId;
+    });
+
+    // index = 0: first event ts > readEventTs
+    // can't say the this is the first unread event.
+    // there could be more behind
+    if (index <= 0) {
+      return undefined;
+    }
+    return event;
   }
 
   private async getMessages(
@@ -325,22 +359,24 @@ export class Timeline implements TimelineView, Disposable {
     return sender;
   }
 
-  public openThread(threadId: string): void {
+  public openThread(threadId: string): TimelineView {
     const threadRoot = this.findEvent(threadId);
-    if (!this.threads.read.has(threadId) && threadRoot) {
-      this.addThread(
-        new ThreadTimeline(
-          this.roomId,
-          threadId,
-          this.publishKey,
-          this.request,
-          this.relations,
-          threadRoot
-        )
+    const threadTimeline =
+      this.threads.read.get(threadId) ??
+      new ThreadTimeline(
+        this.roomId,
+        threadId,
+        this.publishKey,
+        this.request,
+        this.relations,
+        threadRoot
       );
+    if (!this.threads.read.has(threadId)) {
+      this.addThread(threadTimeline);
     }
 
     this.activeThread.publish(this.publishKey, threadId);
+    return threadTimeline;
   }
 
   public closeThread(): void {

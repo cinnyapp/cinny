@@ -14,6 +14,7 @@ import { useAtom } from 'jotai';
 import { Editor } from 'slate';
 import { ReactEditor } from 'slate-react';
 import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
+import { ObservableValue } from 'neurone/lib/utils/observable';
 import { scrollToBottom } from '../../../utils/dom';
 import { MessageBatch, RangeInfo } from '../../../../client/room/messages';
 import { getResizeObserverEntry, useResizeObserver } from '../../../hooks/useResizeObserver';
@@ -36,7 +37,9 @@ import { useClient } from '../../../hooks/useClient';
 import { createMentionElement, moveCursor } from '../../../components/editor';
 import { inSameDay, minuteDifference } from '../../../utils/time';
 import { getThreadId } from '../../../utils/room';
-import { ScrollToElement } from '../../../hooks/useVirtualPaginator';
+import { ItemRange, ScrollToElement, ScrollToItem } from '../../../hooks/useVirtualPaginator';
+import { randomStr } from '../../../utils/common';
+import { useObservableValue } from '../../../hooks/useObservableValue';
 
 const TimelineViewContext = createContext<TimelineView | null>(null);
 export const TimelineViewProvider = TimelineViewContext.Provider;
@@ -50,9 +53,41 @@ export const useTimelineView = (): TimelineView => {
   return timelineView;
 };
 
-export const useTimelinePrefetch = (timeline: TimelineView, limit: number) => {
+export const useTimelineBatch = (timeline: TimelineView) => {
+  const messageBatch = useObservableValue(timeline.batch);
+  const { events } = messageBatch.messages;
+
+  const range = useObservableValue(timeline.range.info);
+  const rangeAtStart = range.start === 0;
+  const rangeAtEnd = range.end === messageBatch.size;
+  const atLiveEnd = !!messageBatch.next.end && rangeAtEnd;
+
+  return {
+    messageBatch,
+    events,
+    range,
+    rangeAtStart,
+    rangeAtEnd,
+    atLiveEnd,
+  };
+};
+
+export const useTimelineRelations = (timeline: TimelineView) => {
+  const redacted = useObservableValue(timeline.relations.redacted);
+  const reactions = useObservableValue(timeline.relations.reactions.eventToRelations);
+  const edits = useObservableValue(timeline.relations.edits.eventToRelations);
+
+  return {
+    redacted,
+    reactions,
+    edits,
+  };
+};
+
+export const useTimelinePrefetch = (timeline: TimelineView, limit: number, enable = true) => {
   useEffect(() => {
     const handleInfo = (info: RangeInfo) => {
+      if (!enable) return;
       if (info.start <= limit) {
         requestAnimationFrame(() => timeline.paginateBackward(limit));
       }
@@ -63,23 +98,38 @@ export const useTimelinePrefetch = (timeline: TimelineView, limit: number) => {
 
     handleInfo(timeline.range.info.read);
     return timeline.range.info.subscribe(handleInfo);
-  }, [timeline, limit]);
+  }, [timeline, limit, enable]);
 };
 
-export const useTimelinePaginate = (timeline: TimelineView, limit: number) =>
+export const useTimelinePaginate = (timeline: TimelineView, limit: number, enable = true) =>
   useCallback(
     (back: boolean) => {
+      if (!enable) return;
+
       if (back) {
         timeline.paginateBackward(limit);
         return;
       }
       timeline.paginateForward(limit);
     },
-    [timeline, limit]
+    [timeline, limit, enable]
+  );
+
+export const useOnRangeChange = (timeline: TimelineView) =>
+  useCallback((r: ItemRange) => timeline.range.setRange(r), [timeline]);
+
+export const useGetItemElement = (scrollRef: RefObject<HTMLDivElement>) =>
+  useCallback(
+    (index: number) =>
+      (scrollRef.current?.querySelector(`[data-message-item="${index}"]`) as HTMLElement) ??
+      undefined,
+    [scrollRef]
   );
 
 /**
  * Restore timeline scrolling position on room open.
+ * a) restore from the cache position
+ * b) scroll to bottom if live timeline
  */
 export const useTimelineScrollRestore = (
   timeline: TimelineView,
@@ -89,9 +139,10 @@ export const useTimelineScrollRestore = (
     const scrollEl = scrollRef.current;
     if (scrollEl) {
       const scrollTop = timeline.range.scrollTopCache;
+      const batch = timeline.batch.read;
       if (scrollTop) {
         scrollEl.scrollTo({ top: scrollTop, behavior: 'instant' });
-      } else {
+      } else if (batch.next.end && batch.messages.events.length > 0) {
         scrollToBottom(scrollEl, 'instant');
       }
     }
@@ -104,7 +155,7 @@ export const useTimelineScrollRestore = (
 };
 
 /**
- * When room loads and timeline does not hav any message
+ * When room loads and timeline does not have any message
  * scrolls to bottom after message appears.
  */
 export const useRestoreScrollToBottom = (
@@ -126,14 +177,12 @@ export const useRestoreScrollToBottom = (
   }, [msgBatch, scrollRef]);
 };
 
-export const useEditorResizeStickBottom = (
+export const useTimelineContainerResizeStickBottom = (
   getScrollElement: () => HTMLElement | null,
-  getEditorElement: () => HTMLElement | null,
-  atBottom: boolean
+  getContainerElement: () => HTMLElement | null,
+  atBottomObservable: ObservableValue<boolean>,
+  enable = true
 ) => {
-  const atBottomRef = useRef(atBottom);
-  atBottomRef.current = atBottom;
-
   useResizeObserver(
     useMemo(() => {
       let mounted = false;
@@ -143,58 +192,116 @@ export const useEditorResizeStickBottom = (
           mounted = true;
           return;
         }
+        const containerEl = getContainerElement();
+        if (!containerEl) return;
+        const scrollElement = getScrollElement();
+        const containerEntry = getResizeObserverEntry(containerEl, entries);
+        if (!containerEntry || !scrollElement) return;
+
+        if (atBottomObservable.read) {
+          requestAnimationFrame(() => {
+            scrollToBottom(scrollElement, 'smooth');
+          });
+        }
+      };
+    }, [getContainerElement, getScrollElement, atBottomObservable]),
+    enable ? getContainerElement : undefined
+  );
+};
+
+export const useEditorResizeStickBottom = (
+  getScrollElement: () => HTMLElement | null,
+  getEditorElement: () => HTMLElement | null,
+  atBottomObservable: ObservableValue<boolean>
+) => {
+  useResizeObserver(
+    useMemo(() => {
+      let mounted = false;
+      return (entries) => {
+        if (!mounted) {
+          // skip initial mounting call
+          mounted = true;
+          return;
+        }
+
         const editorEl = getEditorElement();
         if (!editorEl) return;
         const editorBaseEntry = getResizeObserverEntry(editorEl, entries);
         const scrollElement = getScrollElement();
         if (!editorBaseEntry || !scrollElement) return;
 
-        if (atBottomRef.current) {
+        if (atBottomObservable.read) {
           scrollToBottom(scrollElement);
         }
       };
-    }, [getScrollElement, getEditorElement, atBottomRef]),
+    }, [getScrollElement, getEditorElement, atBottomObservable]),
     getEditorElement
   );
 };
 
+export const useUnreadMarker = (
+  atBottomLazy: boolean,
+  focused: boolean,
+  readReceiptTs?: number
+) => {
+  const markerTsRef = useRef<number | undefined>(readReceiptTs);
+
+  // receive initial read receipt ts
+  if (markerTsRef.current === undefined && readReceiptTs !== undefined) {
+    markerTsRef.current = readReceiptTs;
+  }
+
+  // Attention lost: move markerTs to latest readReceiptTs
+  if (!focused) {
+    markerTsRef.current = readReceiptTs;
+  }
+
+  // Not Reading Live: move markerTs to latest readReceiptTs
+  if (!atBottomLazy) {
+    markerTsRef.current = readReceiptTs;
+  }
+
+  return { markerTs: markerTsRef.current };
+};
+
+const AT_BOTTOM_KEY = randomStr();
 export const useAtBottomToggle = (
   getScrollElement: () => HTMLElement | null,
-  atLiveEnd: boolean,
-  onBottom?: (bottom: boolean) => void
-): [boolean, RefObject<HTMLElement>] => {
+  atLiveEnd: boolean
+) => {
   const atBottomAnchorRef = useRef<HTMLElement>(null);
-  const [atBottom, setAtBottom] = useState<boolean>(atLiveEnd);
+  const [atBottomLazy, setAtBottomLazy] = useState<boolean>(atLiveEnd);
+  const [atBottomObservable] = useState(
+    () => new ObservableValue<boolean>(atLiveEnd, AT_BOTTOM_KEY)
+  );
 
-  const debounceSetAtBottom = useDebounce(
-    useCallback(
-      (entry: IntersectionObserverEntry) => {
-        if (!entry.isIntersecting) {
-          setAtBottom(false);
-          onBottom?.(false);
-        }
-      },
-      [onBottom]
-    ),
+  const debounceSetAtBottomLazy = useDebounce(
+    useCallback((entry: IntersectionObserverEntry) => {
+      if (!entry.isIntersecting) {
+        setAtBottomLazy(false);
+      }
+    }, []),
     { wait: 1000 }
   );
   useIntersectionObserver(
     useCallback(
       (entries) => {
         const target = atBottomAnchorRef.current;
-        if (!target) return;
-        const targetEntry = getIntersectionObserverEntry(target, entries);
+        const targetEntry = target && getIntersectionObserverEntry(target, entries);
+        if (!targetEntry) return;
+
+        const atBottom = targetEntry.isIntersecting && atLiveEnd;
+        atBottomObservable.publish(AT_BOTTOM_KEY, atBottom);
 
         // set to false with delay
-        if (targetEntry) debounceSetAtBottom(targetEntry);
+        if (targetEntry) debounceSetAtBottomLazy(targetEntry);
 
         // set to true instantly
-        if (targetEntry?.isIntersecting && atLiveEnd) {
-          setAtBottom(true);
-          onBottom?.(true);
+        if (targetEntry.isIntersecting && atLiveEnd) {
+          setAtBottomLazy(true);
         }
       },
-      [debounceSetAtBottom, atLiveEnd, onBottom]
+      [debounceSetAtBottomLazy, atLiveEnd, atBottomObservable]
     ),
     useCallback(
       () => ({
@@ -206,7 +313,34 @@ export const useAtBottomToggle = (
     useCallback(() => atBottomAnchorRef.current, [])
   );
 
-  return [atBottom, atBottomAnchorRef];
+  return {
+    atBottomLazy,
+    atBottomObservable,
+    atBottomAnchorRef,
+  };
+};
+
+export type FocusItem = { eventId: string; highlight: boolean; preventScroll?: boolean };
+export const useFocusItem = (timeline: TimelineView, scrollToItem: ScrollToItem) => {
+  const [focusItem, setFocusItem] = useState<FocusItem | undefined>();
+
+  useLayoutEffect(() => {
+    if (!focusItem) return undefined;
+
+    const { eventId, preventScroll } = focusItem;
+    const index = timeline.findIndex(eventId);
+    if (!preventScroll) {
+      scrollToItem(index, { align: 'center', behavior: 'instant', stopInView: true });
+    }
+
+    const t = setTimeout(() => setFocusItem(undefined), 2000);
+    return () => clearTimeout(t);
+  }, [focusItem, timeline, scrollToItem]);
+
+  return {
+    focusItem,
+    setFocusItem,
+  };
 };
 
 export const useReplyClickHandler = (

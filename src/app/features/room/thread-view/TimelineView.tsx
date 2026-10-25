@@ -44,11 +44,15 @@ import {
   useEditorResizeStickBottom,
   useEventCollapse,
   useEventDivider,
+  useGetItemElement,
   useMessageEditorOutOfViewFocus,
+  useOnRangeChange,
   useReplyClickHandler,
   useRestoreScrollToBottom,
+  useTimelineBatch,
   useTimelinePaginate,
   useTimelinePrefetch,
+  useTimelineRelations,
   useTimelineScrollRestore,
   useUserClickHandler,
   useUsernameClickHandler,
@@ -148,17 +152,12 @@ export function TimelineView({ threadTimeline, threadInputRef, editor }: Timelin
   const { linkifyOpts, htmlReactParserOptions, htmlReactParserInlineOptions } =
     useMessageParserOptions(roomId, getRoomName, membersAPI.getName);
 
-  const redacted = useObservableValue(threadTimeline.relations.redacted);
-  const reactions = useObservableValue(threadTimeline.relations.reactions.eventToRelations);
-  const edits = useObservableValue(threadTimeline.relations.edits.eventToRelations);
-  const messageBatch = useObservableValue(threadTimeline.batch);
-  const localEventSenders = useObservableValue(threadTimeline.outbox.senders);
   const threadMeta = useObservableValue(threadTimeline.meta);
-  const { events } = messageBatch.messages;
+  const { redacted, reactions, edits } = useTimelineRelations(threadTimeline);
 
-  const range = useObservableValue(threadTimeline.range.info);
-  const rangeAtStart = range.start === 0;
-  const rangeAtEnd = range.end === messageBatch.size;
+  const localEventSenders = useObservableValue(threadTimeline.outbox.senders);
+  const { messageBatch, events, range, rangeAtStart, rangeAtEnd, atLiveEnd } =
+    useTimelineBatch(threadTimeline);
 
   const getScrollElement = useCallback(() => scrollRef.current, []);
 
@@ -172,14 +171,9 @@ export function TimelineView({ threadTimeline, threadInputRef, editor }: Timelin
       count: messageBatch.size,
       limit: PAGINATION_LIMIT,
       range,
-      onRangeChange: useCallback((r) => threadTimeline.range.setRange(r), [threadTimeline]),
+      onRangeChange: useOnRangeChange(threadTimeline),
       getScrollElement,
-      getItemElement: useCallback(
-        (index: number) =>
-          (scrollRef.current?.querySelector(`[data-message-item="${index}"]`) as HTMLElement) ??
-          undefined,
-        []
-      ),
+      getItemElement: useGetItemElement(scrollRef),
       onEnd: handlePaginate,
     });
 
@@ -187,23 +181,15 @@ export function TimelineView({ threadTimeline, threadInputRef, editor }: Timelin
     console.log('mark thread as read.');
   }, []);
 
-  const [atBottom, atBottomAnchorRef] = useAtBottomToggle(
+  const { atBottomLazy, atBottomObservable, atBottomAnchorRef } = useAtBottomToggle(
     getScrollElement,
-    messageBatch.next.end ?? false,
-    useCallback(
-      (bottom: boolean) => {
-        if (bottom && document.hasFocus()) {
-          tryAutoMarkAsRead();
-        }
-      },
-      [tryAutoMarkAsRead]
-    )
+    messageBatch.next.end ?? false
   );
 
   useEditorResizeStickBottom(
     getScrollElement,
     useCallback(() => threadInputRef?.current ?? null, [threadInputRef]),
-    atBottom
+    atBottomObservable
   );
 
   // scroll to focused message
@@ -509,7 +495,7 @@ export function TimelineView({ threadTimeline, threadInputRef, editor }: Timelin
           </Box>
         </Box>
       </Scroll>
-      {!atBottom && (
+      {!atBottomLazy && (
         <TimelineFloat position="Bottom">
           <JumpToLatestButton getScrollElement={getScrollElement} />
         </TimelineFloat>

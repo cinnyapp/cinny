@@ -72,6 +72,9 @@ export class MessageRange implements Disposable {
     }
 
     this.setRange(MessageRange.atLiveEnd(size));
+
+    // clear the top cache since the timeline batch has changed
+    this.scrollTopCache = undefined;
   }
 
   private adjustBackwardGrowth(lenthChange: number): RangeInfo {

@@ -3,8 +3,16 @@ import {
   PendingObservableValue,
   PendingObservableResult,
   ComputedObservableValue,
+  Observable,
 } from 'neurone/lib/utils/observable';
 import { useMemo, useSyncExternalStore, useCallback, useEffect } from 'react';
+
+export function useObservable<T>(observable: Observable<T>, listener: (value: T) => void) {
+  useEffect(() => {
+    const unsub = observable.subscribe(listener);
+    return unsub;
+  });
+}
 
 export function useObservableValue<T>(observableValue: ObservableValue<T>): T {
   const value = useSyncExternalStore(

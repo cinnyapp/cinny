@@ -5,6 +5,10 @@ import { RelationsProcessor } from './relations';
 import { LocalEventOutbox } from './local-event/LocalEventOutbox';
 import { LocalEventSender, LocalMessage } from './local-event';
 
+export type JumpTarget =
+  | { type: 'main'; eventId: string }
+  | { type: 'thread'; threadId: string; eventId: string };
+
 export interface TimelineView {
   readonly batch: ObservableValue<MessageBatch>;
   readonly range: MessageRange;
@@ -12,9 +16,11 @@ export interface TimelineView {
   readonly relations: RelationsProcessor;
   paginateBackward(limit: number): Promise<void>;
   paginateForward(limit: number): Promise<void>;
-  findEvent(eventId: string): MessageEventWithoutRoomId | undefined;
-  jumpToEvent(eventId: string): Promise<void>;
+  jumpToEvent(eventId: string): Promise<JumpTarget>;
   jumpToLatest(): Promise<void>;
+  findEvent(eventId: string): MessageEventWithoutRoomId | undefined;
+  findIndex(eventId: string): number;
+  findFirstUnread(userId: string, readEventTs: number): MessageEventWithoutRoomId | undefined;
   sendMessage(
     originalMessage: LocalMessage,
     wireMessage: LocalMessage,
