@@ -24,7 +24,14 @@ export class MessageRange implements Disposable {
 
   static rangeLimit = 80;
 
-  static atLiveEnd(len: number): RangeInfo {
+  static atBackwardEnd(len: number): RangeInfo {
+    return {
+      start: 0,
+      end: Math.min(len, 0 + this.rangeLimit),
+    };
+  }
+
+  static atForwardEnd(len: number): RangeInfo {
     return {
       start: Math.max(0, len - this.rangeLimit),
       end: len,
@@ -34,7 +41,7 @@ export class MessageRange implements Disposable {
   constructor(batch: ObservableValue<MessageBatch>) {
     const len = batch.read.size;
 
-    this.info = new ObservableValue(MessageRange.atLiveEnd(len), this.publishKey);
+    this.info = new ObservableValue(MessageRange.atForwardEnd(len), this.publishKey);
     this.oldLength = len;
 
     this.disposer.collect(batch.subscribe(this.onBatchUpdate.bind(this)));
@@ -49,7 +56,7 @@ export class MessageRange implements Disposable {
       const lenAdded = size - oldLen;
       this.setRange(
         oldLen === 0 && batch.next.end
-          ? MessageRange.atLiveEnd(size)
+          ? MessageRange.atForwardEnd(size)
           : this.adjustBackwardGrowth(lenAdded)
       );
       return;
@@ -71,7 +78,7 @@ export class MessageRange implements Disposable {
       return;
     }
 
-    this.setRange(MessageRange.atLiveEnd(size));
+    this.setRange(MessageRange.atForwardEnd(size));
 
     // clear the top cache since the timeline batch has changed
     this.scrollTopCache = undefined;

@@ -255,6 +255,12 @@ export class ThreadTimeline implements TimelineView, Disposable {
   }
 
   public async jumpToEvent(eventId: string): Promise<JumpTarget> {
+    // thread root is not part of timeline.
+    // return early so we do not have to wait for response
+    if (eventId === this.threadId) {
+      return { type: 'main', eventId };
+    }
+
     const resp = await this.request(
       getContext({
         pathParams: {
@@ -287,8 +293,9 @@ export class ThreadTimeline implements TimelineView, Disposable {
     if (threadId && threadId !== this.threadId) {
       return { type: 'thread', eventId, threadId };
     }
-    // event is not the root of this thread
-    if (!threadId && event.event_id !== this.threadId) {
+    // no untheaed reply should be put in timeline
+    // not event thread root
+    if (!threadId) {
       return { type: 'main', eventId };
     }
 
@@ -300,9 +307,18 @@ export class ThreadTimeline implements TimelineView, Disposable {
     };
   }
 
+  public async jumpToOldest(): Promise<void> {
+    if (this.batch.read.prev.end) {
+      this.range.setRange(MessageRange.atBackwardEnd(this.batch.read.size));
+      return;
+    }
+
+    this.batchManager.reload(MessageBatch.emptyAtBackwardEnd());
+  }
+
   public async jumpToLatest(): Promise<void> {
     if (this.batch.read.next.end) {
-      this.range.setRange(MessageRange.atLiveEnd(this.batch.read.size));
+      this.range.setRange(MessageRange.atForwardEnd(this.batch.read.size));
       return;
     }
 

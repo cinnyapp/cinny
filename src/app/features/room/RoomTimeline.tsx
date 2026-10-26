@@ -49,6 +49,7 @@ import {
   useEventDivider,
   useFocusItem,
   useGetItemElement,
+  useJumpHandlers,
   useMessageEditorOutOfViewFocus,
   useOnRangeChange,
   useReplyClickHandler,
@@ -214,40 +215,13 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   );
   useMessageEditorOutOfViewFocus(scrollRef, scrollToElement, editId);
 
-  const handleOpenEvent = useCallback(
-    async (evtId: string) => {
-      const index = timeline.findIndex(evtId);
-      if (index === -1) {
-        setEventLoading(true);
-        await timeline.jumpToEvent(evtId);
-        setEventLoading(false);
-        setFocusItem({ eventId: evtId, highlight: true });
-        return;
-      }
-
-      scrollToItem(index, { align: 'center', behavior: 'smooth', stopInView: true });
-      setFocusItem({ eventId: evtId, highlight: true, preventScroll: true });
-    },
-    [timeline, scrollToItem, setFocusItem]
+  const { handleOpenEvent, handleJumpToUnread } = useJumpHandlers(
+    timeline,
+    readReceipt,
+    scrollToItem,
+    setFocusItem,
+    setEventLoading
   );
-
-  const handleJumpToUnread = useCallback(async () => {
-    if (!readReceipt) return;
-    const unreadEvent = timeline.findFirstUnread(ct.session.userId, readReceipt.ts);
-    if (!unreadEvent) {
-      setEventLoading(true);
-      await timeline.jumpToEvent(readReceipt.eventId);
-      setEventLoading(false);
-      const unreadEvId =
-        timeline.findFirstUnread(ct.session.userId, readReceipt.ts)?.event_id ??
-        readReceipt.eventId;
-      setFocusItem({ eventId: unreadEvId, highlight: false });
-      return;
-    }
-    const index = timeline.findIndex(unreadEvent.event_id);
-
-    scrollToItem(index, { align: 'center', behavior: 'instant', stopInView: true });
-  }, [ct, readReceipt, timeline, scrollToItem, setFocusItem]);
 
   useEffect(() => {
     if (eventId) {

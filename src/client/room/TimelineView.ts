@@ -17,6 +17,7 @@ export interface TimelineView {
   paginateBackward(limit: number): Promise<void>;
   paginateForward(limit: number): Promise<void>;
   jumpToEvent(eventId: string): Promise<JumpTarget>;
+  jumpToOldest(): Promise<void>;
   jumpToLatest(): Promise<void>;
   findEvent(eventId: string): MessageEventWithoutRoomId | undefined;
   findIndex(eventId: string): number;

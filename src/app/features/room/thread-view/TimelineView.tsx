@@ -1,11 +1,9 @@
-import React, { RefObject, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ReactEditor } from 'slate-react';
 import { Editor } from 'slate';
 import { Box, Scroll, Text, config } from 'folds';
 import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { useVirtualPaginator } from '../../../hooks/useVirtualPaginator';
-import { useAlive } from '../../../hooks/useAlive';
-import { scrollToBottom } from '../../../utils/dom';
 import {
   DefaultPlaceholder,
   CompactPlaceholder,
@@ -34,7 +32,7 @@ import { useTheme } from '../../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags, usePowerLevelTagsState } from '../../../hooks/usePowerLevelTags';
 import { ThreadTimeline } from '../../../../client/room/ThreadTimeline';
-import { useObservableValue } from '../../../hooks/useObservableValue';
+import { useObservableValue, useObservableValueListener } from '../../../hooks/useObservableValue';
 import { useClient } from '../../../hooks/useClient';
 import { useRoomMembersAPI } from '../../../hooks/useRoomMembers';
 import { useGetRoomName } from '../../../hooks/storage/useGetRoomName';
@@ -44,16 +42,20 @@ import {
   useEditorResizeStickBottom,
   useEventCollapse,
   useEventDivider,
+  useFocusItem,
   useGetItemElement,
+  useJumpHandlers,
   useMessageEditorOutOfViewFocus,
   useOnRangeChange,
   useReplyClickHandler,
   useRestoreScrollToBottom,
   useTimelineBatch,
+  useTimelineContainerResizeStickBottom,
   useTimelinePaginate,
   useTimelinePrefetch,
   useTimelineRelations,
   useTimelineScrollRestore,
+  useUnreadMarker,
   useUserClickHandler,
   useUsernameClickHandler,
 } from '../hooks/useTimeline';
@@ -71,16 +73,18 @@ import { useMessageParserOptions } from '../../../hooks/useMessageParserOptions'
 import { MessageContent } from '../../../components/MessageContent';
 import { MessageEditor } from '../message/MessageEditor';
 import { useSendReaction } from '../hooks/useSendReaction';
+import { useWindowFocus } from '../../../hooks/useWindowFocus';
 
 type TimelineViewProps = {
-  threadTimeline: ThreadTimeline;
+  timeline: ThreadTimeline;
   threadInputRef: RefObject<HTMLElement>;
   editor: Editor;
+  eventId: string;
 };
 
 const PAGINATION_LIMIT = 80;
 
-export function TimelineView({ threadTimeline, threadInputRef, editor }: TimelineViewProps) {
+export function TimelineView({ timeline, threadInputRef, editor, eventId }: TimelineViewProps) {
   const ct = useClient();
   const roomId = useRoom();
   const encryptedRooms = useObservableValue(ct.encryptedRooms);
@@ -134,102 +138,91 @@ export function TimelineView({ threadTimeline, threadInputRef, editor }: Timelin
   const imagePackRooms = useImagePackRooms(roomId);
 
   const scrollRef = useRef<HTMLDivElement>(null);
-  const scrollToBottomRef = useRef({
-    count: 0,
-    smooth: true,
-  });
-
-  const [focusItem, setFocusItem] = useState<
-    | {
-        index: number;
-        scrollTo: boolean;
-        highlight: boolean;
-      }
-    | undefined
-  >();
-  const alive = useAlive();
+  const timelineContainerRef = useRef<HTMLDivElement>(null);
 
   const { linkifyOpts, htmlReactParserOptions, htmlReactParserInlineOptions } =
     useMessageParserOptions(roomId, getRoomName, membersAPI.getName);
 
-  const threadMeta = useObservableValue(threadTimeline.meta);
-  const { redacted, reactions, edits } = useTimelineRelations(threadTimeline);
+  const threadMeta = useObservableValue(timeline.meta);
+  const { redacted, reactions, edits } = useTimelineRelations(timeline);
 
-  const localEventSenders = useObservableValue(threadTimeline.outbox.senders);
+  const localEventSenders = useObservableValue(timeline.outbox.senders);
   const { messageBatch, events, range, rangeAtStart, rangeAtEnd, atLiveEnd } =
-    useTimelineBatch(threadTimeline);
+    useTimelineBatch(timeline);
 
   const getScrollElement = useCallback(() => scrollRef.current, []);
 
-  useTimelinePrefetch(threadTimeline, PAGINATION_LIMIT);
-  const handlePaginate = useTimelinePaginate(threadTimeline, PAGINATION_LIMIT);
-  useTimelineScrollRestore(threadTimeline, scrollRef);
-  useRestoreScrollToBottom(scrollRef, messageBatch);
+  const readReceipt = useUserReadReceipt(timeline.threadId);
+  const lastReadEventInTimeline = useMemo(
+    () => !!readReceipt && !!messageBatch.messages.get(readReceipt.eventId),
+    [readReceipt, messageBatch]
+  );
+
+  const [eventLoading, setEventLoading] = useState(false);
+  useTimelinePrefetch(timeline, PAGINATION_LIMIT, !eventLoading);
+  const handlePaginate = useTimelinePaginate(timeline, PAGINATION_LIMIT, !eventLoading);
 
   const { getItems, scrollToItem, scrollToElement, observeBackAnchor, observeFrontAnchor } =
     useVirtualPaginator({
       count: messageBatch.size,
       limit: PAGINATION_LIMIT,
       range,
-      onRangeChange: useOnRangeChange(threadTimeline),
+      onRangeChange: useOnRangeChange(timeline),
       getScrollElement,
       getItemElement: useGetItemElement(scrollRef),
       onEnd: handlePaginate,
     });
 
-  const tryAutoMarkAsRead = useCallback(() => {
-    console.log('mark thread as read.');
-  }, []);
+  const { focusItem, setFocusItem } = useFocusItem(timeline, scrollToItem);
+  const focused = useWindowFocus();
+  useTimelineScrollRestore(timeline, scrollRef);
+  useRestoreScrollToBottom(scrollRef, messageBatch);
 
   const { atBottomLazy, atBottomObservable, atBottomAnchorRef } = useAtBottomToggle(
     getScrollElement,
-    messageBatch.next.end ?? false
+    atLiveEnd
   );
 
+  const tryAutoMarkAsRead = useCallback(() => {
+    if (!atBottomObservable.read) return;
+    console.log('%cmark as read.', 'background: blue; color: white; padding: 5px 10px;');
+  }, [atBottomObservable]);
+  useObservableValueListener(atBottomObservable, tryAutoMarkAsRead);
+
+  const { markerTs } = useUnreadMarker(atBottomLazy, focused, readReceipt?.ts);
+
+  useTimelineContainerResizeStickBottom(
+    timeline,
+    getScrollElement,
+    useCallback(() => timelineContainerRef.current, []),
+    atBottomObservable,
+    !focusItem && atLiveEnd
+  );
   useEditorResizeStickBottom(
     getScrollElement,
-    useCallback(() => threadInputRef?.current ?? null, [threadInputRef]),
+    useCallback(() => threadInputRef.current, [threadInputRef]),
     atBottomObservable
   );
-
-  // scroll to focused message
-  useLayoutEffect(() => {
-    if (focusItem && focusItem.scrollTo) {
-      scrollToItem(focusItem.index, {
-        behavior: 'instant',
-        align: 'center',
-        stopInView: true,
-      });
-    }
-
-    setTimeout(() => {
-      if (!alive()) return;
-      setFocusItem((currentItem) => {
-        if (currentItem === focusItem) return undefined;
-        return currentItem;
-      });
-    }, 2000);
-  }, [alive, focusItem, scrollToItem]);
-
-  // scroll to bottom of timeline
-  const scrollToBottomCount = scrollToBottomRef.current.count;
-  useLayoutEffect(() => {
-    if (scrollToBottomCount > 0) {
-      const scrollEl = scrollRef.current;
-      if (scrollEl)
-        scrollToBottom(scrollEl, scrollToBottomRef.current.smooth ? 'smooth' : 'instant');
-    }
-  }, [scrollToBottomCount]);
-
   useMessageEditorOutOfViewFocus(scrollRef, scrollToElement, editId);
 
-  const handleOpenReply = useCallback((replyId: string) => {
-    console.log(replyId);
-  }, []);
+  const { handleOpenEvent, handleJumpToUnread } = useJumpHandlers(
+    timeline,
+    readReceipt,
+    scrollToItem,
+    setFocusItem,
+    setEventLoading,
+    timeline.threadId
+  );
+
+  useEffect(() => {
+    if (eventId) {
+      handleOpenEvent(eventId);
+    }
+  }, [eventId, handleOpenEvent]);
 
   const handleUserClick = useUserClickHandler();
   const handleUsernameClick = useUsernameClickHandler(editor);
-  const [replyDraft, handleReplyClick] = useReplyClickHandler(editor, threadTimeline.threadId);
+  const [replyDraft, handleReplyClick] = useReplyClickHandler(editor, timeline.threadId);
 
   const { reactionSender, handleAddReaction } = useSendReaction(reactions, redacted);
 
@@ -254,20 +247,20 @@ export function TimelineView({ threadTimeline, threadInputRef, editor }: Timelin
 
     const editEvents = edits.get(event.event_id);
     const editedEvent = getLatestEditEvent(event, editEvents, redacted);
-    const highlighted = focusItem?.index === item && focusItem.highlight;
+    const highlighted = focusItem?.eventId === event.event_id && focusItem.highlight;
 
     const replyEventId = fallbackReply(event.content) ? undefined : getReplyId(event.content);
     const replyJSX = replyEventId ? (
       <Reply
         roomId={roomId}
         eventId={replyEventId}
-        onClick={handleOpenReply}
+        onClick={handleOpenEvent}
         onUserClick={handleUserClick}
         getMemberPowerTag={getMemberPowerTag}
         accessibleTagColors={accessiblePowerTagColors}
         legacyUsernameColor={legacyUsernameColor || direct}
         getMemberName={membersAPI.getName}
-        timeline={threadTimeline}
+        timeline={timeline}
         htmlReactParserOptions={htmlReactParserInlineOptions}
         linkifyOpts={linkifyOpts}
       />
@@ -360,7 +353,6 @@ export function TimelineView({ threadTimeline, threadInputRef, editor }: Timelin
     );
   };
 
-  const readReceipt = useUserReadReceipt(threadTimeline.threadId);
   const {
     getDayDivider,
     getThreadRootDivider,
@@ -368,8 +360,8 @@ export function TimelineView({ threadTimeline, threadInputRef, editor }: Timelin
     updateDivider,
     clearDayDivider,
     clearNewDivider,
-  } = useEventDivider(readReceipt?.ts);
-  const { getCollapsed, updateCollapse } = useEventCollapse(threadTimeline.threadId);
+  } = useEventDivider(markerTs);
+  const { getCollapsed, updateCollapse } = useEventCollapse(timeline.threadId);
   const eventRenderer = (event: MessageEventWithoutRoomId, item: number) => {
     if (event.sender && ignoredUsersSet.has(event.sender)) {
       return null;
@@ -409,11 +401,8 @@ export function TimelineView({ threadTimeline, threadInputRef, editor }: Timelin
 
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
-      {readReceipt && (
-        <UnreadControls
-          onJumpToUnread={() => threadTimeline.jumpToEvent(readReceipt.eventId)}
-          onMarkAsRead={() => undefined}
-        />
+      {readReceipt && !lastReadEventInTimeline && (
+        <UnreadControls onJumpToUnread={handleJumpToUnread} onMarkAsRead={() => undefined} />
       )}
       <Scroll ref={scrollRef} size="0" visibility="Hover" hideTrack>
         <Box direction="Column" style={{ minHeight: '100%' }}>
@@ -448,7 +437,7 @@ export function TimelineView({ threadTimeline, threadInputRef, editor }: Timelin
               padding: `${config.space.S600} ${config.space.S400} ${config.space.S600} 0`,
             }}
           >
-            {!messageBatch.prev.end || !rangeAtStart || !threadMeta ? (
+            {!messageBatch.prev.end || !rangeAtStart || !threadMeta || eventLoading ? (
               <PlaceholderList
                 ref={observeBackAnchor}
                 count={5}
@@ -459,11 +448,12 @@ export function TimelineView({ threadTimeline, threadInputRef, editor }: Timelin
             ) : (
               <>{eventRenderer(threadMeta.rootEvent, -1)}</>
             )}
-            {getItems().map((item) => {
-              const event = events[item];
-              if (!event) return null;
-              return eventRenderer(event, item);
-            })}
+            {!eventLoading &&
+              getItems().map((item) => {
+                const event = events[item];
+                if (!event) return null;
+                return eventRenderer(event, item);
+              })}
             {(!messageBatch.next.end || !rangeAtEnd) && (
               <PlaceholderList
                 ref={observeFrontAnchor}

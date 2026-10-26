@@ -14,6 +14,16 @@ export class MessageBatch {
 
   public readonly change: BatchChange;
 
+  static emptyAtBackwardEnd(): MessageBatch {
+    return new MessageBatch(
+      randomStr(),
+      new Messages([]),
+      new BatchInfo(undefined, true),
+      new BatchInfo(),
+      new BatchChange()
+    );
+  }
+
   static emptyAtForwardEnd(): MessageBatch {
     return new MessageBatch(
       randomStr(),

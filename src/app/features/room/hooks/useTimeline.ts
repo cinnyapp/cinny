@@ -40,6 +40,8 @@ import { getThreadId } from '../../../utils/room';
 import { ItemRange, ScrollToElement, ScrollToItem } from '../../../hooks/useVirtualPaginator';
 import { randomStr } from '../../../utils/common';
 import { useObservableValue } from '../../../hooks/useObservableValue';
+import { ReadReceiptObject } from '../../../../client/storage/collections';
+import { useAlive } from '../../../hooks/useAlive';
 
 const TimelineViewContext = createContext<TimelineView | null>(null);
 export const TimelineViewProvider = TimelineViewContext.Provider;
@@ -341,6 +343,60 @@ export const useFocusItem = (timeline: TimelineView, scrollToItem: ScrollToItem)
   return {
     focusItem,
     setFocusItem,
+  };
+};
+
+export const useJumpHandlers = (
+  timeline: TimelineView,
+  readReceipt: ReadReceiptObject | undefined,
+  scrollToItem: ScrollToItem,
+  setFocusItem: (focus: FocusItem) => void,
+  setEventLoading: (loading: boolean) => void,
+  threadId?: string
+) => {
+  const ct = useClient();
+  const alive = useAlive();
+
+  const handleOpenEvent = useCallback(
+    async (evtId: string) => {
+      const index = timeline.findIndex(evtId);
+      if (index !== -1) {
+        scrollToItem(index, { align: 'center', behavior: 'smooth', stopInView: true });
+        setFocusItem({ eventId: evtId, highlight: true, preventScroll: true });
+        return;
+      }
+      if (evtId !== threadId) {
+        // TODO: handle it properly
+        setEventLoading(true);
+        await timeline.jumpToEvent(evtId);
+        if (!alive()) return;
+        setEventLoading(false);
+      }
+      setFocusItem({ eventId: evtId, highlight: true });
+    },
+    [timeline, scrollToItem, setFocusItem, setEventLoading, alive, threadId]
+  );
+
+  const handleJumpToUnread = useCallback(async () => {
+    if (!readReceipt) return;
+    const unreadEvent = timeline.findFirstUnread(ct.session.userId, readReceipt.ts);
+    if (unreadEvent) {
+      const index = timeline.findIndex(unreadEvent.event_id);
+      scrollToItem(index, { align: 'center', behavior: 'instant', stopInView: true });
+      return;
+    }
+    setEventLoading(true);
+    await timeline.jumpToEvent(readReceipt.eventId);
+    if (!alive()) return;
+    setEventLoading(false);
+    const unreadEvId =
+      timeline.findFirstUnread(ct.session.userId, readReceipt.ts)?.event_id ?? readReceipt.eventId;
+    setFocusItem({ eventId: unreadEvId, highlight: false });
+  }, [ct, readReceipt, timeline, scrollToItem, setFocusItem, setEventLoading, alive]);
+
+  return {
+    handleOpenEvent,
+    handleJumpToUnread,
   };
 };
 

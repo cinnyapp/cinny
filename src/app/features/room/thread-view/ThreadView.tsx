@@ -64,11 +64,7 @@ export function ThreadView({ threadTimeline, threadFocusRef, requestClose }: Thr
         </Box>
       </PageHeader>
 
-      <TimelineView
-        threadTimeline={threadTimeline}
-        threadInputRef={threadInputRef}
-        editor={editor}
-      />
+      <TimelineView timeline={threadTimeline} threadInputRef={threadInputRef} editor={editor} />
       <Box shrink="No" direction="Column">
         <div style={{ padding: `0 ${config.space.S400}` }}>
           <RoomInput
