@@ -9,6 +9,8 @@ type Session = {
   accessToken: string;
   userId: string;
   deviceId: string;
+  refreshToken: string;
+  expiresInMs?: number;
 };
 
 export const initClient = async (session: Session): Promise<MatrixClient> => {
@@ -24,6 +26,39 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     baseUrl: session.baseUrl,
     accessToken: session.accessToken,
     userId: session.userId,
+    refreshToken: session.refreshToken,
+
+    tokenRefreshFunction: async () => {
+
+      const response = await fetch(`${session.baseUrl}/_matrix/client/v3/refresh`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+          body: JSON.stringify({
+          refresh_token: session.refreshToken,
+        }),
+      });
+
+      const data = await response.json();
+        
+      session.accessToken = data.access_token;
+      if (data.refresh_token) {
+        session.refreshToken = data.refresh_token;
+      }
+
+      localStorage.setItem('cinny_access_token', data.access_token);
+      if (data.refresh_token) {
+        localStorage.setItem('cinny_refresh_token', data.refresh_token);
+      }
+
+      return {
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+        expiresInMs: data.expires_in ? data.expires_in_ms : undefined,
+      };
+    },
+
     store: indexedDBStore,
     cryptoStore: legacyCryptoStore,
     deviceId: session.deviceId,

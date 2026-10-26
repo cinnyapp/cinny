@@ -31,11 +31,15 @@ export type SessionStoreName = {
 
 export function setFallbackSession(
   accessToken: string,
+  refreshToken: string,
   deviceId: string,
   userId: string,
-  baseUrl: string
+  baseUrl: string,
 ) {
   localStorage.setItem('cinny_access_token', accessToken);
+  if (refreshToken) {
+    localStorage.setItem('cinny_refresh_token', refreshToken);
+  }
   localStorage.setItem('cinny_device_id', deviceId);
   localStorage.setItem('cinny_user_id', userId);
   localStorage.setItem('cinny_hs_base_url', baseUrl);
@@ -45,12 +49,14 @@ export const removeFallbackSession = () => {
   localStorage.removeItem('cinny_user_id');
   localStorage.removeItem('cinny_device_id');
   localStorage.removeItem('cinny_access_token');
+  localStorage.removeItem('cinny_refresh_token');
 };
 export const getFallbackSession = (): Session | undefined => {
   const baseUrl = localStorage.getItem('cinny_hs_base_url');
   const userId = localStorage.getItem('cinny_user_id');
   const deviceId = localStorage.getItem('cinny_device_id');
   const accessToken = localStorage.getItem('cinny_access_token');
+  const refreshToken = localStorage.getItem('cinny_refresh_token');
 
   if (baseUrl && userId && deviceId && accessToken) {
     const session: Session = {
@@ -58,6 +64,7 @@ export const getFallbackSession = (): Session | undefined => {
       userId,
       deviceId,
       accessToken,
+      refreshToken: refreshToken ?? undefined,
       fallbackSdkStores: true,
     };
 
