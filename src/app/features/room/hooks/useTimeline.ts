@@ -178,6 +178,7 @@ export const useRestoreScrollToBottom = (
 };
 
 export const useTimelineContainerResizeStickBottom = (
+  timeline: TimelineView,
   getScrollElement: () => HTMLElement | null,
   getContainerElement: () => HTMLElement | null,
   atBottomObservable: ObservableValue<boolean>,
@@ -199,12 +200,12 @@ export const useTimelineContainerResizeStickBottom = (
         if (!containerEntry || !scrollElement) return;
 
         if (atBottomObservable.read) {
-          requestAnimationFrame(() => {
-            scrollToBottom(scrollElement, 'smooth');
-          });
+          const batchChange = timeline.batch.read.change;
+          const messageArrived = batchChange.type === 'Grow' && batchChange.dir === 'f';
+          scrollToBottom(scrollElement, messageArrived ? 'smooth' : 'instant');
         }
       };
-    }, [getContainerElement, getScrollElement, atBottomObservable]),
+    }, [timeline, getContainerElement, getScrollElement, atBottomObservable]),
     enable ? getContainerElement : undefined
   );
 };

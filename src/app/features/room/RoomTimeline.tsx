@@ -201,6 +201,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   const { markerTs } = useUnreadMarker(atBottomLazy, focused, readReceipt?.ts);
 
   useTimelineContainerResizeStickBottom(
+    timeline,
     getScrollElement,
     useCallback(() => timelineContainerRef.current, []),
     atBottomObservable,
