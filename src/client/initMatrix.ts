@@ -30,7 +30,7 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
 
     tokenRefreshFunction: async () => {
 
-      const response = await fetch(`${session.baseUrl}/_matrix/client/v3/refresh`, {
+      const res = await fetch(`${session.baseUrl}/_matrix/client/v3/refresh`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json' 
@@ -40,22 +40,22 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
         }),
       });
 
-      const data = await response.json();
+      const { access_token, refresh_token, expires_in_ms } = await res.json();
         
-      session.accessToken = data.access_token;
-      if (data.refresh_token) {
-        session.refreshToken = data.refresh_token;
+      session.accessToken = access_token;
+      if (refresh_token) {
+        session.refreshToken = refresh_token;
       }
 
-      localStorage.setItem('cinny_access_token', data.access_token);
-      if (data.refresh_token) {
-        localStorage.setItem('cinny_refresh_token', data.refresh_token);
+      localStorage.setItem('cinny_access_token', access_token);
+      if (refresh_token) {
+        localStorage.setItem('cinny_refresh_token', refresh_token);
       }
 
       return {
-        accessToken: data.access_token,
-        refreshToken: data.refresh_token,
-        expiresInMs: data.expires_in ? data.expires_in_ms : undefined,
+        accessToken: access_token,
+        refreshToken: refresh_token,
+        expiresInMs: expires_in_ms,
       };
     },
 
