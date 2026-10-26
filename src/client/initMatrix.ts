@@ -29,6 +29,9 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     refreshToken: session.refreshToken,
 
     tokenRefreshFunction: async () => {
+      if (!session.refreshToken) {
+        throw new Error('No refresh token available');
+      }
 
       const res = await fetch(`${session.baseUrl}/_matrix/client/v3/refresh`, {
         method: 'POST',
@@ -39,6 +42,10 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
           refresh_token: session.refreshToken,
         }),
       });
+
+      if (!res.ok) {
+        throw new Error(`Failed to refresh token: ${res.status}`);
+      }
 
       const { access_token, refresh_token, expires_in_ms } = await res.json();
         
