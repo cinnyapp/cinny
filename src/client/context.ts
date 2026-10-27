@@ -137,6 +137,7 @@ export type ClientContext = {
   megolmBackup: MegolmBackup;
 
   sync: SyncContext;
+  firstSync: ObservableValue<boolean>;
   requestAuthJSON: MatrixRequest;
   getTxnId: GetTxnId;
   logout: () => Promise<void>;

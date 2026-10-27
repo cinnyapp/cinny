@@ -3,7 +3,7 @@ import { useCallback, useEffect } from 'react';
 import { UnreadNotificationCounts } from 'neurone/lib/api/types';
 import { useRoomsNotificationPreferencesContext } from '../../hooks/useRoomsNotificationPreferences';
 import { ClientContext } from '../../../client/context';
-import { useObservableValue } from '../../hooks/useObservableValue';
+import { useObservableValue, useObservableValueListener } from '../../hooks/useObservableValue';
 
 export type Notifications = UnreadNotificationCounts & {
   threads: Map<string, UnreadNotificationCounts>;
@@ -54,6 +54,15 @@ export const useBindRoomToNotificationsAtom = (
   }, [notifications, threadNotifications, setNotificationAtom, roomsNotificationPreferences]);
 
   useEffect(() => {
-    processNotifications();
-  }, [processNotifications]);
+    if (!ct.firstSync) {
+      processNotifications();
+    }
+  }, [ct.firstSync, processNotifications]);
+
+  useObservableValueListener(
+    ct.firstSync,
+    useCallback(() => {
+      processNotifications();
+    }, [processNotifications])
+  );
 };

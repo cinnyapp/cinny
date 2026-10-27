@@ -1,7 +1,7 @@
 import { atom, useSetAtom } from 'jotai';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { ThreadId } from '../../../types/matrix/room';
-import { useObservableValue } from '../../hooks/useObservableValue';
+import { useObservableValue, useObservableValueListener } from '../../hooks/useObservableValue';
 import { getReadReceiptId } from '../../../client/storage/collections';
 import { ClientContext } from '../../../client/context';
 
@@ -12,7 +12,7 @@ export const useBindUnreadRoomsAtom = (ct: ClientContext, unreadRooms: typeof un
   const roomToLatestEvent = useObservableValue(ct.roomToLatestEvent);
   const userReadReceipts = useObservableValue(ct.userReadReceipt);
 
-  useEffect(() => {
+  const proccessUnread = useCallback(() => {
     const unreads = new Set<string>();
 
     Array.from(roomToLatestEvent.entries()).forEach(([roomId, event]) => {
@@ -27,4 +27,17 @@ export const useBindUnreadRoomsAtom = (ct: ClientContext, unreadRooms: typeof un
 
     setUnreadRooms(unreads);
   }, [ct, setUnreadRooms, userReadReceipts, roomToLatestEvent]);
+
+  useEffect(() => {
+    if (!ct.firstSync) {
+      proccessUnread();
+    }
+  }, [ct.firstSync, proccessUnread]);
+
+  useObservableValueListener(
+    ct.firstSync,
+    useCallback(() => {
+      proccessUnread();
+    }, [proccessUnread])
+  );
 };

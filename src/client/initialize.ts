@@ -1,5 +1,6 @@
 import { MatrixRequest } from 'neurone/lib/matrix-request';
 import { Disposer } from 'neurone/lib/utils/disposable';
+import { ObservableValue } from 'neurone/lib/utils/observable';
 import { removeSession, Session } from './sessions';
 import {
   ClientContext,
@@ -42,6 +43,7 @@ import { initializeCrypto } from './crypto';
 import { MegolmBackup } from './MegolmBackup';
 import { clearUserLocalStorage } from './localStorage';
 import { CallSessions } from './call';
+import { randomStr } from '../app/utils/common';
 
 export type InitializeClientResult = {
   ct: ClientContext;
@@ -49,6 +51,7 @@ export type InitializeClientResult = {
 };
 export const initializeClient = async (session: Session): Promise<InitializeClientResult> => {
   const disposer = new Disposer();
+  const publisherKey = randomStr();
 
   const { storage, deleteStorage, disconnectStorage } = await createStorage(session);
 
@@ -105,6 +108,7 @@ export const initializeClient = async (session: Session): Promise<InitializeClie
     sync,
     () => syncTokenObservable.read
   );
+  const firstSync = new ObservableValue(true, publisherKey);
 
   const decryption = new DecryptionManager(machine);
 
@@ -169,6 +173,7 @@ export const initializeClient = async (session: Session): Promise<InitializeClie
       observable: syncObservable,
       controller: syncController,
     },
+    firstSync,
     requestAuthJSON,
     getTxnId,
     logout: () => logoutManager.logout(),
@@ -178,7 +183,10 @@ export const initializeClient = async (session: Session): Promise<InitializeClie
   const machineManager = new MachineManager(ct);
 
   const syncResponseManager = new SyncResponseManager(ct, syncTokenObservable, {
-    onWriteComplete,
+    onWriteComplete: () => {
+      if (firstSync.read) firstSync.publish(publisherKey, false);
+      onWriteComplete();
+    },
     onSyncToken,
     onVerificationRequest,
     onToDeviceEvents,
