@@ -9,6 +9,8 @@ type Session = {
   accessToken: string;
   userId: string;
   deviceId: string;
+  refreshToken: string;
+  expiresInMs?: number;
 };
 
 export const initClient = async (session: Session): Promise<MatrixClient> => {
@@ -24,6 +26,46 @@ export const initClient = async (session: Session): Promise<MatrixClient> => {
     baseUrl: session.baseUrl,
     accessToken: session.accessToken,
     userId: session.userId,
+    refreshToken: session.refreshToken,
+
+    tokenRefreshFunction: async () => {
+      if (!session.refreshToken) {
+        throw new Error('No refresh token available');
+      }
+
+      const res = await fetch(`${session.baseUrl}/_matrix/client/v3/refresh`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json' 
+        },
+          body: JSON.stringify({
+          refresh_token: session.refreshToken,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to refresh token: ${res.status}`);
+      }
+
+      const { access_token, refresh_token, expires_in_ms } = await res.json();
+        
+      session.accessToken = access_token;
+      if (refresh_token) {
+        session.refreshToken = refresh_token;
+      }
+
+      localStorage.setItem('cinny_access_token', access_token);
+      if (refresh_token) {
+        localStorage.setItem('cinny_refresh_token', refresh_token);
+      }
+
+      return {
+        accessToken: access_token,
+        refreshToken: refresh_token,
+        expiresInMs: expires_in_ms,
+      };
+    },
+
     store: indexedDBStore,
     cryptoStore: legacyCryptoStore,
     deviceId: session.deviceId,
