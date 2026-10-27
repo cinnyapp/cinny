@@ -142,7 +142,7 @@ export const useTimelineScrollRestore = (
     if (scrollEl) {
       const scrollTop = timeline.range.scrollTopCache;
       const batch = timeline.batch.read;
-      if (scrollTop) {
+      if (typeof scrollTop === 'number') {
         scrollEl.scrollTo({ top: scrollTop, behavior: 'instant' });
       } else if (batch.next.end && batch.messages.events.length > 0) {
         scrollToBottom(scrollEl, 'instant');
