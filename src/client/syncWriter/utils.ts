@@ -336,29 +336,41 @@ export const writeUnreadNotifications = async (
 ): Promise<void> => {
   const existing = await ct.storage.unreadNotifications.read.getMultiple(joinRooms);
 
-  const unreadNotificationsObjects: UnreadNotificationsObject[] = joinRooms.flatMap(
-    (roomId, index) => {
-      const joinRoom = join[roomId];
+  const unreadNotificationsObjects: UnreadNotificationsObject[] = [];
+  const roomsToDelete: string[] = [];
 
-      const existingUnread = existing[index]?.unread;
-      const unread = joinRoomUtil.roomUnreadNotifications(joinRoom);
+  joinRooms.forEach((roomId, index) => {
+    const joinRoom = join[roomId];
+    const existingUnread = existing[index]?.unread;
+    const unread = joinRoomUtil.roomUnreadNotifications(joinRoom);
 
-      if (
-        !unread ||
-        (existingUnread?.highlight_count === unread.highlight_count &&
-          existingUnread?.notification_count === unread.notification_count)
-      ) {
-        return [];
+    if (!unread) {
+      if (existingUnread) {
+        roomsToDelete.push(roomId);
       }
-      const obj: UnreadNotificationsObject = {
-        id: roomId,
-        unread,
-      };
-      return obj;
+      return;
     }
-  );
 
-  await ct.storage.unreadNotifications.write.putMultiple(unreadNotificationsObjects);
+    if (
+      existingUnread?.highlight_count === unread.highlight_count &&
+      existingUnread?.notification_count === unread.notification_count
+    ) {
+      return;
+    }
+
+    unreadNotificationsObjects.push({
+      id: roomId,
+      unread,
+    });
+  });
+
+  if (roomsToDelete.length > 0) {
+    await ct.storage.unreadNotifications.write.deleteMultiple(roomsToDelete);
+  }
+
+  if (unreadNotificationsObjects.length > 0) {
+    await ct.storage.unreadNotifications.write.putMultiple(unreadNotificationsObjects);
+  }
 };
 
 export const writeUnreadThreadNotifications = async (
@@ -399,8 +411,12 @@ export const writeUnreadThreadNotifications = async (
   const toRemoveKeys = notificationsToRemove.map((n) =>
     getUnreadThreadNotificationId(n.roomId, n.threadId)
   );
-  await ct.storage.unreadThreadNotifications.write.deleteMultiple(toRemoveKeys);
-  await ct.storage.unreadThreadNotifications.write.putMultiple(unreadThreadNotificationsObjects);
+  if (toRemoveKeys.length > 0) {
+    await ct.storage.unreadThreadNotifications.write.deleteMultiple(toRemoveKeys);
+  }
+  if (unreadThreadNotificationsObjects.length > 0) {
+    await ct.storage.unreadThreadNotifications.write.putMultiple(unreadThreadNotificationsObjects);
+  }
 };
 
 export const writeInviteRoomState = async (
