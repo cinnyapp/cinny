@@ -44,6 +44,7 @@ import { MegolmBackup } from './MegolmBackup';
 import { clearUserLocalStorage } from './localStorage';
 import { CallSessions } from './call';
 import { randomStr } from '../app/utils/common';
+import { ReadMarker } from './ReadMarker';
 
 export type InitializeClientResult = {
   ct: ClientContext;
@@ -114,6 +115,7 @@ export const initializeClient = async (session: Session): Promise<InitializeClie
 
   const callSessions = new CallSessions(storage, syncObservable);
   const roomToTimeline = createTimelines(rooms.join, syncObservable, requestAuthJSON, disposer);
+  const readMarker = new ReadMarker(storage, requestAuthJSON, session.userId);
 
   const logoutObservable = createLogoutObservable(syncObservable, disposer);
   const logoutManager = new LogoutManager(logoutObservable, requestAuthJSON, async () => {
@@ -161,6 +163,7 @@ export const initializeClient = async (session: Session): Promise<InitializeClie
     roomToCreators,
     roomToVersion,
     roomToTimeline,
+    readMarker,
 
     pendingMemberRooms,
     verificationRequest,
