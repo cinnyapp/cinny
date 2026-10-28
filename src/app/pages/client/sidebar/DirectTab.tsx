@@ -102,7 +102,7 @@ export function DirectTab() {
             onClick={handleDirectClick}
             onContextMenu={handleContextMenu}
           >
-            <Icon src={Icons.User} filled={directSelected} />
+            <Icon src={Icons.Message} filled={directSelected} />
           </SidebarAvatar>
         )}
       </SidebarItemTooltip>
