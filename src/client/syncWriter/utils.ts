@@ -233,7 +233,7 @@ export const writeJoinRoomLatestEvent = async (
 
     for (let i = events.length - 1; i >= 0; i -= 1) {
       const event = events[i];
-      if (!('state_key' in event) && supportedTypes.includes(event.type)) {
+      if (supportedTypes.includes(event.type)) {
         roomLatestEventObjects.push({
           id: roomId,
           event,

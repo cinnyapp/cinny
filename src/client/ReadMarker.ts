@@ -1,5 +1,5 @@
 import { MatrixRequest, parseMatrixResp } from 'neurone/lib/matrix-request';
-import { ReceiptType } from 'neurone/lib/api/types';
+import { MessageEventWithoutRoomId, ReceiptType } from 'neurone/lib/api/types';
 import { postReceiptEventId, PostReceiptEventIdOK } from 'neurone/lib/api/matrix/client/v3/rooms';
 import { AsyncTaskQueue, MatrixRequestRetrier, sleep } from 'neurone/lib/utils';
 import { Storage } from './storage';
@@ -8,6 +8,12 @@ import { ThreadId } from '../types/matrix/room';
 
 export class ReadMarker {
   private readonly queue = new AsyncTaskQueue();
+
+  static hasUnread = (
+    receipt: ReadReceiptObject,
+    event: MessageEventWithoutRoomId,
+    userId: string
+  ) => receipt && receipt.ts < event.origin_server_ts && event.sender !== userId;
 
   constructor(
     private readonly storage: Storage,

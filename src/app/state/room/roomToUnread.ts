@@ -4,6 +4,7 @@ import { ThreadId } from '../../../types/matrix/room';
 import { useObservableValue, useObservableValueListener } from '../../hooks/useObservableValue';
 import { getReadReceiptId } from '../../../client/storage/collections';
 import { ClientContext } from '../../../client/context';
+import { ReadMarker } from '../../../client/ReadMarker';
 
 export const unreadRoomsAtom = atom<Set<string>>(new Set<string>());
 
@@ -19,7 +20,7 @@ export const useBindUnreadRoomsAtom = (ct: ClientContext, unreadRooms: typeof un
       const receipt = userReadReceipts.find(
         (r) => getReadReceiptId(roomId, ct.session.userId, ThreadId.Main) === r.id
       );
-      if (!receipt || receipt.ts > event.origin_server_ts || event.sender === ct.session.userId) {
+      if (!receipt || !ReadMarker.hasUnread(receipt, event, ct.session.userId)) {
         return;
       }
       unreads.add(roomId);
