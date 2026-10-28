@@ -1,7 +1,7 @@
 {
-  "name": "Cinny",
-  "short_name": "Cinny",
-  "description": "Yet another matrix client",
+  "name": "blazeroom",
+  "short_name": "blazeroom",
+  "description": "Chat with your friends",
   "dir": "auto",
   "lang": "en-US",
   "display": "standalone",

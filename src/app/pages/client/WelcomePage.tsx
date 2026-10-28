@@ -14,11 +14,11 @@ export function WelcomePage() {
       >
         <PageHeroSection>
           <PageHero
-            icon={<img width="70" height="70" src={CinnySVG} alt="Cinny Logo" />}
-            title="Welcome to Cinny"
+            icon={<img width="70" height="70" src={CinnySVG} alt="blazeroom logo" />}
+            title="Welcome to blazeroom"
             subTitle={
               <span>
-                Yet another matrix client.{' '}
+                Chat with your friends. Built on Cinny{' '}
                 <a
                   href="https://github.com/cinnyapp/cinny/releases"
                   target="_blank"
@@ -33,7 +33,7 @@ export function WelcomePage() {
               <Box grow="Yes" style={{ maxWidth: toRem(300) }} direction="Column" gap="300">
                 <Button
                   as="a"
-                  href="https://github.com/cinnyapp/cinny"
+                  href="https://github.com/pistydotta/cinny"
                   target="_blank"
                   rel="noreferrer noopener"
                   before={<Icon size="200" src={Icons.Code} />}
