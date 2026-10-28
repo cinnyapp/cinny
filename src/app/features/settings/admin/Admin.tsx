@@ -25,7 +25,9 @@ import { useAlive } from '../../../hooks/useAlive';
 import { copyToClipboard } from '../../../utils/dom';
 import { useToast } from '../../../components/toast';
 import { useAdminApi } from '../../admin/useAdminApi';
+import { UsersList } from './UsersList';
 import {
+  AdminRole,
   MIN_PASSWORD_LENGTH,
   NewAccount,
   adminErrorMessage,
@@ -78,7 +80,11 @@ function CreatedAccount({ created, homeserver }: { created: Created; homeserver:
   );
 }
 
-function CreateAccount() {
+type CreateAccountProps = {
+  role: AdminRole;
+  onCreated: () => void;
+};
+function CreateAccount({ role, onCreated }: CreateAccountProps) {
   const mx = useMatrixClient();
   const api = useAdminApi();
   const alive = useAlive();
@@ -108,6 +114,7 @@ function CreateAccount() {
         if (!alive()) return;
         setCreated({ userId, password });
         toast(`Created ${userId}`);
+        onCreated();
         usernameInput.value = '';
         setPassword('');
         setMakeAdmin(false);
@@ -179,15 +186,17 @@ function CreateAccount() {
               Account.
             </Text>
           </Box>
-          <Box alignItems="Center" justifyContent="SpaceBetween" gap="200">
-            <Box direction="Column">
-              <Text size="T300">Server admin</Text>
-              <Text size="T200" priority="300">
-                Can create accounts and manage the server. Only for people you fully trust.
-              </Text>
+          {role.superadmin && (
+            <Box alignItems="Center" justifyContent="SpaceBetween" gap="200">
+              <Box direction="Column">
+                <Text size="T300">Server admin</Text>
+                <Text size="T200" priority="300">
+                  Can create accounts and manage regular users. Only for people you fully trust.
+                </Text>
+              </Box>
+              <Switch variant="Critical" value={makeAdmin} onChange={setMakeAdmin} />
             </Box>
-            <Switch variant="Critical" value={makeAdmin} onChange={setMakeAdmin} />
-          </Box>
+          )}
           {createState.status === AsyncStatus.Error && (
             <Text size="T200" style={{ color: color.Critical.Main }}>
               <b>{adminErrorMessage(createState.error)}</b>
@@ -215,8 +224,11 @@ function CreateAccount() {
 
 type AdminProps = {
   requestClose: () => void;
+  role: AdminRole;
 };
-export function Admin({ requestClose }: AdminProps) {
+export function Admin({ requestClose, role }: AdminProps) {
+  const [reloadKey, setReloadKey] = useState(0);
+
   return (
     <Page>
       <PageHeader outlined={false}>
@@ -225,6 +237,11 @@ export function Admin({ requestClose }: AdminProps) {
             <Text size="H3" truncate>
               Admin
             </Text>
+            {role.superadmin && (
+              <Text size="T200" priority="300">
+                Superadmin
+              </Text>
+            )}
           </Box>
           <Box shrink="No">
             <IconButton onClick={requestClose} variant="Surface">
@@ -244,7 +261,15 @@ export function Admin({ requestClose }: AdminProps) {
                 direction="Column"
                 gap="400"
               >
-                <CreateAccount />
+                <CreateAccount role={role} onCreated={() => setReloadKey((k) => k + 1)} />
+              </SequenceCard>
+              <SequenceCard
+                className={SequenceCardStyle}
+                variant="SurfaceVariant"
+                direction="Column"
+                gap="400"
+              >
+                <UsersList reloadKey={reloadKey} />
               </SequenceCard>
             </Box>
           </PageContent>

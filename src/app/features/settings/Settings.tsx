@@ -31,7 +31,8 @@ import { EmojisStickers } from './emojis-stickers';
 import { DeveloperTools } from './developer-tools';
 import { About } from './about';
 import { Admin } from './admin';
-import { useIsServerAdmin } from '../admin/useAdminApi';
+import { useAdminRole } from '../admin/useAdminApi';
+import { AdminRole } from '../admin/adminApi';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { stopPropagation } from '../../utils/keyboard';
 import { LogoutDialog } from '../../components/LogoutDialog';
@@ -53,8 +54,8 @@ type SettingsMenuItem = {
   icon: IconSrc;
 };
 
-const useSettingsMenuItems = (): SettingsMenuItem[] => {
-  const isServerAdmin = useIsServerAdmin();
+const useSettingsMenuItems = (adminRole: AdminRole): SettingsMenuItem[] => {
+  const isServerAdmin = adminRole.admin;
   return useMemo(
     () => [
       {
@@ -119,7 +120,8 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
     if (initialPage) return initialPage;
     return screenSize === ScreenSize.Mobile ? undefined : SettingsPages.GeneralPage;
   });
-  const menuItems = useSettingsMenuItems();
+  const adminRole = useAdminRole();
+  const menuItems = useSettingsMenuItems(adminRole);
 
   const handlePageRequestClose = () => {
     if (screenSize === ScreenSize.Mobile) {
@@ -237,7 +239,9 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
         <DeveloperTools requestClose={handlePageRequestClose} />
       )}
       {activePage === SettingsPages.AboutPage && <About requestClose={handlePageRequestClose} />}
-      {activePage === SettingsPages.AdminPage && <Admin requestClose={handlePageRequestClose} />}
+      {activePage === SettingsPages.AdminPage && (
+        <Admin requestClose={handlePageRequestClose} role={adminRole} />
+      )}
     </PageRoot>
   );
 }

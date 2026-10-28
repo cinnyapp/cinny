@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { adminErrorMessage, createAdminApi, generatePassword, loginDetails } from './adminApi';
+import {
+  adminErrorMessage,
+  createAdminApi,
+  generatePassword,
+  loginDetails,
+  matchesUserFilter,
+} from './adminApi';
 import { ApiError } from '../../utils/blazeroomApi';
 
 const respond = (status: number, body?: unknown) =>
@@ -8,10 +14,10 @@ const respond = (status: number, body?: unknown) =>
     .mockResolvedValue(new Response(body === undefined ? null : JSON.stringify(body), { status }));
 
 describe('createAdminApi', () => {
-  it('asks whether we are a server admin', async () => {
-    const fetchImpl = respond(200, { admin: true });
+  it('asks for our admin role', async () => {
+    const fetchImpl = respond(200, { admin: true, superadmin: false });
     const api = createAdminApi(() => 'tok', fetchImpl);
-    expect(await api.isAdmin()).toBe(true);
+    expect(await api.role()).toEqual({ admin: true, superadmin: false });
     expect(fetchImpl).toHaveBeenCalledWith('/api/admin/me', {
       method: 'GET',
       headers: { Authorization: 'Bearer tok' },
@@ -40,7 +46,49 @@ describe('createAdminApi', () => {
     });
 
     const down = createAdminApi(() => 'tok', vi.fn().mockRejectedValue(new TypeError('offline')));
-    await expect(down.isAdmin()).rejects.toMatchObject({ code: 'network', status: 0 });
+    await expect(down.role()).rejects.toMatchObject({ code: 'network', status: 0 });
+  });
+});
+
+describe('user management', () => {
+  it('lists users and posts edits to the user ID, encoded', async () => {
+    const users = [{ userId: '@ana:x', role: 'user' }];
+    const list = respond(200, { users });
+    expect(await createAdminApi(() => 'tok', list).listUsers()).toEqual(users);
+    expect(list.mock.calls[0][0]).toBe('/api/admin/users');
+
+    const edit = vi.fn().mockImplementation(async () => new Response('{}', { status: 200 }));
+    const api = createAdminApi(() => 'tok', edit);
+    await api.resetPassword('@ana:x', 'newpassword');
+    await api.setLocked('@ana:x', true);
+    await api.setAdmin('@ana:x', false);
+    const sent = edit.mock.calls.map(([path, init]) => [path, JSON.parse(init.body)]);
+    expect(sent).toEqual([
+      ['/api/admin/users/%40ana%3Ax/password', { password: 'newpassword' }],
+      ['/api/admin/users/%40ana%3Ax/lock', { locked: true }],
+      ['/api/admin/users/%40ana%3Ax/role', { admin: false }],
+    ]);
+  });
+});
+
+describe('matchesUserFilter', () => {
+  const user = {
+    userId: '@ana:blazeroom.com.br',
+    displayName: 'Ana Maria',
+    role: 'superadmin' as const,
+    locked: false,
+    deactivated: false,
+    createdAt: null,
+    canEdit: false,
+    canChangeRole: false,
+  };
+
+  it('matches the ID, display name or role, ignoring case', () => {
+    expect(matchesUserFilter(user, '')).toBe(true);
+    expect(matchesUserFilter(user, 'ANA:')).toBe(true);
+    expect(matchesUserFilter(user, 'maria')).toBe(true);
+    expect(matchesUserFilter(user, 'superadmin')).toBe(true);
+    expect(matchesUserFilter(user, 'bob')).toBe(false);
   });
 });
 
@@ -53,7 +101,7 @@ describe('adminErrorMessage', () => {
       'Numeric user IDs are reserved'
     );
     expect(adminErrorMessage(new ApiError('internal', 500))).toBe(
-      "Couldn't create the account (internal)."
+      'Something went wrong (internal).'
     );
     expect(adminErrorMessage(new Error('x'))).toBe('Something went wrong.');
   });

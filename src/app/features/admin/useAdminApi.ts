@@ -1,24 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { createAdminApi } from './adminApi';
+import { AdminRole, NO_ADMIN_ROLE, createAdminApi } from './adminApi';
 
 export const useAdminApi = () => {
   const mx = useMatrixClient();
   return useMemo(() => createAdminApi(() => mx.getAccessToken()), [mx]);
 };
 
-// False until the server confirms we're an admin (and on any error), so the admin UI stays
-// hidden for everyone else.
-export const useIsServerAdmin = (): boolean => {
+// No role until the server confirms one (and on any error), so the admin UI stays hidden for
+// everyone else.
+export const useAdminRole = (): AdminRole => {
   const api = useAdminApi();
-  const [admin, setAdmin] = useState(false);
+  const [role, setRole] = useState<AdminRole>(NO_ADMIN_ROLE);
 
   useEffect(() => {
     let current = true;
     api
-      .isAdmin()
+      .role()
       .then((value) => {
-        if (current) setAdmin(value);
+        if (current) setRole(value);
       })
       .catch(() => undefined);
     return () => {
@@ -26,5 +26,5 @@ export const useIsServerAdmin = (): boolean => {
     };
   }, [api]);
 
-  return admin;
+  return role;
 };
