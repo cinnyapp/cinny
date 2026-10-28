@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   createInvitesApi,
   expiresInLabel,
-  hoursLabel,
   inviteErrorMessage,
+  minutesLabel,
   usageLabel,
   usesLabel,
 } from './invitesApi';
@@ -16,7 +16,7 @@ const respond = (status: number, body?: unknown) =>
 
 describe('createInvitesApi', () => {
   it('reads the info, creates with the chosen options and revokes by code', async () => {
-    const info = { perDay: 5, remaining: 5, options: { uses: [1, 5], hours: [1, 24, 168] } };
+    const info = { perDay: 5, remaining: 5, options: { uses: [1, 5], minutes: [15, 60, 1440] } };
     const infoFetch = respond(200, info);
     expect(await createInvitesApi(() => 'tok', infoFetch).info()).toEqual(info);
     expect(infoFetch).toHaveBeenCalledWith('/api/invites', {
@@ -25,12 +25,12 @@ describe('createInvitesApi', () => {
     });
 
     const createFetch = respond(201, { token: 'abc' });
-    await createInvitesApi(() => 'tok', createFetch).create({ uses: 5, hours: 24 });
+    await createInvitesApi(() => 'tok', createFetch).create({ uses: 5, minutes: 1440 });
     const [path, init] = createFetch.mock.calls[0];
     expect([path, init.method, JSON.parse(init.body)]).toEqual([
       '/api/invites',
       'POST',
-      { uses: 5, hours: 24 },
+      { uses: 5, minutes: 1440 },
     ]);
 
     const revokeFetch = respond(204);
@@ -41,7 +41,7 @@ describe('createInvitesApi', () => {
 
   it('reports the daily limit', async () => {
     const api = createInvitesApi(() => 'tok', respond(429, { error: 'daily_limit' }));
-    await expect(api.create({ uses: 5, hours: 1 })).rejects.toMatchObject({
+    await expect(api.create({ uses: 5, minutes: 60 })).rejects.toMatchObject({
       code: 'daily_limit',
     });
   });
@@ -50,7 +50,14 @@ describe('createInvitesApi', () => {
 describe('labels', () => {
   it('names the options', () => {
     expect([1, 5, null].map(usesLabel)).toEqual(['1 person', '5 people', 'No limit']);
-    expect([1, 24, 168, 720].map(hoursLabel)).toEqual(['1 hour', '1 day', '7 days', '30 days']);
+    expect([15, 30, 60, 1440, 10080, 43200].map(minutesLabel)).toEqual([
+      '15 minutes',
+      '30 minutes',
+      '1 hour',
+      '1 day',
+      '7 days',
+      '30 days',
+    ]);
   });
 
   it('says how long a link has left', () => {

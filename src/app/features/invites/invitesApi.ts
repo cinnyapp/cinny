@@ -1,7 +1,7 @@
 import { ApiError, createApiRequest } from '../../utils/blazeroomApi';
 
 // `uses: null` means no limit (admins only).
-export type InviteChoice = { uses: number | null; hours: number };
+export type InviteChoice = { uses: number | null; minutes: number };
 
 export type Invite = {
   token: string;
@@ -16,7 +16,7 @@ export type Invite = {
 export type InvitesInfo = {
   perDay: number | null;
   remaining: number | null;
-  options: { uses: (number | null)[]; hours: number[] };
+  options: { uses: (number | null)[]; minutes: number[] };
   defaults: InviteChoice;
   invites: Invite[];
 };
@@ -60,7 +60,9 @@ export const usesLabel = (uses: number | null): string => {
   return uses === 1 ? '1 person' : `${uses} people`;
 };
 
-export const hoursLabel = (hours: number): string => {
+export const minutesLabel = (minutes: number): string => {
+  if (minutes < 60) return `${minutes} minutes`;
+  const hours = Math.round(minutes / 60);
   if (hours < 24) return hours === 1 ? '1 hour' : `${hours} hours`;
   const days = Math.round(hours / 24);
   return days === 1 ? '1 day' : `${days} days`;

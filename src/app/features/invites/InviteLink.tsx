@@ -9,9 +9,9 @@ import {
   InvitesInfo,
   createInvitesApi,
   expiresInLabel,
-  hoursLabel,
   inviteErrorMessage,
   inviteShareText,
+  minutesLabel,
   usageLabel,
   usesLabel,
 } from './invitesApi';
@@ -194,10 +194,10 @@ export function InviteLink() {
           />
           <OptionRow
             label="Expires after"
-            values={info.options.hours}
-            selected={choice.hours}
-            name={hoursLabel}
-            onSelect={(hours) => setChoice({ ...choice, hours })}
+            values={info.options.minutes}
+            selected={choice.minutes}
+            name={minutesLabel}
+            onSelect={(minutes) => setChoice({ ...choice, minutes })}
           />
           <Box>
             <Button
