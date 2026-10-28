@@ -20,6 +20,7 @@ import { callChatAtom } from '../../state/callEmbed';
 import { CallChatView } from './CallChatView';
 import { useCallEmbed } from '../../hooks/useCallEmbed';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
+import { useWordSwapArrive } from '../word-swap/useWordSwaps';
 
 export function Room() {
   const { eventId } = useParams();
@@ -36,6 +37,7 @@ export function Room() {
   const powerLevels = usePowerLevels(room);
   const members = useRoomMembers(mx, room.roomId);
   const chat = useAtomValue(callChatAtom);
+  useWordSwapArrive(room);
 
   useKeyDown(
     window,
