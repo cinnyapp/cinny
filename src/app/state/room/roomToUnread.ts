@@ -29,7 +29,7 @@ export const useBindUnreadRoomsAtom = (ct: ClientContext, unreadRooms: typeof un
   }, [ct, setUnreadRooms, userReadReceipts, roomToLatestEvent]);
 
   useEffect(() => {
-    if (!ct.firstSync) {
+    if (!ct.firstSync.read) {
       proccessUnread();
     }
   }, [ct.firstSync, proccessUnread]);

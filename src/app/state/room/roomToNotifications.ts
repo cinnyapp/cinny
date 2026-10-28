@@ -54,7 +54,7 @@ export const useBindRoomToNotificationsAtom = (
   }, [notifications, threadNotifications, setNotificationAtom, roomsNotificationPreferences]);
 
   useEffect(() => {
-    if (!ct.firstSync) {
+    if (!ct.firstSync.read) {
       processNotifications();
     }
   }, [ct.firstSync, processNotifications]);
