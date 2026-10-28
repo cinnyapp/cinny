@@ -12,7 +12,8 @@ import { ClientConfig } from '../hooks/useClientConfig';
 import { AuthLayout, Login, Register, ResetPassword } from './auth';
 import {
   DIRECT_PATH,
-  FRIENDS_PATH,
+  OLD_FRIENDS_PATH,
+  _FRIENDS_PATH,
   EXPLORE_PATH,
   HOME_PATH,
   LOGIN_PATH,
@@ -34,6 +35,7 @@ import {
 import {
   getAppPathFromHref,
   getExploreFeaturedPath,
+  getFriendsPath,
   getHomePath,
   getInboxNotificationsPath,
   getLoginPath,
@@ -197,7 +199,8 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
             </PageRoot>
           }
         >
-          {mobile ? null : <Route index element={<WelcomePage />} />}
+          {mobile ? null : <Route index loader={() => redirect(getFriendsPath())} />}
+          <Route path={_FRIENDS_PATH} element={<FriendsPage />} />
           <Route path={_CREATE_PATH} element={<DirectCreate />} />
           <Route
             path={_ROOM_PATH}
@@ -208,7 +211,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
             }
           />
         </Route>
-        <Route path={FRIENDS_PATH} element={<FriendsPage />} />
+        <Route path={OLD_FRIENDS_PATH} loader={() => redirect(getFriendsPath())} />
         <Route
           path={SPACE_PATH}
           element={

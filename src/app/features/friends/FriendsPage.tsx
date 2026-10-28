@@ -4,7 +4,7 @@ import { Box, Icon, IconButton, Icons, Scroll, Spinner, Text, color, config } fr
 import { Page, PageContent, PageContentCenter, PageHeader } from '../../components/page';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
-import { getHomePath } from '../../pages/pathUtils';
+import { getDirectPath } from '../../pages/pathUtils';
 import { isOnline, sortFriends } from './presence';
 import { useFriends } from './useFriends';
 import { friendDisplayName } from './userDisplay';
@@ -110,7 +110,7 @@ export function FriendsPage() {
         <Box grow="Yes" gap="200">
           <Box grow="Yes" basis="No">
             {screenSize === ScreenSize.Mobile && (
-              <IconButton aria-label="Back" onClick={() => navigate(getHomePath())}>
+              <IconButton aria-label="Back" onClick={() => navigate(getDirectPath())}>
                 <Icon src={Icons.ArrowLeft} />
               </IconButton>
             )}

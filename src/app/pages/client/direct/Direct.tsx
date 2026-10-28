@@ -51,6 +51,7 @@ import {
   useRoomsNotificationPreferencesContext,
 } from '../../../hooks/useRoomsNotificationPreferences';
 import { useDirectCreateSelected } from '../../../hooks/router/useDirectSelected';
+import { FriendsNavItem } from '../../../features/friends/FriendsNavItem';
 
 type DirectMenuProps = {
   requestClose: () => void;
@@ -206,11 +207,17 @@ export function Direct() {
     <PageNav>
       <DirectHeader />
       {noRoomToDisplay ? (
-        <DirectEmpty />
+        <>
+          <Box direction="Column" style={{ padding: config.space.S200 }}>
+            <FriendsNavItem />
+          </Box>
+          <DirectEmpty />
+        </>
       ) : (
         <PageNavContent scrollRef={scrollRef}>
           <Box direction="Column" gap="300">
             <NavCategory>
+              <FriendsNavItem />
               <NavItem variant="Background" radii="400" aria-selected={createDirectSelected}>
                 <NavButton onClick={() => navigate(getDirectCreatePath())}>
                   <NavItemContent>
