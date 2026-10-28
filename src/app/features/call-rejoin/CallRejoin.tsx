@@ -7,7 +7,7 @@ import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 import { mDirectAtom } from '../../state/mDirectList';
 import { webRTCSupported } from '../../utils/rtc';
 import { Membership } from '../../../types/matrix/room';
-import { REJOIN_KEY, parseRejoin, serializeRejoin } from './savedCall';
+import { REJOIN_KEY, REJOIN_WINDOW_MS, parseRejoin, serializeRejoin } from './savedCall';
 
 const takeSaved = (): string | null => {
   try {
@@ -66,10 +66,12 @@ export function CallRejoin({ callEmbed, joined }: CallRejoinProps) {
 
   useEffect(() => {
     if (!pending || started.current) return;
+    // The call server is learned from /.well-known a moment after load: wait for it.
+    if (!livekitSupported || !webRTCSupported()) return;
     started.current = true;
+    if (callEmbed || Date.now() - pending.at > REJOIN_WINDOW_MS) return;
     const room = mx.getRoom(pending.roomId);
     if (!room || room.getMyMembership() !== Membership.Join) return;
-    if (!livekitSupported || !webRTCSupported()) return;
     try {
       startCall(room, {
         microphone: pending.microphone,
@@ -80,7 +82,7 @@ export function CallRejoin({ callEmbed, joined }: CallRejoinProps) {
       // eslint-disable-next-line no-console
       console.warn("Couldn't rejoin the call", e);
     }
-  }, [mx, pending, startCall, livekitSupported]);
+  }, [mx, pending, startCall, livekitSupported, callEmbed]);
 
   return null;
 }
