@@ -15,6 +15,7 @@ import {
   INBOX_INVITES_PATH,
   INBOX_NOTIFICATIONS_PATH,
   INBOX_PATH,
+  FRIENDS_PATH,
   REGISTER_PATH,
   RESET_PASSWORD_PATH,
   ROOT_PATH,
@@ -156,5 +157,6 @@ export const getExploreServerPath = (server: string): string => {
 export const getCreatePath = (): string => CREATE_PATH;
 
 export const getInboxPath = (): string => INBOX_PATH;
+export const getFriendsPath = (): string => FRIENDS_PATH;
 export const getInboxNotificationsPath = (): string => INBOX_NOTIFICATIONS_PATH;
 export const getInboxInvitesPath = (): string => INBOX_INVITES_PATH;

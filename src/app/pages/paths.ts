@@ -79,6 +79,7 @@ export const CREATE_PATH = '/create';
 export const _NOTIFICATIONS_PATH = 'notifications/';
 export const _INVITES_PATH = 'invites/';
 export const INBOX_PATH = '/inbox/';
+export const FRIENDS_PATH = '/friends/';
 export type InboxNotificationsPathSearchParams = {
   only?: string;
 };
