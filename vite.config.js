@@ -81,6 +81,9 @@ export default defineConfig({
   server: {
     port: 8080,
     host: true,
+    proxy: {
+      '/api': { target: 'https://blazeroom.com.br', changeOrigin: true },
+    },
     fs: {
       // Allow serving files from one level up to the project root
       allow: ['..'],
