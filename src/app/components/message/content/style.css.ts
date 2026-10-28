@@ -38,3 +38,26 @@ export const Blur = style([
     filter: 'blur(44px)',
   },
 ]);
+
+export const MediaBackdrop = style([
+  AbsoluteContainer,
+  {
+    cursor: 'pointer',
+  },
+]);
+
+export const WatchButton = style({
+  width: '4rem',
+  height: '4rem',
+  color: 'white',
+  opacity: 0.6,
+  transition: 'opacity 0.25s',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  selectors: {
+    [`${MediaBackdrop}:hover &`]: {
+      opacity: 0.8,
+    },
+  },
+});
