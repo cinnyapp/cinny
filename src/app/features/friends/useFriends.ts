@@ -2,10 +2,14 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { createFriendsApi, FriendsApiError, FriendsList } from './friendsApi';
+import { createLatestGate } from './latestGate';
 
 export const POLL_INTERVAL_MS = 20_000;
 
 export const friendsAtom = atom<{ lists?: FriendsList; error?: FriendsApiError }>({});
+
+// Shared by every refresh (poller and post-action) so only the newest response is applied.
+const beginRefresh = createLatestGate();
 
 export const useFriendsApi = () => {
   const mx = useMatrixClient();
@@ -16,10 +20,13 @@ const useRefresh = () => {
   const api = useFriendsApi();
   const setState = useSetAtom(friendsAtom);
   return useCallback(async () => {
+    const isLatest = beginRefresh();
     try {
       const lists = await api.list();
+      if (!isLatest()) return;
       setState({ lists });
     } catch (e) {
+      if (!isLatest()) return;
       const error = e instanceof FriendsApiError ? e : new FriendsApiError('unknown', 0);
       setState((prev) => ({ lists: prev.lists, error }));
     }

@@ -6,3 +6,4 @@ export * from './ExploreTab';
 export * from './SettingsTab';
 export * from './UnverifiedTab';
 export * from './SearchTab';
+export * from './FriendsTab';

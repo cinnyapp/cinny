@@ -12,6 +12,7 @@ import { ClientConfig } from '../hooks/useClientConfig';
 import { AuthLayout, Login, Register, ResetPassword } from './auth';
 import {
   DIRECT_PATH,
+  FRIENDS_PATH,
   EXPLORE_PATH,
   HOME_PATH,
   LOGIN_PATH,
@@ -48,6 +49,7 @@ import { Notifications, Inbox, Invites } from './client/inbox';
 import { setAfterLoginRedirectPath } from './afterLoginRedirectPath';
 import { Room } from '../features/room';
 import { Lobby } from '../features/lobby';
+import { FriendsPage } from '../features/friends';
 import { WelcomePage } from './client/WelcomePage';
 import { SidebarNav } from './client/SidebarNav';
 import { PageRoot } from '../components/page';
@@ -206,6 +208,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
             }
           />
         </Route>
+        <Route path={FRIENDS_PATH} element={<FriendsPage />} />
         <Route
           path={SPACE_PATH}
           element={

@@ -17,8 +17,8 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - run: npx eslint src/app/features/friends
-      - run: npx prettier --check src/app/features/friends
+      - run: npx eslint src/app/features/friends src/app/pages/client/sidebar/FriendsTab.tsx
+      - run: npx prettier --check src/app/features/friends src/app/pages/client/sidebar/FriendsTab.tsx
       - name: Typecheck (our files only)
         run: |
           npx tsc --noEmit > tsc.log || true
