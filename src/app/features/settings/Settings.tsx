@@ -30,6 +30,8 @@ import { Devices } from './devices';
 import { EmojisStickers } from './emojis-stickers';
 import { DeveloperTools } from './developer-tools';
 import { About } from './about';
+import { Admin } from './admin';
+import { useIsServerAdmin } from '../admin/useAdminApi';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { stopPropagation } from '../../utils/keyboard';
 import { LogoutDialog } from '../../components/LogoutDialog';
@@ -42,6 +44,7 @@ export enum SettingsPages {
   EmojisStickersPage,
   DeveloperToolsPage,
   AboutPage,
+  AdminPage,
 }
 
 type SettingsMenuItem = {
@@ -50,8 +53,9 @@ type SettingsMenuItem = {
   icon: IconSrc;
 };
 
-const useSettingsMenuItems = (): SettingsMenuItem[] =>
-  useMemo(
+const useSettingsMenuItems = (): SettingsMenuItem[] => {
+  const isServerAdmin = useIsServerAdmin();
+  return useMemo(
     () => [
       {
         page: SettingsPages.GeneralPage,
@@ -83,14 +87,18 @@ const useSettingsMenuItems = (): SettingsMenuItem[] =>
         name: 'Developer Tools',
         icon: Icons.Terminal,
       },
+      ...(isServerAdmin
+        ? [{ page: SettingsPages.AdminPage, name: 'Admin', icon: Icons.ShieldUser }]
+        : []),
       {
         page: SettingsPages.AboutPage,
         name: 'About',
         icon: Icons.Info,
       },
     ],
-    []
+    [isServerAdmin]
   );
+};
 
 type SettingsProps = {
   initialPage?: SettingsPages;
@@ -229,6 +237,7 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
         <DeveloperTools requestClose={handlePageRequestClose} />
       )}
       {activePage === SettingsPages.AboutPage && <About requestClose={handlePageRequestClose} />}
+      {activePage === SettingsPages.AdminPage && <Admin requestClose={handlePageRequestClose} />}
     </PageRoot>
   );
 }
