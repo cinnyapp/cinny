@@ -43,6 +43,9 @@ export interface Settings {
   showNotifications: boolean;
   isNotificationSounds: boolean;
 
+  // Read by the Element Call page too (src/element-call/micFilter.js).
+  callNoiseSuppression: boolean;
+
   hour24Clock: boolean;
   dateFormatString: string;
 
@@ -76,6 +79,8 @@ const defaultSettings: Settings = {
 
   showNotifications: true,
   isNotificationSounds: true,
+
+  callNoiseSuppression: true,
 
   hour24Clock: false,
   dateFormatString: 'D MMM YYYY',

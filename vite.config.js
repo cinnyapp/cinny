@@ -11,12 +11,36 @@ import fs from 'fs';
 import path from 'path';
 import buildConfig from './build.config';
 
+const noiseSuppressor = 'node_modules/@sapphi-red/web-noise-suppressor/dist';
+
 const copyFiles = {
   targets: [
     {
-      src: 'node_modules/@element-hq/element-call-embedded/dist/*',
+      src: [
+        'node_modules/@element-hq/element-call-embedded/dist/assets',
+        'node_modules/@element-hq/element-call-embedded/dist/config.json',
+      ],
       dest: 'public/element-call',
     },
+    {
+      // Loads our mic noise suppression before Element Call's own script.
+      src: 'node_modules/@element-hq/element-call-embedded/dist/index.html',
+      dest: 'public/element-call',
+      transform: (content) => {
+        const script = '<script type="module" src="./blazeroom/blazeroom-noise.js"></script>';
+        const at = content.indexOf('<script type="module"');
+        if (at === -1) throw new Error('Element Call index.html: module script not found');
+        return content.slice(0, at) + script + content.slice(at);
+      },
+    },
+    ...[
+      { src: 'src/element-call/blazeroom-noise.js' },
+      { src: 'src/element-call/micFilter.js' },
+      { src: `${noiseSuppressor}/index.js`, rename: 'noise-suppressor.js' },
+      { src: `${noiseSuppressor}/rnnoise/workletProcessor.js`, rename: 'rnnoiseWorklet.js' },
+      { src: `${noiseSuppressor}/rnnoise.wasm` },
+      { src: `${noiseSuppressor}/rnnoise_simd.wasm` },
+    ].map((file) => ({ ...file, dest: 'public/element-call/blazeroom' })),
     {
       src: 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
       dest: '',

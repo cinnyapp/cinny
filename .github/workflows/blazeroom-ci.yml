@@ -17,9 +17,9 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - run: npx eslint src/app/features/friends src/app/pages/client/sidebar/FriendsTab.tsx
-      - run: npx prettier --check src/app/features/friends src/app/pages/client/sidebar/FriendsTab.tsx
+      - run: npx eslint src/app/features/friends src/app/pages/client/sidebar/FriendsTab.tsx src/element-call src/app/components/toast src/app/components/invite-user-prompt/inviteUserId.ts src/app/components/invite-user-prompt/inviteUserId.test.ts
+      - run: npx prettier --check src/app/features/friends src/app/pages/client/sidebar/FriendsTab.tsx src/element-call src/app/components/toast src/app/components/invite-user-prompt/inviteUserId.ts src/app/components/invite-user-prompt/inviteUserId.test.ts
       - name: Typecheck (our files only)
         run: |
           npx tsc --noEmit > tsc.log || true
-          if grep -E "src/app/features/friends/|src/app/pages/client/sidebar/FriendsTab.tsx" tsc.log; then exit 1; fi
+          if grep -E "src/app/features/friends/|src/app/pages/client/sidebar/FriendsTab.tsx|src/element-call/|src/app/components/toast/|invite-user-prompt/inviteUserId" tsc.log; then exit 1; fi

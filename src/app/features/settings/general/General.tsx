@@ -741,6 +741,25 @@ function Editor() {
   );
 }
 
+function Calls() {
+  const [noiseSuppression, setNoiseSuppression] = useSetting(settingsAtom, 'callNoiseSuppression');
+
+  return (
+    <Box direction="Column" gap="100">
+      <Text size="L400">Calls</Text>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Noise Suppression"
+          description="Filter background noise like keyboards, fans and voices from your microphone (RNNoise). Applies from the next call you join."
+          after={
+            <Switch variant="Primary" value={noiseSuppression} onChange={setNoiseSuppression} />
+          }
+        />
+      </SequenceCard>
+    </Box>
+  );
+}
+
 function SelectMessageLayout() {
   const [menuCords, setMenuCords] = useState<RectCords>();
   const [messageLayout, setMessageLayout] = useSetting(settingsAtom, 'messageLayout');
@@ -1005,6 +1024,7 @@ export function General({ requestClose }: GeneralProps) {
               <Appearance />
               <DateAndTime />
               <Editor />
+              <Calls />
               <Messages />
             </Box>
           </PageContent>
