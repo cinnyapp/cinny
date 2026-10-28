@@ -1,15 +1,4 @@
-export class AdminApiError extends Error {
-  code: string;
-
-  status: number;
-
-  constructor(code: string, status: number, message?: string) {
-    super(message ?? code);
-    this.name = 'AdminApiError';
-    this.code = code;
-    this.status = status;
-  }
-}
+import { ApiError, createApiRequest } from '../../utils/blazeroomApi';
 
 // Matches api/src/app.js.
 export const MIN_PASSWORD_LENGTH = 8;
@@ -21,34 +10,7 @@ export const createAdminApi = (
   getToken: () => string | null,
   fetchImpl: typeof fetch = (...args) => fetch(...args)
 ) => {
-  const request = async (path: string, method: string, jsonBody?: unknown): Promise<Response> => {
-    const headers: Record<string, string> = { Authorization: `Bearer ${getToken() ?? ''}` };
-    const init: RequestInit = { method, headers };
-    if (jsonBody !== undefined) {
-      headers['Content-Type'] = 'application/json';
-      init.body = JSON.stringify(jsonBody);
-    }
-    let res: Response;
-    try {
-      res = await fetchImpl(path, init);
-    } catch {
-      throw new AdminApiError('network', 0);
-    }
-    if (!res.ok) {
-      let body: { error?: unknown; message?: unknown } = {};
-      try {
-        body = await res.json();
-      } catch {
-        // non-JSON or empty error body
-      }
-      throw new AdminApiError(
-        typeof body.error === 'string' ? body.error : 'unknown',
-        res.status,
-        typeof body.message === 'string' ? body.message : undefined
-      );
-    }
-    return res;
-  };
+  const request = createApiRequest(getToken, fetchImpl);
 
   return {
     async isAdmin(): Promise<boolean> {
@@ -63,7 +25,7 @@ export const createAdminApi = (
 };
 
 export const adminErrorMessage = (error: unknown): string => {
-  if (!(error instanceof AdminApiError)) return 'Something went wrong.';
+  if (!(error instanceof ApiError)) return 'Something went wrong.';
   switch (error.code) {
     case 'user_exists':
       return 'That username is already taken.';

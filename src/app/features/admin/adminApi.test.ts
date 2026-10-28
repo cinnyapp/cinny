@@ -1,11 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  AdminApiError,
-  adminErrorMessage,
-  createAdminApi,
-  generatePassword,
-  loginDetails,
-} from './adminApi';
+import { adminErrorMessage, createAdminApi, generatePassword, loginDetails } from './adminApi';
+import { ApiError } from '../../utils/blazeroomApi';
 
 const respond = (status: number, body?: unknown) =>
   vi
@@ -35,7 +30,7 @@ describe('createAdminApi', () => {
     expect(JSON.parse(init.body)).toEqual(account);
   });
 
-  it('turns error bodies and network failures into AdminApiError', async () => {
+  it('turns error bodies and network failures into ApiError', async () => {
     const taken = createAdminApi(() => 'tok', respond(409, { error: 'user_exists' }));
     await expect(
       taken.createAccount({ username: 'a', password: 'b', admin: false })
@@ -51,13 +46,13 @@ describe('createAdminApi', () => {
 
 describe('adminErrorMessage', () => {
   it('explains each error', () => {
-    expect(adminErrorMessage(new AdminApiError('user_exists', 409))).toBe(
+    expect(adminErrorMessage(new ApiError('user_exists', 409))).toBe(
       'That username is already taken.'
     );
-    expect(
-      adminErrorMessage(new AdminApiError('rejected', 400, 'Numeric user IDs are reserved'))
-    ).toBe('Numeric user IDs are reserved');
-    expect(adminErrorMessage(new AdminApiError('internal', 500))).toBe(
+    expect(adminErrorMessage(new ApiError('rejected', 400, 'Numeric user IDs are reserved'))).toBe(
+      'Numeric user IDs are reserved'
+    );
+    expect(adminErrorMessage(new ApiError('internal', 500))).toBe(
       "Couldn't create the account (internal)."
     );
     expect(adminErrorMessage(new Error('x'))).toBe('Something went wrong.');

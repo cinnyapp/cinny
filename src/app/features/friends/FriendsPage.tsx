@@ -14,6 +14,7 @@ import { AddFriend } from './AddFriend';
 import { EmptyState } from './EmptyState';
 import { TabChip } from './TabChip';
 import { FriendsPoller } from './FriendsPoller';
+import { InviteLink } from '../invites/InviteLink';
 
 type Tab = 'online' | 'all' | 'pending' | 'add';
 
@@ -81,7 +82,14 @@ export function FriendsPage() {
   };
 
   const renderTab = (): ReactNode => {
-    if (activeTab === 'add') return <AddFriend />;
+    if (activeTab === 'add') {
+      return (
+        <Box direction="Column" gap="700">
+          <AddFriend />
+          <InviteLink />
+        </Box>
+      );
+    }
     if (!lists) {
       return error ? null : (
         <Box justifyContent="Center" style={{ padding: config.space.S700 }}>
