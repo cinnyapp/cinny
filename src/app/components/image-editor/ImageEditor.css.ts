@@ -1,5 +1,5 @@
 import { style } from '@vanilla-extract/css';
-import { DefaultReset, color, config } from 'folds';
+import { DefaultReset, color, config, toRem } from 'folds';
 
 export const ImageEditor = style([
   DefaultReset,
@@ -19,17 +19,31 @@ export const ImageEditorHeader = style([
   },
 ]);
 
-export const ImageEditorContent = style([
+export const CropArea = style([
   DefaultReset,
   {
+    position: 'relative',
+    width: '100%',
+    height: toRem(360),
+    maxHeight: '60vh',
     backgroundColor: color.Background.Container,
-    color: color.Background.OnContainer,
-    overflow: 'hidden',
   },
 ]);
 
-export const Image = style({
-  width: '100%',
-  height: '100%',
-  objectFit: 'contain',
+export const Controls = style([
+  DefaultReset,
+  {
+    padding: config.space.S200,
+    flexShrink: 0,
+  },
+]);
+
+export const ZoomSlider = style({
+  flexGrow: 1,
+  minWidth: 0,
+  accentColor: color.Primary.Main,
+});
+
+export const Mirrored = style({
+  transform: 'scaleX(-1)',
 });

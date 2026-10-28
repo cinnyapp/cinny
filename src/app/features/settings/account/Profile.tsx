@@ -60,14 +60,25 @@ function ProfileAvatar({ profile, userId }: ProfileProps) {
     ? mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined
     : undefined;
 
+  // The picked image is cropped in the editor first; only the cropped file is uploaded.
+  const [editFile, setEditFile] = useState<File>();
+  const editFileURL = useObjectURL(editFile);
   const [imageFile, setImageFile] = useState<File>();
-  const imageFileURL = useObjectURL(imageFile);
   const uploadAtom = useMemo(() => {
     if (imageFile) return createUploadAtom(imageFile);
     return undefined;
   }, [imageFile]);
 
-  const pickFile = useFilePicker(setImageFile, false);
+  const pickFile = useFilePicker(setEditFile, false);
+
+  const handleCloseEditor = useCallback(() => {
+    setEditFile(undefined);
+  }, []);
+
+  const handleEdited = useCallback((file: File) => {
+    setEditFile(undefined);
+    setImageFile(file);
+  }, []);
 
   const handleRemoveUpload = useCallback(() => {
     setImageFile(undefined);
@@ -140,22 +151,23 @@ function ProfileAvatar({ profile, userId }: ProfileProps) {
         </Box>
       )}
 
-      {imageFileURL && (
-        <Overlay open={false} backdrop={<OverlayBackdrop />}>
+      {editFileURL && (
+        <Overlay open backdrop={<OverlayBackdrop />}>
           <OverlayCenter>
             <FocusTrap
               focusTrapOptions={{
                 initialFocus: false,
-                onDeactivate: handleRemoveUpload,
+                onDeactivate: handleCloseEditor,
                 clickOutsideDeactivates: true,
                 escapeDeactivates: stopPropagation,
               }}
             >
               <Modal className={ModalWide} variant="Surface" size="500">
                 <ImageEditor
-                  name={imageFile?.name ?? 'Unnamed'}
-                  url={imageFileURL}
-                  requestClose={handleRemoveUpload}
+                  name={editFile?.name ?? 'Unnamed'}
+                  url={editFileURL}
+                  requestClose={handleCloseEditor}
+                  onSave={handleEdited}
                 />
               </Modal>
             </FocusTrap>
