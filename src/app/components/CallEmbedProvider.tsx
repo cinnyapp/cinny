@@ -56,6 +56,7 @@ import { getRoomPermissionsAPI } from '../hooks/useRoomPermissions';
 import { useLivekitSupport } from '../hooks/useLivekitSupport';
 import { CallAvatarAnimation } from '../styles/Animations.css';
 import { webRTCSupported } from '../utils/rtc';
+import { CallRejoin } from '../features/call-rejoin/CallRejoin';
 
 type IncomingCallInfo = {
   room: Room;
@@ -386,6 +387,7 @@ export function CallEmbedProvider({ children }: CallEmbedProviderProps) {
       {callEmbed && <CallUtils embed={callEmbed} />}
       <CallEmbedRefContextProvider value={callEmbedRef}>
         <IncomingCallListener callEmbed={callEmbed} joined={joined} />
+        <CallRejoin callEmbed={callEmbed} joined={joined} />
         {children}
       </CallEmbedRefContextProvider>
       <div
