@@ -10,6 +10,7 @@ import {
 import { UnreadBadge } from '../../../components/unread-badge';
 import { getFriendsPath } from '../../pathUtils';
 import { useFriends, useFriendsPoller } from '../../../features/friends/useFriends';
+import { useAutoAcceptFriendDMs } from '../../../features/friends/useAutoAcceptFriendDMs';
 
 // Upstream's SidebarItemTooltip returns ReactNode, which this repo's React types reject as a JSX
 // component (TS2786, reported for every upstream tab). Narrow the return type so our file typechecks.
@@ -21,6 +22,7 @@ export function FriendsTab() {
   const navigate = useNavigate();
   // The sidebar is always mounted, so this is the app's single friends poller.
   useFriendsPoller();
+  useAutoAcceptFriendDMs();
   const { lists } = useFriends();
   const incomingCount = lists?.incoming.length ?? 0;
 
