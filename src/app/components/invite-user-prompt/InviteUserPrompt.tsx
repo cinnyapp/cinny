@@ -3,6 +3,7 @@ import React, {
   FormEventHandler,
   KeyboardEventHandler,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -34,7 +35,7 @@ import { isKeyHotkey } from 'is-hotkey';
 import FocusTrap from 'focus-trap-react';
 import { stopPropagation } from '../../utils/keyboard';
 import { useDirectUsers } from '../../hooks/useDirectUsers';
-import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../utils/matrix';
+import { getMxIdLocalPart, getMxIdServer } from '../../utils/matrix';
 import { Membership } from '../../../types/matrix/room';
 import { useAsyncSearch, UseAsyncSearchOptions } from '../../hooks/useAsyncSearch';
 import { highlightText, makeHighlightRegex } from '../../plugins/react-custom-html-parser';
@@ -42,6 +43,11 @@ import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { BreakWord } from '../../styles/Text.css';
 import { useAlive } from '../../hooks/useAlive';
+import { useToast } from '../toast';
+import { useFriends } from '../../features/friends/useFriends';
+import { FriendAvatar } from '../../features/friends/FriendAvatar';
+import { friendDisplayName } from '../../features/friends/userDisplay';
+import { inviteSearchTerm, resolveInviteUserId } from './inviteUserId';
 
 const SEARCH_OPTIONS: UseAsyncSearchOptions = {
   limit: 1000,
@@ -59,17 +65,44 @@ export function InviteUserPrompt({ room, requestClose }: InviteUserProps) {
   const mx = useMatrixClient();
   const alive = useAlive();
 
+  const toast = useToast();
+  const homeserver = mx.getDomain() ?? '';
+
   const inputRef = useRef<HTMLInputElement>(null);
   const directUsers = useDirectUsers();
+  const { lists: friendLists, refresh: refreshFriends } = useFriends();
   const [validUserId, setValidUserId] = useState<string>();
+  // Invited from this dialog; the room's member list may not have caught up yet.
+  const [invitedIds, setInvitedIds] = useState<ReadonlySet<string>>(new Set());
+
+  useEffect(() => {
+    refreshFriends();
+  }, [refreshFriends]);
+
+  const canInvite = useCallback(
+    (userId: string) => {
+      if (invitedIds.has(userId)) return false;
+      const membership = room.getMember(userId)?.membership;
+      return membership !== Membership.Join && membership !== Membership.Invite;
+    },
+    [room, invitedIds]
+  );
+
+  const friendIds = useMemo(
+    () => (friendLists?.friends ?? []).map((friend) => friend.userId),
+    [friendLists]
+  );
+  const invitableFriends = useMemo(
+    () =>
+      friendIds
+        .filter(canInvite)
+        .sort((a, b) => friendDisplayName(mx, a).localeCompare(friendDisplayName(mx, b))),
+    [friendIds, canInvite, mx]
+  );
 
   const filteredUsers = useMemo(
-    () =>
-      directUsers.filter((userId) => {
-        const membership = room.getMember(userId)?.membership;
-        return membership !== Membership.Join;
-      }),
-    [directUsers, room]
+    () => Array.from(new Set([...friendIds, ...directUsers])).filter(canInvite),
+    [friendIds, directUsers, canInvite]
   );
   const [result, search, resetSearch] = useAsyncSearch(
     filteredUsers,
@@ -91,6 +124,24 @@ export function InviteUserPrompt({ room, requestClose }: InviteUserProps) {
 
   const inviting = inviteState.status === AsyncStatus.Loading;
 
+  const inviteDone = (userId: string) => {
+    setInvitedIds((ids) => new Set(ids).add(userId));
+    toast(`Invited ${friendDisplayName(mx, userId)} to ${room.name}`);
+  };
+
+  const handleInviteFriend = (userId: string) => {
+    if (inviting) return;
+    invite(userId, undefined)
+      .then(() => {
+        if (alive()) inviteDone(userId);
+      })
+      .catch((e: unknown) => {
+        if (!alive()) return;
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        toast(`Couldn't invite ${friendDisplayName(mx, userId)}: ${message}`, 'Critical');
+      });
+  };
+
   const handleReset = () => {
     if (inputRef.current) inputRef.current.value = '';
     setValidUserId(undefined);
@@ -106,26 +157,27 @@ export function InviteUserPrompt({ room, requestClose }: InviteUserProps) {
     const reasonInput = target?.reasonInput as HTMLTextAreaElement | undefined;
     const reason = reasonInput?.value.trim();
 
-    invite(validUserId, reason || undefined).then(() => {
-      if (alive()) {
-        handleReset();
-        if (reasonInput) reasonInput.value = '';
-      }
-    });
+    const userId = validUserId;
+    // A failure is shown below the form from inviteState.
+    invite(userId, reason || undefined)
+      .then(() => {
+        if (alive()) {
+          inviteDone(userId);
+          handleReset();
+          if (reasonInput) reasonInput.value = '';
+        }
+      })
+      .catch(() => undefined);
   };
 
   const handleSearchChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
-    const value = evt.currentTarget.value.trim();
-    if (isUserId(value)) {
-      setValidUserId(value);
+    const { value } = evt.currentTarget;
+    setValidUserId(resolveInviteUserId(value, homeserver));
+    const term = inviteSearchTerm(value);
+    if (term) {
+      search(term);
     } else {
-      setValidUserId(undefined);
-      const term = getMxIdLocalPart(value) ?? (value.startsWith('@') ? value.slice(1) : value);
-      if (term) {
-        search(term);
-      } else {
-        resetSearch();
-      }
+      resetSearch();
     }
   };
 
@@ -178,6 +230,43 @@ export function InviteUserPrompt({ room, requestClose }: InviteUserProps) {
                   </IconButton>
                 </Box>
               </Header>
+              {invitableFriends.length > 0 && (
+                <Box
+                  direction="Column"
+                  gap="100"
+                  style={{ padding: `${config.space.S400} ${config.space.S400} 0` }}
+                >
+                  <Text size="L400">Friends</Text>
+                  <Scroll size="300" hideTrack style={{ maxHeight: toRem(220) }}>
+                    <Box direction="Column" gap="100">
+                      {invitableFriends.map((userId) => (
+                        <Box key={userId} alignItems="Center" gap="200">
+                          <FriendAvatar userId={userId} />
+                          <Box grow="Yes" direction="Column">
+                            <Text size="T300" truncate>
+                              {friendDisplayName(mx, userId)}
+                            </Text>
+                            <Text size="T200" priority="300" truncate>
+                              {userId}
+                            </Text>
+                          </Box>
+                          <Button
+                            type="button"
+                            size="300"
+                            variant="Primary"
+                            fill="Soft"
+                            radii="300"
+                            disabled={inviting}
+                            onClick={() => handleInviteFriend(userId)}
+                          >
+                            <Text size="B300">Invite</Text>
+                          </Button>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Scroll>
+                </Box>
+              )}
               <Box
                 as="form"
                 onSubmit={handleSubmit}
@@ -187,14 +276,14 @@ export function InviteUserPrompt({ room, requestClose }: InviteUserProps) {
                 gap="400"
               >
                 <Box direction="Column" gap="100">
-                  <Text size="L400">User ID</Text>
+                  <Text size="L400">Username</Text>
                   <div>
                     <Input
                       size="500"
                       ref={inputRef}
                       onChange={handleSearchChange}
                       onKeyDown={handleKeyDown}
-                      placeholder="@username:server"
+                      placeholder={`username or @username:${homeserver || 'server'}`}
                       name="userIdInput"
                       variant="Background"
                       disabled={inviting}
