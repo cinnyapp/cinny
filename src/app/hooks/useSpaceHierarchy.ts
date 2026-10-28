@@ -6,7 +6,13 @@ import { getHierarchy, GetHierarchyOK } from 'neurone/lib/api/matrix/client/v1/r
 import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { SpaceChildContent } from '../../types/matrix/room';
 import { isRoomId } from '../utils/matrix';
-import { SortFunc, byOrderKey, byTsOldToNew, factoryRoomIdByActivity } from '../utils/sort';
+import {
+  SortFunc,
+  activityTsScope,
+  byOrderKey,
+  byTsOldToNew,
+  factoryRoomIdByActivity,
+} from '../utils/sort';
 import { ErrorCode } from '../cs-errorcode';
 import { useObservableValue } from './useObservableValue';
 import { useClient } from './useClient';
@@ -223,6 +229,7 @@ export const useJoinedHierarchyItems = (
   closedCategories: Set<string>,
   selectedRoomId: string | undefined
 ) => {
+  const ct = useClient();
   const roomToLatestEvent = useRoomsLatestEvent(rooms);
   const [sortByActivity] = useSetting('roomListByActivity');
 
@@ -238,19 +245,13 @@ export const useJoinedHierarchyItems = (
             return total.count > 0 || unreadRooms.has(item.roomId);
           })
           .sort((h1, h2) =>
-            factoryRoomIdByActivity((rId) => roomToLatestEvent.get(rId)?.origin_server_ts)(
-              h1.roomId,
-              h2.roomId
-            )
+            factoryRoomIdByActivity(activityTsScope(ct, roomToLatestEvent))(h1.roomId, h2.roomId)
           );
       }
 
       if (sortByActivity) {
         items.sort((h1, h2) =>
-          factoryRoomIdByActivity((rId) => roomToLatestEvent.get(rId)?.origin_server_ts)(
-            h1.roomId,
-            h2.roomId
-          )
+          factoryRoomIdByActivity(activityTsScope(ct, roomToLatestEvent))(h1.roomId, h2.roomId)
         );
         return items;
       }
@@ -260,6 +261,7 @@ export const useJoinedHierarchyItems = (
       return items;
     },
     [
+      ct,
       roomToLatestEvent,
       closedCategories,
       spaceId,

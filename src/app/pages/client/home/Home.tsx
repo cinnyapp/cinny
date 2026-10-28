@@ -18,7 +18,7 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAtom } from 'jotai';
 import FocusTrap from 'focus-trap-react';
-import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
+import { activityTsScope, factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
 import {
   NavButton,
   NavCategory,
@@ -237,15 +237,16 @@ export function Home() {
           const total = getRoomTotalNotifications(notification);
           return total.count > 0 || unreadRooms.has(roomId);
         })
-        .sort(factoryRoomIdByActivity((rId) => roomToLatestEvent.get(rId)?.origin_server_ts));
+        .sort(factoryRoomIdByActivity(activityTsScope(ct, roomToLatestEvent)));
     }
     if (sortByActivity) {
       return Array.from(rooms).sort(
-        factoryRoomIdByActivity((rId) => roomToLatestEvent.get(rId)?.origin_server_ts)
+        factoryRoomIdByActivity(activityTsScope(ct, roomToLatestEvent))
       );
     }
     return Array.from(rooms).sort(factoryRoomIdByAtoZ(getRoomName));
   }, [
+    ct,
     getRoomName,
     rooms,
     closedCategories,
@@ -376,6 +377,7 @@ export function Home() {
                       ref={virtualizer.measureElement}
                     >
                       <RoomNavItem
+                        key={roomId}
                         roomId={roomId}
                         roomName={getRoomName(roomId) ?? 'Unknown'}
                         avatarUrl={getRoomAvatar(roomId)}

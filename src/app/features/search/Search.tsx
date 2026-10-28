@@ -38,7 +38,7 @@ import {
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
 import { getAllParents, guessPerfectParent } from '../../utils/room';
 import { highlightText, makeHighlightRegex } from '../../plugins/react-custom-html-parser';
-import { factoryRoomIdByActivity } from '../../utils/sort';
+import { activityTsScope, factoryRoomIdByActivity } from '../../utils/sort';
 import { nameInitials } from '../../utils/common';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { useListFocusIndex } from '../../hooks/useListFocusIndex';
@@ -85,19 +85,23 @@ const useTopActiveRooms = (
   const roomToLatestEvent = useObservableValue(ct.roomToLatestEvent);
 
   return useMemo(() => {
-    const getTimestamp = (rId: string) => roomToLatestEvent.get(rId)?.origin_server_ts;
-
     if (searchRoomType === SearchRoomType.Spaces) {
       return spaces;
     }
     if (searchRoomType === SearchRoomType.Directs) {
-      return [...directs].sort(factoryRoomIdByActivity(getTimestamp)).slice(0, 20);
+      return [...directs]
+        .sort(factoryRoomIdByActivity(activityTsScope(ct, roomToLatestEvent)))
+        .slice(0, 20);
     }
     if (searchRoomType === SearchRoomType.Rooms) {
-      return [...rooms].sort(factoryRoomIdByActivity(getTimestamp)).slice(0, 20);
+      return [...rooms]
+        .sort(factoryRoomIdByActivity(activityTsScope(ct, roomToLatestEvent)))
+        .slice(0, 20);
     }
-    return [...rooms, ...directs].sort(factoryRoomIdByActivity(getTimestamp)).slice(0, 20);
-  }, [roomToLatestEvent, rooms, directs, spaces, searchRoomType]);
+    return [...rooms, ...directs]
+      .sort(factoryRoomIdByActivity(activityTsScope(ct, roomToLatestEvent)))
+      .slice(0, 20);
+  }, [ct, roomToLatestEvent, rooms, directs, spaces, searchRoomType]);
 };
 
 const useSearchTargetRooms = (

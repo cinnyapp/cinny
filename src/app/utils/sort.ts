@@ -1,4 +1,18 @@
+import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
+import { ClientContext } from '../../client/context';
+
 export type SortFunc<T> = (a: T, b: T) => number;
+
+export const activityTsScope = (
+  ct: ClientContext,
+  roomToLatestEvent: Map<string, MessageEventWithoutRoomId>
+) => {
+  const getTs = (rId: string) =>
+    roomToLatestEvent.get(rId)?.origin_server_ts ??
+    ct.state.join.create.read.find((ev) => ev.roomId === rId)?.event.origin_server_ts;
+
+  return getTs;
+};
 
 export const factoryRoomIdByActivity =
   (getLatestEventTs: (roomId: string) => number | undefined): SortFunc<string> =>

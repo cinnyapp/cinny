@@ -18,7 +18,7 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import FocusTrap from 'focus-trap-react';
 import { useNavigate } from 'react-router-dom';
-import { factoryRoomIdByActivity } from '../../../utils/sort';
+import { activityTsScope, factoryRoomIdByActivity } from '../../../utils/sort';
 import {
   NavButton,
   NavCategory,
@@ -210,12 +210,13 @@ export function Direct() {
           const total = getRoomTotalNotifications(notification);
           return total.count > 0 || unreadRooms.has(roomId);
         })
-        .sort(factoryRoomIdByActivity((rId) => roomToLatestEvent.get(rId)?.origin_server_ts));
+        .sort(factoryRoomIdByActivity(activityTsScope(ct, roomToLatestEvent)));
     }
     return Array.from(directs).sort(
-      factoryRoomIdByActivity((rId) => roomToLatestEvent.get(rId)?.origin_server_ts)
+      factoryRoomIdByActivity(activityTsScope(ct, roomToLatestEvent))
     );
   }, [
+    ct,
     directs,
     closedCategories,
     roomToNotifications,
@@ -290,6 +291,7 @@ export function Direct() {
                       ref={virtualizer.measureElement}
                     >
                       <RoomNavItem
+                        key={roomId}
                         roomId={roomId}
                         roomName={getRoomName(roomId) ?? 'Unknown'}
                         avatarUrl={getRoomAvatar(roomId)}
