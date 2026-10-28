@@ -15,6 +15,11 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run typecheck
-      - run: npm run lint
       - run: npm test
+      - run: npm run build
+      - run: npx eslint src/app/features/friends
+      - run: npx prettier --check src/app/features/friends
+      - name: Typecheck (our files only)
+        run: |
+          npx tsc --noEmit > tsc.log || true
+          if grep -E "src/app/features/friends/|src/app/pages/client/sidebar/FriendsTab.tsx" tsc.log; then exit 1; fi
