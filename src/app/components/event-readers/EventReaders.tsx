@@ -24,6 +24,8 @@ import { useObservableValuePromise } from '../../hooks/useObservableValue';
 import { useRoomMembersAPI } from '../../hooks/useRoomMembers';
 import { mxcToHttp } from '../../../client/mxcToHttp';
 import { useRoom } from '../../hooks/useRoom';
+import { Time } from '../message';
+import { useSettings } from '../../state/hooks/settings';
 
 export type EventReadersProps = {
   eventId: string;
@@ -34,6 +36,7 @@ export const EventReaders = as<'div', EventReadersProps>(
     const ct = useClient();
     const roomId = useRoom();
     const membersAPI = useRoomMembersAPI();
+    const { hour24Clock, dateFormatString } = useSettings();
 
     const eventReceipt = useObservableValuePromise(
       useMemo(
@@ -41,14 +44,6 @@ export const EventReaders = as<'div', EventReadersProps>(
         [ct, eventId]
       )
     );
-
-    const users: string[] = useMemo(() => {
-      const u = new Set<string>();
-      eventReceipt.value?.forEach((r) => {
-        u.add(r.userId);
-      });
-      return Array.from(u);
-    }, [eventReceipt]);
 
     const useAuthentication = useMediaAuthentication();
     const openProfile = useOpenUserRoomProfile();
@@ -72,48 +67,58 @@ export const EventReaders = as<'div', EventReadersProps>(
         <Box grow="Yes">
           <Scroll visibility="Hover" hideTrack size="300">
             <Box className={css.Content} direction="Column">
-              {users.map((readerId) => {
-                const name = membersAPI.getName(readerId);
-                const avatarMxcUrl = membersAPI.getAvatar(readerId);
-                const avatarUrl = avatarMxcUrl
-                  ? mxcToHttp(ct.session.baseUrl, avatarMxcUrl, useAuthentication).thumbnail({
-                      width: 96,
-                      height: 96,
-                      method: 'crop',
-                    })
-                  : undefined;
+              {Array.from(eventReceipt.value ?? [])
+                .sort((a, b) => b.ts - a.ts)
+                ?.map((receipt) => {
+                  const { userId, ts } = receipt;
+                  const name = membersAPI.getName(userId);
+                  const avatarMxcUrl = membersAPI.getAvatar(userId);
+                  const avatarUrl = avatarMxcUrl
+                    ? mxcToHttp(ct.session.baseUrl, avatarMxcUrl, useAuthentication).thumbnail({
+                        width: 96,
+                        height: 96,
+                        method: 'crop',
+                      })
+                    : undefined;
 
-                return (
-                  <MenuItem
-                    key={readerId}
-                    style={{ padding: `0 ${config.space.S200}` }}
-                    radii="400"
-                    onClick={(event) => {
-                      openProfile(
-                        roomId,
-                        spaceId,
-                        readerId,
-                        getMouseEventCords(event.nativeEvent),
-                        'Bottom'
-                      );
-                    }}
-                    before={
-                      <Avatar size="200">
-                        <UserAvatar
-                          userId={readerId}
-                          src={avatarUrl ?? undefined}
-                          alt={name}
-                          renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+                  return (
+                    <MenuItem
+                      key={`${userId}${ts}`}
+                      style={{ padding: `0 ${config.space.S200}` }}
+                      radii="400"
+                      onClick={(event) => {
+                        openProfile(
+                          roomId,
+                          spaceId,
+                          userId,
+                          getMouseEventCords(event.nativeEvent),
+                          'Bottom'
+                        );
+                      }}
+                      before={
+                        <Avatar size="200">
+                          <UserAvatar
+                            userId={userId}
+                            src={avatarUrl ?? undefined}
+                            alt={name}
+                            renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+                          />
+                        </Avatar>
+                      }
+                      after={
+                        <Time
+                          hour24Clock={hour24Clock}
+                          dateFormatString={dateFormatString}
+                          ts={ts}
                         />
-                      </Avatar>
-                    }
-                  >
-                    <Text size="T400" truncate>
-                      {name}
-                    </Text>
-                  </MenuItem>
-                );
-              })}
+                      }
+                    >
+                      <Text style={{ flexGrow: 1 }} size="T400" truncate>
+                        {name}
+                      </Text>
+                    </MenuItem>
+                  );
+                })}
             </Box>
           </Scroll>
         </Box>
