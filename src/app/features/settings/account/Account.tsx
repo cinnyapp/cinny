@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Text, IconButton, Icon, Icons, Scroll } from 'folds';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { MatrixId } from './MatrixId';
+import { Password } from './Password';
 import { Profile } from './Profile';
 import { ContactInformation } from './ContactInfo';
 import { IgnoredUserList } from './IgnoredUserList';
@@ -32,6 +33,7 @@ export function Account({ requestClose }: AccountProps) {
             <Box direction="Column" gap="700">
               <Profile />
               <MatrixId />
+              <Password />
               <ContactInformation />
               <IgnoredUserList />
             </Box>
