@@ -27,6 +27,10 @@ export const EditorTextarea = style([
     flexGrow: 1,
     height: '100%',
     padding: `${toRem(13)} ${toRem(1)}`,
+    // Correct BiDi rendering for mixed Persian/Arabic + Latin text in RTL mode.
+    // Makes the browser determine each line's direction from its first strong
+    // character, instead of inheriting the global dir="rtl" blindly.
+    unicodeBidi: 'plaintext',
     selectors: {
       [`${EditorTextareaScroll}:first-child &`]: {
         paddingLeft: toRem(13),

@@ -32,7 +32,7 @@ import FocusTrap from 'focus-trap-react';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { SequenceCard } from '../../../components/sequence-card';
 import { useSetting } from '../../../state/hooks/settings';
-import { DateFormat, MessageLayout, MessageSpacing, settingsAtom } from '../../../state/settings';
+import { DateFormat, MessageLayout, MessageSpacing, settingsAtom, TextDirection } from '../../../state/settings';
 import { SettingTile } from '../../../components/setting-tile';
 import { KeySymbol } from '../../../utils/key-symbol';
 import { isMacOS } from '../../../utils/user-agent';
@@ -50,6 +50,80 @@ import { useMessageLayoutItems } from '../../../hooks/useMessageLayout';
 import { useMessageSpacingItems } from '../../../hooks/useMessageSpacing';
 import { useDateFormatItems } from '../../../hooks/useDateFormat';
 import { SequenceCardStyle } from '../styles.css';
+
+const TEXT_DIRECTION_OPTIONS: { value: TextDirection; label: string }[] = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'ltr', label: 'LTR (Left to Right)' },
+  { value: 'rtl', label: 'RTL (Right to Left ‏/ راست‌چین)' },
+];
+
+function SelectTextDirection() {
+  const [textDirection, setTextDirection] = useSetting(settingsAtom, 'textDirection');
+  const [menuCords, setMenuCords] = useState<RectCords>();
+
+  const selectedOption = TEXT_DIRECTION_OPTIONS.find((o) => o.value === textDirection);
+
+  const handleMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setMenuCords(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const handleSelect = (value: TextDirection) => {
+    setTextDirection(value);
+    setMenuCords(undefined);
+  };
+
+  return (
+    <>
+      <Button
+        size="300"
+        variant="Secondary"
+        outlined
+        fill="Soft"
+        radii="300"
+        after={<Icon size="300" src={Icons.ChevronBottom} />}
+        onClick={handleMenu}
+      >
+        <Text size="T300">{selectedOption?.label ?? textDirection}</Text>
+      </Button>
+      <PopOut
+        anchor={menuCords}
+        offset={5}
+        position="Bottom"
+        align="End"
+        content={
+          <FocusTrap
+            focusTrapOptions={{
+              initialFocus: false,
+              onDeactivate: () => setMenuCords(undefined),
+              clickOutsideDeactivates: true,
+              isKeyForward: (evt: KeyboardEvent) =>
+                evt.key === 'ArrowDown' || evt.key === 'ArrowRight',
+              isKeyBackward: (evt: KeyboardEvent) =>
+                evt.key === 'ArrowUp' || evt.key === 'ArrowLeft',
+              escapeDeactivates: stopPropagation,
+            }}
+          >
+            <Menu>
+              <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+                {TEXT_DIRECTION_OPTIONS.map((option) => (
+                  <MenuItem
+                    key={option.value}
+                    size="300"
+                    variant={textDirection === option.value ? 'Primary' : 'Surface'}
+                    radii="300"
+                    onClick={() => handleSelect(option.value)}
+                  >
+                    <Text size="T300">{option.label}</Text>
+                  </MenuItem>
+                ))}
+              </Box>
+            </Menu>
+          </FocusTrap>
+        }
+      />
+    </>
+  );
+}
 
 type ThemeSelectorProps = {
   themeNames: Record<string, string>;
@@ -349,6 +423,14 @@ function Appearance() {
 
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile title="Page Zoom" after={<PageZoomInput />} />
+      </SequenceCard>
+
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Text Direction"
+          description="Layout direction. 'Auto' follows your browser language (RTL for Persian, Arabic, etc.)."
+          after={<SelectTextDirection />}
+        />
       </SequenceCard>
     </Box>
   );

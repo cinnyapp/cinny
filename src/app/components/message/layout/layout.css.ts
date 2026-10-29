@@ -182,6 +182,10 @@ export const UsernameBold = style({
 export const MessageTextBody = recipe({
   base: {
     wordBreak: 'break-word',
+    // BiDi fix: determine direction from the first strong character in each
+    // message, not from the inherited global dir="rtl". This makes mixed
+    // Persian+English messages like "یک پیام english وسط فارسی" render correctly.
+    unicodeBidi: 'plaintext',
   },
   variants: {
     preWrap: {
