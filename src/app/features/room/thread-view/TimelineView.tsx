@@ -46,6 +46,7 @@ import {
   useGetItemElement,
   useJumpHandlers,
   useMessageEditorOutOfViewFocus,
+  useNewDividerVisiblity,
   useOnRangeChange,
   useReplyClickHandler,
   useRestoreScrollToBottom,
@@ -65,7 +66,7 @@ import {
   JumpToLatestButton,
   ComboDivider,
   PlaceholderList,
-  UnreadControls,
+  ThreadUnreadControls,
 } from '../components';
 import { OutboxView } from '../OutboxView';
 import { useUserReadReceipt } from '../../../hooks/useReadReceipt';
@@ -74,6 +75,36 @@ import { MessageContent } from '../../../components/MessageContent';
 import { MessageEditor } from '../message/MessageEditor';
 import { useSendReaction } from '../hooks/useSendReaction';
 import { useWindowFocus } from '../../../hooks/useWindowFocus';
+import { useMarkAsRead } from '../../../hooks/useMarkAsRead';
+
+function ThreadBegins({ ts }: { ts: number }) {
+  return (
+    <Box
+      grow="Yes"
+      alignItems="Center"
+      justifyContent="Center"
+      direction="Column"
+      className={css.ZigZagLine}
+      style={{ padding: `${config.space.S700} ${config.space.S700} ${config.space.S400}` }}
+      gap="700"
+    >
+      <Box
+        style={{ padding: `${config.space.S600} 0` }}
+        grow="Yes"
+        alignItems="Center"
+        justifyContent="Center"
+        direction="Column"
+        gap="300"
+      >
+        <Text size="H1">✦</Text>
+        <Text size="L400">A Thread Begins</Text>
+      </Box>
+      <Text size="T200" align="Center">
+        <DividerTime ts={ts} />
+      </Text>
+    </Box>
+  );
+}
 
 type TimelineViewProps = {
   timeline: ThreadTimeline;
@@ -153,10 +184,6 @@ export function TimelineView({ timeline, threadInputRef, editor, eventId }: Time
   const getScrollElement = useCallback(() => scrollRef.current, []);
 
   const readReceipt = useUserReadReceipt(timeline.threadId);
-  const lastReadEventInTimeline = useMemo(
-    () => !!readReceipt && !!messageBatch.messages.get(readReceipt.eventId),
-    [readReceipt, messageBatch]
-  );
 
   const [eventLoading, setEventLoading] = useState(false);
   useTimelinePrefetch(timeline, PAGINATION_LIMIT, !eventLoading);
@@ -183,13 +210,26 @@ export function TimelineView({ timeline, threadInputRef, editor, eventId }: Time
     atLiveEnd
   );
 
-  const tryAutoMarkAsRead = useCallback(() => {
-    if (!atBottomObservable.read) return;
-    console.log('%cmark as read.', 'background: blue; color: white; padding: 5px 10px;');
-  }, [atBottomObservable]);
-  useObservableValueListener(atBottomObservable, tryAutoMarkAsRead);
+  const { markerTs, markerTsRef } = useUnreadMarker(atBottomLazy, focused, readReceipt?.ts);
 
-  const { markerTs } = useUnreadMarker(atBottomLazy, focused, readReceipt?.ts);
+  const markAsRead = useMarkAsRead(roomId, timeline.threadId);
+
+  const { observeNewDivider, newDividerVisible } = useNewDividerVisiblity(getScrollElement);
+  const lastDividerVisibleTs = useRef<number>();
+  if (newDividerVisible) {
+    lastDividerVisibleTs.current = markerTs;
+  }
+
+  useObservableValueListener(
+    atBottomObservable,
+    useCallback(() => {
+      if (!atBottomObservable.read) return;
+      if (markerTsRef.current === lastDividerVisibleTs.current) {
+        console.log('%cmark as read.', 'background: blue; color: white; padding: 5px 10px;');
+      }
+      // markAsRead();
+    }, [atBottomObservable, markerTsRef])
+  );
 
   useTimelineContainerResizeStickBottom(
     timeline,
@@ -385,6 +425,8 @@ export function TimelineView({ timeline, threadInputRef, editor, eventId }: Time
           messageSpacing={messageSpacing}
           ts={dayDivider ? event.origin_server_ts : undefined}
           replyCount={replyCount}
+          unread={newDivider}
+          ref={newDivider ? observeNewDivider : undefined}
         />
       ) : null;
 
@@ -401,34 +443,16 @@ export function TimelineView({ timeline, threadInputRef, editor, eventId }: Time
 
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
-      {readReceipt && !lastReadEventInTimeline && (
-        <UnreadControls onJumpToUnread={handleJumpToUnread} onMarkAsRead={() => undefined} />
-      )}
+      <ThreadUnreadControls
+        threadId={timeline.threadId}
+        meta={timeline.meta}
+        visible={!newDividerVisible}
+        onJumpToUnread={handleJumpToUnread}
+        onMarkAsRead={markAsRead}
+      />
       <Scroll ref={scrollRef} size="0" visibility="Hover" hideTrack>
         <Box direction="Column" style={{ minHeight: '100%' }}>
-          <Box
-            grow="Yes"
-            alignItems="Center"
-            justifyContent="Center"
-            direction="Column"
-            className={css.ZigZagLine}
-            style={{ padding: config.space.S700 }}
-            gap="700"
-          >
-            <Box
-              grow="Yes"
-              alignItems="Center"
-              justifyContent="Center"
-              direction="Column"
-              gap="300"
-            >
-              <Text size="H1">✦</Text>
-              <Text size="L400">A Thread Begins</Text>
-            </Box>
-            <Text size="T200" align="Center">
-              <DividerTime ts={threadMeta?.rootEvent.origin_server_ts ?? Date.now()} />
-            </Text>
-          </Box>
+          <ThreadBegins ts={threadMeta?.rootEvent.origin_server_ts ?? Date.now()} />
           <Box
             grow="No"
             direction="Column"

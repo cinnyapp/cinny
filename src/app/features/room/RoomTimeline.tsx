@@ -51,6 +51,7 @@ import {
   useGetItemElement,
   useJumpHandlers,
   useMessageEditorOutOfViewFocus,
+  useNewDividerVisiblity,
   useOnRangeChange,
   useReplyClickHandler,
   useRestoreScrollToBottom,
@@ -81,6 +82,7 @@ import { MessageContent } from '../../components/MessageContent';
 import { MessageEditor } from './message/MessageEditor';
 import { useSendReaction } from './hooks/useSendReaction';
 import { useWindowFocus } from '../../hooks/useWindowFocus';
+import { useMarkAsRead } from '../../hooks/useMarkAsRead';
 
 type RoomTimelineProps = {
   eventId?: string;
@@ -163,10 +165,10 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   const getScrollElement = useCallback(() => scrollRef.current, []);
 
   const readReceipt = useUserReadReceipt();
-  const lastReadEventInTimeline = useMemo(
-    () => !!readReceipt && !!messageBatch.messages.get(readReceipt.eventId),
-    [readReceipt, messageBatch]
-  );
+  // const lastReadEventInTimeline = useMemo(
+  //   () => !!readReceipt && !!messageBatch.messages.get(readReceipt.eventId),
+  //   [readReceipt, messageBatch]
+  // );
 
   const [eventLoading, setEventLoading] = useState(false);
   useTimelinePrefetch(timeline, PAGINATION_LIMIT, !eventLoading);
@@ -193,13 +195,26 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
     atLiveEnd
   );
 
-  const tryAutoMarkAsRead = useCallback(() => {
-    if (!atBottomObservable.read) return;
-    console.log('%cmark as read.', 'background: blue; color: white; padding: 5px 10px;');
-  }, [atBottomObservable]);
-  useObservableValueListener(atBottomObservable, tryAutoMarkAsRead);
+  const { markerTs, markerTsRef } = useUnreadMarker(atBottomLazy, focused, readReceipt?.ts);
 
-  const { markerTs } = useUnreadMarker(atBottomLazy, focused, readReceipt?.ts);
+  const markAsRead = useMarkAsRead(roomId);
+
+  const { observeNewDivider, newDividerVisible } = useNewDividerVisiblity(getScrollElement);
+  const lastDividerVisibleTs = useRef<number>();
+  if (newDividerVisible) {
+    lastDividerVisibleTs.current = markerTs;
+  }
+
+  useObservableValueListener(
+    atBottomObservable,
+    useCallback(() => {
+      if (!atBottomObservable.read) return;
+      if (markerTsRef.current === lastDividerVisibleTs.current) {
+        console.log('%cmark as read.', 'background: blue; color: white; padding: 5px 10px;');
+      }
+      // markAsRead();
+    }, [atBottomObservable, markerTsRef])
+  );
 
   useTimelineContainerResizeStickBottom(
     timeline,
@@ -455,6 +470,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
           messageSpacing={messageSpacing}
           ts={dayDivider ? event.origin_server_ts : undefined}
           unread={newDivider}
+          ref={newDivider ? observeNewDivider : undefined}
         />
       ) : null;
 
@@ -471,9 +487,11 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
 
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
-      {readReceipt && !lastReadEventInTimeline && (
-        <UnreadControls onJumpToUnread={handleJumpToUnread} onMarkAsRead={() => undefined} />
-      )}
+      <UnreadControls
+        visible={!newDividerVisible}
+        onJumpToUnread={handleJumpToUnread}
+        onMarkAsRead={markAsRead}
+      />
       <Scroll ref={scrollRef} visibility="Hover">
         <Box
           ref={timelineContainerRef}
