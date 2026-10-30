@@ -264,7 +264,7 @@ export const useUnreadMarker = (
     markerTsRef.current = readReceiptTs;
   }
 
-  return { markerTs: markerTsRef.current };
+  return { markerTsRef, markerTs: markerTsRef.current };
 };
 
 const AT_BOTTOM_KEY = randomStr();
@@ -343,6 +343,41 @@ export const useFocusItem = (timeline: TimelineView, scrollToItem: ScrollToItem)
   return {
     focusItem,
     setFocusItem,
+  };
+};
+
+export const useNewDividerVisiblity = (getScrollElement: () => HTMLElement | null) => {
+  const [newDividerVisible, setNewDividerVisibility] = useState(false);
+
+  const observer = useIntersectionObserver(
+    useCallback((entries) => {
+      const target = entries.find((t) => t.isIntersecting);
+      const intersect = target?.isIntersecting ?? false;
+      setNewDividerVisibility(intersect);
+    }, []),
+    useCallback(
+      () => ({
+        root: getScrollElement(),
+        rootMargin: '100px',
+      }),
+      [getScrollElement]
+    )
+  );
+
+  const observeNewDivider = useCallback(
+    (element: HTMLElement | null) => {
+      setNewDividerVisibility(false);
+      observer?.disconnect();
+      if (element) {
+        observer?.observe(element);
+      }
+    },
+    [observer]
+  );
+
+  return {
+    observeNewDivider,
+    newDividerVisible,
   };
 };
 
