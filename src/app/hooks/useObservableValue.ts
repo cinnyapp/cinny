@@ -23,6 +23,18 @@ export function useObservableValue<T>(observableValue: ObservableValue<T>): T {
   return value;
 }
 
+export function useScopedObservableValue<T, R>(
+  observableValue: ObservableValue<T>,
+  scope: (value: T) => R
+): R {
+  const value = useSyncExternalStore(
+    useCallback((c) => observableValue.subscribe(c), [observableValue]),
+    useCallback(() => scope(observableValue.read), [observableValue, scope])
+  );
+
+  return value;
+}
+
 export function useObservableValueOptionally<T>(
   observableValue?: ObservableValue<T>
 ): T | undefined {
