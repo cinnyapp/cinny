@@ -74,8 +74,14 @@ const SLOW_LOAD_LEAD: Record<SlowLoadKind, string> = {
   degraded: 'The saved copy had to be rebuilt: loading all your chats once',
 };
 /** Honest copy for the one-time full load (nothing saved in this browser). */
-const firstLoadNote = (elapsedMs: number, kind: SlowLoadKind) =>
-  `${SLOW_LOAD_LEAD[kind]} (a minute or two). Every later start takes seconds. ${mmss(elapsedMs)}`;
+const firstLoadNote = (elapsedMs: number, kind: SlowLoadKind, interrupted: boolean) =>
+  interrupted
+    ? `${
+        SLOW_LOAD_LEAD[kind]
+      }. It was cut off (page in the background, screen off or offline) and starts over. It only runs while this page stays open and in front: keep it open 2-3 minutes. ${mmss(
+        elapsedMs
+      )}`
+    : `${SLOW_LOAD_LEAD[kind]} (2-3 minutes). Every later start takes seconds. ${mmss(elapsedMs)}`;
 
 function ClientRootLoading({ mx }: { mx?: MatrixClient }) {
   // On accounts with a very large number of rooms, restoring the persisted
@@ -113,7 +119,18 @@ function ClientRootLoading({ mx }: { mx?: MatrixClient }) {
   });
   let slowKind: SlowLoadKind = 'degraded';
   if (firstLoad) slowKind = snapshot ? 'cleared' : 'first';
-  const note = slowLoad ? firstLoadNote(elapsed, slowKind) : undefined;
+  // the full /sync was cut off (tab in the background, device slept, network
+  // gone): say so instead of a clock that pretends to be loading. Sticky: the
+  // SDK stays RECONNECTING while its retry runs, so "cut off, starts over" is
+  // true both while paused and after the page is back in front.
+  const [interrupted, setInterrupted] = useState(false);
+  useSyncState(
+    mx,
+    useCallback((state) => {
+      if (state === 'RECONNECTING' || state === 'ERROR') setInterrupted(true);
+    }, [])
+  );
+  const note = slowLoad ? firstLoadNote(elapsed, slowKind, interrupted) : undefined;
 
   useEffect(() => {
     if (!mx) return undefined;

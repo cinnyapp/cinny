@@ -4,6 +4,7 @@ import {
   MatrixClient,
   IndexedDBStore,
   IndexedDBCryptoStore,
+  SyncState,
 } from 'matrix-js-sdk';
 import { SyncApi } from 'matrix-js-sdk/lib/sync.js';
 
@@ -325,9 +326,30 @@ const buildLiteSyncFilter = async (mx: MatrixClient): Promise<Filter | undefined
   return filter;
 };
 
+/**
+ * A page that is not in front (phone browser in the background, screen off,
+ * laptop asleep) has its running /sync cut off and its timers frozen; the SDK
+ * then waits in its keep-alive loop. When the page is back in front, retry at
+ * once instead of waiting for the next keep-alive poke (up to 10 s).
+ * 2026-10-31: a one-time full load sat 74 min like that in a background tab.
+ */
+const installRetryOnWake = (mx: MatrixClient) => {
+  const wake = () => {
+    if (document.visibilityState !== 'visible' || !mx.clientRunning) return;
+    const state = mx.getSyncState();
+    if (state === SyncState.Reconnecting || state === SyncState.Error) {
+      mx.retryImmediately();
+    }
+  };
+  document.addEventListener('visibilitychange', wake);
+  window.addEventListener('pageshow', wake);
+  window.addEventListener('focus', wake);
+};
+
 export const startClient = async (mx: MatrixClient) => {
   markStartup('start-client');
   const filter = await buildLiteSyncFilter(mx);
+  installRetryOnWake(mx);
   await mx.startClient({
     lazyLoadMembers: true,
     ...(filter ? { filter } : {}),
