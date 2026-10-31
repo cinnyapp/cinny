@@ -144,12 +144,15 @@ export const useTimelineScrollRestore = (
       const batch = timeline.batch.read;
       if (typeof scrollTop === 'number') {
         scrollEl.scrollTo({ top: scrollTop, behavior: 'instant' });
-      } else if (batch.next.end && batch.messages.events.length > 0) {
+      } else if (batch.next.end && batch.size > 0) {
         scrollToBottom(scrollEl, 'instant');
       }
     }
     return () => {
       if (!scrollEl) return;
+      const batch = timeline.batch.read;
+      // do not set cache if event are not loaded yet.
+      if (batch.size === 0) return;
       // eslint-disable-next-line no-param-reassign
       timeline.range.scrollTopCache = scrollEl.scrollTop;
     };
