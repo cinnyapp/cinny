@@ -36,6 +36,7 @@ import { MegolmBackup } from './MegolmBackup';
 import { CallSessions } from './call';
 import { randomStr } from '../app/utils/common';
 import { ReadMarker } from './ReadMarker';
+import { MemberCache } from './MemberCache';
 
 export type StateContext = {
   join: {
@@ -129,6 +130,7 @@ export type ClientContext = {
   threadNotifications: ObservableValue<UnreadThreadNotificationsObject[]>;
   roomToTimeline: ObservableValue<Map<string, Timeline>>;
   readMarker: ReadMarker;
+  memberCache: MemberCache;
 
   pendingMemberRooms: ObservableValue<string[]>;
   verificationRequest: Observable<InboundVerification | OutboundVerification>;

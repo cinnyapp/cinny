@@ -38,7 +38,7 @@ import { usePowerLevelTags, usePowerLevelTagsState } from '../../hooks/usePowerL
 import { Timeline } from '../../../client/room';
 import { useObservableValue, useObservableValueListener } from '../../hooks/useObservableValue';
 import { useClient } from '../../hooks/useClient';
-import { useRoomMembersAPI } from '../../hooks/useRoomMembers';
+import { useRoomMembersAPI, useRoomMembersAPIWithCache } from '../../hooks/useRoomMembers';
 import { useGetRoomName } from '../../hooks/storage/useGetRoomName';
 import { useRoomHeroes } from '../../hooks/storage/useRoomHeros';
 import { useGetRoomAvatar } from '../../hooks/storage/useGetRoomAvatar';
@@ -127,7 +127,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   const getRoomName = useGetRoomName(getRoomHeroes);
   const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
 
-  const membersAPI = useRoomMembersAPI();
+  const membersAPI = useRoomMembersAPIWithCache(roomId, useRoomMembersAPI());
   const creatorsTag = useRoomCreatorsTag();
   const powerLevelTagsState = usePowerLevelTagsState(roomId);
   const powerLevelTags = usePowerLevelTags(powerLevels, powerLevelTagsState.value);

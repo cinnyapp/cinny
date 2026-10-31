@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo } from 'react';
+import { createContext, useContext, useMemo } from 'react';
 import { PendingObservableResult } from 'neurone/lib/utils/observable';
 import { RoomMembership } from 'neurone/lib/api/types';
 import { useClient } from './useClient';
@@ -10,6 +10,7 @@ import {
   roomMemberContentDisplayname,
   roomMemberContentMembership,
 } from '../utils/room';
+import { MemberCache } from '../../client/MemberCache';
 
 export type GetRoomMemberCallback = (userId: string) => JoinRoomMemberObject | undefined;
 export type GetRoomMemberNameCallback = (userId: string) => string;
@@ -21,71 +22,76 @@ export type RoomMembersAPI = {
   getAvatar: GetRoomMemberAvatarCallback;
   getMembership: GetRoomMemberMembershipCallback;
   memberEventsResult: PendingObservableResult<JoinRoomMemberObject[]>;
+  userIdToMemberEvent: Record<string, JoinRoomMemberObject>;
 };
 
-const useMemberEvents = (
-  memberEventsResult: PendingObservableResult<JoinRoomMemberObject[]>
-): RoomMembersAPI => {
-  const memberEvents = memberEventsResult.value;
+class MembersAPI implements RoomMembersAPI {
+  public userIdToMemberEvent: Record<string, JoinRoomMemberObject>;
 
-  const userIdToMemberEvent = useMemo(() => {
-    const uToM: Record<string, JoinRoomMemberObject> = {};
-    memberEvents?.forEach((member) => {
-      uToM[member.userId] = member;
-    });
-    return uToM;
-  }, [memberEvents]);
+  constructor(
+    public readonly memberEventsResult: PendingObservableResult<JoinRoomMemberObject[]>,
+    uIdToMemberEvent?: Record<string, JoinRoomMemberObject>
+  ) {
+    this.userIdToMemberEvent = uIdToMemberEvent ?? {};
+    if (!uIdToMemberEvent) {
+      memberEventsResult.value?.forEach((member) => {
+        this.userIdToMemberEvent[member.userId] = member;
+      });
+    }
+  }
 
-  const getMember: GetRoomMemberCallback = useCallback(
-    (userId) => {
-      const member = userIdToMemberEvent[userId];
+  getMember = (userId: string): JoinRoomMemberObject | undefined => {
+    const member = this.userIdToMemberEvent[userId];
+    return member;
+  };
+
+  getName = (userId: string): string => {
+    const member = this.getMember(userId);
+
+    const content = member?.event.content;
+    const displayName = content ? roomMemberContentDisplayname(content) : undefined;
+
+    return displayName || getMxIdLocalPart(userId) || userId;
+  };
+
+  getAvatar = (userId: string): string | undefined => {
+    const member = this.getMember(userId);
+
+    const content = member?.event.content;
+    if (!content) return undefined;
+
+    return roomMemberContentAvatarUrl(content);
+  };
+
+  getMembership = (userId: string): RoomMembership | undefined => {
+    const member = this.getMember(userId);
+
+    const content = member?.event.content;
+    if (!content) return undefined;
+
+    return roomMemberContentMembership(content);
+  };
+}
+
+class MembersAPIWithCache extends MembersAPI implements RoomMembersAPI {
+  constructor(
+    private readonly memberCache: MemberCache,
+    private readonly roomId: string,
+    memberEventsResult: PendingObservableResult<JoinRoomMemberObject[]>,
+    uIdToMemberEvent?: Record<string, JoinRoomMemberObject>
+  ) {
+    super(memberEventsResult, uIdToMemberEvent);
+  }
+
+  override getMember = (userId: string): JoinRoomMemberObject | undefined => {
+    const member = this.userIdToMemberEvent[userId];
+    if (member) {
+      this.memberCache.putMember(member);
       return member;
-    },
-    [userIdToMemberEvent]
-  );
-
-  const getName: GetRoomMemberNameCallback = useCallback(
-    (userId) => {
-      const member = getMember(userId);
-
-      const content = member?.event.content;
-      const displayName = content ? roomMemberContentDisplayname(content) : undefined;
-
-      return displayName || getMxIdLocalPart(userId) || userId;
-    },
-    [getMember]
-  );
-
-  const getAvatar: GetRoomMemberAvatarCallback = useCallback(
-    (userId) => {
-      const member = getMember(userId);
-
-      const content = member?.event.content;
-      if (!content) return undefined;
-
-      return roomMemberContentAvatarUrl(content);
-    },
-    [getMember]
-  );
-
-  const getMembership: GetRoomMemberMembershipCallback = useCallback(
-    (userId) => {
-      const member = getMember(userId);
-
-      const content = member?.event.content;
-      if (!content) return undefined;
-
-      return roomMemberContentMembership(content);
-    },
-    [getMember]
-  );
-
-  const api: RoomMembersAPI = useMemo(
-    () => ({ memberEventsResult, getMember, getName, getAvatar, getMembership }),
-    [memberEventsResult, getMember, getName, getAvatar, getMembership]
-  );
-  return api;
-};
+    }
+    return this.memberCache.getMember(this.roomId, userId);
+  };
+}
 
 export const useCreateRoomMembersAPI = (roomId: string): RoomMembersAPI => {
   const ct = useClient();
@@ -96,7 +102,8 @@ export const useCreateRoomMembersAPI = (roomId: string): RoomMembersAPI => {
 
   const memberEventsResult = useObservableValuePromise(memberEventsPromise);
 
-  return useMemberEvents(memberEventsResult);
+  const api = useMemo(() => new MembersAPI(memberEventsResult), [memberEventsResult]);
+  return api;
 };
 
 const RoomMembersAPIContext = createContext<RoomMembersAPI | null>(null);
@@ -109,6 +116,22 @@ export const useRoomMembersAPI = (): RoomMembersAPI => {
   }
 
   return api;
+};
+
+export const useRoomMembersAPIWithCache = (roomId: string, api: RoomMembersAPI): RoomMembersAPI => {
+  const ct = useClient();
+  const apiWithCache = useMemo(
+    () =>
+      new MembersAPIWithCache(
+        ct.memberCache,
+        roomId,
+        api.memberEventsResult,
+        api.userIdToMemberEvent
+      ),
+    [api, ct, roomId]
+  );
+
+  return apiWithCache;
 };
 
 export const useRoomMembers = (roomId: string, users: string[]) => {
@@ -132,5 +155,6 @@ export const useRoomMembers = (roomId: string, users: string[]) => {
     return memberEventsResult;
   }, [memberEventsResult]);
 
-  return useMemberEvents(memberEvents);
+  const api = useMemo(() => new MembersAPI(memberEvents), [memberEvents]);
+  return api;
 };

@@ -45,6 +45,7 @@ import { clearUserLocalStorage } from './localStorage';
 import { CallSessions } from './call';
 import { randomStr } from '../app/utils/common';
 import { ReadMarker } from './ReadMarker';
+import { MemberCache } from './MemberCache';
 
 export type InitializeClientResult = {
   ct: ClientContext;
@@ -164,6 +165,7 @@ export const initializeClient = async (session: Session): Promise<InitializeClie
     roomToVersion,
     roomToTimeline,
     readMarker,
+    memberCache: new MemberCache(),
 
     pendingMemberRooms,
     verificationRequest,
