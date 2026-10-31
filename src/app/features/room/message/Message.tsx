@@ -84,6 +84,7 @@ import { ReactionContent } from '../../../../types/matrix/common';
 import { RoomMembersAPI } from '../../../hooks/useRoomMembers';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { usePowerLevelsContext } from '../../../hooks/usePowerLevels';
+import { useCanMessage } from '../hooks/useCanMessage';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -989,6 +990,7 @@ export const Message = as<'div', MessageProps>(
   ) => {
     const ct = useClient();
     const senderId = event.sender;
+    const canMessage = useCanMessage();
 
     const [hover, setHover] = useState(false);
     const { hoverProps } = useHover({ onHoverChange: setHover });
@@ -1091,32 +1093,36 @@ export const Message = as<'div', MessageProps>(
                   </PopOut>
                 )}
 
-                <OptionButton
-                  onClick={onReplyClick}
-                  iconSrc={Icons.ReplyArrow}
-                  tooltip="Reply"
-                  senderId={event.sender}
-                  eventId={event.event_id}
-                />
-                {canThread && (
-                  <OptionButton
-                    onClick={onThreadClick}
-                    iconSrc={Icons.Thread}
-                    tooltip="Reply in Thread"
-                    senderId={event.sender}
-                    eventId={event.event_id}
-                  />
-                )}
-                {onEditId && (
-                  <EditButtonHost event={event}>
+                {canMessage && (
+                  <>
                     <OptionButton
-                      onClick={() => onEditId(event.event_id)}
-                      iconSrc={Icons.Pencil}
-                      tooltip="Edit"
+                      onClick={onReplyClick}
+                      iconSrc={Icons.ReplyArrow}
+                      tooltip="Reply"
                       senderId={event.sender}
                       eventId={event.event_id}
                     />
-                  </EditButtonHost>
+                    {canThread && (
+                      <OptionButton
+                        onClick={onThreadClick}
+                        iconSrc={Icons.Thread}
+                        tooltip="Reply in Thread"
+                        senderId={event.sender}
+                        eventId={event.event_id}
+                      />
+                    )}
+                    {onEditId && (
+                      <EditButtonHost event={event}>
+                        <OptionButton
+                          onClick={() => onEditId(event.event_id)}
+                          iconSrc={Icons.Pencil}
+                          tooltip="Edit"
+                          senderId={event.sender}
+                          eventId={event.event_id}
+                        />
+                      </EditButtonHost>
+                    )}
+                  </>
                 )}
                 <PopOut
                   anchor={menuAnchor}
@@ -1167,56 +1173,16 @@ export const Message = as<'div', MessageProps>(
                               onClose={closeMenu}
                             />
                           )}
-                          <MenuItem
-                            size="300"
-                            after={<Icon size="100" src={Icons.ReplyArrow} />}
-                            radii="300"
-                            data-event-id={event.event_id}
-                            data-sender-id={event.sender}
-                            onClick={(evt: any) => {
-                              onReplyClick(evt);
-                              closeMenu();
-                            }}
-                          >
-                            <Text
-                              className={css.MessageMenuItemText}
-                              as="span"
-                              size="T300"
-                              truncate
-                            >
-                              Reply
-                            </Text>
-                          </MenuItem>
-                          {canThread && (
-                            <MenuItem
-                              size="300"
-                              after={<Icon src={Icons.Thread} size="100" />}
-                              radii="300"
-                              data-event-id={event.event_id}
-                              onClick={(evt: any) => {
-                                onThreadClick?.(evt);
-                                closeMenu();
-                              }}
-                            >
-                              <Text
-                                className={css.MessageMenuItemText}
-                                as="span"
-                                size="T300"
-                                truncate
-                              >
-                                Reply in Thread
-                              </Text>
-                            </MenuItem>
-                          )}
-                          {onEditId && (
-                            <EditButtonHost event={event}>
+                          {canMessage && (
+                            <>
                               <MenuItem
                                 size="300"
-                                after={<Icon size="100" src={Icons.Pencil} />}
+                                after={<Icon size="100" src={Icons.ReplyArrow} />}
                                 radii="300"
                                 data-event-id={event.event_id}
-                                onClick={() => {
-                                  onEditId(event.event_id);
+                                data-sender-id={event.sender}
+                                onClick={(evt: any) => {
+                                  onReplyClick(evt);
                                   closeMenu();
                                 }}
                               >
@@ -1226,10 +1192,54 @@ export const Message = as<'div', MessageProps>(
                                   size="T300"
                                   truncate
                                 >
-                                  Edit Message
+                                  Reply
                                 </Text>
                               </MenuItem>
-                            </EditButtonHost>
+                              {canThread && (
+                                <MenuItem
+                                  size="300"
+                                  after={<Icon src={Icons.Thread} size="100" />}
+                                  radii="300"
+                                  data-event-id={event.event_id}
+                                  onClick={(evt: any) => {
+                                    onThreadClick?.(evt);
+                                    closeMenu();
+                                  }}
+                                >
+                                  <Text
+                                    className={css.MessageMenuItemText}
+                                    as="span"
+                                    size="T300"
+                                    truncate
+                                  >
+                                    Reply in Thread
+                                  </Text>
+                                </MenuItem>
+                              )}
+                              {onEditId && (
+                                <EditButtonHost event={event}>
+                                  <MenuItem
+                                    size="300"
+                                    after={<Icon size="100" src={Icons.Pencil} />}
+                                    radii="300"
+                                    data-event-id={event.event_id}
+                                    onClick={() => {
+                                      onEditId(event.event_id);
+                                      closeMenu();
+                                    }}
+                                  >
+                                    <Text
+                                      className={css.MessageMenuItemText}
+                                      as="span"
+                                      size="T300"
+                                      truncate
+                                    >
+                                      Edit Message
+                                    </Text>
+                                  </MenuItem>
+                                </EditButtonHost>
+                              )}
+                            </>
                           )}
                           {!hideReadReceipts && (
                             <MessageReadReceiptItem eventId={event.event_id} onClose={closeMenu} />
