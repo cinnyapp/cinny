@@ -9,15 +9,17 @@ import { PermissionGroups, Powers, PowersEditor } from '../../common-settings/pe
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
 import { useClient } from '../../../hooks/useClient';
+import { useObservableValue } from '../../../hooks/useObservableValue';
 
 type PermissionsProps = {
   requestClose: () => void;
 };
 export function Permissions({ requestClose }: PermissionsProps) {
   const ct = useClient();
-  const room = useRoom();
+  const roomId = useRoom();
   const powerLevels = usePowerLevelsContext();
-  const creators = useRoomCreators(room);
+  const creators = useRoomCreators(roomId);
+  const encryptedRooms = useObservableValue(ct.encryptedRooms);
 
   const permissions = useRoomPermissions(creators, powerLevels);
 
@@ -26,7 +28,7 @@ export function Permissions({ requestClose }: PermissionsProps) {
     StateEventType.RoomPowerLevels,
     ct.session.userId
   );
-  const permissionGroups = usePermissionGroups();
+  const permissionGroups = usePermissionGroups(encryptedRooms.has(roomId));
 
   const [powerEditor, setPowerEditor] = useState(false);
 

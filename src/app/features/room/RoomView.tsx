@@ -1,6 +1,5 @@
 import React, { MutableRefObject, useRef } from 'react';
 import { Box, Text, config } from 'folds';
-import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { useEditor } from '../../components/editor';
 import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 import { RoomTimeline } from './RoomTimeline';
@@ -9,15 +8,13 @@ import { RoomInput } from './RoomInput';
 import { RoomViewFollowing } from './RoomViewFollowing';
 import { Page } from '../../components/page';
 import { useSetting } from '../../state/hooks/settings';
-import { useRoomPermissions } from '../../hooks/useRoomPermissions';
-import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoom } from '../../hooks/useRoom';
 import { useObservableValue } from '../../hooks/useObservableValue';
 import { useClient } from '../../hooks/useClient';
-import { MessageEvent } from '../../../types/matrix/room';
 import { Timeline } from '../../../client/room';
 import { useEditorAutoFocus } from './hooks/useEditorAutoFocus';
 import { FollowingMembersPlaceholder } from './components';
+import { useCanMessage } from './hooks/useCanMessage';
 
 type RoomViewProps = {
   eventId?: string;
@@ -37,13 +34,8 @@ export function RoomView({ eventId, timeline, threadFocusRef }: RoomViewProps) {
   const roomToReplacement = useObservableValue(ct.roomToReplacement);
   const replacementRoom = roomToReplacement.get(roomId);
 
-  const creators = useRoomCreators(roomId);
-  const powerLevels = usePowerLevelsContext();
-
-  const permissions = useRoomPermissions(creators, powerLevels);
-  const canMessage = permissions.event(MessageEvent.RoomMessage, ct.session.userId);
-
   useEditorAutoFocus(editor, threadFocusRef, false);
+  const canMessage = useCanMessage();
 
   return (
     <Page ref={roomViewRef}>

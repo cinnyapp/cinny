@@ -10,6 +10,8 @@ import { useSetting } from '../../../state/hooks/settings';
 import { FollowingMembersPlaceholder } from '../components';
 import { ThreadViewFollowing } from './ThreadViewFollowing';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
+import { useCanMessage } from '../hooks/useCanMessage';
+import { RoomInputPlaceholder } from '../RoomInputPlaceholder';
 
 type ThreadViewProps = {
   threadTimeline: ThreadTimeline;
@@ -23,6 +25,8 @@ export function ThreadView({ threadTimeline, threadFocusRef, requestClose }: Thr
   const threadInputRef = useRef<HTMLDivElement>(null);
   const threadViewRef = useRef<HTMLDivElement>(null);
   const [hideActivity] = useSetting('hideActivity');
+
+  const canMessage = useCanMessage();
 
   useThreadFocus(threadTimeline.threadId, threadFocusRef, threadViewRef);
   useEditorAutoFocus(editor, threadFocusRef, true);
@@ -67,12 +71,22 @@ export function ThreadView({ threadTimeline, threadFocusRef, requestClose }: Thr
       <TimelineView timeline={threadTimeline} threadInputRef={threadInputRef} editor={editor} />
       <Box shrink="No" direction="Column">
         <div style={{ padding: `0 ${config.space.S400}` }}>
-          <RoomInput
-            editor={editor}
-            fileDropContainerRef={threadViewRef}
-            ref={threadInputRef}
-            threadId={threadTimeline.threadId}
-          />
+          {canMessage ? (
+            <RoomInput
+              editor={editor}
+              fileDropContainerRef={threadViewRef}
+              ref={threadInputRef}
+              threadId={threadTimeline.threadId}
+            />
+          ) : (
+            <RoomInputPlaceholder
+              style={{ padding: config.space.S200 }}
+              alignItems="Center"
+              justifyContent="Center"
+            >
+              <Text align="Center">No permission</Text>
+            </RoomInputPlaceholder>
+          )}
         </div>
         {hideActivity ? (
           <FollowingMembersPlaceholder />

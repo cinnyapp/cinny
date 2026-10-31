@@ -112,7 +112,7 @@ type TimelineViewProps = {
   timeline: ThreadTimeline;
   threadInputRef: RefObject<HTMLElement>;
   editor: Editor;
-  eventId: string;
+  eventId?: string;
 };
 
 const PAGINATION_LIMIT = 80;

@@ -1,18 +1,31 @@
 import { useMemo } from 'react';
 import { MessageEvent, StateEvent } from '../../../../types/matrix/room';
-import { PermissionGroup } from '../../common-settings/permissions';
+import { PermissionGroup, PermissionItem } from '../../common-settings/permissions';
 
-export const usePermissionGroups = (): PermissionGroup[] => {
+export const usePermissionGroups = (encryptedRoom: boolean): PermissionGroup[] => {
   const groups: PermissionGroup[] = useMemo(() => {
+    const messages: PermissionItem[] = [
+      {
+        location: {
+          key: MessageEvent.RoomMessage,
+        },
+        name: 'Send Messages',
+      },
+    ];
+
+    if (encryptedRoom) {
+      messages.push({
+        location: {
+          key: MessageEvent.RoomMessageEncrypted,
+        },
+        name: 'Send Encrypted Messages',
+      });
+    }
+
     const messagesGroup: PermissionGroup = {
       name: 'Messages',
       items: [
-        {
-          location: {
-            key: MessageEvent.RoomMessage,
-          },
-          name: 'Send Messages',
-        },
+        ...messages,
         {
           location: {
             key: MessageEvent.Sticker,
@@ -222,7 +235,7 @@ export const usePermissionGroups = (): PermissionGroup[] => {
       roomSettingsGroup,
       otherSettingsGroup,
     ];
-  }, []);
+  }, [encryptedRoom]);
 
   return groups;
 };

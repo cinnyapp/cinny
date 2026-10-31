@@ -32,6 +32,7 @@ import { callChatAtom } from '../../state/callEmbed';
 import { isCallRoom } from '../../utils/room';
 import { CallChatView } from './CallChatView';
 import { CallView } from '../call/CallView';
+import { CanMessageProvider } from './hooks/useCanMessage';
 
 export function Room() {
   const { eventId } = useParams();
@@ -86,68 +87,70 @@ export function Room() {
     <RoomMembersAPIProvider value={membersAPI}>
       <PowerLevelsContextProvider value={powerLevels}>
         <PowerLevelTagsContextProvider value={powerLevelTags}>
-          {timeline && (
-            <Box grow="Yes">
-              <TimelineViewProvider value={timeline}>
-                {callView && (screenSize === ScreenSize.Desktop || !chat) && (
-                  <Box grow="Yes" direction="Column">
-                    <RoomViewHeader callView />
-                    <Box grow="Yes">
-                      <CallView />
+          <CanMessageProvider>
+            {timeline && (
+              <Box grow="Yes">
+                <TimelineViewProvider value={timeline}>
+                  {callView && (screenSize === ScreenSize.Desktop || !chat) && (
+                    <Box grow="Yes" direction="Column">
+                      <RoomViewHeader callView />
+                      <Box grow="Yes">
+                        <CallView />
+                      </Box>
                     </Box>
-                  </Box>
-                )}
-                {!callView && !(threadTimeline && screenSize !== ScreenSize.Desktop) && (
-                  <Box grow="Yes" direction="Column">
-                    <RoomViewHeader />
-                    <Box grow="Yes">
+                  )}
+                  {!callView && !(threadTimeline && screenSize !== ScreenSize.Desktop) && (
+                    <Box grow="Yes" direction="Column">
+                      <RoomViewHeader />
+                      <Box grow="Yes">
+                        <RoomView
+                          key={roomId}
+                          threadFocusRef={threadFocusRef}
+                          timeline={timeline}
+                          eventId={eventId}
+                        />
+                      </Box>
+                    </Box>
+                  )}
+                </TimelineViewProvider>
+
+                {callView && chat && !threadTimeline && (
+                  <TimelineViewProvider value={timeline}>
+                    {screenSize === ScreenSize.Desktop && (
+                      <Line variant="Background" direction="Vertical" size="300" />
+                    )}
+                    <CallChatView>
                       <RoomView
                         key={roomId}
                         threadFocusRef={threadFocusRef}
                         timeline={timeline}
                         eventId={eventId}
                       />
-                    </Box>
-                  </Box>
+                    </CallChatView>
+                  </TimelineViewProvider>
                 )}
-              </TimelineViewProvider>
 
-              {callView && chat && !threadTimeline && (
-                <TimelineViewProvider value={timeline}>
-                  {screenSize === ScreenSize.Desktop && (
-                    <Line variant="Background" direction="Vertical" size="300" />
-                  )}
-                  <CallChatView>
-                    <RoomView
-                      key={roomId}
+                {threadTimeline && (
+                  <TimelineViewProvider key={threadTimeline.threadId} value={threadTimeline}>
+                    {screenSize === ScreenSize.Desktop && (
+                      <Line variant="Background" direction="Vertical" size="300" />
+                    )}
+                    <ThreadView
+                      threadTimeline={threadTimeline}
                       threadFocusRef={threadFocusRef}
-                      timeline={timeline}
-                      eventId={eventId}
+                      requestClose={() => timeline.closeThread()}
                     />
-                  </CallChatView>
-                </TimelineViewProvider>
-              )}
-
-              {threadTimeline && (
-                <TimelineViewProvider key={threadTimeline.threadId} value={threadTimeline}>
-                  {screenSize === ScreenSize.Desktop && (
+                  </TimelineViewProvider>
+                )}
+                {!threadTimeline && !callView && screenSize === ScreenSize.Desktop && isDrawer && (
+                  <>
                     <Line variant="Background" direction="Vertical" size="300" />
-                  )}
-                  <ThreadView
-                    threadTimeline={threadTimeline}
-                    threadFocusRef={threadFocusRef}
-                    requestClose={() => timeline.closeThread()}
-                  />
-                </TimelineViewProvider>
-              )}
-              {!threadTimeline && !callView && screenSize === ScreenSize.Desktop && isDrawer && (
-                <>
-                  <Line variant="Background" direction="Vertical" size="300" />
-                  <MembersDrawer key={roomId} />
-                </>
-              )}
-            </Box>
-          )}
+                    <MembersDrawer key={roomId} />
+                  </>
+                )}
+              </Box>
+            )}
+          </CanMessageProvider>
         </PowerLevelTagsContextProvider>
       </PowerLevelsContextProvider>
     </RoomMembersAPIProvider>
