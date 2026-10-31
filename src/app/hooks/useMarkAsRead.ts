@@ -18,6 +18,10 @@ export const useMarkAsRead = (roomId: string, threadId?: string) => {
   }, [ct, roomId, threadId]);
 
   const markAsRead = useCallback(async () => {
+    // do not mark as read until first sync is complete
+    // and we have latest read markers.
+    if (ct.firstSync) return;
+
     const latestEvent = ct.roomToLatestEvent.read.get(roomId);
     const notification = threadId
       ? ct.threadNotifications.read.find(
