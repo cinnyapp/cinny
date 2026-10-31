@@ -4,7 +4,7 @@ import { EventType } from 'matrix-js-sdk';
 import { ReactEditor } from 'slate-react';
 import { isKeyHotkey } from 'is-hotkey';
 import { useStateEvent } from '../../hooks/useStateEvent';
-import { StateEvent } from '../../../types/matrix/room';
+import { StateEvent, MessageEvent } from '../../../types/matrix/room';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useEditor } from '../../components/editor';
@@ -71,7 +71,11 @@ export function RoomView({ eventId }: { eventId?: string }) {
   const creators = useRoomCreators(room);
 
   const permissions = useRoomPermissions(creators, powerLevels);
-  const canMessage = permissions.event(EventType.RoomMessage, mx.getSafeUserId());
+  const isEncrypted = mx.isRoomEncrypted(roomId);
+  const canMessage = permissions.event(
+    isEncrypted ? MessageEvent.RoomMessageEncrypted : EventType.RoomMessage,
+    mx.getSafeUserId()
+  );
 
   useKeyDown(
     window,
