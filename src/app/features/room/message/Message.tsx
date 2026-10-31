@@ -1092,7 +1092,6 @@ export const Message = as<'div', MessageProps>(
                     />
                   </PopOut>
                 )}
-
                 {canMessage && (
                   <>
                     <OptionButton
@@ -1124,38 +1123,110 @@ export const Message = as<'div', MessageProps>(
                     )}
                   </>
                 )}
-                <PopOut
-                  anchor={menuAnchor}
-                  position="Bottom"
-                  align={menuAnchor?.width === 0 ? 'Start' : 'End'}
-                  offset={menuAnchor?.width === 0 ? 0 : undefined}
-                  content={
-                    <FocusTrap
-                      focusTrapOptions={{
-                        initialFocus: false,
-                        onDeactivate: () => setMenuAnchor(undefined),
-                        clickOutsideDeactivates: true,
-                        isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
-                        isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
-                        escapeDeactivates: stopPropagation,
+                <OptionButton
+                  onClick={handleOpenMenu}
+                  iconSrc={Icons.VerticalDots}
+                  tooltip="Options"
+                  senderId={event.sender}
+                  eventId={event.event_id}
+                  pressed={!!menuAnchor}
+                />
+              </Box>
+            </Menu>
+          </div>
+        )}
+
+        {menuAnchor && (
+          <PopOut
+            anchor={menuAnchor}
+            position="Bottom"
+            align={menuAnchor?.width === 0 ? 'Start' : 'End'}
+            offset={menuAnchor?.width === 0 ? 0 : undefined}
+            content={
+              <FocusTrap
+                focusTrapOptions={{
+                  initialFocus: false,
+                  onDeactivate: () => setMenuAnchor(undefined),
+                  clickOutsideDeactivates: true,
+                  isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                  isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                  escapeDeactivates: stopPropagation,
+                }}
+              >
+                <Menu>
+                  {canSendReaction && (
+                    <MessageQuickReactions
+                      onReaction={(key, shortcode) => {
+                        onReactionToggle(event.event_id, key, shortcode);
+                        closeMenu();
                       }}
-                    >
-                      <Menu>
-                        {canSendReaction && (
-                          <MessageQuickReactions
-                            onReaction={(key, shortcode) => {
-                              onReactionToggle(event.event_id, key, shortcode);
+                    />
+                  )}
+                  <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                    {canSendReaction && (
+                      <MenuItem
+                        size="300"
+                        after={<Icon size="100" src={Icons.SmilePlus} />}
+                        radii="300"
+                        onClick={handleAddReactions}
+                      >
+                        <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
+                          Add Reaction
+                        </Text>
+                      </MenuItem>
+                    )}
+                    {reactionEvents && (
+                      <MessageAllReactionItem reactionEvents={reactionEvents} onClose={closeMenu} />
+                    )}
+                    {canMessage && (
+                      <>
+                        <MenuItem
+                          size="300"
+                          after={<Icon size="100" src={Icons.ReplyArrow} />}
+                          radii="300"
+                          data-event-id={event.event_id}
+                          data-sender-id={event.sender}
+                          onClick={(evt: any) => {
+                            onReplyClick(evt);
+                            closeMenu();
+                          }}
+                        >
+                          <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
+                            Reply
+                          </Text>
+                        </MenuItem>
+                        {canThread && (
+                          <MenuItem
+                            size="300"
+                            after={<Icon src={Icons.Thread} size="100" />}
+                            radii="300"
+                            data-event-id={event.event_id}
+                            onClick={(evt: any) => {
+                              onThreadClick?.(evt);
                               closeMenu();
                             }}
-                          />
+                          >
+                            <Text
+                              className={css.MessageMenuItemText}
+                              as="span"
+                              size="T300"
+                              truncate
+                            >
+                              Reply in Thread
+                            </Text>
+                          </MenuItem>
                         )}
-                        <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                          {canSendReaction && (
+                        {onEditId && (
+                          <EditButtonHost event={event}>
                             <MenuItem
                               size="300"
-                              after={<Icon size="100" src={Icons.SmilePlus} />}
+                              after={<Icon size="100" src={Icons.Pencil} />}
                               radii="300"
-                              onClick={handleAddReactions}
+                              data-event-id={event.event_id}
+                              onClick={() => {
+                                onEditId(event.event_id);
+                                closeMenu();
+                              }}
                             >
                               <Text
                                 className={css.MessageMenuItemText}
@@ -1163,124 +1234,39 @@ export const Message = as<'div', MessageProps>(
                                 size="T300"
                                 truncate
                               >
-                                Add Reaction
+                                Edit Message
                               </Text>
                             </MenuItem>
-                          )}
-                          {reactionEvents && (
-                            <MessageAllReactionItem
-                              reactionEvents={reactionEvents}
-                              onClose={closeMenu}
-                            />
-                          )}
-                          {canMessage && (
-                            <>
-                              <MenuItem
-                                size="300"
-                                after={<Icon size="100" src={Icons.ReplyArrow} />}
-                                radii="300"
-                                data-event-id={event.event_id}
-                                data-sender-id={event.sender}
-                                onClick={(evt: any) => {
-                                  onReplyClick(evt);
-                                  closeMenu();
-                                }}
-                              >
-                                <Text
-                                  className={css.MessageMenuItemText}
-                                  as="span"
-                                  size="T300"
-                                  truncate
-                                >
-                                  Reply
-                                </Text>
-                              </MenuItem>
-                              {canThread && (
-                                <MenuItem
-                                  size="300"
-                                  after={<Icon src={Icons.Thread} size="100" />}
-                                  radii="300"
-                                  data-event-id={event.event_id}
-                                  onClick={(evt: any) => {
-                                    onThreadClick?.(evt);
-                                    closeMenu();
-                                  }}
-                                >
-                                  <Text
-                                    className={css.MessageMenuItemText}
-                                    as="span"
-                                    size="T300"
-                                    truncate
-                                  >
-                                    Reply in Thread
-                                  </Text>
-                                </MenuItem>
-                              )}
-                              {onEditId && (
-                                <EditButtonHost event={event}>
-                                  <MenuItem
-                                    size="300"
-                                    after={<Icon size="100" src={Icons.Pencil} />}
-                                    radii="300"
-                                    data-event-id={event.event_id}
-                                    onClick={() => {
-                                      onEditId(event.event_id);
-                                      closeMenu();
-                                    }}
-                                  >
-                                    <Text
-                                      className={css.MessageMenuItemText}
-                                      as="span"
-                                      size="T300"
-                                      truncate
-                                    >
-                                      Edit Message
-                                    </Text>
-                                  </MenuItem>
-                                </EditButtonHost>
-                              )}
-                            </>
-                          )}
-                          {!hideReadReceipts && (
-                            <MessageReadReceiptItem eventId={event.event_id} onClose={closeMenu} />
-                          )}
-                          {showDeveloperTools && (
-                            <MessageSourceCodeItem event={event} onClose={closeMenu} />
-                          )}
-                          <MessageCopyLinkItem eventId={event.event_id} onClose={closeMenu} />
-                          {canPinEvent && (
-                            <MessagePinItem eventId={event.event_id} onClose={closeMenu} />
-                          )}
-                        </Box>
-                        {((!redacted && canDelete) || event.sender !== ct.session.userId) && (
-                          <>
-                            <Line size="300" />
-                            <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                              {!redacted && canDelete && (
-                                <MessageDeleteItem eventId={event.event_id} onClose={closeMenu} />
-                              )}
-                              {event.sender !== ct.session.userId && (
-                                <MessageReportItem eventId={event.event_id} onClose={closeMenu} />
-                              )}
-                            </Box>
-                          </>
+                          </EditButtonHost>
                         )}
-                      </Menu>
-                    </FocusTrap>
-                  }
-                >
-                  <OptionButton
-                    onClick={handleOpenMenu}
-                    iconSrc={Icons.VerticalDots}
-                    tooltip="Options"
-                    senderId={event.sender}
-                    eventId={event.event_id}
-                    pressed={!!menuAnchor}
-                  />
-                </PopOut>
-              </Box>
-            </Menu>
-          </div>
+                      </>
+                    )}
+                    {!hideReadReceipts && (
+                      <MessageReadReceiptItem eventId={event.event_id} onClose={closeMenu} />
+                    )}
+                    {showDeveloperTools && (
+                      <MessageSourceCodeItem event={event} onClose={closeMenu} />
+                    )}
+                    <MessageCopyLinkItem eventId={event.event_id} onClose={closeMenu} />
+                    {canPinEvent && <MessagePinItem eventId={event.event_id} onClose={closeMenu} />}
+                  </Box>
+                  {((!redacted && canDelete) || event.sender !== ct.session.userId) && (
+                    <>
+                      <Line size="300" />
+                      <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                        {!redacted && canDelete && (
+                          <MessageDeleteItem eventId={event.event_id} onClose={closeMenu} />
+                        )}
+                        {event.sender !== ct.session.userId && (
+                          <MessageReportItem eventId={event.event_id} onClose={closeMenu} />
+                        )}
+                      </Box>
+                    </>
+                  )}
+                </Menu>
+              </FocusTrap>
+            }
+          />
         )}
 
         {reply}
