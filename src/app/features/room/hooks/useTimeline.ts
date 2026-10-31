@@ -39,7 +39,7 @@ import { inSameDay, minuteDifference } from '../../../utils/time';
 import { getThreadId } from '../../../utils/room';
 import { ItemRange, ScrollToElement, ScrollToItem } from '../../../hooks/useVirtualPaginator';
 import { randomStr } from '../../../utils/common';
-import { useObservableValue } from '../../../hooks/useObservableValue';
+import { useObservableValue, useObservableValueListener } from '../../../hooks/useObservableValue';
 import { ReadReceiptObject } from '../../../../client/storage/collections';
 import { useAlive } from '../../../hooks/useAlive';
 
@@ -203,7 +203,8 @@ export const useTimelineContainerResizeStickBottom = (
 
         if (atBottomObservable.read) {
           const batchChange = timeline.batch.read.change;
-          const messageArrived = batchChange.type === 'Grow' && batchChange.dir === 'f';
+          const liveEnd = timeline.batch.read.next.end;
+          const messageArrived = liveEnd && batchChange.type === 'Grow' && batchChange.dir === 'f';
           scrollToBottom(scrollElement, messageArrived ? 'smooth' : 'instant');
         }
       };
@@ -379,6 +380,39 @@ export const useNewDividerVisiblity = (getScrollElement: () => HTMLElement | nul
     observeNewDivider,
     newDividerVisible,
   };
+};
+
+export const useAutoMarkAsRead = (
+  atBottomObservable: ObservableValue<boolean>,
+  markerTsRef: RefObject<number | undefined>,
+  lastDividerVisibleTs: RefObject<number | undefined>,
+  markAsRead: () => void
+) => {
+  const alive = useAlive();
+
+  const autoMarkAsRead = useCallback(() => {
+    if (!alive()) return;
+    if (!atBottomObservable.read) return;
+    if (markerTsRef.current === lastDividerVisibleTs.current) {
+      markAsRead();
+    }
+  }, [atBottomObservable, markerTsRef, lastDividerVisibleTs, markAsRead, alive]);
+
+  return autoMarkAsRead;
+};
+
+export const useMessageArrive = (timeline: TimelineView, onArrive: () => void) => {
+  useObservableValueListener(
+    timeline.batch,
+    useCallback(
+      (v) => {
+        const msgArrived = v.next.end && v.change.type === 'Grow';
+        if (!msgArrived) return;
+        onArrive();
+      },
+      [onArrive]
+    )
+  );
 };
 
 export const useJumpHandlers = (

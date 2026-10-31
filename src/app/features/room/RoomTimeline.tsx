@@ -44,12 +44,14 @@ import { useRoomHeroes } from '../../hooks/storage/useRoomHeros';
 import { useGetRoomAvatar } from '../../hooks/storage/useGetRoomAvatar';
 import {
   useAtBottomToggle,
+  useAutoMarkAsRead,
   useEditorResizeStickBottom,
   useEventCollapse,
   useEventDivider,
   useFocusItem,
   useGetItemElement,
   useJumpHandlers,
+  useMessageArrive,
   useMessageEditorOutOfViewFocus,
   useNewDividerVisiblity,
   useOnRangeChange,
@@ -165,10 +167,6 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
   const getScrollElement = useCallback(() => scrollRef.current, []);
 
   const readReceipt = useUserReadReceipt();
-  // const lastReadEventInTimeline = useMemo(
-  //   () => !!readReceipt && !!messageBatch.messages.get(readReceipt.eventId),
-  //   [readReceipt, messageBatch]
-  // );
 
   const [eventLoading, setEventLoading] = useState(false);
   useTimelinePrefetch(timeline, PAGINATION_LIMIT, !eventLoading);
@@ -205,16 +203,21 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
     lastDividerVisibleTs.current = markerTs;
   }
 
-  useObservableValueListener(
+  const autoMarkAsRead = useAutoMarkAsRead(
     atBottomObservable,
-    useCallback(() => {
-      if (!atBottomObservable.read) return;
-      if (markerTsRef.current === lastDividerVisibleTs.current) {
-        console.log('%cmark as read.', 'background: blue; color: white; padding: 5px 10px;');
-      }
-      // markAsRead();
-    }, [atBottomObservable, markerTsRef])
+    markerTsRef,
+    lastDividerVisibleTs,
+    markAsRead
   );
+
+  useMessageArrive(
+    timeline,
+    useCallback(() => {
+      setTimeout(autoMarkAsRead, 100);
+    }, [autoMarkAsRead])
+  );
+
+  useObservableValueListener(atBottomObservable, autoMarkAsRead);
 
   useTimelineContainerResizeStickBottom(
     timeline,

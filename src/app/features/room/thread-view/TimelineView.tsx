@@ -39,12 +39,14 @@ import { useGetRoomName } from '../../../hooks/storage/useGetRoomName';
 import { useRoomHeroes } from '../../../hooks/storage/useRoomHeros';
 import {
   useAtBottomToggle,
+  useAutoMarkAsRead,
   useEditorResizeStickBottom,
   useEventCollapse,
   useEventDivider,
   useFocusItem,
   useGetItemElement,
   useJumpHandlers,
+  useMessageArrive,
   useMessageEditorOutOfViewFocus,
   useNewDividerVisiblity,
   useOnRangeChange,
@@ -220,16 +222,21 @@ export function TimelineView({ timeline, threadInputRef, editor, eventId }: Time
     lastDividerVisibleTs.current = markerTs;
   }
 
-  useObservableValueListener(
+  const autoMarkAsRead = useAutoMarkAsRead(
     atBottomObservable,
-    useCallback(() => {
-      if (!atBottomObservable.read) return;
-      if (markerTsRef.current === lastDividerVisibleTs.current) {
-        console.log('%cmark as read.', 'background: blue; color: white; padding: 5px 10px;');
-      }
-      // markAsRead();
-    }, [atBottomObservable, markerTsRef])
+    markerTsRef,
+    lastDividerVisibleTs,
+    markAsRead
   );
+
+  useMessageArrive(
+    timeline,
+    useCallback(() => {
+      setTimeout(autoMarkAsRead, 100);
+    }, [autoMarkAsRead])
+  );
+
+  useObservableValueListener(atBottomObservable, autoMarkAsRead);
 
   useTimelineContainerResizeStickBottom(
     timeline,
