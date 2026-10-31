@@ -12,31 +12,64 @@
         <img alt="Sponsor Cinny" src="https://img.shields.io/opencollective/all/cinny?logo=opencollective&style=social"></a>
 </p>
 
-A Matrix client focusing primarily on simple, elegant and secure interface. The main goal is to have an instant messaging application that is easy on people and has a modern touch.
+A Matrix client focusing primarily on simple, elegant and secure interface.
+The main goal is to have an instant messaging application that is easy on
+people and has a modern touch.
 - [Roadmap](https://github.com/orgs/cinnyapp/projects/1)
 - [Contributing](./CONTRIBUTING.md)
 
 > [!IMPORTANT] 
-We are currently in the [process of replacing the matrix-js-sdk](https://github.com/cinnyapp/cinny/issues/257#issuecomment-3714406704) with our own SDK. As a result, we will not be accepting any pull requests until further notice.
-Thank you for your understanding.
+We are currently in the process of [replacing] the matrix-js-sdk with our
+own SDK. As a result, we will not be accepting any pull requests until
+further notice. Thank you for your understanding.
+
+[replacing]: https://github.com/cinnyapp/cinny/issues/257#issuecomment-3714406704
 
 <img align="center" src="https://raw.githubusercontent.com/cinnyapp/cinny-site/main/assets/preview2-light.png" height="380">
 
 ## Getting started
-The web app is available at [app.cinny.in](https://app.cinny.in/) and gets updated on each new release. The `dev` branch is continuously deployed at [dev.cinny.in](https://dev.cinny.in) but keep in mind that it could have things broken.
+The web app is available at [app.cinny.in] and gets updated on each new
+release. The `dev` branch is continuously deployed at [dev.cinny.in]
+but keep in mind that it could have things broken.
 
-You can also download our desktop app from the [cinny-desktop repository](https://github.com/cinnyapp/cinny-desktop).
+You can also download our desktop app from the [cinny-desktop repository].
+
+[app.cinny.in]: https://app.cinny.in
+[dev.cinny.in]: https://dev.cinny.in
+[cinny-desktop repository]: https://github.com/cinnyapp/cinny-desktop 
+
+## Contributing and Developing
+
+If you have any ideas, issues, etc. regarding Cinny, or would like to
+contribute to Cinny through pull requests, please check out our
+["Contributing to Cinny"](CONTRIBUTING.md) document. Those who would like
+to get involved with Cinny's development as well should also read the
+["Developing Cinny"](HACKING.md) document for more technical details.
 
 ## Self-hosting
-To host Cinny on your own, simply download the tarball from [GitHub releases](https://github.com/cinnyapp/cinny/releases/latest), and serve the files from `dist/` using your preferred webserver. Alternatively, you can just pull the docker image from [DockerHub](https://hub.docker.com/r/ajbura/cinny) or [GitHub Container Registry](https://github.com/cinnyapp/cinny/pkgs/container/cinny).
+To host Cinny on your own, simply download the tarball from
+[GitHub releases], and serve the files from `dist/` using your preferred
+webserver. Alternatively, you can just pull the docker image from
+[DockerHub] or [GitHub Container Registry].
 
 * The default homeservers and explore pages are defined in [`config.json`](config.json).
 
-* You need to set up redirects to serve the assests. Example configurations; [netlify](netlify.toml), [nginx](contrib/nginx/cinny.domain.tld.conf), [caddy](contrib/caddy/caddyfile).
-    * If you have trouble configuring redirects you can [enable hash routing](config.json#L35) — the url in the browser will have a `/#/` between the domain and open channel (ie. `app.cinny.in/#/home/` instead of `app.cinny.in/home/`) but you won't have to configure your webserver.
+* You need to set up redirects to serve the assests. Example configurations;
+[netlify](netlify.toml), [nginx](contrib/nginx/cinny.domain.tld.conf),
+[caddy](contrib/caddy/caddyfile).
+    * If you have trouble configuring redirects you can
+    [enable hash routing](config.json#L35) — the url in the browser will have
+    a `/#/` between the domain and open channel (ie. `app.cinny.in/#/home/`
+    instead of `app.cinny.in/home/`) but you won't have to configure your webserver.
 
-* To deploy on subdirectory, you need to rebuild the app youself after updating the `base` path in [`build.config.ts`](build.config.ts).
-    * For example, if you want to deploy on `https://cinny.in/app`, then set `base: '/app'`.
+* To deploy on subdirectory, you need to rebuild the app youself after
+updating the `base` path in [`build.config.ts`](build.config.ts).
+    * For example, if you want to deploy on `https://cinny.in/app`, then
+    set `base: '/app'`.
+
+[GitHub releases]: https://github.com/cinnyapp/cinny/releases/latest
+[DockerHub]: https://hub.docker.com/r/ajbura/cinny
+[GitHub Container Registry]: https://github.com/cinnyapp/cinny/pkgs/container/cinny
 
 <details><summary><b>PGP Public Key to verify tarball</b></summary>
 
@@ -85,31 +118,11 @@ mxFo+ioe/ABCufSmyqFye0psX3Sp
 ```
 </details>
 
-## Local development
-> [!TIP]
-> We recommend using a version manager as versions change very quickly. You will likely need to switch between multiple Node.js versions based on the needs of different projects you're working on. [NVM on windows](https://github.com/coreybutler/nvm-windows#installation--upgrades) on Windows and [nvm](https://github.com/nvm-sh/nvm) on Linux/macOS are pretty good choices. Recommended nodejs version is Krypton LTS (v24.13.1).
+## License
+Cinny Project  
+Copyright © 2024–present Ajay Bura  
+https://cinny.in  
 
-Execute the following commands to start a development server:
-```sh
-npm ci # Installs all dependencies
-npm start # Serve a development version
-```
-
-To build the app:
-```sh
-npm run build # Compiles the app into the dist/ directory
-```
-
-### Running with Docker
-This repository includes a Dockerfile, which builds the application from source and serves it with Nginx on port 80. To
-use this locally, you can build the container like so:
-```
-docker build -t cinny:latest .
-```
-
-You can then run the container you've built with a command similar to this:
-```
-docker run -p 8080:80 cinny:latest
-```
-
-This will forward your `localhost` port 8080 to the container's port 80. You can visit the app in your browser by navigating to `http://localhost:8080`.
+Cinny is licensed under the GNU Affero General Public License, 
+Version 3 of the License (AGPL-3.0-only).
+You may obtain a copy of the License at https://www.gnu.org/licenses/agpl-3.0.html
