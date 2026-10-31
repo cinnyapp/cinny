@@ -450,13 +450,15 @@ export function TimelineView({ timeline, threadInputRef, editor, eventId }: Time
 
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
-      <ThreadUnreadControls
-        threadId={timeline.threadId}
-        meta={timeline.meta}
-        visible={!newDividerVisible}
-        onJumpToUnread={handleJumpToUnread}
-        onMarkAsRead={markAsRead}
-      />
+      {events.length > 0 && !eventLoading && (
+        <ThreadUnreadControls
+          threadId={timeline.threadId}
+          meta={timeline.meta}
+          visible={!newDividerVisible}
+          onJumpToUnread={handleJumpToUnread}
+          onMarkAsRead={markAsRead}
+        />
+      )}
       <Scroll ref={scrollRef} size="0" visibility="Hover" hideTrack>
         <Box direction="Column" style={{ minHeight: '100%' }}>
           <ThreadBegins ts={threadMeta?.rootEvent.origin_server_ts ?? Date.now()} />

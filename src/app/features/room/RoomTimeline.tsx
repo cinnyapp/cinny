@@ -490,11 +490,13 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
 
   return (
     <Box grow="Yes" style={{ position: 'relative' }}>
-      <UnreadControls
-        visible={!newDividerVisible}
-        onJumpToUnread={handleJumpToUnread}
-        onMarkAsRead={markAsRead}
-      />
+      {events.length > 0 && !eventLoading && (
+        <UnreadControls
+          visible={!newDividerVisible}
+          onJumpToUnread={handleJumpToUnread}
+          onMarkAsRead={markAsRead}
+        />
+      )}
       <Scroll ref={scrollRef} visibility="Hover">
         <Box
           ref={timelineContainerRef}
