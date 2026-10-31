@@ -60,7 +60,7 @@ export class ReadMarker {
     if (err) {
       throw err.data.error ?? err.data.errcode ?? 'Unknown Error';
     }
-    // await this.updateStore(roomId, receiptType, eventId, threadId);
+    await this.updateStore(roomId, receiptType, eventId, threadId);
   }
 
   // fetch the actual latest event from the server.
