@@ -2,6 +2,7 @@
 import React, {
   Dispatch,
   MouseEventHandler,
+  ReactNode,
   RefObject,
   SetStateAction,
   useCallback,
@@ -126,6 +127,8 @@ import { useAccessiblePowerTagColors, useGetMemberPowerTag } from '../../hooks/u
 import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
+import { MessageRenderFailed, SafeBoundary } from '../../components/error-boundary/SafeBoundary';
+import { recordError } from '../../components/error-boundary/errorReport';
 
 const TimelineFloat = as<'div', css.TimelineFloatVariants>(
   ({ position, className, ...props }, ref) => (
@@ -419,7 +422,10 @@ const getEmptyTimeline = () => ({
 });
 
 const getRoomUnreadInfo = (room: Room, scrollTo = false) => {
-  const readUptoEventId = room.getEventReadUpTo(room.client.getUserId() ?? '');
+  // `ignoreSynthesized = true` so this matches what `markAsRead` compares against:
+  // the js-sdk's synthesized receipt for our own messages must not be mistaken for
+  // an acknowledgement the server knows about.
+  const readUptoEventId = room.getEventReadUpTo(room.client.getUserId() ?? '', true);
   if (!readUptoEventId) return undefined;
   const evtTimeline = getEventTimeline(room, readUptoEventId);
   const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
@@ -616,7 +622,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             // Check if the document is in focus (user is actively viewing the app),
             // and either there are no unread messages or the latest message is from the current user.
             // If either condition is met, trigger the markAsRead function to send a read receipt.
-            requestAnimationFrame(() => markAsRead(mx, mEvt.getRoomId()!, hideActivity));
+            requestAnimationFrame(() =>
+              // automatic receipt: never clears a manual "mark as unread"
+              markAsRead(mx, mEvt.getRoomId()!, hideActivity, false)
+            );
           }
 
           if (!document.hasFocus() && !unreadInfo) {
@@ -709,13 +718,25 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const tryAutoMarkAsRead = useCallback(() => {
     const readUptoEventId = readUptoEventIdRef.current;
     if (!readUptoEventId) {
-      requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity));
+      requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity, false));
       return;
     }
     const evtTimeline = getEventTimeline(room, readUptoEventId);
-    const latestTimeline = evtTimeline && getFirstLinkedTimeline(evtTimeline, Direction.Forward);
+    if (!evtTimeline) {
+      // The server-side read-up-to event is too old to be found in any loaded
+      // timeline (e.g. the receipt was pinned far behind by a bridge or a bot
+      // posting as us). If the user is viewing the live timeline at its end,
+      // advance the receipt to the latest event instead of silently doing
+      // nothing — otherwise the room's badge can never be cleared by reading
+      // it (stuck-unread bug).
+      if (atLiveEndRef.current) {
+        requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity, false));
+      }
+      return;
+    }
+    const latestTimeline = getFirstLinkedTimeline(evtTimeline, Direction.Forward);
     if (latestTimeline === room.getLiveTimeline()) {
-      requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity));
+      requestAnimationFrame(() => markAsRead(mx, room.roomId, hideActivity, false));
     }
   }, [mx, room, hideActivity]);
 
@@ -1049,6 +1070,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             highlight={highlighted}
             edit={editId === mEventId}
             canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
+            canRedact={canRedact}
             canSendReaction={canSendReaction}
             canPinEvent={canPinEvent}
             imagePackRooms={imagePackRooms}
@@ -1106,6 +1128,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                 htmlReactParserOptions={htmlReactParserOptions}
                 linkifyOpts={linkifyOpts}
                 outlineAttachment={messageLayout === MessageLayout.Bubble}
+                roomId={room.roomId}
+                eventId={mEvent.getId()}
               />
             )}
           </Message>
@@ -1131,6 +1155,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             highlight={highlighted}
             edit={editId === mEventId}
             canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
+            canRedact={canRedact}
             canSendReaction={canSendReaction}
             canPinEvent={canPinEvent}
             imagePackRooms={imagePackRooms}
@@ -1212,6 +1237,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                       htmlReactParserOptions={htmlReactParserOptions}
                       linkifyOpts={linkifyOpts}
                       outlineAttachment={messageLayout === MessageLayout.Bubble}
+                      roomId={room.roomId}
+                      eventId={mEvent.getId()}
                     />
                   );
                 }
@@ -1249,6 +1276,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             collapse={collapse}
             highlight={highlighted}
             canDelete={canRedact || (canDeleteOwn && mEvent.getSender() === mx.getUserId())}
+            canRedact={canRedact}
             canSendReaction={canSendReaction}
             canPinEvent={canPinEvent}
             imagePackRooms={imagePackRooms}
@@ -1656,9 +1684,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       prevEvent.getType() === mEvent.getType() &&
       minuteDifference(prevEvent.getTs(), mEvent.getTs()) < 2;
 
-    const eventJSX = reactionOrEditEvent(mEvent)
-      ? null
-      : renderMatrixEvent(
+    let rawEventJSX: ReactNode = null;
+    if (!reactionOrEditEvent(mEvent)) {
+      try {
+        rawEventJSX = renderMatrixEvent(
           mEvent.getType(),
           typeof mEvent.getStateKey() === 'string',
           mEventId,
@@ -1667,6 +1696,23 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           timelineSet,
           collapsed
         );
+      } catch (err) {
+        // The renderer itself threw (before any component mounted) — show the
+        // per-message fallback instead of taking the whole timeline down.
+        recordError(`message ${mEventId}`, err);
+        rawEventJSX = (
+          <MessageRenderFailed key={mEventId} where={`message ${mEventId}`} error={err} />
+        );
+      }
+    }
+    // Each message gets its own boundary: a component that throws while
+    // rendering one message replaces only that message with a one-line
+    // "could not be shown — Retry / Report", its siblings keep rendering.
+    const eventJSX = rawEventJSX ? (
+      <SafeBoundary key={mEventId} where={`message ${mEventId}`} variant="message">
+        {rawEventJSX}
+      </SafeBoundary>
+    ) : null;
     prevEvent = mEvent;
     isPrevRendered = !!eventJSX;
 

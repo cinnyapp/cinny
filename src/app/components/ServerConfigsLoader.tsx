@@ -4,6 +4,7 @@ import { AsyncStatus, useAsyncCallbackValue } from '../hooks/useAsyncCallback';
 import { useMatrixClient } from '../hooks/useMatrixClient';
 import { MediaConfig } from '../hooks/useMediaConfig';
 import { promiseFulfilledResult } from '../utils/common';
+import { probeAuthMetadata } from '../utils/authMetadataProbe';
 
 export type ServerConfigs = {
   capabilities?: Capabilities;
@@ -23,7 +24,7 @@ export function ServerConfigsLoader({ children }: ServerConfigsLoaderProps) {
       const result = await Promise.allSettled([
         mx.getCapabilities(),
         mx.getMediaConfig(),
-        mx.getAuthMetadata(),
+        probeAuthMetadata(mx.getHomeserverUrl(), () => mx.getAuthMetadata()),
       ]);
 
       const capabilities = promiseFulfilledResult(result[0]);
@@ -31,10 +32,14 @@ export function ServerConfigsLoader({ children }: ServerConfigsLoaderProps) {
       const authMetadata = promiseFulfilledResult(result[2]);
       let validatedAuthMetadata: ValidatedAuthMetadata | undefined;
 
-      try {
-        validatedAuthMetadata = validateAuthMetadata(authMetadata);
-      } catch (e) {
-        console.error(e);
+      // No metadata at all is the normal case on a password-login homeserver -
+      // only complain about metadata that exists but is invalid.
+      if (authMetadata) {
+        try {
+          validatedAuthMetadata = validateAuthMetadata(authMetadata);
+        } catch (e) {
+          console.error(e);
+        }
       }
 
       return {

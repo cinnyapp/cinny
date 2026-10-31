@@ -26,6 +26,14 @@ import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
 import { useSelectedRoom } from '../../hooks/router/useSelectedRoom';
 import { useInboxNotificationsSelected } from '../../hooks/router/useInbox';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { getDmAvatarMxc, setPreferContactPhoto } from '../../utils/dmAvatar';
+
+function PreferContactPhotoFeature() {
+  const [preferContactPhoto] = useSetting(settingsAtom, 'preferContactPhoto');
+  // Read by the non-hook avatar helpers (room list, search, notifications).
+  setPreferContactPhoto(preferContactPhoto);
+  return null;
+}
 
 function SystemEmojiFeature() {
   const [twitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
@@ -213,8 +221,7 @@ function MessageNotifications() {
       }
 
       if (showNotifications && notificationPermission('granted')) {
-        const avatarMxc =
-          room.getAvatarFallbackMember()?.getMxcAvatarUrl() ?? room.getMxcAvatarUrl();
+        const avatarMxc = getDmAvatarMxc(room);
         notify({
           roomName: room.name ?? 'Unknown',
           roomAvatar: avatarMxc
@@ -260,6 +267,7 @@ type ClientNonUIFeaturesProps = {
 export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
   return (
     <>
+      <PreferContactPhotoFeature />
       <SystemEmojiFeature />
       <PageZoomFeature />
       <FaviconUpdater />

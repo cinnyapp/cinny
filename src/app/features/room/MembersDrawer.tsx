@@ -46,7 +46,8 @@ import { useSetSetting, useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { millify } from '../../plugins/millify';
 import { ScrollTopContainer } from '../../components/scroll-top-container';
-import { UserAvatar } from '../../components/user-avatar';
+import { UserAvatar, UserInitials } from '../../components/user-avatar';
+import { getSenderAvatar } from '../../hooks/useSenderAvatar';
 import { useRoomTypingMember } from '../../hooks/useRoomTypingMembers';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useMembershipFilter, useMembershipFilterMenu } from '../../hooks/useMemberFilter';
@@ -55,6 +56,7 @@ import { useGetMemberPowerLevel, usePowerLevelsContext } from '../../hooks/usePo
 import { MembershipFilterMenu } from '../../components/MembershipFilterMenu';
 import { MemberSortMenu } from '../../components/MemberSortMenu';
 import { useOpenUserRoomProfile, useUserRoomProfileState } from '../../state/hooks/userRoomProfile';
+import { useOpenMediaViewer } from '../media-viewer/state';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { useFlattenPowerTagMembers, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
@@ -121,10 +123,7 @@ function MemberItem({
 }: MemberItemProps) {
   const name =
     getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId) ?? member.userId;
-  const avatarMxcUrl = member.getMxcAvatarUrl();
-  const avatarUrl = avatarMxcUrl
-    ? mx.mxcUrlToHttp(avatarMxcUrl, 100, 100, 'crop', undefined, false, useAuthentication)
-    : undefined;
+  const avatar = getSenderAvatar(mx, room, member.userId, useAuthentication, 100);
 
   return (
     <MenuItem
@@ -135,12 +134,13 @@ function MemberItem({
       radii="400"
       onClick={onClick}
       before={
-        <Avatar size="200">
+        <Avatar size="200" data-member-avatar title="Profile pictures">
           <UserAvatar
             userId={member.userId}
-            src={avatarUrl ?? undefined}
+            src={avatar.src}
+            fallbackSrc={avatar.fallbackSrc}
             alt={name}
-            renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+            renderFallback={() => <UserInitials name={name} size="T200" />}
           />
         </Avatar>
       }
@@ -237,10 +237,17 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
     { wait: 200 }
   );
 
+  const openMediaViewer = useOpenMediaViewer();
   const handleMemberClick: MouseEventHandler<HTMLButtonElement> = (evt) => {
     const btn = evt.currentTarget as HTMLButtonElement;
     const userId = btn.getAttribute('data-user-id');
     if (!userId) return;
+    // A tap on the member's picture itself opens their picture history;
+    // the rest of the row opens the profile as before.
+    if ((evt.target as HTMLElement).closest?.('[data-member-avatar]')) {
+      openMediaViewer({ mode: 'avatars', roomId: room.roomId, userId });
+      return;
+    }
     openUserRoomProfile(room.roomId, space?.roomId, userId, btn.getBoundingClientRect(), 'Left');
   };
 

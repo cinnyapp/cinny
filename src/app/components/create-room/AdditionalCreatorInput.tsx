@@ -16,7 +16,6 @@ import {
   toRem,
 } from 'folds';
 import { isKeyHotkey } from 'is-hotkey';
-import FocusTrap from 'focus-trap-react';
 import React, {
   ChangeEventHandler,
   KeyboardEventHandler,
@@ -24,6 +23,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import FocusTrap from '../focus-trap';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../utils/matrix';
 import { useDirectUsers } from '../../hooks/useDirectUsers';
 import { SettingTile } from '../setting-tile';

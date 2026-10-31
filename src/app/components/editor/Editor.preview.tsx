@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import FocusTrap from 'focus-trap-react';
 import {
   config,
   Icon,
@@ -11,6 +10,7 @@ import {
   OverlayBackdrop,
   OverlayCenter,
 } from 'folds';
+import FocusTrap from '../focus-trap';
 
 import { CustomEditor, useEditor } from './Editor';
 import { Toolbar } from './Toolbar';

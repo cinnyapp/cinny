@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect } from 'react';
-import FocusTrap from 'focus-trap-react';
 import {
   Dialog,
   Overlay,
@@ -17,6 +16,7 @@ import {
   Spinner,
 } from 'folds';
 import { MatrixError } from 'matrix-js-sdk';
+import FocusTrap from '../focus-trap';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { stopPropagation } from '../../utils/keyboard';

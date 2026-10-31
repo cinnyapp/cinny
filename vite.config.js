@@ -127,6 +127,12 @@ export default defineConfig({
       ],
     },
   },
+  // chagai: the IndexedDB sync-store worker (src/client/indexeddb-worker.ts) is a
+  // module worker; since matrix-js-sdk 41 its bundle code-splits, which the
+  // default 'iife' worker format cannot do. Must stay 'es'.
+  worker: {
+    format: 'es',
+  },
   build: {
     outDir: 'dist',
     sourcemap: true,

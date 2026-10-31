@@ -31,6 +31,7 @@ import { PdfViewer } from './Pdf-viewer';
 import { TextViewer } from './text-viewer';
 import { testMatrixTo } from '../plugins/matrix-to';
 import { IImageContent } from '../../types/matrix/common';
+import { useOpenMediaViewer } from '../features/media-viewer/state';
 
 type RenderMessageContentProps = {
   displayName: string;
@@ -44,6 +45,9 @@ type RenderMessageContentProps = {
   htmlReactParserOptions: HTMLReactParserOptions;
   linkifyOpts: Opts;
   outlineAttachment?: boolean;
+  // Identifiers used by the local transcription action on voice/audio messages.
+  roomId?: string;
+  eventId?: string;
 };
 export function RenderMessageContent({
   displayName,
@@ -57,7 +61,17 @@ export function RenderMessageContent({
   htmlReactParserOptions,
   linkifyOpts,
   outlineAttachment,
+  roomId,
+  eventId,
 }: RenderMessageContentProps) {
+  const openMediaViewer = useOpenMediaViewer();
+  // Pictures/videos in a room timeline open the chat-wide gallery (← → through
+  // every picture of the chat). Elsewhere (search, notifications) and for local
+  // echoes (ids starting with "~") the old single-image viewer stays.
+  const openInGallery =
+    roomId && eventId && eventId.startsWith('$')
+      ? () => openMediaViewer({ mode: 'room', roomId, eventId })
+      : undefined;
   const renderUrlsPreview = (urls: string[]) => {
     const filteredUrls = urls.filter((url) => !testMatrixTo(url));
     if (filteredUrls.length === 0) return undefined;
@@ -194,6 +208,7 @@ export function RenderMessageContent({
               autoPlay={mediaAutoLoad}
               renderImage={(p) => <Image {...p} loading="lazy" />}
               renderViewer={(p) => <ImageViewer {...p} />}
+              onOpenViewer={openInGallery}
             />
           )}
           outlined={outlineAttachment}
@@ -227,6 +242,7 @@ export function RenderMessageContent({
                   : undefined
               }
               renderVideo={(p) => <Video {...p} />}
+              onOpenViewer={openInGallery}
             />
           )}
           outlined={outlineAttachment}
@@ -243,7 +259,12 @@ export function RenderMessageContent({
           content={getContent()}
           renderAsFile={renderFile}
           renderAudioContent={(props) => (
-            <AudioContent {...props} renderMediaControl={(p) => <MediaControl {...p} />} />
+            <AudioContent
+              {...props}
+              roomId={roomId}
+              eventId={eventId}
+              renderMediaControl={(p) => <MediaControl {...p} />}
+            />
           )}
           outlined={outlineAttachment}
         />

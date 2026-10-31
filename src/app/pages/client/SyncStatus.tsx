@@ -1,5 +1,5 @@
 import { MatrixClient, SyncState } from 'matrix-js-sdk';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Box, config, Line, Text } from 'folds';
 import { useSyncState } from '../../hooks/useSyncState';
 import { ContainerColor } from '../../styles/ContainerColor.css';
@@ -12,6 +12,8 @@ type StateData = {
 type SyncStatusProps = {
   mx: MatrixClient;
 };
+
+const CONNECTING_DELAY_MS = 1500;
 export function SyncStatus({ mx }: SyncStatusProps) {
   const [stateData, setStateData] = useState<StateData>({
     current: null,
@@ -30,12 +32,31 @@ export function SyncStatus({ mx }: SyncStatusProps) {
     }, [])
   );
 
-  if (
-    (stateData.current === SyncState.Prepared ||
-      stateData.current === SyncState.Syncing ||
-      stateData.current === SyncState.Catchup) &&
-    stateData.previous !== SyncState.Syncing
-  ) {
+  // "Connecting" = the saved chats are on screen (PREPARED) but the first live
+  // /sync has not been applied yet, or the client is catching up after a lost
+  // connection. Upstream also kept it up for the first SYNCING (previous state
+  // PREPARED) — i.e. until the SECOND /sync returned, a 30 s long-poll on a quiet
+  // account: measured 2026-10-21, 'Connecting...' for 14 s after a refresh that
+  // had already applied everything. Once SYNCING arrives the app is live.
+  const connecting =
+    stateData.current === SyncState.Prepared || stateData.current === SyncState.Catchup;
+
+  // A fast catch-up (the normal case with a fresh sync token) should show
+  // nothing at all: only say "Connecting..." when it takes longer than this.
+  // PREPARED → first SYNCING covers applying the first live /sync AND the
+  // crypto module's post-sync work (key queries), which can take seconds — the
+  // open chat may still be a few seconds stale until this banner goes.
+  const [connectingShown, setConnectingShown] = useState(false);
+  useEffect(() => {
+    if (!connecting) {
+      setConnectingShown(false);
+      return undefined;
+    }
+    const id = setTimeout(() => setConnectingShown(true), CONNECTING_DELAY_MS);
+    return () => clearTimeout(id);
+  }, [connecting]);
+
+  if (connecting && connectingShown) {
     return (
       <Box direction="Column" shrink="No">
         <Box
@@ -44,7 +65,7 @@ export function SyncStatus({ mx }: SyncStatusProps) {
           alignItems="Center"
           justifyContent="Center"
         >
-          <Text size="L400">Connecting...</Text>
+          <Text size="L400">Connecting... checking for new messages</Text>
         </Box>
         <Line variant="Success" size="300" />
       </Box>

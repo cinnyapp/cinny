@@ -1,6 +1,6 @@
-import FocusTrap from 'focus-trap-react';
 import { Box, Button, config, Menu, PopOut, RectCords, Text } from 'folds';
 import React, { MouseEventHandler, ReactNode, useState } from 'react';
+import FocusTrap from './focus-trap';
 import { stopPropagation } from '../utils/keyboard';
 
 type HexColorPickerPopOutProps = {

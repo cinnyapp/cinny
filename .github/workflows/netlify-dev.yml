@@ -33,6 +33,12 @@ jobs:
           production-deploy: true
           github-deployment-environment: nightly
           github-deployment-description: 'Nightly deployment on each commit to dev branch'
+          # Without this, actions-netlify silently no-ops (exit 0, "Netlify credentials
+          # not provided, not deployable") whenever NETLIFY_AUTH_TOKEN/NETLIFY_SITE_ID_DEV
+          # are unset — which is exactly what happened on every run of this workflow so far
+          # (fork secrets were never configured): the job showed green but never deployed.
+          # This makes a missing-credentials run FAIL loudly instead of lying green.
+          fails-without-credentials: true
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_DEV }}

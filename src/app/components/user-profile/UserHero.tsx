@@ -11,7 +11,7 @@ import {
   Text,
 } from 'folds';
 import classNames from 'classnames';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from '../focus-trap';
 import * as css from './styles.css';
 import { UserAvatar } from '../user-avatar';
 import colorMXID from '../../../util/colorMXID';
@@ -26,8 +26,10 @@ type UserHeroProps = {
   userId: string;
   avatarUrl?: string;
   presence?: UserPresence;
+  /** Replaces the single-picture viewer (e.g. with the picture history). */
+  onAvatarClick?: () => void;
 };
-export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
+export function UserHero({ userId, avatarUrl, presence, onAvatarClick }: UserHeroProps) {
   const [viewAvatar, setViewAvatar] = useState<string>();
 
   return (
@@ -51,8 +53,10 @@ export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
           }
         >
           <Avatar
-            as={avatarUrl ? 'button' : 'div'}
-            onClick={avatarUrl ? () => setViewAvatar(avatarUrl) : undefined}
+            as={avatarUrl || onAvatarClick ? 'button' : 'div'}
+            onClick={onAvatarClick ?? (avatarUrl ? () => setViewAvatar(avatarUrl) : undefined)}
+            aria-label={onAvatarClick ? 'Profile pictures' : undefined}
+            data-user-hero-avatar
             className={css.UserHeroAvatar}
             size="500"
           >

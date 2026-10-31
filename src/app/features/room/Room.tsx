@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Box, Line } from 'folds';
 import { useParams } from 'react-router-dom';
 import { isKeyHotkey } from 'is-hotkey';
@@ -12,12 +12,14 @@ import { PowerLevelsContextProvider, usePowerLevels } from '../../hooks/usePower
 import { useRoom } from '../../hooks/useRoom';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import { markAsRead } from '../../utils/notifications';
+import { setMarkedUnreadState } from '../../utils/markedUnread';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useRoomMembers } from '../../hooks/useRoomMembers';
 import { CallView } from '../call/CallView';
 import { RoomViewHeader } from './RoomViewHeader';
 import { callChatAtom } from '../../state/callEmbed';
 import { CallChatView } from './CallChatView';
+import { SafeBoundary } from '../../components/error-boundary/SafeBoundary';
 import { useCallEmbed } from '../../hooks/useCallEmbed';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
 
@@ -49,6 +51,16 @@ export function Room() {
     )
   );
 
+  // MSC2867: "Clients SHOULD reset the unread marker by setting `unread` to
+  // `false` when opening a room to display its timeline." Keyed on the room id,
+  // so it runs exactly once per room open — the same place Element Web clears
+  // it (its `ViewRoom` dispatch handler). Marking the room you are *currently*
+  // in as unread therefore sticks until you navigate away and come back, which
+  // is what Element does too.
+  useEffect(() => {
+    setMarkedUnreadState(mx, room.roomId, false).catch(() => undefined);
+  }, [mx, room.roomId]);
+
   const callView = callEmbed?.roomId === room.roomId || room.isCallRoom() || callMembers.length > 0;
 
   return (
@@ -56,17 +68,25 @@ export function Room() {
       <Box grow="Yes">
         {callView && (screenSize === ScreenSize.Desktop || !chat) && (
           <Box grow="Yes" direction="Column">
-            <RoomViewHeader callView />
+            <SafeBoundary where="room header" resetKeys={[room.roomId]}>
+              <RoomViewHeader callView />
+            </SafeBoundary>
             <Box grow="Yes">
-              <CallView />
+              <SafeBoundary where="call view" variant="panel" resetKeys={[room.roomId]}>
+                <CallView />
+              </SafeBoundary>
             </Box>
           </Box>
         )}
         {!callView && (
           <Box grow="Yes" direction="Column">
-            <RoomViewHeader />
+            <SafeBoundary where="room header" resetKeys={[room.roomId]}>
+              <RoomViewHeader />
+            </SafeBoundary>
             <Box grow="Yes">
-              <RoomView eventId={eventId} />
+              <SafeBoundary where="room view" variant="panel" resetKeys={[room.roomId]}>
+                <RoomView eventId={eventId} />
+              </SafeBoundary>
             </Box>
           </Box>
         )}
@@ -76,13 +96,17 @@ export function Room() {
             {screenSize === ScreenSize.Desktop && (
               <Line variant="Background" direction="Vertical" size="300" />
             )}
-            <CallChatView />
+            <SafeBoundary where="call chat" variant="panel" resetKeys={[room.roomId]}>
+              <CallChatView />
+            </SafeBoundary>
           </>
         )}
         {!callView && screenSize === ScreenSize.Desktop && isDrawer && (
           <>
             <Line variant="Background" direction="Vertical" size="300" />
-            <MembersDrawer key={room.roomId} room={room} members={members} />
+            <SafeBoundary where="members drawer" variant="panel" resetKeys={[room.roomId]}>
+              <MembersDrawer key={room.roomId} room={room} members={members} />
+            </SafeBoundary>
           </>
         )}
       </Box>

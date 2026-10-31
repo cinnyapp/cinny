@@ -18,10 +18,10 @@ import {
   Spinner,
 } from 'folds';
 import { useFocusWithin, useHover } from 'react-aria';
-import FocusTrap from 'focus-trap-react';
 import { useAtom, useAtomValue } from 'jotai';
+import FocusTrap from '../../components/focus-trap';
 import { NavItem, NavItemContent, NavItemOptions, NavLink } from '../../components/nav';
-import { UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
+import { MarkedUnreadBadge, UnreadBadge, UnreadBadgeCenter } from '../../components/unread-badge';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
 import { getDirectRoomAvatarUrl, getRoomAvatarUrl, getStateEvent } from '../../utils/room';
 import { nameInitials } from '../../utils/common';
@@ -31,6 +31,8 @@ import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 import { getPowersLevelFromMatrixEvent, usePowerLevels } from '../../hooks/usePowerLevels';
 import { copyToClipboard } from '../../utils/dom';
 import { markAsRead } from '../../utils/notifications';
+import { setMarkedUnreadState } from '../../utils/markedUnread';
+import { useRoomMarkedUnread } from '../../state/hooks/markedUnread';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
 import { useRoomTypingMember } from '../../hooks/useRoomTypingMembers';
@@ -60,6 +62,7 @@ import { useCallPreferencesAtom } from '../../state/hooks/callPreferences';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
 import { livekitSupport } from '../../hooks/useLivekitSupport';
 import { StateEvent } from '../../../types/matrix/room';
+import { getDmColorKey } from '../../utils/dmAvatar';
 import { webRTCSupported } from '../../utils/rtc';
 
 type RoomNavItemMenuProps = {
@@ -72,6 +75,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
     const mx = useMatrixClient();
     const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
     const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
+    const markedUnread = useRoomMarkedUnread(room.roomId);
     const powerLevels = usePowerLevels(room);
     const creators = useRoomCreators(room);
 
@@ -84,6 +88,14 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
 
     const handleMarkAsRead = () => {
       markAsRead(mx, room.roomId, hideActivity);
+      requestClose();
+    };
+
+    const handleMarkAsUnread = () => {
+      // MSC2867 / spec v1.12: room account data `m.marked_unread`. Read
+      // receipts and `m.fully_read` are deliberately left untouched, so the
+      // read position in the room survives.
+      setMarkedUnreadState(mx, room.roomId, true).catch(() => undefined);
       requestClose();
     };
 
@@ -120,10 +132,24 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
             size="300"
             after={<Icon size="100" src={Icons.CheckTwice} />}
             radii="300"
-            disabled={!unread}
+            // a chat that is only *marked* unread has no counts, but
+            // "Mark as Read" still has something to do: clear the mark
+            disabled={!unread && !markedUnread}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
               Mark as Read
+            </Text>
+          </MenuItem>
+          <MenuItem
+            onClick={handleMarkAsUnread}
+            size="300"
+            after={<Icon size="100" src={Icons.MessageUnread} />}
+            radii="300"
+            disabled={markedUnread}
+            aria-label="Mark as Unread"
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              Mark as Unread
             </Text>
           </MenuItem>
           <RoomNotificationModeSwitcher roomId={room.roomId} value={notificationMode}>
@@ -260,6 +286,13 @@ export function RoomNavItem({
   const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
+  // Explicit "Mark as Unread" (MSC2867). Shown as a plain dot and only while
+  // the room has no real notifications of its own, per MSC2867: "If a client
+  // gets new notifications after marking a room as unread the notification
+  // count should be displayed instead as normal."
+  const markedUnread = useRoomMarkedUnread(room.roomId);
+  const showMarkedUnread = markedUnread && !unread;
+  const attention = unread !== undefined || markedUnread;
   const typingMember = useRoomTypingMember(room.roomId).filter(
     (receipt) => receipt.userId !== mx.getUserId()
   );
@@ -319,7 +352,7 @@ export function RoomNavItem({
     <NavItem
       variant="Background"
       radii="400"
-      highlight={unread !== undefined}
+      highlight={attention}
       aria-selected={selected}
       data-hover={!!menuAnchor}
       onContextMenu={handleContextMenu}
@@ -332,7 +365,7 @@ export function RoomNavItem({
             <Avatar size="200" radii="400">
               {showAvatar ? (
                 <RoomAvatar
-                  roomId={room.roomId}
+                  roomId={direct ? getDmColorKey(room) : room.roomId}
                   src={
                     direct
                       ? getDirectRoomAvatarUrl(mx, room, 96, useAuthentication)
@@ -348,7 +381,7 @@ export function RoomNavItem({
               ) : (
                 <RoomIcon
                   style={{
-                    opacity: unread ? config.opacity.P500 : config.opacity.P300,
+                    opacity: attention ? config.opacity.P500 : config.opacity.P300,
                   }}
                   filled={selected}
                   size="100"
@@ -358,11 +391,11 @@ export function RoomNavItem({
               )}
             </Avatar>
             <Box as="span" grow="Yes">
-              <Text priority={unread ? '500' : '300'} as="span" size="Inherit" truncate>
+              <Text priority={attention ? '500' : '300'} as="span" size="Inherit" truncate>
                 {roomName}
               </Text>
             </Box>
-            {!optionsVisible && !unread && !selected && typingMember.length > 0 && (
+            {!optionsVisible && !attention && !selected && typingMember.length > 0 && (
               <Badge size="300" variant="Secondary" fill="Soft" radii="Pill" outlined>
                 <TypingIndicator size="300" disableAnimation />
               </Badge>
@@ -370,6 +403,11 @@ export function RoomNavItem({
             {!optionsVisible && unread && (
               <UnreadBadgeCenter>
                 <UnreadBadge highlight={unread.highlight > 0} count={unread.total} />
+              </UnreadBadgeCenter>
+            )}
+            {!optionsVisible && showMarkedUnread && (
+              <UnreadBadgeCenter>
+                <MarkedUnreadBadge />
               </UnreadBadgeCenter>
             )}
             {!optionsVisible && notificationMode !== RoomNotificationMode.Unset && (

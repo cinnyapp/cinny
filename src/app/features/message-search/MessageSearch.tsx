@@ -15,7 +15,7 @@ import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { ScrollTopContainer } from '../../components/scroll-top-container';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { decodeSearchParamValueArray, encodeSearchParamValueArray } from '../../pages/pathUtils';
-import { useRooms } from '../../state/hooks/roomList';
+import { useAllJoinedRooms } from '../../state/hooks/roomList';
 import { allRoomsAtom } from '../../state/room-list/roomList';
 import { mDirectAtom } from '../../state/mDirectList';
 import { MessageSearchParams, useMessageSearch } from './useMessageSearch';
@@ -52,7 +52,7 @@ export function MessageSearch({
 }: MessageSearchProps) {
   const mx = useMatrixClient();
   const mDirects = useAtomValue(mDirectAtom);
-  const allRooms = useRooms(mx, allRoomsAtom, mDirects);
+  const allRooms = useAllJoinedRooms(mx, allRoomsAtom);
   const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
   const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
@@ -71,7 +71,8 @@ export function MessageSearch({
       const joinedRoomIds = decodeSearchParamValueArray(searchPathSearchParams.rooms).filter(
         (rId) => allRooms.includes(rId)
       );
-      return joinedRoomIds;
+      // Return undefined (no filter) rather than [] (search zero rooms) when none resolved.
+      return joinedRoomIds.length > 0 ? joinedRoomIds : undefined;
     }
     return undefined;
   }, [allRooms, searchPathSearchParams.rooms]);
@@ -214,7 +215,7 @@ export function MessageSearch({
         <SearchFilters
           defaultRoomsFilterName={defaultRoomsFilterName}
           allowGlobal={allowGlobal}
-          roomList={searchPathSearchParams.global === 'true' ? allRooms : rooms}
+          roomList={allRooms}
           selectedRooms={searchParamRooms}
           onSelectedRoomsChange={handleSelectedRoomsChange}
           global={searchPathSearchParams.global === 'true'}

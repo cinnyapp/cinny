@@ -1,0 +1,114 @@
+import { useEffect, useRef } from 'react';
+import { MatrixClient } from 'matrix-js-sdk';
+import { RoomToUnread } from '../../../types/matrix/room';
+import { getDirectRoomAvatarUrl, getRoomToParents, isRoom } from '../../utils/room';
+import { getSettings } from '../../state/settings';
+import { chatListMembership } from '../../utils/chatList';
+import { getReplayState } from '../../../client/staged-replay';
+import {
+  buildSnapshot,
+  readSnapshot,
+  sameSnapshot,
+  SNAPSHOT_MAX_ROOMS,
+  SnapshotRoom,
+  writeSnapshot,
+} from './snapshot';
+
+const SAVE_DELAY_MS = 4000;
+// Unread counts are read from the jotai store at save time (not subscribed), so
+// the chat list does not re-render on every unread change because of this.
+
+/**
+ * Keep the startup snapshot (see ./snapshot.ts) in step with the chat list.
+ * Saves the top of the list a few seconds after it changes, and when the page is
+ * hidden or closed, so the next start can draw it instantly.
+ */
+export const useStartupSnapshotWriter = (
+  mx: MatrixClient,
+  sortedRoomIds: string[],
+  mDirects: Set<string>,
+  getRoomToUnread: () => RoomToUnread,
+  isMuted: (roomId: string) => boolean,
+  useAuthentication: boolean
+) => {
+  const latest = useRef<() => void>();
+
+  latest.current = () => {
+    // never persist a half-rebuilt list / total while the staged start-up is
+    // still streaming the older chats in
+    if (getReplayState().active) return;
+    const userId = mx.getUserId();
+    if (!userId || sortedRoomIds.length === 0) return;
+    const roomToUnread = getRoomToUnread();
+    const rooms: SnapshotRoom[] = [];
+    // Decide membership here, from fresh facts, with the SAME rule the real list
+    // uses (chatListMembership): the list handed in can be a moment older than the
+    // space structure (e.g. while the app is still starting), and must not leak a
+    // space's chats into the saved Home list.
+    const showAllRooms = getSettings().homeShowsAllRooms;
+    const parents = getRoomToParents(mx);
+    for (let i = 0; i < sortedRoomIds.length && rooms.length < SNAPSHOT_MAX_ROOMS; i += 1) {
+      const roomId = sortedRoomIds[i];
+      const room = mx.getRoom(roomId);
+      const dm = mDirects.has(roomId);
+      const parent = parents.has(roomId);
+      if (
+        room &&
+        isRoom(room) &&
+        chatListMembership('home', { direct: dm, hasParent: parent, showAllRooms })
+      ) {
+        const unread = roomToUnread.get(roomId);
+        rooms.push({
+          id: roomId,
+          name: room.name,
+          avatar: dm ? getDirectRoomAvatarUrl(mx, room, 96, useAuthentication) : undefined,
+          dm,
+          parent,
+          unread: unread?.total,
+          highlight: unread?.highlight,
+          muted: isMuted(roomId),
+        });
+      }
+    }
+    // Nothing to show is never saved over the last good list: "Clear Cache"
+    // empties the client's rooms right before the page goes away (pagehide),
+    // and an empty snapshot then hid the instant list for the whole one-time load.
+    if (rooms.length === 0) return;
+    const snap = buildSnapshot(userId, rooms, mx.getRooms().length, Date.now(), showAllRooms);
+    if (sameSnapshot(readSnapshot(userId), snap)) return;
+    writeSnapshot(snap);
+  };
+
+  // Throttle, not debounce: right after start the list keeps changing (activity
+  // lookups land one by one), and a debounce would never get to save.
+  const timer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => {
+    if (timer.current) return;
+    timer.current = setTimeout(() => {
+      timer.current = undefined;
+      latest.current?.();
+    }, SAVE_DELAY_MS);
+  }, [sortedRoomIds, mDirects]);
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    []
+  );
+
+  useEffect(() => {
+    const save = () => latest.current?.();
+    // unread counts change without the order changing: refresh now and then
+    const interval = setInterval(save, 60000);
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') save();
+    };
+    window.addEventListener('pagehide', save);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('pagehide', save);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
+};

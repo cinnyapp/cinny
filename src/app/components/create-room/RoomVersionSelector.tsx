@@ -12,7 +12,7 @@ import {
   Text,
   toRem,
 } from 'folds';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from '../focus-trap';
 import { SettingTile } from '../setting-tile';
 import { SequenceCard } from '../sequence-card';
 import { stopPropagation } from '../../utils/keyboard';

@@ -59,6 +59,7 @@ import { AuthRouteThemeManager, UnAuthRouteThemeManager } from './ThemeManager';
 import { ReceiveSelfDeviceVerification } from '../components/DeviceVerification';
 import { AutoRestoreBackupOnVerification } from '../components/BackupRestore';
 import { RoomSettingsRenderer } from '../features/room-settings';
+import { MediaViewerRenderer } from '../features/media-viewer/MediaViewerRenderer';
 import { ClientRoomsNotificationPreferences } from './client/ClientRoomsNotificationPreferences';
 import { SpaceSettingsRenderer } from '../features/space-settings';
 import { UserRoomProfileRenderer } from '../components/UserRoomProfileRenderer';
@@ -70,13 +71,16 @@ import { SearchModalRenderer } from '../features/search';
 import { getFallbackSession } from '../state/sessions';
 import { CallStatusRenderer } from './CallStatusRenderer';
 import { CallEmbedProvider } from '../components/CallEmbedProvider';
+import { RouteErrorPage } from '../components/error-boundary/AppErrorPage';
 
 export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize) => {
   const { hashRouter } = clientConfig;
   const mobile = screenSize === ScreenSize.Mobile;
 
   const routes = createRoutesFromElements(
-    <Route>
+    // Last resort only: every popup, message, room view and settings page has its
+    // own <SafeBoundary>, so an error reaching this page escaped all of them.
+    <Route errorElement={<RouteErrorPage />}>
       <Route
         index
         loader={() => {
@@ -143,6 +147,7 @@ export const createRouter = (clientConfig: ClientConfig, screenSize: ScreenSize)
                       <CreateRoomModalRenderer />
                       <CreateSpaceModalRenderer />
                       <RoomSettingsRenderer />
+                      <MediaViewerRenderer />
                       <SpaceSettingsRenderer />
                       <ReceiveSelfDeviceVerification />
                       <AutoRestoreBackupOnVerification />

@@ -1,5 +1,4 @@
 import React, { FormEventHandler, useState } from 'react';
-import FocusTrap from 'focus-trap-react';
 import {
   Dialog,
   Overlay,
@@ -16,6 +15,7 @@ import {
   Input,
   color,
 } from 'folds';
+import FocusTrap from '../focus-trap';
 import { stopPropagation } from '../../utils/keyboard';
 import { isRoomAlias, isRoomId } from '../../utils/matrix';
 import { parseMatrixToRoom, parseMatrixToRoomEvent, testMatrixTo } from '../../plugins/matrix-to';

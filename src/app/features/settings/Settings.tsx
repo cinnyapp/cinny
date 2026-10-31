@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   Avatar,
   Box,
@@ -14,7 +14,7 @@ import {
   OverlayCenter,
   Text,
 } from 'folds';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from '../../components/focus-trap';
 import { General } from './general';
 import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '../../components/page';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
@@ -30,19 +30,21 @@ import { Devices } from './devices';
 import { EmojisStickers } from './emojis-stickers';
 import { DeveloperTools } from './developer-tools';
 import { About } from './about';
+import { Translation } from './translation';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { stopPropagation } from '../../utils/keyboard';
 import { LogoutDialog } from '../../components/LogoutDialog';
+import { SettingsPages } from './pages';
+import { SafeBoundary } from '../../components/error-boundary/SafeBoundary';
+import {
+  SettingsHighlightProvider,
+  SettingsSearchInput,
+  SettingsSearchResults,
+  SettingsSearchResult,
+  useSettingsSearchState,
+} from './search';
 
-export enum SettingsPages {
-  GeneralPage,
-  AccountPage,
-  NotificationPage,
-  DevicesPage,
-  EmojisStickersPage,
-  DeveloperToolsPage,
-  AboutPage,
-}
+export { SettingsPages };
 
 type SettingsMenuItem = {
   page: SettingsPages;
@@ -79,6 +81,11 @@ const useSettingsMenuItems = (): SettingsMenuItem[] =>
         icon: Icons.Smile,
       },
       {
+        page: SettingsPages.TranslationPage,
+        name: 'Translation',
+        icon: Icons.Globe,
+      },
+      {
         page: SettingsPages.DeveloperToolsPage,
         name: 'Developer Tools',
         icon: Icons.Terminal,
@@ -112,6 +119,21 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
     return screenSize === ScreenSize.Mobile ? undefined : SettingsPages.GeneralPage;
   });
   const menuItems = useSettingsMenuItems();
+
+  // Settings search — filters every settings page/section/item live.
+  const search = useSettingsSearchState();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  // Which setting the search sent us to, so the tile can flash itself.
+  const [highlight, setHighlight] = useState<{ title?: string; token: number }>({ token: 0 });
+
+  const openSearchResult = useCallback((result: SettingsSearchResult) => {
+    setActivePage(result.entry.page);
+    setHighlight((prev) => ({ title: result.entry.title, token: prev.token + 1 }));
+  }, []);
+
+  const handleSearchSubmit = useCallback(() => {
+    if (search.active) openSearchResult(search.active);
+  }, [search.active, openSearchResult]);
 
   const handlePageRequestClose = () => {
     if (screenSize === ScreenSize.Mobile) {
@@ -148,28 +170,46 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
               </Box>
             </PageNavHeader>
             <Box grow="Yes" direction="Column">
+              <SettingsSearchInput
+                ref={searchInputRef}
+                query={search.query}
+                onQueryChange={search.setQuery}
+                onSubmit={handleSearchSubmit}
+                onArrow={search.move}
+              />
               <PageNavContent>
                 <div style={{ flexGrow: 1 }}>
-                  {menuItems.map((item) => (
-                    <MenuItem
-                      key={item.name}
-                      variant="Background"
-                      radii="400"
-                      aria-pressed={activePage === item.page}
-                      before={<Icon src={item.icon} size="100" filled={activePage === item.page} />}
-                      onClick={() => setActivePage(item.page)}
-                    >
-                      <Text
-                        style={{
-                          fontWeight: activePage === item.page ? config.fontWeight.W600 : undefined,
-                        }}
-                        size="T300"
-                        truncate
+                  {search.query ? (
+                    <SettingsSearchResults
+                      query={search.query}
+                      activeIndex={search.activeIndex}
+                      onSelect={openSearchResult}
+                    />
+                  ) : (
+                    menuItems.map((item) => (
+                      <MenuItem
+                        key={item.name}
+                        variant="Background"
+                        radii="400"
+                        aria-pressed={activePage === item.page}
+                        before={
+                          <Icon src={item.icon} size="100" filled={activePage === item.page} />
+                        }
+                        onClick={() => setActivePage(item.page)}
                       >
-                        {item.name}
-                      </Text>
-                    </MenuItem>
-                  ))}
+                        <Text
+                          style={{
+                            fontWeight:
+                              activePage === item.page ? config.fontWeight.W600 : undefined,
+                          }}
+                          size="T300"
+                          truncate
+                        >
+                          {item.name}
+                        </Text>
+                      </MenuItem>
+                    ))
+                  )}
                 </div>
               </PageNavContent>
               <Box style={{ padding: config.space.S200 }} shrink="No" direction="Column">
@@ -210,25 +250,38 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
         )
       }
     >
-      {activePage === SettingsPages.GeneralPage && (
-        <General requestClose={handlePageRequestClose} />
-      )}
-      {activePage === SettingsPages.AccountPage && (
-        <Account requestClose={handlePageRequestClose} />
-      )}
-      {activePage === SettingsPages.NotificationPage && (
-        <Notifications requestClose={handlePageRequestClose} />
-      )}
-      {activePage === SettingsPages.DevicesPage && (
-        <Devices requestClose={handlePageRequestClose} />
-      )}
-      {activePage === SettingsPages.EmojisStickersPage && (
-        <EmojisStickers requestClose={handlePageRequestClose} />
-      )}
-      {activePage === SettingsPages.DeveloperToolsPage && (
-        <DeveloperTools requestClose={handlePageRequestClose} />
-      )}
-      {activePage === SettingsPages.AboutPage && <About requestClose={handlePageRequestClose} />}
+      <SettingsHighlightProvider value={highlight}>
+        <SafeBoundary
+          where={`settings page ${activePage ?? 'menu'}`}
+          variant="panel"
+          resetKeys={[activePage]}
+        >
+          {activePage === SettingsPages.GeneralPage && (
+            <General requestClose={handlePageRequestClose} />
+          )}
+          {activePage === SettingsPages.AccountPage && (
+            <Account requestClose={handlePageRequestClose} />
+          )}
+          {activePage === SettingsPages.NotificationPage && (
+            <Notifications requestClose={handlePageRequestClose} />
+          )}
+          {activePage === SettingsPages.DevicesPage && (
+            <Devices requestClose={handlePageRequestClose} />
+          )}
+          {activePage === SettingsPages.EmojisStickersPage && (
+            <EmojisStickers requestClose={handlePageRequestClose} />
+          )}
+          {activePage === SettingsPages.TranslationPage && (
+            <Translation requestClose={handlePageRequestClose} />
+          )}
+          {activePage === SettingsPages.DeveloperToolsPage && (
+            <DeveloperTools requestClose={handlePageRequestClose} />
+          )}
+          {activePage === SettingsPages.AboutPage && (
+            <About requestClose={handlePageRequestClose} />
+          )}
+        </SafeBoundary>
+      </SettingsHighlightProvider>
     </PageRoot>
   );
 }

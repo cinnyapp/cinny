@@ -29,6 +29,8 @@ import {
   StateEvent,
   UnreadInfo,
 } from '../../types/matrix/room';
+import { getDmAvatarMxc } from './dmAvatar';
+import { getSenderAvatarMxc } from './senderAvatar';
 
 export const getStateEvent = (
   room: Room,
@@ -243,15 +245,26 @@ export const getUnreadInfo = (room: Room): UnreadInfo => {
   };
 };
 
+/**
+ * Unread info for a single room, or `undefined` when the room has nothing unread
+ * (or should not contribute to the unread map at all).
+ */
+export const getUnreadInfoIfUnread = (mx: MatrixClient, room: Room): UnreadInfo | undefined => {
+  if (room.isSpaceRoom()) return undefined;
+  if (room.getMyMembership() !== 'join') return undefined;
+  if (getNotificationType(mx, room.roomId) === NotificationType.Mute) return undefined;
+
+  if (roomHaveNotification(room) || roomHaveUnread(mx, room)) {
+    return getUnreadInfo(room);
+  }
+
+  return undefined;
+};
+
 export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] => {
   const unreadInfos = mx.getRooms().reduce<UnreadInfo[]>((unread, room) => {
-    if (room.isSpaceRoom()) return unread;
-    if (room.getMyMembership() !== 'join') return unread;
-    if (getNotificationType(mx, room.roomId) === NotificationType.Mute) return unread;
-
-    if (roomHaveNotification(room) || roomHaveUnread(mx, room)) {
-      unread.push(getUnreadInfo(room));
-    }
+    const unreadInfo = getUnreadInfoIfUnread(mx, room);
+    if (unreadInfo) unread.push(unreadInfo);
 
     return unread;
   }, []);
@@ -316,15 +329,13 @@ export const getDirectRoomAvatarUrl = (
   size: 32 | 96 = 32,
   useAuthentication = false
 ): string | undefined => {
-  const mxcUrl = room.getAvatarFallbackMember()?.getMxcAvatarUrl();
+  // Prefers the other person's live picture over the room's copy (bridged
+  // 1:1 chats included) — see utils/dmAvatar.ts.
+  const mxcUrl = getDmAvatarMxc(room);
 
-  if (!mxcUrl) {
-    return getRoomAvatarUrl(mx, room, size, useAuthentication);
-  }
-
-  return (
-    mx.mxcUrlToHttp(mxcUrl, size, size, 'crop', undefined, false, useAuthentication) ?? undefined
-  );
+  return mxcUrl
+    ? mx.mxcUrlToHttp(mxcUrl, size, size, 'crop', undefined, false, useAuthentication) ?? undefined
+    : undefined;
 };
 
 export const trimReplyFromBody = (body: string): string => {
@@ -375,10 +386,13 @@ export const getMemberSearchStr = (
   query.startsWith('@') || query.indexOf(':') > -1 ? member.userId : mxIdToName(member.userId),
 ];
 
-export const getMemberAvatarMxc = (room: Room, userId: string): string | undefined => {
-  const member = room.getMember(userId);
-  return member?.getMxcAvatarUrl();
-};
+/**
+ * The picture of a person inside a room. Same rule everywhere (utils/senderAvatar.ts):
+ * their own picture, and for the contact of a bridged 1:1 chat the chat's picture
+ * when they have none.
+ */
+export const getMemberAvatarMxc = (room: Room, userId: string): string | undefined =>
+  getSenderAvatarMxc(room, userId);
 
 export const isMembershipChanged = (mEvent: MatrixEvent): boolean =>
   mEvent.getContent().membership !== mEvent.getPrevContent().membership ||

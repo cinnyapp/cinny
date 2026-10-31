@@ -30,12 +30,12 @@ import React, {
   useCallback,
   useState,
 } from 'react';
-import FocusTrap from 'focus-trap-react';
 import { useHover, useFocusWithin } from 'react-aria';
 import { MatrixEvent, Room } from 'matrix-js-sdk';
 import { Relations } from 'matrix-js-sdk/lib/models/relations';
 import classNames from 'classnames';
 import { RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
+import FocusTrap from '../../../components/focus-trap';
 import {
   AvatarBase,
   BubbleLayout,
@@ -46,18 +46,8 @@ import {
   Username,
   UsernameBold,
 } from '../../../components/message';
-import {
-  canEditEvent,
-  getEventEdits,
-  getMemberAvatarMxc,
-  getMemberDisplayName,
-} from '../../../utils/room';
-import {
-  getCanonicalAliasOrRoomId,
-  getMxIdLocalPart,
-  isRoomAlias,
-  mxcUrlToHttp,
-} from '../../../utils/matrix';
+import { canEditEvent, getEventEdits, getMemberDisplayName } from '../../../utils/room';
+import { getCanonicalAliasOrRoomId, getMxIdLocalPart, isRoomAlias } from '../../../utils/matrix';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
@@ -68,7 +58,8 @@ import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { EmojiBoard } from '../../../components/emoji-board';
 import { ReactionViewer } from '../reaction-viewer';
 import { MessageEditor } from './MessageEditor';
-import { UserAvatar } from '../../../components/user-avatar';
+import { UserAvatar, UserInitials } from '../../../components/user-avatar';
+import { useSenderAvatar } from '../../../hooks/useSenderAvatar';
 import { copyToClipboard } from '../../../utils/dom';
 import { stopPropagation } from '../../../utils/keyboard';
 import { getMatrixToRoomEvent } from '../../../plugins/matrix-to';
@@ -79,6 +70,8 @@ import { MemberPowerTag, StateEvent } from '../../../../types/matrix/room';
 import { PowerIcon } from '../../../components/power';
 import colorMXID from '../../../../util/colorMXID';
 import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
+import { MessageTranslation } from '../../translation/MessageTranslation';
+import { IrrelevantContent, MessageIrrelevantItem, useIrrelevantMarkers } from '../../irrelevant';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -659,6 +652,7 @@ export type MessageProps = {
   highlight: boolean;
   edit?: boolean;
   canDelete?: boolean;
+  canRedact?: boolean;
   canSendReaction?: boolean;
   canPinEvent?: boolean;
   imagePackRooms?: Room[];
@@ -693,6 +687,7 @@ export const Message = as<'div', MessageProps>(
       highlight,
       edit,
       canDelete,
+      canRedact,
       canSendReaction,
       canPinEvent,
       imagePackRooms,
@@ -728,9 +723,18 @@ export const Message = as<'div', MessageProps>(
     const [menuAnchor, setMenuAnchor] = useState<RectCords>();
     const [emojiBoardAnchor, setEmojiBoardAnchor] = useState<RectCords>();
 
+    // "Mark as irrelevant": a 🙈 marker reaction (from anyone) collapses the message like a
+    // deleted one; Show/Hide reveals the original inline. Editing always shows the content.
+    const irrelevantMarkers = useIrrelevantMarkers(relations);
+    const [irrelevantRevealed, setIrrelevantRevealed] = useState(false);
+    const irrelevant = irrelevantMarkers.length > 0 && !edit;
+    const hideIrrelevantContent = irrelevant && !irrelevantRevealed;
+
     const senderDisplayName =
       getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
-    const senderAvatarMxc = getMemberAvatarMxc(room, senderId);
+    // Live: re-reads when the member event or the chat picture changes, and falls
+    // back to the chat's picture for the contact of a bridged 1:1 chat.
+    const senderAvatar = useSenderAvatar(room, senderId, 48);
 
     const tagColor = memberPowerTag?.color
       ? accessibleTagColors?.get(memberPowerTag.color)
@@ -801,13 +805,10 @@ export const Message = as<'div', MessageProps>(
         >
           <UserAvatar
             userId={senderId}
-            src={
-              senderAvatarMxc
-                ? mxcUrlToHttp(mx, senderAvatarMxc, useAuthentication, 48, 48, 'crop') ?? undefined
-                : undefined
-            }
+            src={senderAvatar.src}
+            fallbackSrc={senderAvatar.fallbackSrc}
             alt={senderDisplayName}
-            renderFallback={() => <Icon size="200" src={Icons.User} filled />}
+            renderFallback={() => <UserInitials name={senderDisplayName} />}
           />
         </Avatar>
       </AvatarBase>
@@ -815,21 +816,37 @@ export const Message = as<'div', MessageProps>(
 
     const msgContentJSX = (
       <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
-        {reply}
-        {edit && onEditId ? (
-          <MessageEditor
-            style={{
-              maxWidth: '100%',
-              width: '100vw',
-            }}
-            roomId={room.roomId}
+        {irrelevant && (
+          <IrrelevantContent
             room={room}
-            mEvent={mEvent}
-            imagePackRooms={imagePackRooms}
-            onCancel={() => onEditId()}
+            markers={irrelevantMarkers}
+            revealed={irrelevantRevealed}
+            onToggle={() => setIrrelevantRevealed((revealed) => !revealed)}
           />
-        ) : (
-          children
+        )}
+        {!hideIrrelevantContent && (
+          <>
+            {reply}
+            {edit && onEditId ? (
+              <MessageEditor
+                style={{
+                  maxWidth: '100%',
+                  width: '100vw',
+                }}
+                roomId={room.roomId}
+                room={room}
+                mEvent={mEvent}
+                imagePackRooms={imagePackRooms}
+                onCancel={() => onEditId()}
+              />
+            ) : (
+              children
+            )}
+            {/* In-app translation (per-message button + inline translation, auto-translate when on).
+                Self-contained; renders nothing unless the translate backend is configured and this
+                is a text message. Kept separate from the transcription UI to minimize conflicts. */}
+            {!edit && <MessageTranslation mEvent={mEvent} roomId={room.roomId} />}
+          </>
         )}
         {reactions}
       </Box>
@@ -1069,6 +1086,17 @@ export const Message = as<'div', MessageProps>(
                                 Edit Message
                               </Text>
                             </MenuItem>
+                          )}
+                          {!mEvent.isRedacted() && (
+                            <MessageIrrelevantItem
+                              room={room}
+                              mEvent={mEvent}
+                              markers={irrelevantMarkers}
+                              canRedact={canRedact}
+                              canSendReaction={canSendReaction}
+                              onReactionToggle={onReactionToggle}
+                              onClose={closeMenu}
+                            />
                           )}
                           {!hideReadReceipts && (
                             <MessageReadReceiptItem

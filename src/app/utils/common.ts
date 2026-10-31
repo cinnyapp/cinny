@@ -113,7 +113,10 @@ export const trimSlash = (str: string): string => trimLeadingSlash(trimTrailingS
 
 export const nameInitials = (str: string | undefined | null, len = 1): string => {
   if (!str) return '�';
-  return [...str].slice(0, len).join('') || '�';
+  // Skip leading punctuation / maths symbols / spaces so "+41 79…" or a bridge's
+  // masked "+4∙∙∙∙41 (WA)" shows "4", not "+". Emoji (symbol "other") are kept.
+  const trimmed = str.replace(/^[\p{P}\p{Sm}\p{Z}]+/u, '');
+  return [...(trimmed || str)].slice(0, len).join('') || '�';
 };
 
 export const randomStr = (len = 12): string => {

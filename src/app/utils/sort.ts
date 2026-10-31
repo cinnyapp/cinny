@@ -1,18 +1,24 @@
 import { MatrixClient } from 'matrix-js-sdk';
+import { getRoomActivity } from '../state/room/roomActivity';
 
 export type SortFunc<T> = (a: T, b: T) => number;
 
+/**
+ * Newest activity first, where activity = the last real MESSAGE (see
+ * utils/roomActivity.ts) — not the last event of any kind, so a burst of
+ * profile-picture / rename / member events does not lift a chat. Before the first
+ * scan has run, falls back to the old "last event" timestamp.
+ */
+const activityKey = (mx: MatrixClient, roomId: string): number => {
+  const activity = getRoomActivity(roomId);
+  if (activity) return activity.known ? activity.ts : -1;
+  return mx.getRoom(roomId)?.getLastActiveTimestamp() ?? Number.MIN_SAFE_INTEGER;
+};
+
 export const factoryRoomIdByActivity =
   (mx: MatrixClient): SortFunc<string> =>
-  (a, b) => {
-    const room1 = mx.getRoom(a);
-    const room2 = mx.getRoom(b);
-
-    return (
-      (room2?.getLastActiveTimestamp() ?? Number.MIN_SAFE_INTEGER) -
-      (room1?.getLastActiveTimestamp() ?? Number.MIN_SAFE_INTEGER)
-    );
-  };
+  (a, b) =>
+    activityKey(mx, b) - activityKey(mx, a);
 
 export const factoryRoomIdByAtoZ =
   (mx: MatrixClient): SortFunc<string> =>

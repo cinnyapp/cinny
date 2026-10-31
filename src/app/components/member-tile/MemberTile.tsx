@@ -1,9 +1,10 @@
 import React, { ReactNode } from 'react';
-import { as, Avatar, Box, Icon, Icons, Text } from 'folds';
+import { as, Avatar, Box, Text } from 'folds';
 import { MatrixClient, Room, RoomMember } from 'matrix-js-sdk';
 import { getMemberDisplayName } from '../../utils/room';
 import { getMxIdLocalPart } from '../../utils/matrix';
-import { UserAvatar } from '../user-avatar';
+import { UserAvatar, UserInitials } from '../user-avatar';
+import { getSenderAvatar } from '../../hooks/useSenderAvatar';
 import * as css from './style.css';
 
 const getName = (room: Room, member: RoomMember) =>
@@ -21,19 +22,17 @@ export const MemberTile = as<'button', MemberTileProps>(
     const name = getName(room, member);
     const username = getMxIdLocalPart(member.userId);
 
-    const avatarMxcUrl = member.getMxcAvatarUrl();
-    const avatarUrl = avatarMxcUrl
-      ? mx.mxcUrlToHttp(avatarMxcUrl, 100, 100, 'crop', undefined, false, useAuthentication)
-      : undefined;
+    const avatar = getSenderAvatar(mx, room, member.userId, useAuthentication, 100);
 
     return (
       <AsMemberTile className={css.MemberTile} {...props} ref={ref}>
         <Avatar size="300" radii="400">
           <UserAvatar
             userId={member.userId}
-            src={avatarUrl ?? undefined}
+            src={avatar.src}
+            fallbackSrc={avatar.fallbackSrc}
             alt={name}
-            renderFallback={() => <Icon size="300" src={Icons.User} filled />}
+            renderFallback={() => <UserInitials name={name} size="T300" />}
           />
         </Avatar>
         <Box grow="Yes" as="span" direction="Column">

@@ -2,12 +2,8 @@ import React, { MouseEventHandler, forwardRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Icon, Icons, Menu, MenuItem, PopOut, RectCords, Text, config, toRem } from 'folds';
 import { useAtomValue } from 'jotai';
-import FocusTrap from 'focus-trap-react';
-import { useOrphanRooms } from '../../../state/hooks/roomList';
+import FocusTrap from '../../../components/focus-trap';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { mDirectAtom } from '../../../state/mDirectList';
-import { roomToParentsAtom } from '../../../state/room/roomToParents';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
 import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { getHomePath, joinPathComponent } from '../../pathUtils';
 import { useRoomsUnread } from '../../../state/hooks/unread';
@@ -18,7 +14,8 @@ import {
   SidebarItemTooltip,
 } from '../../../components/sidebar';
 import { useHomeSelected } from '../../../hooks/router/useHomeSelected';
-import { UnreadBadge } from '../../../components/unread-badge';
+import { MarkedUnreadBadge, UnreadBadge } from '../../../components/unread-badge';
+import { useRoomsMarkedUnread } from '../../../state/hooks/markedUnread';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
 import { useHomeRooms } from '../home/useHomeRooms';
@@ -63,14 +60,15 @@ const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(({ requestClose }, re
 
 export function HomeTab() {
   const navigate = useNavigate();
-  const mx = useMatrixClient();
   const screenSize = useScreenSizeContext();
   const navToActivePath = useAtomValue(useNavToActivePathAtom());
 
-  const mDirects = useAtomValue(mDirectAtom);
-  const roomToParents = useAtomValue(roomToParentsAtom);
-  const orphanRooms = useOrphanRooms(mx, allRoomsAtom, mDirects, roomToParents);
-  const homeUnread = useRoomsUnread(orphanRooms, roomToUnreadAtom);
+  // Same list the Home panel renders, so the badge can never disagree with it.
+  const homeRooms = useHomeRooms();
+  const homeUnread = useRoomsUnread(homeRooms, roomToUnreadAtom);
+  // A chat the user marked unread by hand (MSC2867) has no counts, so it never
+  // reaches `roomToUnreadAtom`; surface it as a plain dot instead.
+  const homeMarkedUnread = useRoomsMarkedUnread(homeRooms);
   const homeSelected = useHomeSelected();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
@@ -111,6 +109,11 @@ export function HomeTab() {
       {homeUnread && (
         <SidebarItemBadge hasCount={homeUnread.total > 0}>
           <UnreadBadge highlight={homeUnread.highlight > 0} count={homeUnread.total} />
+        </SidebarItemBadge>
+      )}
+      {!homeUnread && homeMarkedUnread && (
+        <SidebarItemBadge hasCount={false}>
+          <MarkedUnreadBadge />
         </SidebarItemBadge>
       )}
       {menuAnchor && (

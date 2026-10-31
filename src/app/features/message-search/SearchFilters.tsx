@@ -26,8 +26,8 @@ import {
   RectCords,
 } from 'folds';
 import { SearchOrderBy } from 'matrix-js-sdk';
-import FocusTrap from 'focus-trap-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import FocusTrap from '../../components/focus-trap';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { getRoomIconSrc } from '../../utils/room';
 import { factoryRoomIdByAtoZ } from '../../utils/sort';

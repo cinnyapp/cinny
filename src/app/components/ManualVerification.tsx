@@ -12,7 +12,7 @@ import {
   MenuItem,
   color,
 } from 'folds';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from './focus-trap';
 import { stopPropagation } from '../utils/keyboard';
 import { SettingTile } from './setting-tile';
 import { SecretStorageKeyContent } from '../../types/matrix/accountData';

@@ -1,5 +1,4 @@
 import React, { MouseEventHandler, forwardRef, useState } from 'react';
-import FocusTrap from 'focus-trap-react';
 import {
   Box,
   Avatar,
@@ -25,6 +24,7 @@ import {
 } from 'folds';
 import { useNavigate } from 'react-router-dom';
 import { Room } from 'matrix-js-sdk';
+import FocusTrap from '../../components/focus-trap';
 import { useStateEvent } from '../../hooks/useStateEvent';
 import { PageHeader } from '../../components/page';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
@@ -37,12 +37,19 @@ import { useSetting } from '../../state/hooks/settings';
 import { settingsAtom } from '../../state/settings';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import { getHomeSearchPath, getSpaceSearchPath, withSearchParam } from '../../pages/pathUtils';
-import { getCanonicalAliasOrRoomId, isRoomAlias, mxcUrlToHttp } from '../../utils/matrix';
+import {
+  getCanonicalAliasOrRoomId,
+  guessDmRoomUserId,
+  isRoomAlias,
+  mxcUrlToHttp,
+} from '../../utils/matrix';
 import { _SearchPathSearchParams } from '../../pages/paths';
 import * as css from './RoomViewHeader.css';
 import { useRoomUnread } from '../../state/hooks/unread';
 import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
 import { markAsRead } from '../../utils/notifications';
+import { setMarkedUnreadState } from '../../utils/markedUnread';
+import { useRoomMarkedUnread } from '../../state/hooks/markedUnread';
 import { roomToUnreadAtom } from '../../state/room/roomToUnread';
 import { copyToClipboard } from '../../utils/dom';
 import { LeaveRoomPrompt } from '../../components/leave-room-prompt';
@@ -69,6 +76,9 @@ import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { RoomSettingsPage } from '../../state/roomSettings';
+import { getDmColorKey } from '../../utils/dmAvatar';
+import { nameInitials } from '../../utils/common';
+import { useOpenMediaViewer } from '../media-viewer/state';
 import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
 import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 import { webRTCSupported } from '../../utils/rtc';
@@ -81,6 +91,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
   const mx = useMatrixClient();
   const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
   const unread = useRoomUnread(room.roomId, roomToUnreadAtom);
+  const markedUnread = useRoomMarkedUnread(room.roomId);
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(room);
 
@@ -94,6 +105,14 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
 
   const handleMarkAsRead = () => {
     markAsRead(mx, room.roomId, hideActivity);
+    requestClose();
+  };
+
+  const handleMarkAsUnread = () => {
+    // MSC2867 / spec v1.12 `m.marked_unread`. The flag survives while you stay
+    // in the room (automatic read receipts no longer clear it); it is cleared
+    // the next time the room is opened, exactly like Element.
+    setMarkedUnreadState(mx, room.roomId, true).catch(() => undefined);
     requestClose();
   };
 
@@ -114,6 +133,10 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
     openSettings(room.roomId, parentSpace?.roomId);
     requestClose();
   };
+  const handleOpenMedia = () => {
+    openSettings(room.roomId, parentSpace?.roomId, RoomSettingsPage.MediaPage);
+    requestClose();
+  };
 
   return (
     <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
@@ -132,10 +155,24 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
           size="300"
           after={<Icon size="100" src={Icons.CheckTwice} />}
           radii="300"
-          disabled={!unread}
+          // see RoomNavItem: a marked-unread chat has no counts but can still
+          // be "read"
+          disabled={!unread && !markedUnread}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
             Mark as Read
+          </Text>
+        </MenuItem>
+        <MenuItem
+          onClick={handleMarkAsUnread}
+          size="300"
+          after={<Icon size="100" src={Icons.MessageUnread} />}
+          radii="300"
+          disabled={markedUnread}
+          aria-label="Mark as Unread"
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Mark as Unread
           </Text>
         </MenuItem>
         <RoomNotificationModeSwitcher roomId={room.roomId} value={notificationMode}>
@@ -184,6 +221,17 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ room, requestClose
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
             Copy Link
+          </Text>
+        </MenuItem>
+        <MenuItem
+          onClick={handleOpenMedia}
+          size="300"
+          after={<Icon size="100" src={Icons.Photo} />}
+          radii="300"
+          data-room-menu-media
+        >
+          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+            Media & Files
           </Text>
         </MenuItem>
         <MenuItem
@@ -417,6 +465,17 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
 
   const [peopleDrawer, setPeopleDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
 
+  // Tapping the chat's picture shows its picture history: in a DM the other
+  // person's profile pictures (as this chat saw them) plus the chat's own
+  // picture; in a group the group picture's history.
+  const openMediaViewer = useOpenMediaViewer();
+  const handleAvatarClick = () => {
+    const dmUserId = direct
+      ? room.getAvatarFallbackMember()?.userId ?? guessDmRoomUserId(room, mx.getSafeUserId())
+      : undefined;
+    openMediaViewer({ mode: 'avatars', roomId: room.roomId, userId: dmUserId, includeRoom: true });
+  };
+
   const handleSearchClick = () => {
     const searchParams: _SearchPathSearchParams = {
       rooms: room.roomId,
@@ -463,15 +522,29 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
           </BackRouteHandler>
         )}
         <Box grow="Yes" alignItems="Center" gap="300">
-          {screenSize !== ScreenSize.Mobile && (
-            <Avatar size="300">
+          {(screenSize !== ScreenSize.Mobile || direct) && (
+            <Avatar
+              size="300"
+              as="button"
+              onClick={handleAvatarClick}
+              aria-label="Profile pictures"
+              title="Profile pictures"
+              style={{ cursor: 'pointer', border: 'none', padding: 0 }}
+              data-room-header-avatar
+            >
               <RoomAvatar
-                roomId={room.roomId}
+                roomId={direct ? getDmColorKey(room) : room.roomId}
                 src={avatarUrl}
                 alt={name}
-                renderFallback={() => (
-                  <RoomIcon size="200" joinRule={room.getJoinRule()} roomType={room.getType()} />
-                )}
+                renderFallback={() =>
+                  direct ? (
+                    <Text as="span" size="H6">
+                      {nameInitials(name)}
+                    </Text>
+                  ) : (
+                    <RoomIcon size="200" joinRule={room.getJoinRule()} roomType={room.getType()} />
+                  )
+                }
               />
             </Avatar>
           )}
@@ -635,6 +708,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
                 onClick={handleOpenMenu}
                 ref={triggerRef}
                 aria-pressed={!!menuAnchor}
+                aria-label="Room Options"
               >
                 <Icon size="400" src={Icons.VerticalDots} filled={!!menuAnchor} />
               </IconButton>

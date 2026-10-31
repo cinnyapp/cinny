@@ -17,6 +17,7 @@ import {
   isValidChild,
   mapParentWithChildren,
 } from '../../utils/room';
+import { isReplayActive, onReplayProgress } from '../../../client/staged-replay';
 
 export type RoomToParentsAction =
   | {
@@ -76,13 +77,31 @@ export const useBindRoomToParentsAtom = (
   useEffect(() => {
     setRoomToParents({ type: 'INITIALIZE', roomToParents: getRoomToParents(mx) });
 
+    // Staged start-up: while rooms stream in behind the open app, every room is
+    // brand new and its state is complete when it lands — rebuild the map once
+    // per chunk instead of one immer `produce` per m.space.child event (the
+    // bridged WhatsApp space alone has 6,519 of them: measured 4 s frozen).
+    let replayDirty = false;
+    const unsubscribeReplay = onReplayProgress(mx, () => {
+      if (!replayDirty) return;
+      replayDirty = false;
+      setRoomToParents({ type: 'INITIALIZE', roomToParents: getRoomToParents(mx) });
+    });
+    const deferDuringReplay = (): boolean => {
+      if (!isReplayActive()) return false;
+      replayDirty = true;
+      return true;
+    };
+
     const handleAddRoom = (room: Room) => {
+      if (deferDuringReplay()) return;
       if (isSpace(room) && room.getMyMembership() !== Membership.Invite) {
         setRoomToParents({ type: 'PUT', parent: room.roomId, children: getSpaceChildren(room) });
       }
     };
 
     const handleMembershipChange = (room: Room, membership: string) => {
+      if (deferDuringReplay()) return;
       if (isSpace(room) && room.getMyMembership() === Membership.Leave) {
         setRoomToParents({ type: 'DELETE', roomId: room.roomId });
         return;
@@ -94,6 +113,7 @@ export const useBindRoomToParentsAtom = (
 
     const handleStateChange = (mEvent: MatrixEvent) => {
       if (mEvent.getType() === StateEvent.SpaceChild) {
+        if (deferDuringReplay()) return;
         const childId = mEvent.getStateKey();
         const roomId = mEvent.getRoomId();
         if (childId && roomId) {
@@ -115,6 +135,7 @@ export const useBindRoomToParentsAtom = (
     mx.on(RoomStateEvent.Events, handleStateChange);
     mx.on(ClientEvent.DeleteRoom, handleDeleteRoom);
     return () => {
+      unsubscribeReplay();
       mx.removeListener(ClientEvent.Room, handleAddRoom);
       mx.removeListener(RoomEvent.MyMembership, handleMembershipChange);
       mx.removeListener(RoomStateEvent.Events, handleStateChange);

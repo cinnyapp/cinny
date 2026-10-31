@@ -15,6 +15,7 @@ import { mxcUrlToHttp } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { ImageViewer } from '../image-viewer';
 import { onEnterOrSpace } from '../../utils/keyboard';
+import { getCachedUrlPreview } from '../../utils/urlPreviewCache';
 
 const linkStyles = { color: color.Success.Main };
 
@@ -24,11 +25,13 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
     const useAuthentication = useMediaAuthentication();
     const [viewer, setViewer] = useState(false);
     const [previewStatus, loadPreview] = useAsyncCallback(
-      useCallback(() => mx.getUrlPreview(url, ts), [url, ts, mx])
+      useCallback(() => getCachedUrlPreview(url, () => mx.getUrlPreview(url, ts)), [url, ts, mx])
     );
 
     useEffect(() => {
-      loadPreview();
+      // A failed preview just isn't shown (the link itself always is); keep the
+      // rejection out of the console as an "Uncaught (in promise)".
+      loadPreview().catch(() => undefined);
     }, [loadPreview]);
 
     if (previewStatus.status === AsyncStatus.Error) return null;

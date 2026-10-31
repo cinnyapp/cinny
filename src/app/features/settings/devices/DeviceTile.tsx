@@ -16,8 +16,8 @@ import {
   OverlayCenter,
 } from 'folds';
 import { CryptoApi } from 'matrix-js-sdk/lib/crypto-api';
-import FocusTrap from 'focus-trap-react';
 import { IMyDevice, MatrixError } from 'matrix-js-sdk';
+import FocusTrap from '../../../components/focus-trap';
 import { SettingTile } from '../../../components/setting-tile';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { timeDayMonYear, timeHourMinute, today, yesterday } from '../../../utils/time';

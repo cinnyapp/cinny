@@ -28,7 +28,7 @@ import {
   toRem,
 } from 'folds';
 import { isKeyHotkey } from 'is-hotkey';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from '../../../components/focus-trap';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { SequenceCard } from '../../../components/sequence-card';
 import { useSetting } from '../../../state/hooks/settings';
@@ -50,6 +50,9 @@ import { useMessageLayoutItems } from '../../../hooks/useMessageLayout';
 import { useMessageSpacingItems } from '../../../hooks/useMessageSpacing';
 import { useDateFormatItems } from '../../../hooks/useDateFormat';
 import { SequenceCardStyle } from '../styles.css';
+import { TranscriptionSettings } from '../../transcription/TranscriptionSettings';
+import { LiteModeSettings } from './LiteMode';
+import { ChatListSettings } from './ChatList';
 
 type ThemeSelectorProps = {
   themeNames: Record<string, string>;
@@ -307,6 +310,11 @@ function Appearance() {
   const [systemTheme, setSystemTheme] = useSetting(settingsAtom, 'useSystemTheme');
   const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
+  const [showPinnedBanner, setShowPinnedBanner] = useSetting(settingsAtom, 'showPinnedBanner');
+  const [preferContactPhoto, setPreferContactPhoto] = useSetting(
+    settingsAtom,
+    'preferContactPhoto'
+  );
 
   return (
     <Box direction="Column" gap="100">
@@ -349,6 +357,45 @@ function Appearance() {
 
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile title="Page Zoom" after={<PageZoomInput />} />
+      </SequenceCard>
+
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Show Pinned Message Banner"
+          description="Show a small bar above the timeline with the room's pinned messages, with arrows to step through them and a tap to jump to the message. The pin button in the room header and the Pinned Messages list are unaffected."
+          after={
+            <Switch variant="Primary" value={showPinnedBanner} onChange={setShowPinnedBanner} />
+          }
+        />
+      </SequenceCard>
+
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Prefer Contact Photo in 1:1 Chats"
+          description="In one-to-one chats (including WhatsApp and other bridged chats), show the person's own current profile picture instead of the chat's picture, which bridges copy once and may not keep up to date. People without a picture get a coloured initial."
+          after={
+            <Switch variant="Primary" value={preferContactPhoto} onChange={setPreferContactPhoto} />
+          }
+        />
+      </SequenceCard>
+    </Box>
+  );
+}
+
+function Navigation() {
+  const [homeShowsAllRooms, setHomeShowsAllRooms] = useSetting(settingsAtom, 'homeShowsAllRooms');
+
+  return (
+    <Box direction="Column" gap="100">
+      <Text size="L400">Navigation</Text>
+      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+        <SettingTile
+          title="Show All Chats in Home"
+          description="List every chat under Home, including the ones that live inside a space (such as the WhatsApp and Telegram bridge spaces) and your direct chats. Turn off to keep only rooms that do not belong to any space. Spaces themselves are unaffected."
+          after={
+            <Switch variant="Primary" value={homeShowsAllRooms} onChange={setHomeShowsAllRooms} />
+          }
+        />
       </SequenceCard>
     </Box>
   );
@@ -1003,9 +1050,13 @@ export function General({ requestClose }: GeneralProps) {
           <PageContent>
             <Box direction="Column" gap="700">
               <Appearance />
+              <Navigation />
+              <ChatListSettings />
+              <LiteModeSettings />
               <DateAndTime />
               <Editor />
               <Messages />
+              <TranscriptionSettings />
             </Box>
           </PageContent>
         </Scroll>

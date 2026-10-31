@@ -12,10 +12,11 @@ import './index.css';
 
 import { trimTrailingSlash } from './app/utils/common';
 import App from './app/pages/App';
+import { RootErrorBoundary } from './app/components/error-boundary/AppErrorPage';
 
 // import i18n (needs to be bundled ;))
 import './app/i18n';
-import { pushSessionToSW } from './sw-session';
+import { claimIfUncontrolled, pushSessionToSW } from './sw-session';
 import { getFallbackSession } from './app/state/sessions';
 
 document.body.classList.add(configClass, varsClass);
@@ -34,6 +35,17 @@ if ('serviceWorker' in navigator) {
 
   navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
   navigator.serviceWorker.ready.then(sendSessionToSW);
+  claimIfUncontrolled();
+
+  // A newly activated (or respawned) worker starts with no session, and taking
+  // control of this page is the moment it begins serving our media requests.
+  navigator.serviceWorker.addEventListener('controllerchange', sendSessionToSW);
+
+  // Cheap safety net: refresh the worker's copy whenever the tab comes back to
+  // the foreground, which is also when media is about to be requested again.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') sendSessionToSW();
+  });
 
   navigator.serviceWorker.addEventListener('message', (ev) => {
     const { type } = ev.data ?? {};
@@ -53,7 +65,11 @@ const mountApp = () => {
   }
 
   const root = createRoot(rootContainer);
-  root.render(<App />);
+  root.render(
+    <RootErrorBoundary>
+      <App />
+    </RootErrorBoundary>
+  );
 };
 
 mountApp();

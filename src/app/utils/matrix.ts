@@ -17,6 +17,8 @@ import to from 'await-to-js';
 import { IImageInfo, IThumbnailContent, IVideoInfo } from '../../types/matrix/common';
 import { AccountDataEvent } from '../../types/matrix/accountData';
 import { getStateEvent } from './room';
+import { fetchMediaResponse } from './mediaAuth';
+import { getFallbackSession } from '../state/sessions';
 import { Membership, StateEvent } from '../../types/matrix/room';
 
 const DOMAIN_REGEX = /\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\b/;
@@ -296,18 +298,76 @@ export const mxcUrlToHttp = (
     useAuthentication
   );
 
+const pageHasNoServiceWorker = (): boolean =>
+  typeof navigator !== 'undefined' &&
+  'serviceWorker' in navigator &&
+  !navigator.serviceWorker.controller;
+
 export const downloadMedia = async (src: string): Promise<Blob> => {
-  // this request is authenticated by service worker
-  const res = await fetch(src, { method: 'GET' });
+  // Normally authenticated by the service worker; when the page is not
+  // controlled by it (hard reload) the 401 is retried with the page's own token.
+  // A failed response always throws (MediaLoadError) - an error body must never
+  // be wrapped in an object URL and handed to a player/viewer as if it were the
+  // file, which just spins forever.
+  const res = await fetchMediaResponse(
+    src,
+    getFallbackSession,
+    {},
+    fetch,
+    pageHasNoServiceWorker()
+  );
   const blob = await res.blob();
   return blob;
 };
 
+/**
+ * Same as downloadMedia, but reports how much has arrived so the UI can show a
+ * progress bar instead of an indefinite spinner.
+ *
+ * Synapse does not expose `Content-Length` to cross-origin JavaScript, so the
+ * total is usually unknown here — callers pass the size from the event's
+ * `info.size` instead.
+ */
+export const downloadMediaWithProgress = async (
+  src: string,
+  onProgress?: (loaded: number, total?: number) => void
+): Promise<Blob> => {
+  // authenticated by the service worker, or by the page itself on a 401
+  const res = await fetchMediaResponse(
+    src,
+    getFallbackSession,
+    {},
+    fetch,
+    pageHasNoServiceWorker()
+  );
+  if (!onProgress || !res.body) return res.blob();
+
+  const lengthHeader = res.headers.get('content-length');
+  const total = lengthHeader ? Number(lengthHeader) : undefined;
+  const reader = res.body.getReader();
+  const chunks: BlobPart[] = [];
+  let loaded = 0;
+
+  for (;;) {
+    // eslint-disable-next-line no-await-in-loop
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value) {
+      chunks.push(value as BlobPart);
+      loaded += value.byteLength;
+      onProgress(loaded, Number.isFinite(total) ? total : undefined);
+    }
+  }
+
+  return new Blob(chunks, { type: res.headers.get('content-type') ?? undefined });
+};
+
 export const downloadEncryptedMedia = async (
   src: string,
-  decryptContent: (buf: ArrayBuffer) => Promise<Blob>
+  decryptContent: (buf: ArrayBuffer) => Promise<Blob>,
+  onProgress?: (loaded: number, total?: number) => void
 ): Promise<Blob> => {
-  const encryptedContent = await downloadMedia(src);
+  const encryptedContent = await downloadMediaWithProgress(src, onProgress);
   const decryptedContent = await decryptContent(await encryptedContent.arrayBuffer());
 
   return decryptedContent;

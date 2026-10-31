@@ -1,7 +1,6 @@
 /* eslint-disable jsx-a11y/media-has-caption */
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
-import FocusTrap from 'focus-trap-react';
 import {
   Avatar,
   Box,
@@ -26,6 +25,7 @@ import {
 } from 'matrix-js-sdk';
 import { IRTCNotificationContent, RTCNotificationType } from 'matrix-js-sdk/lib/matrixrtc/types';
 import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
+import FocusTrap from './focus-trap';
 import {
   CallEmbedContextProvider,
   CallEmbedRefContextProvider,

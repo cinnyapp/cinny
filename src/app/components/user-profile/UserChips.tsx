@@ -1,6 +1,5 @@
 import React, { MouseEventHandler, useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import FocusTrap from 'focus-trap-react';
 import { isKeyHotkey } from 'is-hotkey';
 import { Room } from 'matrix-js-sdk';
 import {
@@ -20,6 +19,7 @@ import {
   Scroll,
   Avatar,
 } from 'folds';
+import FocusTrap from '../focus-trap';
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { getMxIdServer } from '../../utils/matrix';
 import { useCloseUserRoomProfile } from '../../state/hooks/userRoomProfile';

@@ -14,7 +14,7 @@ import {
 import classNames from 'classnames';
 import { Room } from 'matrix-js-sdk';
 import { type Relations } from 'matrix-js-sdk/lib/models/relations';
-import FocusTrap from 'focus-trap-react';
+import FocusTrap from '../../../components/focus-trap';
 import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { factoryEventSentBy } from '../../../utils/matrix';
 import { Reaction, ReactionTooltipMsg } from '../../../components/message';
@@ -23,6 +23,7 @@ import * as css from './styles.css';
 import { ReactionViewer } from '../reaction-viewer';
 import { stopPropagation } from '../../../utils/keyboard';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+import { IRRELEVANT_REACTION_KEY } from '../../irrelevant';
 
 export type ReactionsProps = {
   room: Room;
@@ -39,7 +40,13 @@ export const Reactions = as<'div', ReactionsProps>(
     const myUserId = mx.getUserId();
     const reactions = useRelations(
       relations,
-      useCallback((rel) => [...(rel.getSortedAnnotationsByKey() ?? [])], [])
+      useCallback(
+        (rel) =>
+          [...(rel.getSortedAnnotationsByKey() ?? [])].filter(
+            ([key]) => key !== IRRELEVANT_REACTION_KEY
+          ),
+        []
+      )
     );
 
     const handleViewReaction: MouseEventHandler<HTMLButtonElement> = (evt) => {

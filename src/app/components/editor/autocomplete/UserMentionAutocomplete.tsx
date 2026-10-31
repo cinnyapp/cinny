@@ -17,7 +17,8 @@ import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
 import { useKeyDown } from '../../../hooks/useKeyDown';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../../utils/matrix';
 import { getMemberDisplayName, getMemberSearchStr } from '../../../utils/room';
-import { UserAvatar } from '../../user-avatar';
+import { UserAvatar, UserInitials } from '../../user-avatar';
+import { getSenderAvatar } from '../../../hooks/useSenderAvatar';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { Membership } from '../../../../types/matrix/room';
 
@@ -153,10 +154,7 @@ export function UserMentionAutocomplete({
         />
       ) : (
         autoCompleteMembers.map((roomMember) => {
-          const avatarMxcUrl = roomMember.getMxcAvatarUrl();
-          const avatarUrl = avatarMxcUrl
-            ? mx.mxcUrlToHttp(avatarMxcUrl, 32, 32, 'crop', undefined, false, useAuthentication)
-            : undefined;
+          const avatar = getSenderAvatar(mx, room, roomMember.userId, useAuthentication, 32);
           return (
             <MenuItem
               key={roomMember.userId}
@@ -175,9 +173,10 @@ export function UserMentionAutocomplete({
                 <Avatar size="200">
                   <UserAvatar
                     userId={roomMember.userId}
-                    src={avatarUrl ?? undefined}
+                    src={avatar.src}
+                    fallbackSrc={avatar.fallbackSrc}
                     alt={getName(roomMember)}
-                    renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+                    renderFallback={() => <UserInitials name={getName(roomMember)} size="T200" />}
                   />
                 </Avatar>
               }
