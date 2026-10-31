@@ -62,16 +62,21 @@ export class EncryptedEvent<T extends ClientEventWithoutRoomId> {
     return this.event.event_id;
   }
 
-  public decrypt(): Promise<void> {
+  public async decrypt(): Promise<void> {
+    if (this.decryption.read instanceof EventDecryptionSuccess) {
+      return;
+    }
+
     if (this.decryptPromise) {
-      return this.decryptPromise;
+      await this.decryptPromise;
+      return;
     }
 
     this.decryptPromise = this.runDecryption().finally(() => {
       this.decryptPromise = undefined;
     });
 
-    return this.decryptPromise;
+    await this.decryptPromise;
   }
 
   private async runDecryption(): Promise<void> {
