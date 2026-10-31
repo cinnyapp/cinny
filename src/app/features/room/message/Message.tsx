@@ -7,6 +7,7 @@ import {
   Header,
   Icon,
   IconButton,
+  IconSrc,
   Icons,
   Input,
   Line,
@@ -20,6 +21,8 @@ import {
   RectCords,
   Spinner,
   Text,
+  Tooltip,
+  TooltipProvider,
   as,
   color,
   config,
@@ -29,6 +32,8 @@ import React, {
   MouseEventHandler,
   ReactNode,
   useCallback,
+  useEffect,
+  useId,
   useState,
 } from 'react';
 import FocusTrap from 'focus-trap-react';
@@ -834,6 +839,85 @@ export function RenderMessageLayout({
   );
 }
 
+function OptionButton({
+  tooltip,
+  iconSrc,
+  onClick,
+  eventId,
+  senderId,
+  pressed,
+}: {
+  tooltip: string;
+  iconSrc: IconSrc;
+  onClick?: MouseEventHandler<HTMLButtonElement>;
+  eventId: string;
+  senderId: string;
+  pressed?: boolean;
+}) {
+  const tooltipId = useId();
+
+  return (
+    <TooltipProvider
+      position="Top"
+      delay={0}
+      tooltip={
+        <Tooltip variant="Surface">
+          <Text size="L400" id={tooltipId}>
+            {tooltip}
+          </Text>
+        </Tooltip>
+      }
+    >
+      {(anchorRef) => (
+        <IconButton
+          ref={anchorRef}
+          onClick={onClick}
+          data-event-id={eventId}
+          data-sender-id={senderId}
+          aria-label={tooltip}
+          aria-describedby={tooltipId}
+          aria-pressed={pressed}
+          variant="Surface"
+          size="300"
+          radii="300"
+        >
+          <Icon src={iconSrc} size="100" />
+        </IconButton>
+      )}
+    </TooltipProvider>
+  );
+}
+
+function EditButtonHost({
+  event,
+  children,
+}: {
+  event: MessageEventWithoutRoomId;
+  children: ReactNode;
+}) {
+  const ct = useClient();
+  const roomId = useRoom();
+  const [allow, setAllow] = useState(
+    event.type === MessageEvent.RoomMessageEncrypted ? false : canEditEvent(ct, event)
+  );
+
+  useEffect(() => {
+    let mounted = true;
+    ct.decryption.tryDecryptEvent(roomId, event).then((decryptedEvent) => {
+      if (!mounted) return;
+      setAllow(canEditEvent(ct, decryptedEvent));
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [roomId, event, ct]);
+
+  if (!allow) return null;
+
+  return children;
+}
+
 export type MessageProps = {
   event: MessageEventWithoutRoomId;
   collapse: boolean;
@@ -969,7 +1053,7 @@ export const Message = as<'div', MessageProps>(
       >
         {!edit && (hover || !!menuAnchor || !!emojiBoardAnchor) && (
           <div className={css.MessageOptionsBase}>
-            <Menu className={css.MessageOptionsBar} variant="SurfaceVariant">
+            <Menu className={css.MessageOptionsBar} variant="Surface">
               <Box gap="100">
                 {canSendReaction && (
                   <PopOut
@@ -996,47 +1080,43 @@ export const Message = as<'div', MessageProps>(
                       />
                     }
                   >
-                    <IconButton
+                    <OptionButton
                       onClick={handleOpenEmojiBoard}
-                      variant="SurfaceVariant"
-                      size="300"
-                      radii="300"
-                      aria-pressed={!!emojiBoardAnchor}
-                    >
-                      <Icon src={Icons.SmilePlus} size="100" />
-                    </IconButton>
+                      pressed={!!emojiBoardAnchor}
+                      iconSrc={Icons.SmilePlus}
+                      tooltip="Add Reaction"
+                      senderId={event.sender}
+                      eventId={event.event_id}
+                    />
                   </PopOut>
                 )}
-                <IconButton
+
+                <OptionButton
                   onClick={onReplyClick}
-                  data-event-id={event.event_id}
-                  data-sender-id={event.sender}
-                  variant="SurfaceVariant"
-                  size="300"
-                  radii="300"
-                >
-                  <Icon src={Icons.ReplyArrow} size="100" />
-                </IconButton>
+                  iconSrc={Icons.ReplyArrow}
+                  tooltip="Reply"
+                  senderId={event.sender}
+                  eventId={event.event_id}
+                />
                 {canThread && (
-                  <IconButton
+                  <OptionButton
                     onClick={onThreadClick}
-                    data-event-id={event.event_id}
-                    variant="SurfaceVariant"
-                    size="300"
-                    radii="300"
-                  >
-                    <Icon src={Icons.Thread} size="100" />
-                  </IconButton>
+                    iconSrc={Icons.Thread}
+                    tooltip="Reply in Thread"
+                    senderId={event.sender}
+                    eventId={event.event_id}
+                  />
                 )}
-                {canEditEvent(ct, event) && onEditId && (
-                  <IconButton
-                    onClick={() => onEditId(event.event_id)}
-                    variant="SurfaceVariant"
-                    size="300"
-                    radii="300"
-                  >
-                    <Icon src={Icons.Pencil} size="100" />
-                  </IconButton>
+                {onEditId && (
+                  <EditButtonHost event={event}>
+                    <OptionButton
+                      onClick={() => onEditId(event.event_id)}
+                      iconSrc={Icons.Pencil}
+                      tooltip="Edit"
+                      senderId={event.sender}
+                      eventId={event.event_id}
+                    />
+                  </EditButtonHost>
                 )}
                 <PopOut
                   anchor={menuAnchor}
@@ -1128,26 +1208,28 @@ export const Message = as<'div', MessageProps>(
                               </Text>
                             </MenuItem>
                           )}
-                          {canEditEvent(ct, event) && onEditId && (
-                            <MenuItem
-                              size="300"
-                              after={<Icon size="100" src={Icons.Pencil} />}
-                              radii="300"
-                              data-event-id={event.event_id}
-                              onClick={() => {
-                                onEditId(event.event_id);
-                                closeMenu();
-                              }}
-                            >
-                              <Text
-                                className={css.MessageMenuItemText}
-                                as="span"
-                                size="T300"
-                                truncate
+                          {onEditId && (
+                            <EditButtonHost event={event}>
+                              <MenuItem
+                                size="300"
+                                after={<Icon size="100" src={Icons.Pencil} />}
+                                radii="300"
+                                data-event-id={event.event_id}
+                                onClick={() => {
+                                  onEditId(event.event_id);
+                                  closeMenu();
+                                }}
                               >
-                                Edit Message
-                              </Text>
-                            </MenuItem>
+                                <Text
+                                  className={css.MessageMenuItemText}
+                                  as="span"
+                                  size="T300"
+                                  truncate
+                                >
+                                  Edit Message
+                                </Text>
+                              </MenuItem>
+                            </EditButtonHost>
                           )}
                           {!hideReadReceipts && (
                             <MessageReadReceiptItem eventId={event.event_id} onClose={closeMenu} />
@@ -1177,15 +1259,14 @@ export const Message = as<'div', MessageProps>(
                     </FocusTrap>
                   }
                 >
-                  <IconButton
-                    variant="SurfaceVariant"
-                    size="300"
-                    radii="300"
+                  <OptionButton
                     onClick={handleOpenMenu}
-                    aria-pressed={!!menuAnchor}
-                  >
-                    <Icon src={Icons.VerticalDots} size="100" />
-                  </IconButton>
+                    iconSrc={Icons.VerticalDots}
+                    tooltip="Options"
+                    senderId={event.sender}
+                    eventId={event.event_id}
+                    pressed={!!menuAnchor}
+                  />
                 </PopOut>
               </Box>
             </Menu>
