@@ -68,7 +68,7 @@ import { getMatrixToRoomEvent } from '../../../plugins/matrix-to';
 import { getViaServers } from '../../../plugins/via-servers';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { useRoomPinnedEvents } from '../../../hooks/useRoomPinnedEvents';
-import { MemberPowerTag, StateEventType } from '../../../../types/matrix/room';
+import { MemberPowerTag, MessageEvent, StateEventType } from '../../../../types/matrix/room';
 import { PowerIcon } from '../../../components/power';
 import colorMXID from '../../../../util/colorMXID';
 import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
@@ -239,61 +239,76 @@ export const MessageSourceCodeItem = as<
 >(({ event, onClose, ...props }, ref) => {
   const ct = useClient();
   const roomId = useRoom();
-  const [open, setOpen] = useState(false);
+  const [sourceText, setSourceText] = useState<string>();
 
-  const getText = (): string => {
+  const handleOpen = async () => {
     const timeline = ct.roomToTimeline.read.get(roomId);
     const editEvents = timeline?.relations.edits.eventToRelations.read.get(event.event_id);
 
-    if (!editEvents) return JSON.stringify(event, null, 2);
+    const getEventFormat = async (evt: MessageEventWithoutRoomId) =>
+      evt.type === MessageEvent.RoomMessageEncrypted
+        ? {
+            [`<== DECRYPTED_EVENT ==>`]: await ct.decryption.tryDecryptEvent(roomId, event),
+            [`<== ORIGINAL_EVENT ==>`]: evt,
+          }
+        : evt;
+
+    if (!editEvents) {
+      setSourceText(JSON.stringify(await getEventFormat(event), null, 2));
+      return;
+    }
 
     const content: Record<string, unknown> = {
-      '<== MAIN_EVENT ==>': event,
+      '<== MAIN_EVENT ==>': await getEventFormat(event),
     };
 
-    editEvents?.forEach((evt, index) => {
-      content[`<== REPLACEMENT_EVENT_${index + 1} ==>`] = evt;
-    });
+    for (let idx = 0; idx < editEvents.length; idx += 1) {
+      const editedEvent = editEvents[idx];
+      // eslint-disable-next-line no-await-in-loop
+      content[`<== REPLACEMENT_EVENT_${idx + 1} ==>`] = await getEventFormat(editedEvent);
+    }
 
-    return JSON.stringify(content, null, 2);
+    setSourceText(JSON.stringify(content, null, 2));
   };
 
   const handleClose = () => {
-    setOpen(false);
+    setSourceText(undefined);
     onClose?.();
   };
 
   return (
     <>
-      <Overlay open={open} backdrop={<OverlayBackdrop />}>
-        <OverlayCenter>
-          <FocusTrap
-            focusTrapOptions={{
-              initialFocus: false,
-              onDeactivate: handleClose,
-              clickOutsideDeactivates: true,
-              escapeDeactivates: stopPropagation,
-            }}
-          >
-            <Modal variant="Surface" size="500">
-              <TextViewer
-                name="Source Code"
-                langName="json"
-                text={getText()}
-                requestClose={handleClose}
-              />
-            </Modal>
-          </FocusTrap>
-        </OverlayCenter>
-      </Overlay>
+      {typeof sourceText === 'string' && (
+        <Overlay open backdrop={<OverlayBackdrop />}>
+          <OverlayCenter>
+            <FocusTrap
+              focusTrapOptions={{
+                initialFocus: false,
+                onDeactivate: handleClose,
+                clickOutsideDeactivates: true,
+                escapeDeactivates: stopPropagation,
+              }}
+            >
+              <Modal variant="Surface" size="500">
+                <TextViewer
+                  name="Source Code"
+                  langName="json"
+                  text={sourceText}
+                  requestClose={handleClose}
+                />
+              </Modal>
+            </FocusTrap>
+          </OverlayCenter>
+        </Overlay>
+      )}
       <MenuItem
         size="300"
         after={<Icon size="100" src={Icons.BlockCode} />}
         radii="300"
-        onClick={() => setOpen(true)}
+        onClick={handleOpen}
         {...props}
         ref={ref}
-        aria-pressed={open}
+        aria-pressed={!!sourceText}
       >
         <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
           View Source
