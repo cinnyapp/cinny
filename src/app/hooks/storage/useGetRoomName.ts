@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useAtomValue } from 'jotai';
-import { ObjectReader } from 'neurone/lib/utils';
 import { useClient } from '../useClient';
 import { useObservableValue } from '../useObservableValue';
 import { GetRoomHeroesCallback } from './useRoomHeros';
@@ -39,7 +38,7 @@ export const useGetRoomName = (getRoomHeroes: GetRoomHeroesCallback): GetRoomNam
       });
 
       if (heroNames.length === 0) {
-        return 'NO NAME';
+        return 'Unnammed';
       }
 
       if (heroNames.length === 1) {

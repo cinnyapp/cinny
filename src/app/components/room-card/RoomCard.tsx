@@ -171,7 +171,7 @@ export const RoomCard = as<'div', RoomCardProps>(
     const fallbackName = getMxIdLocalPart(roomIdOrAlias) ?? roomIdOrAlias;
     const fallbackTopic = roomIdOrAlias;
 
-    const avatarMxc = localSummary.avatarUrl ?? avatarUrl;
+    const avatarMxc = avatarUrl ?? localSummary.avatarUrl;
     const avatarHttpUrl =
       avatarMxc &&
       mxcToHttp(baseUrl, avatarMxc, useAuthentication).thumbnail({
@@ -180,9 +180,9 @@ export const RoomCard = as<'div', RoomCardProps>(
         method: 'crop',
       });
 
-    const roomName = localSummary?.name || name || fallbackName;
-    const roomTopic = localSummary.topic || topic || fallbackTopic;
-    const joinedMemberCount = localSummary.memberCount ?? memberCount;
+    const roomName = name || localSummary?.name || fallbackName;
+    const roomTopic = topic || localSummary.topic || fallbackTopic;
+    const joinedMemberCount = memberCount ?? localSummary.memberCount;
 
     const [joinState, join] = useAsyncCallback<PostJoinOK, Error, []>(
       useCallback(async () => {
