@@ -250,27 +250,30 @@ export const useEditorResizeStickBottom = (
 
 export const useUpArrowEdit = (editor: Editor, setEditId: (eventId: string) => void) => {
   const ct = useClient();
+  const roomId = useRoom();
   const timeline = useTimelineView();
 
   // Handle up arrow edit
   useKeyDown(
     window,
     useCallback(
-      (evt) => {
+      async (evt) => {
         if (
           isKeyHotkey('arrowup', evt) &&
           editableActiveElement() &&
           ReactEditor.isFocused(editor) &&
           isEmptyEditor(editor)
         ) {
-          const editableEvt = getLatestEditableEvt(timeline, (mEvt) => canEditEvent(ct, mEvt));
+          const editableEvt = await getLatestEditableEvt(ct, timeline, roomId, (mEvt) =>
+            canEditEvent(ct, mEvt)
+          );
           const editableEvtId = editableEvt?.event_id;
           if (!editableEvtId) return;
           setEditId(editableEvtId);
           evt.preventDefault();
         }
       },
-      [setEditId, ct, timeline, editor]
+      [setEditId, ct, timeline, editor, roomId]
     )
   );
 };

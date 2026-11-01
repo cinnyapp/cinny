@@ -264,10 +264,12 @@ export const canEditEvent = (ct: ClientContext, event: MessageEventWithoutRoomId
   );
 };
 
-export const getLatestEditableEvt = (
+export const getLatestEditableEvt = async (
+  ct: ClientContext,
   timeline: TimelineView,
+  roomId: string,
   canEdit: (event: MessageEventWithoutRoomId) => boolean
-): MessageEventWithoutRoomId | undefined => {
+): Promise<MessageEventWithoutRoomId | undefined> => {
   const batch = timeline.batch.read;
   if (!batch.next.end) return undefined;
 
@@ -275,7 +277,12 @@ export const getLatestEditableEvt = (
 
   for (let i = events.length - 1; i >= 0; i -= 1) {
     const evt = events[i];
-    if (canEdit(evt)) return evt;
+    const targetEvent =
+      evt.type === MessageEvent.RoomMessageEncrypted
+        ? // eslint-disable-next-line no-await-in-loop
+          await ct.decryption.tryDecryptEvent(roomId, evt)
+        : evt;
+    if (canEdit(targetEvent)) return evt;
   }
   return undefined;
 };
