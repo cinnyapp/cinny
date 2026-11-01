@@ -33,6 +33,7 @@ import { isCallRoom } from '../../utils/room';
 import { CallChatView } from './CallChatView';
 import { CallView } from '../call/CallView';
 import { CanMessageProvider } from './hooks/useCanMessage';
+import { editableActiveElement } from '../../utils/dom';
 
 export function Room() {
   const { eventId } = useParams();
@@ -68,7 +69,7 @@ export function Room() {
       (evt) => {
         if (isKeyHotkey('escape', evt)) {
           // TODO: check overlay's
-          if (activeThreadId && threadFocusRef.current) {
+          if (activeThreadId && threadFocusRef.current && !editableActiveElement()) {
             timeline?.closeThread();
           }
           // markAsRead(mx, roomId, hideActivity);

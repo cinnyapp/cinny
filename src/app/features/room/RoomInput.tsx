@@ -201,10 +201,14 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             setAutocompleteQuery(undefined);
             return;
           }
-          setReplyDraft(undefined);
+          if (replyDraft) {
+            setReplyDraft(undefined);
+            return;
+          }
+          ReactEditor.blur(editor);
         }
       },
-      [submit, setReplyDraft, enterForNewline, autocompleteQuery, isComposing]
+      [editor, submit, replyDraft, setReplyDraft, enterForNewline, autocompleteQuery, isComposing]
     );
 
     const handleKeyUp: KeyboardEventHandler = useCallback(

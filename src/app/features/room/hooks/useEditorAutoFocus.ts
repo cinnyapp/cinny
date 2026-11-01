@@ -30,7 +30,8 @@ const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
     code === 'Space' ||
     code === 'Enter' ||
     code === 'NumLock' ||
-    code === 'ScrollLock'
+    code === 'ScrollLock' ||
+    code === 'Escape'
   ) {
     return false;
   }
