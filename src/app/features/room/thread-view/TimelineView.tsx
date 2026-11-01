@@ -59,6 +59,7 @@ import {
   useTimelineRelations,
   useTimelineScrollRestore,
   useUnreadMarker,
+  useUpArrowEdit,
   useUserClickHandler,
   useUsernameClickHandler,
 } from '../hooks/useTimeline';
@@ -251,6 +252,7 @@ export function TimelineView({ timeline, threadInputRef, editor, eventId }: Time
     atBottomObservable
   );
   useMessageEditorOutOfViewFocus(scrollRef, scrollToElement, editId);
+  useUpArrowEdit(editor, setEditId);
 
   const { handleOpenEvent, handleJumpToUnread } = useJumpHandlers(
     timeline,

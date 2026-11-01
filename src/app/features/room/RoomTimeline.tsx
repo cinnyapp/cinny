@@ -64,6 +64,7 @@ import {
   useTimelineRelations,
   useTimelineScrollRestore,
   useUnreadMarker,
+  useUpArrowEdit,
   useUserClickHandler,
   useUsernameClickHandler,
 } from './hooks/useTimeline';
@@ -232,6 +233,7 @@ export function RoomTimeline({ eventId, roomInputRef, editor, timeline }: RoomTi
     atBottomObservable
   );
   useMessageEditorOutOfViewFocus(scrollRef, scrollToElement, editId);
+  useUpArrowEdit(editor, setEditId);
 
   const { handleOpenEvent, handleJumpToUnread } = useJumpHandlers(
     timeline,

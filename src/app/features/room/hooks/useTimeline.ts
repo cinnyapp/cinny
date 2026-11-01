@@ -13,9 +13,10 @@ import {
 import { useAtom } from 'jotai';
 import { Editor } from 'slate';
 import { ReactEditor } from 'slate-react';
+import { isKeyHotkey } from 'is-hotkey';
 import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { ObservableValue } from 'neurone/lib/utils/observable';
-import { scrollToBottom } from '../../../utils/dom';
+import { editableActiveElement, scrollToBottom } from '../../../utils/dom';
 import { MessageBatch, RangeInfo } from '../../../../client/room/messages';
 import { getResizeObserverEntry, useResizeObserver } from '../../../hooks/useResizeObserver';
 import {
@@ -34,14 +35,15 @@ import { useOpenUserRoomProfile } from '../../../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '../../../hooks/useSpace';
 import { useRoomMembersAPI } from '../../../hooks/useRoomMembers';
 import { useClient } from '../../../hooks/useClient';
-import { createMentionElement, moveCursor } from '../../../components/editor';
+import { createMentionElement, isEmptyEditor, moveCursor } from '../../../components/editor';
 import { inSameDay, minuteDifference } from '../../../utils/time';
-import { getThreadId } from '../../../utils/room';
+import { canEditEvent, getLatestEditableEvt, getThreadId } from '../../../utils/room';
 import { ItemRange, ScrollToElement, ScrollToItem } from '../../../hooks/useVirtualPaginator';
 import { randomStr } from '../../../utils/common';
 import { useObservableValue, useObservableValueListener } from '../../../hooks/useObservableValue';
 import { ReadReceiptObject } from '../../../../client/storage/collections';
 import { useAlive } from '../../../hooks/useAlive';
+import { useKeyDown } from '../../../hooks/useKeyDown';
 
 const TimelineViewContext = createContext<TimelineView | null>(null);
 export const TimelineViewProvider = TimelineViewContext.Provider;
@@ -243,6 +245,33 @@ export const useEditorResizeStickBottom = (
       };
     }, [getScrollElement, getEditorElement, atBottomObservable]),
     getEditorElement
+  );
+};
+
+export const useUpArrowEdit = (editor: Editor, setEditId: (eventId: string) => void) => {
+  const ct = useClient();
+  const timeline = useTimelineView();
+
+  // Handle up arrow edit
+  useKeyDown(
+    window,
+    useCallback(
+      (evt) => {
+        if (
+          isKeyHotkey('arrowup', evt) &&
+          editableActiveElement() &&
+          ReactEditor.isFocused(editor) &&
+          isEmptyEditor(editor)
+        ) {
+          const editableEvt = getLatestEditableEvt(timeline, (mEvt) => canEditEvent(ct, mEvt));
+          const editableEvtId = editableEvt?.event_id;
+          if (!editableEvtId) return;
+          setEditId(editableEvtId);
+          evt.preventDefault();
+        }
+      },
+      [setEditId, ct, timeline, editor]
+    )
   );
 };
 
@@ -648,11 +677,17 @@ export const useMessageEditorOutOfViewFocus = (
         (scrollRef.current?.querySelector(`[data-message-id="${editId}"]`) as HTMLElement) ??
         undefined;
       if (editMsgElement) {
-        scrollToElement(editMsgElement, {
-          align: 'center',
-          behavior: 'smooth',
-          stopInView: true,
-        });
+        // use timeline so timeline container on height change
+        // do not bring it down again
+        setTimeout(
+          () =>
+            scrollToElement(editMsgElement, {
+              align: 'center',
+              behavior: 'smooth',
+              stopInView: true,
+            }),
+          100
+        );
       }
     }
   }, [scrollRef, scrollToElement, editId]);

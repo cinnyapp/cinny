@@ -6,6 +6,7 @@ import { MentionsContent, MsgType, ReactionContent, RelationType } from '../../t
 import { ClientContext } from '../../client/context';
 import { rContent, rInReplyTo, rRelatesTo } from '../../client/reader';
 import { replaced } from '../../client/room/relations';
+import { TimelineView } from '../../client/room';
 
 export const isCallRoom = (roomType?: string) => roomType === 'org.matrix.msc3417.call';
 
@@ -261,6 +262,22 @@ export const canEditEvent = (ct: ClientContext, event: MessageEventWithoutRoomId
     event.type === MessageEvent.RoomMessage &&
     (msgType === MsgType.Text || msgType === MsgType.Emote || msgType === MsgType.Notice)
   );
+};
+
+export const getLatestEditableEvt = (
+  timeline: TimelineView,
+  canEdit: (event: MessageEventWithoutRoomId) => boolean
+): MessageEventWithoutRoomId | undefined => {
+  const batch = timeline.batch.read;
+  if (!batch.next.end) return undefined;
+
+  const { events } = batch.messages;
+
+  for (let i = events.length - 1; i >= 0; i -= 1) {
+    const evt = events[i];
+    if (canEdit(evt)) return evt;
+  }
+  return undefined;
 };
 
 export const getMentionContent = (userIds: string[], room: boolean): MentionsContent => {
