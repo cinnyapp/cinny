@@ -132,7 +132,7 @@ export function Reply({
             editedEvent={editedEvent}
             roomId={roomId}
             decryptionManager={ct.decryption}
-            reply
+            inline
           >
             {(contentEvent) => (
               <RenderReplyContent

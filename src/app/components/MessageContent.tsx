@@ -9,7 +9,7 @@ type MessageContentProps = {
   editedEvent?: MessageEventWithoutRoomId;
   roomId: string;
   decryptionManager: DecryptionManager;
-  reply?: boolean;
+  inline?: boolean;
   children: (event: MessageEventWithoutRoomId) => React.ReactNode;
 };
 
@@ -18,7 +18,7 @@ export function MessageContent({
   editedEvent,
   roomId,
   decryptionManager,
-  reply,
+  inline,
   children,
 }: MessageContentProps) {
   const effectiveEvent = editedEvent ?? event;
@@ -29,7 +29,7 @@ export function MessageContent({
         roomId={roomId}
         decryptionManager={decryptionManager}
         event={effectiveEvent}
-        reply={reply}
+        inline={inline}
       >
         {(decryptedEvent) => children(decryptedEvent)}
       </EncryptedMessageEvent>

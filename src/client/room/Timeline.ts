@@ -368,7 +368,7 @@ export class Timeline implements TimelineView, Disposable {
     return sender;
   }
 
-  public openThread(threadId: string): TimelineView {
+  public registerThread(threadId: string): ThreadTimeline {
     const threadRoot = this.findEvent(threadId);
     const threadTimeline =
       this.threads.read.get(threadId) ??
@@ -383,6 +383,12 @@ export class Timeline implements TimelineView, Disposable {
     if (!this.threads.read.has(threadId)) {
       this.addThread(threadTimeline);
     }
+
+    return threadTimeline;
+  }
+
+  public openThread(threadId: string): ThreadTimeline {
+    const threadTimeline = this.registerThread(threadId);
 
     this.activeThread.publish(this.publishKey, threadId);
     return threadTimeline;

@@ -93,6 +93,7 @@ import { useAllJoinedRoomsSet } from '../../../hooks/useAllJoinedRoomsSet';
 import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { RoomAccessIndicator } from '../../../components/RoomAccessIndicator';
+import { ThreadNavItems } from '../../../features/room-nav/ThreadNavItems';
 
 type SpaceMenuProps = {
   requestClose: () => void;
@@ -414,6 +415,8 @@ export function Space() {
   const roomToNotifications = useRoomsNotifications(rooms, roomToNotificationsAtom);
   const unreadRooms = useRoomsUnread(rooms, unreadRoomsAtom);
 
+  const roomToTimeline = useObservableValue(ct.roomToTimeline);
+
   const hierarchyItems = useJoinedHierarchyItems(
     spaceId,
     hierarchy,
@@ -517,6 +520,9 @@ export function Space() {
 
               const n = roomToNotifications.get(roomId);
               const notifications = n && getRoomTotalNotifications(n);
+              const threadNotifications = n?.threads;
+              const timeline = roomToTimeline.get(roomId);
+
               return (
                 <VirtualTile virtualItem={vItem} key={vItem.index} ref={virtualizer.measureElement}>
                   <RoomNavItem
@@ -531,6 +537,13 @@ export function Space() {
                     notifications={notifications}
                     unread={unreadRooms.has(roomId)}
                   />
+                  {timeline && threadNotifications && threadNotifications.size > 0 && (
+                    <ThreadNavItems
+                      roomSelected={selectedRoomId === roomId}
+                      timeline={timeline}
+                      threadNotifications={threadNotifications}
+                    />
+                  )}
                 </VirtualTile>
               );
             })}

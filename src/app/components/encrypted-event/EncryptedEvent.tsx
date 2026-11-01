@@ -43,14 +43,14 @@ type EncryptedMessageEventProps = {
   decryptionManager: DecryptionManager;
   roomId: string;
   event: MessageEventWithoutRoomId;
-  reply?: boolean;
+  inline?: boolean;
   children: (decryptedEvent: MessageEventWithoutRoomId) => ReactNode;
 };
 export function EncryptedMessageEvent({
   decryptionManager,
   roomId,
   event,
-  reply,
+  inline,
   children,
 }: EncryptedMessageEventProps) {
   // Memoize the result because it can return new EncryptedEvent
@@ -67,7 +67,7 @@ export function EncryptedMessageEvent({
 
   if (decryption instanceof EventDecryptionIdle) {
     return (
-      <Text size={reply ? 'T300' : 'T400'} truncate={reply}>
+      <Text size={inline ? 'T300' : 'T400'} truncate={inline}>
         <MessageDecryptionIdle />
       </Text>
     );
@@ -75,7 +75,7 @@ export function EncryptedMessageEvent({
 
   if (decryption instanceof EventDecryptionPending) {
     return (
-      <Text size={reply ? 'T300' : 'T400'} truncate={reply}>
+      <Text size={inline ? 'T300' : 'T400'} truncate={inline}>
         <MessageDecryptionPending />
       </Text>
     );
@@ -89,7 +89,7 @@ export function EncryptedMessageEvent({
 
   if (cause) {
     return (
-      <Text size={reply ? 'T300' : 'T400'} truncate={reply}>
+      <Text size={inline ? 'T300' : 'T400'} truncate={inline}>
         <MessageDecryptionError
           message={
             cause instanceof Error
@@ -103,14 +103,14 @@ export function EncryptedMessageEvent({
 
   if (!error) {
     return (
-      <Text>
+      <Text size={inline ? 'T300' : 'T400'} truncate={inline}>
         <MessageDecryptionError message="Unknown error occurs while decrypting message." />
       </Text>
     );
   }
 
   return (
-    <Text>
+    <Text size={inline ? 'T300' : 'T400'} truncate={inline}>
       <MessageDecryptionError message={error.description} />
     </Text>
   );
