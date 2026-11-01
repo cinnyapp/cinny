@@ -30,7 +30,7 @@ export function CanMessageProvider({ children }: { children: ReactNode }) {
   const allowMessage = encrypted ? canMessageEncrypted : canMessage;
 
   return (
-    <CanMessageContext.Provider value={allowMessage || !replacementRoom}>
+    <CanMessageContext.Provider value={replacementRoom ? false : allowMessage}>
       {children}
     </CanMessageContext.Provider>
   );
