@@ -256,7 +256,7 @@ export function CodeBlock({
   );
 
   const [expanded, setExpand] = useState(false);
-  const [wrap, setWrap] = useState(false);
+  const [wrap, setWrap] = useState(!language);
   const [copied, setCopied] = useTimeoutToggle();
 
   const handleCopy = () => {
