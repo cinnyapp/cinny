@@ -51,7 +51,7 @@ export class ReadMarker {
     const endpoint = postReceiptEventId({
       pathParams: { roomId, receiptType, eventId: latestEventId ?? eventId },
       body: {
-        thread_id: threadId,
+        thread_id: threadId ?? ThreadId.Main,
       },
     });
 

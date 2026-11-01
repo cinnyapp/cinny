@@ -36,7 +36,7 @@ export const useMarkAsRead = (roomId: string, threadId?: string) => {
       return;
     }
     if (count > 0) {
-      await ct.readMarker.markAsRead(roomId, 'm.read', latestEvent.event_id);
+      await ct.readMarker.markAsRead(roomId, 'm.read', latestEvent.event_id, threadId);
       await clearNotificationCount();
     }
 
@@ -47,7 +47,7 @@ export const useMarkAsRead = (roomId: string, threadId?: string) => {
       return;
     }
 
-    await ct.readMarker.markAsRead(roomId, 'm.read', latestEvent.event_id);
+    await ct.readMarker.markAsRead(roomId, 'm.read', latestEvent.event_id, threadId);
   }, [ct, roomId, threadId, clearNotificationCount]);
 
   return markAsRead;
