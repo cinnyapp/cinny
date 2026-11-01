@@ -96,7 +96,7 @@ export const CodeBlock = style([
 export const CodeBlockHeader = style([
   ContainerColor({ variant: 'Surface' }),
   {
-    padding: `0 ${config.space.S200} 0 ${config.space.S300}`,
+    padding: `0 ${config.space.S200} 0 ${config.space.S200}`,
     borderBottomWidth: config.borderWidth.B300,
     gap: config.space.S200,
   },

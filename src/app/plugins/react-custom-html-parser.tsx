@@ -15,7 +15,20 @@ import {
   domToReact,
 } from 'html-react-parser';
 import classNames from 'classnames';
-import { Box, Chip, config, Header, Icon, IconButton, Icons, Scroll, Text, toRem } from 'folds';
+import {
+  Box,
+  Chip,
+  config,
+  Header,
+  Icon,
+  IconButton,
+  Icons,
+  Scroll,
+  Text,
+  Tooltip,
+  TooltipProvider,
+  toRem,
+} from 'folds';
 import { IntermediateRepresentation, Opts as LinkifyOpts, OptFn } from 'linkifyjs';
 import Linkify from 'linkify-react';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -243,6 +256,7 @@ export function CodeBlock({
   );
 
   const [expanded, setExpand] = useState(false);
+  const [wrap, setWrap] = useState(false);
   const [copied, setCopied] = useTimeoutToggle();
 
   const handleCopy = () => {
@@ -257,7 +271,21 @@ export function CodeBlock({
   return (
     <Text size="T300" as="pre" className={css.CodeBlock}>
       <Header variant="Surface" size="400" className={css.CodeBlockHeader}>
-        <Box grow="Yes">
+        {largeCodeBlock && (
+          <Box shrink="No" gap="200">
+            <IconButton
+              size="300"
+              variant="SurfaceVariant"
+              outlined
+              radii="300"
+              onClick={toggleExpand}
+              aria-label={expanded ? 'Collapse' : 'Expand'}
+            >
+              <Icon size="50" src={expanded ? Icons.ChevronTop : Icons.ChevronBottom} />
+            </IconButton>
+          </Box>
+        )}
+        <Box style={{ paddingLeft: largeCodeBlock ? undefined : config.space.S100 }} grow="Yes">
           <Text size="L400" truncate>
             {customLabel ?? language ?? 'Code'}
           </Text>
@@ -272,18 +300,29 @@ export function CodeBlock({
           >
             <Text size="B300">{copied ? 'Copied' : 'Copy'}</Text>
           </Chip>
-          {largeCodeBlock && (
-            <IconButton
-              size="300"
-              variant="SurfaceVariant"
-              outlined
-              radii="300"
-              onClick={toggleExpand}
-              aria-label={expanded ? 'Collapse' : 'Expand'}
-            >
-              <Icon size="50" src={expanded ? Icons.ChevronTop : Icons.ChevronBottom} />
-            </IconButton>
-          )}
+          <TooltipProvider
+            position="Bottom"
+            delay={0}
+            tooltip={
+              <Tooltip>
+                <Text size="L400">Toggle Wrap</Text>
+              </Tooltip>
+            }
+          >
+            {(triggerRef) => (
+              <IconButton
+                ref={triggerRef}
+                size="300"
+                variant={wrap ? 'Success' : 'Surface'}
+                fill="None"
+                aria-pressed={wrap}
+                radii="300"
+                onClick={() => setWrap(!wrap)}
+              >
+                <Icon size="50" src={Icons.Sort} />
+              </IconButton>
+            )}
+          </TooltipProvider>
         </Box>
       </Header>
       <Scroll
@@ -297,7 +336,7 @@ export function CodeBlock({
         visibility="Hover"
         hideTrack
       >
-        <div id="code-block-content" className={css.CodeBlockInternal}>
+        <div style={{ textWrap: wrap ? 'initial' : undefined }} className={css.CodeBlockInternal}>
           {domToReact(children, opts)}
         </div>
       </Scroll>
