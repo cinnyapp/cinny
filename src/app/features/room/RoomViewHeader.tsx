@@ -76,7 +76,7 @@ import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { RoomSettingsPage } from '../../state/roomSettings';
-import { getDmColorKey } from '../../utils/dmAvatar';
+import { getDmColorKey, getDmPartnerUserId } from '../../utils/dmAvatar';
 import { nameInitials } from '../../utils/common';
 import { useOpenMediaViewer } from '../media-viewer/state';
 import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
@@ -470,8 +470,11 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
   // picture; in a group the group picture's history.
   const openMediaViewer = useOpenMediaViewer();
   const handleAvatarClick = () => {
+    // The other person — never me, the bridge bot or my own puppet (bridged DMs
+    // have 3+ members, so the SDK's fallback member is empty there and the
+    // "oldest member" guess was the bot).
     const dmUserId = direct
-      ? room.getAvatarFallbackMember()?.userId ?? guessDmRoomUserId(room, mx.getSafeUserId())
+      ? getDmPartnerUserId(room, guessDmRoomUserId(room, mx.getSafeUserId()))
       : undefined;
     openMediaViewer({ mode: 'avatars', roomId: room.roomId, userId: dmUserId, includeRoom: true });
   };

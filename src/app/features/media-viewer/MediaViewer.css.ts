@@ -13,7 +13,10 @@ const GLASS = 'rgba(16, 18, 22, 0.72)';
 export const Root = style({
   position: 'fixed',
   inset: 0,
-  zIndex: 2000,
+  // Above folds' popup/modal layer (9999): the profile popup and the room
+  // settings modal (Media page) used to be drawn over the viewer. They stay
+  // open underneath and are there again when the viewer closes.
+  zIndex: 10000,
   display: 'flex',
   flexDirection: 'column',
   backgroundColor: GROUND,

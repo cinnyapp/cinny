@@ -12,6 +12,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   getDmPartnerMember,
+  getDmPartnerUserId,
+  getBridgedDmRoomIds,
   getDmAvatarMxc,
   getDmColorKey,
   isBridgedDm,
@@ -204,4 +206,95 @@ test('broken / throwing state never throws out of the helpers', () => {
     throw new Error('boom');
   };
   assert.equal(getDmAvatarMxc(room), 'mxc://m');
+});
+
+test('header picture history: the contact, never the bridge bot that joined first (Telegram DM, 2026-11-03)', () => {
+  const TG_BOT = '@telegrambot:chagai.website';
+  const RACHEL = '@telegram_283970903:chagai.website';
+  const room = fakeRoom({
+    members: [member(TG_BOT), member(ME), member(RACHEL)],
+    functional: [TG_BOT],
+  });
+  // Cinny's "oldest joined member" guess would be the bot
+  assert.equal(getDmPartnerUserId(room, TG_BOT), RACHEL);
+  // partner not loaded yet: a guess that is the bot / me is refused, a real one kept
+  const lazy = fakeRoom({ members: [member(ME), member(TG_BOT)], functional: [TG_BOT] });
+  lazy.getAvatarFallbackMember = () => null;
+  assert.equal(getDmPartnerUserId(lazy, TG_BOT), undefined);
+  assert.equal(getDmPartnerUserId(lazy, ME), undefined);
+  assert.equal(getDmPartnerUserId(lazy, RACHEL), RACHEL);
+});
+
+// Real shape of a Telegram portal on chagai.website (2026-11-03): an old
+// mautrix-telegram bridge event WITHOUT a room type next to the new one, me,
+// the bot, the contact and the bridge's puppet of my own Telegram account.
+const TG_BOT = '@telegrambot:chagai.website';
+const TG_ME = '@telegram_1094837295:chagai.website';
+const TG_RACHEL = '@telegram_658736473:chagai.website';
+function telegramRoom({
+  roomType = 'dm',
+  membership = 'join',
+  roomId = '!tg:chagai.website',
+} = {}) {
+  const room = fakeRoom({
+    members: [
+      member(TG_BOT),
+      member(ME),
+      member(TG_ME, 'mxc://me'),
+      member(TG_RACHEL, 'mxc://r', 'Rachel'),
+    ],
+    functional: [TG_BOT],
+    bridged: false,
+  });
+  const legacy = ev({ bridgebot: TG_BOT, channel: { id: '658736473', displayname: null } });
+  const current = ev({
+    bridgebot: TG_BOT,
+    channel: {
+      id: 'user:658736473',
+      displayname: 'Rachel (Telegram)',
+      'fi.mau.receiver': '1094837295',
+    },
+    ...(roomType ? { 'com.beeper.room_type': roomType } : {}),
+  });
+  const states = { 'm.bridge': [legacy, current], 'uk.half-shot.bridge': [legacy, current] };
+  const base = room.currentState.getStateEvents;
+  room.currentState.getStateEvents = (type, stateKey) =>
+    states[type] ? (stateKey === undefined ? states[type] : states[type][0]) : base(type, stateKey);
+  room.roomId = roomId;
+  room.getMyMembership = () => membership;
+  return room;
+}
+
+test('Telegram 1:1 portal (two bridge events, own puppet): Rachel is the partner, header never picks the bot', () => {
+  const room = telegramRoom();
+  assert.equal(isBridgedDm(room), true);
+  assert.equal(getDmPartnerMember(room)?.userId, TG_RACHEL);
+  assert.equal(getDmPartnerUserId(room, TG_BOT), TG_RACHEL);
+});
+
+test('bridge-marked 1:1 chats count as direct chats; groups, channels and left chats do not', () => {
+  const rooms = [
+    telegramRoom({ roomId: '!dm:x' }),
+    telegramRoom({ roomId: '!group:x', roomType: 'group' }),
+    telegramRoom({ roomId: '!channel:x', roomType: null }),
+    telegramRoom({ roomId: '!left:x', membership: 'leave' }),
+    telegramRoom({ roomId: '!invite:x', membership: 'invite' }),
+    Object.assign(fakeRoom({ bridged: false, members: [member(ME), member(MOLLY)] }), {
+      roomId: '!plain:x',
+      getMyMembership: () => 'join',
+    }),
+  ];
+  assert.deepEqual([...getBridgedDmRoomIds(rooms)].sort(), ['!dm:x', '!invite:x']);
+});
+
+test('scanning 9,000 chats for bridge 1:1 chats is cheap', () => {
+  const rooms = Array.from({ length: 9000 }, (_, i) =>
+    telegramRoom({ roomId: `!r${i}:x`, roomType: i % 3 ? 'dm' : 'group' })
+  );
+  const t0 = performance.now();
+  const ids = getBridgedDmRoomIds(rooms);
+  const ms = performance.now() - t0;
+  assert.equal(ids.size, 6000);
+  assert.ok(ms < 200, `${ms.toFixed(1)} ms`);
+  console.log(`# scan 9000 rooms: ${ms.toFixed(1)} ms`);
 });

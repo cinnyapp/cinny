@@ -71,14 +71,19 @@ export const getBridgeInfo = (room: DmRoomLike): BridgeInfo | undefined => {
   const state = room.currentState as unknown as {
     getStateEvents: (type: string) => StateLike[] | null | undefined;
   };
-  const content = BRIDGE_STATE_TYPES.map((type) => {
+  // A portal can carry several bridge events (mautrix-telegram keeps its old
+  // "net.maunium.telegram://…" one next to the new one): prefer the one that
+  // says what kind of chat it is.
+  const contents = BRIDGE_STATE_TYPES.flatMap((type) => {
     try {
       const events = state.getStateEvents(type);
-      return Array.isArray(events) ? events[0]?.getContent() : undefined;
+      return Array.isArray(events) ? events.map((e) => e?.getContent()).filter((c) => !!c) : [];
     } catch {
-      return undefined;
+      return [];
     }
-  }).find((c) => !!c);
+  });
+  const content =
+    contents.find((c) => typeof c['com.beeper.room_type'] === 'string') ?? contents[0];
   if (content) {
     const channel = (content.channel ?? {}) as Record<string, unknown>;
     return {
@@ -94,6 +99,29 @@ export const getBridgeInfo = (room: DmRoomLike): BridgeInfo | undefined => {
 
 export const isBridgedDm = (room: DmRoomLike): boolean => getBridgeInfo(room)?.roomType === 'dm';
 
+type JoinableRoomLike = DmRoomLike & { getMyMembership: () => string };
+
+/**
+ * Rooms the bridge itself marks as a 1:1 chat (m.bridge "com.beeper.room_type":
+ * "dm"). Cinny only trusted the m.direct account data, which the Telegram
+ * bridge did not fill for ~170 of his chats, so they showed up as rooms.
+ * Groups and channels carry "group"/no type and are never included.
+ */
+export const getBridgedDmRoomIds = (rooms: JoinableRoomLike[]): Set<string> => {
+  const ids = new Set<string>();
+  rooms.forEach((room) => {
+    try {
+      const membership = room.getMyMembership();
+      if ((membership === 'join' || membership === 'invite') && isBridgedDm(room)) {
+        ids.add(room.roomId);
+      }
+    } catch {
+      // a half-loaded room is simply not counted
+    }
+  });
+  return ids;
+};
+
 const getFunctionalMembers = (room: DmRoomLike): string[] => {
   const members = stateContent(room, FUNCTIONAL_MEMBERS)?.service_members;
   return Array.isArray(members) ? members.filter((m): m is string => typeof m === 'string') : [];
@@ -104,11 +132,17 @@ const getFunctionalMembers = (room: DmRoomLike): string[] => {
  * Ignores yourself, the bridge bot, other "functional" members and the
  * bridge's puppet of your own account.
  */
-export const getDmPartnerMember = (room: DmRoomLike): RoomMember | undefined => {
-  const bridge = getBridgeInfo(room);
+/** Members that are never "the other person": me, the bridge bot, functional members. */
+const getNonPartnerIds = (room: DmRoomLike, bridge = getBridgeInfo(room)): Set<string> => {
   const skip = new Set<string>(getFunctionalMembers(room));
   if (room.myUserId) skip.add(room.myUserId);
   if (bridge?.bridgebot) skip.add(bridge.bridgebot);
+  return skip;
+};
+
+export const getDmPartnerMember = (room: DmRoomLike): RoomMember | undefined => {
+  const bridge = getBridgeInfo(room);
+  const skip = getNonPartnerIds(room, bridge);
 
   let candidates = (room.getMembers() ?? []).filter(
     (m) => (m.membership === 'join' || m.membership === 'invite') && !skip.has(m.userId)
@@ -132,7 +166,8 @@ export const getDmPartnerMember = (room: DmRoomLike): RoomMember | undefined => 
       // (WhatsApp moved contacts to new "LID" ids, so a chat can hold the old
       // phone-number ghost and the new one). Pick the one the chat belongs to,
       // else the one that has a picture, else the first — never give up.
-      const remoteId = bridge.channelId?.split('@')[0];
+      // "447…@s.whatsapp.net" (WhatsApp) / "user:658736473" (Telegram) → the bare id
+      const remoteId = bridge.channelId?.split('@')[0].replace(/^user:/, '');
       const byId = remoteId
         ? candidates.filter(
             (m) => m.userId.includes(`_${remoteId}:`) || m.userId.includes(`_lid-${remoteId}:`)
@@ -150,6 +185,19 @@ export const getDmPartnerMember = (room: DmRoomLike): RoomMember | undefined => 
   const fallback = room.getAvatarFallbackMember();
   if (fallback && !skip.has(fallback.userId)) return fallback;
   return undefined;
+};
+
+/**
+ * User id of the other person in a 1:1 chat (whose picture history the chat
+ * header opens). `guess` (e.g. Cinny's guessDmRoomUserId, "oldest joined
+ * member") is only used when the partner can't be found, and never when it is
+ * me / the bridge bot / a functional member — in a bridged DM the bot usually
+ * joined first, so the plain guess picked the bot (2026-11-03).
+ */
+export const getDmPartnerUserId = (room: DmRoomLike, guess?: string): string | undefined => {
+  const partner = getDmPartnerMember(room);
+  if (partner) return partner.userId;
+  return guess && !getNonPartnerIds(room).has(guess) ? guess : undefined;
 };
 
 /**
