@@ -1,5 +1,5 @@
 import React, { forwardRef, ReactNode } from 'react';
-import { as, Badge, Box, ContainerColor, Line, Text } from 'folds';
+import { as, Badge, Box, color, Line, Text } from 'folds';
 import classNames from 'classnames';
 import { DividerTime, MessageBase } from '../../../components/message';
 import { MessageSpacing } from '../../../state/settings';
@@ -7,7 +7,7 @@ import * as css from './styles.css';
 
 export const TimelineDivider = as<
   'div',
-  { variant?: ContainerColor | 'Inherit'; before?: ReactNode; after?: ReactNode }
+  { variant?: 'Critical' | 'Surface'; before?: ReactNode; after?: ReactNode }
 >(({ className, variant, before, after, children, ...props }, ref) => (
   <Box
     className={classNames(css.TimelineDivider, className)}
@@ -18,7 +18,11 @@ export const TimelineDivider = as<
     ref={ref}
   >
     {before}
-    <Line style={{ flexGrow: 1 }} variant={variant} size="300" />
+    <Line
+      style={{ borderColor: variant === 'Critical' ? color.Critical.Main : undefined, flexGrow: 1 }}
+      variant={variant}
+      size="300"
+    />
     <Box className={css.TimelineDividerCenterChild}>{children}</Box>
     {after}
   </Box>
