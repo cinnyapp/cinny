@@ -24,7 +24,7 @@ explain what your changes do and how they interact with the greater system, do n
 
 ## AI Usage
 
-The Cinny project stictly does not allow any AI generated code. Any pull request containing it will be rejected. **This is very important.**
+The Cinny project strictly does not allow any AI generated code. Any pull request containing it will be rejected. **This is very important.**
 
 ## Quick Guide
 
@@ -35,7 +35,7 @@ The Cinny project stictly does not allow any AI generated code. Any pull request
 > When contributing to this project, you must agree that you have authored 100%
 > of the content, that you have the necessary rights to the content and that
 > the content you contribute may be provided under the project license. You will
-> also be asked to [sign the CLA] ([why CLA?]) upon submiting your pull request.
+> also be asked to [sign the CLA] ([why CLA?]) upon submitting your pull request.
 
 [All issues are actionable](#issues-are-actionable). Pick one and start
 working on it. Thank you. If you need help or guidance, comment on the issue.

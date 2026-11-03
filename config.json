@@ -2,7 +2,6 @@
   "defaultHomeserver": 1,
   "homeserverList": ["converser.eu", "matrix.org", "mozilla.org", "unredacted.org", "xmr.se"],
   "allowCustomHomeservers": true,
-
   "featuredCommunities": {
     "openAsDefault": false,
     "spaces": [
@@ -10,18 +9,18 @@
       "#community:matrix.org",
       "#space:unredacted.org",
       "#librewolf-community:matrix.org",
-      "#stickers-and-emojis:tastytea.de",
-      "#videogames:waywardinn.com",
+      "#stickers-and-emojis:fairydust.space",
+      "#videogames:zirco.dev",
       "#science-space:matrix.org",
       "#libregaming-games:tchncs.de",
       "#mathematics-on:matrix.org"
     ],
     "rooms": [
       "#tuwunel:grin.hu",
-      "#freesoftware:matrix.org",
+      "#free-software-movement:matrix.org",
       "#gentoo:matrix.org"
     ],
-    "servers": ["matrixrooms.info", "matrix.org", "mozilla.org", "unredacted.org"]
+    "servers": ["activematrixrooms.com", "matrixrooms.info", "matrix.org", "mozilla.org", "unredacted.org"]
   },
 
   "hashRouter": {
