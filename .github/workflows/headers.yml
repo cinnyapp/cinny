@@ -24,84 +24,74 @@ jobs:
           CR_HOLDER: "Ajay Bura"
           SPDX_LICENSE: "AGPL-3.0-only"
           LINK: "https://cinny.in"
+          TEXT: |
+            Please see LICENSE file in root of repository for full details.
         run: |
           python3 <<'PY'
           import os
           import subprocess
           from pathlib import Path
-
+      
           project = os.environ["PROJECT"]
           year = os.environ["CR_YEAR"]
           holder = os.environ["CR_HOLDER"]
           license_id = os.environ["SPDX_LICENSE"]
           link = os.environ["LINK"]
-
-          comment_styles = {
-              ".ts": "line",
-              ".tsx": "line",
-              ".rs": "line",
-              ".css": "block",
-          }
-
+          license_text = os.environ["TEXT"]
+      
           excluded_prefixes = (
               ".github/",
               "node_modules/",
               "dist/",
               "build/",
           )
-
-          def make_header(style):
-              if style == "block":
-                  return (
-                      "/*\n"
-                      f" * {project}\n"
-                      f" * Copyright (c) {year} {holder}\n"
-                      f" * SPDX-License-Identifier: {license_id}\n"
-                      f" * {link}\n"
-                      " */\n"
-                      "\n"
-                  )
-
+      
+          def make_header():
               return (
-                  f"// {project}\n"
-                  f"// Copyright (c) {year} {holder}\n"
-                  f"// SPDX-License-Identifier: {license_id}\n"
-                  f"// {link}\n"
+                  "/*\n"
+                  f"{project}\n"
+                  f"Copyright {year} {holder}\n"
+                  f"SPDX-License-Identifier: {license_id}\n"
+                  f"{link}\n"
+                  "\n"
+                  f"{license_text}"
+                  "*/\n"
                   "\n"
               )
-
+      
           files = subprocess.check_output(
               ["git", "ls-files"],
               text=True
           ).splitlines()
-
+      
           for filename in files:
               path = Path(filename)
-
+      
               if not path.is_file():
                   continue
-
+      
               if filename.startswith(excluded_prefixes):
                   continue
 
-              style = comment_styles.get(path.suffix.lower())
-              if not style:
+              if path.parent == Path("."):
                   continue
-
+      
+              if path.suffix.lower() not in {".ts", ".tsx", ".css"}:
+                  continue
+      
               text = path.read_text(encoding="utf-8")
-
+      
               # Skip files that already have a header.
               first_lines = "\n".join(text.splitlines()[:20])
-
+      
               if "SPDX-License-Identifier:" in first_lines:
                   continue
-
+      
               if "Copyright" in first_lines:
                   continue
-
-              header = make_header(style)
-              updated = header + text
-
+      
+              updated = make_header() + text
+      
               path.write_text(updated, encoding="utf-8")
               print(f"Updated {filename}")
           PY
