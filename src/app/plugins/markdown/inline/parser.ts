@@ -9,10 +9,11 @@ import {
   StrikeRule,
   UnderlineRule,
 } from './rules';
-import { runInlineRule, runInlineRules } from './runner';
+import { runInlineRules } from './runner';
 import { InlineMDParser } from './type';
 
 const LeveledRules = [
+  CodeRule,
   BoldRule,
   ItalicRule1,
   UnderlineRule,
@@ -32,7 +33,6 @@ const LeveledRules = [
 export const parseInlineMD: InlineMDParser = (text) => {
   if (text === '') return text;
   let result: string | undefined;
-  if (!result) result = runInlineRule(text, CodeRule, parseInlineMD);
 
   if (!result) result = runInlineRules(text, LeveledRules, parseInlineMD);
 

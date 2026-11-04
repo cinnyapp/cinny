@@ -18,7 +18,7 @@ export const runBlockRule = (
 ): string | undefined => {
   const matchResult = rule.match(text);
   if (matchResult) {
-    const content = rule.html(matchResult, parseInline);
+    const content = rule.html(matchResult, parse, parseInline);
     return replaceMatch(text, matchResult, content, (txt) => [parse(txt, parseInline)]).join('');
   }
   return undefined;
