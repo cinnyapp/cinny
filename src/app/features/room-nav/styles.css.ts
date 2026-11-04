@@ -60,3 +60,8 @@ export const ThreadNavItem = style({
     },
   },
 });
+
+export const ThreadViewMoreChip = style({
+  marginLeft: toRem(6),
+  marginBottom: config.space.S200,
+});

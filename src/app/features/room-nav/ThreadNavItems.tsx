@@ -7,9 +7,9 @@ https://cinny.in
 Please see LICENSE file in root of repository for full details.
 */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { MessageEventWithoutRoomId, UnreadNotificationCounts } from 'neurone/lib/api/types';
-import { Box, Text } from 'folds';
+import { Box, Chip, Icon, Icons, Text } from 'folds';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts as LinkifyOpts } from 'linkifyjs';
 import { Timeline } from '../../../client/room';
@@ -130,6 +130,7 @@ export function ThreadNavItems({
 }: ThreadNavItemsProps) {
   const ct = useClient();
   const useAuthentication = useMediaAuthentication();
+  const [viewMore, setViewMore] = useState(false);
 
   const threads = useObservableValue(timeline.threads);
   const edits = useObservableValue(timeline.relations.edits.eventToRelations);
@@ -166,27 +167,46 @@ export function ThreadNavItems({
     [ct, timeline, linkifyOpts, useAuthentication]
   );
 
-  return (
-    <Box className={css.ThreadNavItems} direction="Column">
-      {Array.from(threadNotifications.keys()).map((threadId) => {
-        const notification = threadNotifications.get(threadId);
-        if (!notification) return null;
-        const thread = threads.get(threadId) ?? timeline.registerThread(threadId);
+  const threadIds = Array.from(threadNotifications.keys());
+  const slicedThreadIds = viewMore ? threadIds : threadIds.slice(0, 5);
 
-        return (
-          <ThreadNavItem
-            key={threadId}
-            thread={thread}
-            selected={roomSelected && threadId === activeThread}
-            notification={notification}
-            editEvents={edits.get(threadId)}
-            redactedEvents={redactedSet}
-            htmlReactParserOptions={htmlReactParserInlineOptions}
-            linkifyOpts={linkifyOpts}
-            onClick={() => timeline.openThread(threadId)}
-          />
-        );
-      })}
-    </Box>
+  return (
+    <>
+      <Box className={css.ThreadNavItems} direction="Column">
+        {slicedThreadIds.slice().map((threadId) => {
+          const notification = threadNotifications.get(threadId);
+          if (!notification) return null;
+          const thread = threads.get(threadId) ?? timeline.registerThread(threadId);
+
+          return (
+            <ThreadNavItem
+              key={threadId}
+              thread={thread}
+              selected={roomSelected && threadId === activeThread}
+              notification={notification}
+              editEvents={edits.get(threadId)}
+              redactedEvents={redactedSet}
+              htmlReactParserOptions={htmlReactParserInlineOptions}
+              linkifyOpts={linkifyOpts}
+              onClick={() => timeline.openThread(threadId)}
+            />
+          );
+        })}
+      </Box>
+      {threadIds.length > 5 && (
+        <Chip
+          className={css.ThreadViewMoreChip}
+          variant="Background"
+          fill="None"
+          radii="Pill"
+          before={<Icon src={viewMore ? Icons.ChevronTop : Icons.ChevronBottom} size="50" />}
+          onClick={() => setViewMore(!viewMore)}
+        >
+          <Text as="span" size="T200">
+            {viewMore ? 'View Less' : `View ${threadIds.length - slicedThreadIds.length} More`}
+          </Text>
+        </Chip>
+      )}
+    </>
   );
 }
