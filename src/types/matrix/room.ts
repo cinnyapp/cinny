@@ -42,6 +42,11 @@ export enum StateEvent {
   PowerLevelTags = 'in.cinny.room.power_level_tags',
 }
 
+export enum RoomTag {
+  Favourite = 'm.favourite',
+  LowPriority = 'm.lowpriority',
+}
+
 export enum MessageEvent {
   RoomMessage = 'm.room.message',
   RoomMessageEncrypted = 'm.room.encrypted',
