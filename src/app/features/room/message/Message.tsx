@@ -35,7 +35,7 @@ import { useHover, useFocusWithin } from 'react-aria';
 import { MatrixEvent, Room } from 'matrix-js-sdk';
 import { Relations } from 'matrix-js-sdk/lib/models/relations';
 import classNames from 'classnames';
-import { RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
+import { type RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
 import {
   AvatarBase,
   BubbleLayout,
@@ -344,6 +344,40 @@ export const MessageCopyLinkItem = as<
     >
       <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
         Copy Link
+      </Text>
+    </MenuItem>
+  );
+});
+
+export const MessageCopyTextItem = as<
+  'button',
+  {
+    mEvent: MatrixEvent;
+    onClose?: () => void;
+  }
+>(({ mEvent, onClose, ...props }, ref) => {
+  const content = mEvent.getContent();
+  const { body, msgtype } = content;
+
+  if (msgtype !== 'm.text' && msgtype !== 'm.emote' && msgtype !== 'm.notice') {
+    return null;
+  }
+
+  const handleCopy = () => {
+    copyToClipboard(body ?? '');
+    onClose?.();
+  };
+  return (
+    <MenuItem
+      size="300"
+      after={<Icon size="100" src={Icons.Message} />}
+      radii="300"
+      onClick={handleCopy}
+      {...props}
+      ref={ref}
+    >
+      <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
+        Copy Message
       </Text>
     </MenuItem>
   );
@@ -1088,6 +1122,7 @@ export const Message = as<'div', MessageProps>(
                           {canPinEvent && (
                             <MessagePinItem room={room} mEvent={mEvent} onClose={closeMenu} />
                           )}
+                          <MessageCopyTextItem mEvent={mEvent} onClose={closeMenu} />
                         </Box>
                         {((!mEvent.isRedacted() && canDelete) ||
                           mEvent.getSender() !== mx.getUserId()) && (
