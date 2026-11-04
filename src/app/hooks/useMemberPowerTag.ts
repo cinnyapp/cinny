@@ -5,7 +5,7 @@ import { IPowerLevels, readPowerLevel } from './usePowerLevels';
 import { MemberPowerTag, MemberPowerTagIcon } from '../../types/matrix/room';
 import { useRoomCreatorsTag } from './useRoomCreatorsTag';
 import { ThemeKind } from './useTheme';
-import { accessibleColor } from '../plugins/color';
+import { accessibleColor } from '../plugins/colorUtils';
 
 export type GetMemberPowerTag = (userId: string) => MemberPowerTag;
 
