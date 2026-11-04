@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import React from 'react';
 import { Box, color, Spinner, Switch, Text } from 'folds';
 import { SequenceCard } from '../../../components/sequence-card';

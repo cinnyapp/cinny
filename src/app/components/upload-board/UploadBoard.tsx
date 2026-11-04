@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import React, { MutableRefObject, ReactNode, useImperativeHandle, useRef } from 'react';
 import { Badge, Box, Chip, Header, Icon, Icons, Spinner, Text, as, percent } from 'folds';
 import classNames from 'classnames';

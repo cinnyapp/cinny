@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { isKeyHotkey } from 'is-hotkey';
 import { KeyboardEventHandler, useCallback } from 'react';
 import { Cursor, Intent, Operations, TextArea } from '../plugins/text-area';

@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import React, { useCallback, useMemo } from 'react';
 import { Badge, Box, Text } from 'folds';
 import { PushRuleCondition, PushRules } from 'neurone/lib/api/types';

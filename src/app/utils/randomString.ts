@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 // https://github.com/matrix-org/matrix-js-sdk/blob/c7a75c882479fc54f24eadce963a0c5c0d3c4788/src/randomstring.ts
 
 /**

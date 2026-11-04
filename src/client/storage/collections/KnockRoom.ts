@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { IDBPDatabase } from 'idb';
 import { Collection, Entry } from 'neurone/lib/storage/collection';
 import { StrippedStateEvent } from 'neurone/lib/api/types';

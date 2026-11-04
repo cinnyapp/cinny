@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { useMemo } from 'react';
 import { useAccountData } from './storage/useAccountData';
 import { AccountDataType } from '../../types/matrix/accountData';

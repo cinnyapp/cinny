@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { useCallback, useMemo } from 'react';
 import { PendingObservableResult } from 'neurone/lib/utils/observable';
 import { getRecentEmojis } from '../plugins/recent-emoji';

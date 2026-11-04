@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { Box, Icon, Icons, Text, as, color, config } from 'folds';
 import React from 'react';
 import { Code } from '../../../styles/CustomHtml.css';

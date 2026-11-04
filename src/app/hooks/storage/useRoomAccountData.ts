@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { PendingObservableResult } from 'neurone/lib/utils/observable';
 import { useMemo } from 'react';
 import { JoinAccountDataObject } from '../../../client/storage/collections';

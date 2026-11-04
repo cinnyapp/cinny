@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import React, { useCallback } from 'react';
 import { Box, Text, Switch, Button, color, Spinner } from 'folds';
 import { postPushersSet } from 'neurone/lib/api/matrix/client/v3/pushers';

@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import React, { CSSProperties, ReactNode } from 'react';
 import { Box, Badge, toRem, Text } from 'folds';
 import { millify } from '../../plugins/millify';

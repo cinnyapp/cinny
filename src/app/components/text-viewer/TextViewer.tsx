@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import React, { ComponentProps, HTMLAttributes, Suspense, forwardRef, lazy } from 'react';
 import classNames from 'classnames';

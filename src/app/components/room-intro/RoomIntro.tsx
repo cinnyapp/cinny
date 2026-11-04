@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import React, { useState } from 'react';
 import { Avatar, Box, Button, Text, as } from 'folds';
 import { timeDayMonthYear, timeHourMinute } from '../../utils/time';

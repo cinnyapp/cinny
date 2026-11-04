@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { useCallback, useState } from 'react';
 
 export const useListFocusIndex = (size: number, initialIndex: number) => {

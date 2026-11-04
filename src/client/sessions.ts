@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { getLocalStorageItem, setLocalStorageItem } from './localStorage';
 
 export const CLIENT_SESSIONS_STORE_KEY = 'client-sessions';

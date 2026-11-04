@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { Box, Button, config, Dialog, ProgressBar, Text, toRem } from 'folds';
 import React, { ReactNode, useCallback, useEffect } from 'react';
 import { SplashScreen } from '../../components/splash-screen';

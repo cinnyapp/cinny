@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import React, { CSSProperties } from 'react';
 import { Text } from 'folds';
 import { HTMLReactParserOptions } from 'html-react-parser';

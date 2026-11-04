@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import sanitizeHtml, { Transformer } from 'sanitize-html';
 
 const MAX_TAG_NESTING = 100;

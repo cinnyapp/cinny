@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 const MATRIX_TO_BASE = 'https://matrix.to';
 
 export const getMatrixToUser = (userId: string): string => `${MATRIX_TO_BASE}/#/${userId}`;

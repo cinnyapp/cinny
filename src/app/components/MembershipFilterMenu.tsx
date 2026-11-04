@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import FocusTrap from 'focus-trap-react';
 import React from 'react';
 import { config, Menu, MenuItem, Text } from 'folds';

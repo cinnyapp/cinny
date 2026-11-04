@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 /* eslint-disable react/no-array-index-key */
 import React, { useState, MouseEventHandler, ReactNode } from 'react';
 import FocusTrap from 'focus-trap-react';

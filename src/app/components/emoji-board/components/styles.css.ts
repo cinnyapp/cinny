@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { style } from '@vanilla-extract/css';
 import { toRem, color, config, DefaultReset, FocusOutline } from 'folds';
 

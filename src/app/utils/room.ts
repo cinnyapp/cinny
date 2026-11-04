@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { IconName, IconSrc } from 'folds';
 import { MessageEventWithoutRoomId, RoomMembership } from 'neurone/lib/api/types';
 import { JoinRule, MessageEvent, RoomToParents, RoomType } from '../../types/matrix/room';

@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { useMemo } from 'react';
 import { postCreateRoom, PostCreateRoomOK } from 'neurone/lib/api/matrix/client/v3/createRoom';
 import { parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';

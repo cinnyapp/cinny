@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { ClientEventWithoutRoomId, MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { ObservableValue } from 'neurone/lib/utils/observable';
 import { Disposable, Disposer } from 'neurone/lib/utils/disposable';

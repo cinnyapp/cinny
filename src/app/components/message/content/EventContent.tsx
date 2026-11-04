@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { Box, Icon, IconSrc } from 'folds';
 import React, { ReactNode } from 'react';
 import { BubbleLayout, CompactLayout, ModernLayout } from '..';

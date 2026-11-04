@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import React, { ReactNode, useCallback, useEffect, useState } from 'react';
 import { Box, config, ContainerColor as ContainerColorType, Line, Text } from 'folds';
 import { ContainerColor } from '../../styles/ContainerColor.css';

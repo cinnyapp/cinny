@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import React, { FormEventHandler, ReactNode, useMemo, useState } from 'react';
 import { Badge, Box, Button, Chip, Icon, Icons, Input, Text } from 'folds';
 import { UsageSwitcher, useUsageStr } from './UsageSwitcher';

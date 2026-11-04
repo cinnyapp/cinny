@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getProfile, GetProfileOK } from 'neurone/lib/api/matrix/client/v3/profile';

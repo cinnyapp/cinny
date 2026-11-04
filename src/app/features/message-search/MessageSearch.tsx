@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import React, { RefObject, useEffect, useMemo, useRef } from 'react';
 import { Text, Box, Icon, Icons, config, Spinner, IconButton, Line, toRem } from 'folds';
 import { useAtomValue } from 'jotai';

@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import classNames from 'classnames';
 import { as, Avatar, Text, Tooltip, TooltipProvider, toRem } from 'folds';
 import React, { ComponentProps, ReactNode, RefCallback } from 'react';

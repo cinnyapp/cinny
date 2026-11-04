@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import React, { useCallback } from 'react';
 import { as, Box, Chip, Icon, Icons, Text } from 'folds';
 import { ObservableValue } from 'neurone/lib/utils/observable';

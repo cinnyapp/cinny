@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import to from 'await-to-js';
 import { MatrixRequest, parseMatrixResp } from 'neurone/lib/matrix-request';
 import { MessageEventWithoutRoomId, ReceiptType } from 'neurone/lib/api/types';

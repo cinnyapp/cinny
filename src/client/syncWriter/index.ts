@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { GetSyncOK } from 'neurone/lib/api/matrix/client/v3/sync';
 import { PresenceEvent, StatusContent } from 'neurone/lib/api/types';
 import { ClientContext } from '../context';

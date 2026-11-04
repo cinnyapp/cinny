@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import React, { ReactNode, useContext, createContext } from 'react';
 import { MessageEvent } from '../../../../types/matrix/room';
 import { useClient } from '../../../hooks/useClient';

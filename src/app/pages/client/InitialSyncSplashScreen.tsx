@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { Box, Button, color, config, Dialog, ProgressBar, Text, toRem } from 'folds';
 import { ObservableValue } from 'neurone/lib/utils/observable';
 import { printMatrixError } from 'neurone/lib/matrix-request';

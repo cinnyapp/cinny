@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { ReactNode, useCallback } from 'react';
 import { matchPath, useLocation, useNavigate } from 'react-router-dom';
 import {

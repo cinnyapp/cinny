@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { useCallback } from 'react';
 import type * as PdfJsDist from 'pdfjs-dist';
 import type { GetViewportParameters } from 'pdfjs-dist/types/src/display/api';

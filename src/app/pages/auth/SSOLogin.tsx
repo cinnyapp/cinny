@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { Avatar, AvatarImage, Box, Button, Text } from 'folds';
 import { IdentityProvider } from 'neurone/lib/api/types';
 import React from 'react';

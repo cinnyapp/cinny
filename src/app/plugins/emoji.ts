@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { CompactEmoji, fromUnicodeToHexcode } from 'emojibase';
 import emojisData from 'emojibase-data/en/compact.json';
 import joypixels from 'emojibase-data/en/shortcodes/joypixels.json';

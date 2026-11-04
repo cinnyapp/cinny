@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { PutSendBody, PutSendPathParams } from 'neurone/lib/api/matrix/client/v3/rooms';
 import { MatrixEndpoint } from 'neurone/lib/api/MatrixEndpoint';
 import { withSearchParams } from 'neurone/lib/api/utils';

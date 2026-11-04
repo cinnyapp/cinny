@@ -1,3 +1,8 @@
+// Cinny Project
+// Copyright (c) 2021-present Ajay Bura
+// SPDX-License-Identifier: AGPL-3.0-only
+// https://cinny.in
+
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { OnIntersectionCallback, useIntersectionObserver } from './useIntersectionObserver';
 import {
