@@ -9,6 +9,7 @@ export type DateFormat =
   | 'YYYY-MM-DD'
   | '';
 export type MessageSpacing = '0' | '100' | '200' | '300' | '400' | '500';
+export type TextDirection = 'auto' | 'ltr' | 'rtl';
 export enum MessageLayout {
   Modern = 0,
   Compact = 1,
@@ -46,6 +47,8 @@ export interface Settings {
   hour24Clock: boolean;
   dateFormatString: string;
 
+  textDirection: TextDirection;
+
   developerTools: boolean;
 }
 
@@ -79,6 +82,8 @@ const defaultSettings: Settings = {
 
   hour24Clock: false,
   dateFormatString: 'D MMM YYYY',
+
+  textDirection: 'auto' as TextDirection,
 
   developerTools: false,
 };

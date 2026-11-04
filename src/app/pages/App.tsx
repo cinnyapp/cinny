@@ -12,6 +12,7 @@ import { FeatureCheck } from './FeatureCheck';
 import { createRouter } from './Router';
 import { ScreenSizeProvider, useScreenSize } from '../hooks/useScreenSize';
 import { useCompositionEndTracking } from '../hooks/useComposingCheck';
+import { DirectionManager } from './DirectionManager';
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ function App() {
                   <ClientConfigProvider value={clientConfig}>
                     <QueryClientProvider client={queryClient}>
                       <JotaiProvider>
+                        <DirectionManager />
                         <RouterProvider router={createRouter(clientConfig, screenSize)} />
                       </JotaiProvider>
                       <ReactQueryDevtools initialIsOpen={false} />

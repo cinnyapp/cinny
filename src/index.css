@@ -1,3 +1,6 @@
+/* RTL / Persian font — covers Persian, Arabic, and Latin */
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap');
+
 @font-face {
   font-family: Twemoji;
   src: url('../public/font/Twemoji.Mozilla.v15.1.0.woff2'),
@@ -67,6 +70,37 @@ body {
   box-sizing: border-box;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
   -webkit-tap-highlight-color: transparent;
+}
+
+/* RTL overrides */
+[dir='rtl'] body {
+  font-family: 'Vazirmatn', var(--font-emoji), sans-serif;
+}
+
+/* Logical margin/padding helpers for RTL flip */
+[dir='rtl'] {
+  --direction: rtl;
+}
+
+/*
+ * BiDi (Bidirectional text) fix for mixed Persian+English content.
+ *
+ * `unicode-bidi: plaintext` makes the browser treat each block as if it had
+ * dir="auto": it reads the first strong directional character and sets that
+ * line's base direction accordingly. Without this, a global dir="rtl" causes
+ * text like "یک پیام english وسط فارسی" to render with wrong word order.
+ */
+[dir='rtl'] textarea,
+[dir='rtl'] input[type='text'],
+[dir='rtl'] input[type='search'],
+[dir='rtl'] input[type='email'],
+[dir='rtl'] input[type='username'],
+[dir='rtl'] input[type='password'],
+[dir='rtl'] [data-message-body],
+[dir='rtl'] [class*='message'],
+[dir='rtl'] p,
+[dir='rtl'] blockquote {
+  unicode-bidi: plaintext;
 }
 a {
   color: var(--tc-link);

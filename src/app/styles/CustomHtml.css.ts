@@ -16,7 +16,9 @@ export const MarginSpaced = style({
   },
 });
 
-export const Paragraph = style([DefaultReset]);
+// unicode-bidi: plaintext makes each paragraph determine its own direction
+// from the first strong character — essential for mixed Persian+Latin messages.
+export const Paragraph = style([DefaultReset, { unicodeBidi: 'plaintext' }]);
 
 export const Heading = style([
   DefaultReset,
@@ -38,6 +40,8 @@ export const BlockQuote = style([
     paddingLeft: config.space.S200,
     borderLeft: `${config.borderWidth.B700} solid ${color.SurfaceVariant.ContainerLine}`,
     fontStyle: 'italic',
+    // Same BiDi fix: blockquotes can also contain mixed-script text
+    unicodeBidi: 'plaintext',
   },
 ]);
 
