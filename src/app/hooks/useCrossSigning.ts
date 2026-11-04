@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { AesHmacSha2, AesHmacSha2EncryptedData } from 'neurone/lib/crypto/ssss';
 import { useMemo } from 'react';
 import { CrossSigningKeys } from 'neurone/lib/crypto/machine';

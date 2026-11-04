@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { forwardRef } from 'react';
 import { Menu, Box, Text, Chip } from 'folds';
 import dayjs from 'dayjs';

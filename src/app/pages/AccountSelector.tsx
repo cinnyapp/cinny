@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Avatar, Badge, Box, Button, config, Icon, Icons, Text } from 'folds';
 import { Link, Navigate, Outlet, useNavigate } from 'react-router-dom';

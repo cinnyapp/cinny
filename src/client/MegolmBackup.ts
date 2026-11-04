@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { getKeys, GetKeysOK, PutKeysOK } from 'neurone/lib/api/matrix/client/v3/roomKeys';
 import { BackupVersionInfo } from 'neurone/lib/api/types';
 import { Machine } from 'neurone/lib/crypto/machine';

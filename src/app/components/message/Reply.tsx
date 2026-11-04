@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { Box, Icon, Icons, Text, color, config, toRem } from 'folds';
 import React, { MouseEventHandler, ReactNode, useCallback, useMemo } from 'react';
 import { ClientEventWithoutRoomId } from 'neurone/lib/api/types';

@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { useMemo, useCallback, KeyboardEventHandler, MutableRefObject } from 'react';
 import { isKeyHotkey } from 'is-hotkey';
 import { TextArea, Intent, TextAreaOperations, Cursor } from '../plugins/text-area';

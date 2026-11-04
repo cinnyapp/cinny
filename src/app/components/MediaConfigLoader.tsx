@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { ReactNode, useCallback, useEffect } from 'react';
 import { getConfig, GetConfigOK } from 'neurone/lib/api/matrix/client/v1/media';
 import { parseMatrixResp } from 'neurone/lib/matrix-request';
