@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { AccountDataEvent } from 'neurone/lib/api/types';
 import { putAccountData } from 'neurone/lib/api/matrix/client/v3/user';
 import { IEmoji, emojis } from './emoji';

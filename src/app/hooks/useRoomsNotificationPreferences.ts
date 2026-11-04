@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { createContext, useCallback, useContext, useMemo } from 'react';
 import { AccountDataEvent, PushRules } from 'neurone/lib/api/types';
 import { deletePushRule, putPushRule } from 'neurone/lib/api/matrix/client/v3/pushrules';

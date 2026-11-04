@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { MatrixRequest } from 'neurone/lib/matrix-request';
 import { Disposer } from 'neurone/lib/utils/disposable';
 import { ObservableValue } from 'neurone/lib/utils/observable';
