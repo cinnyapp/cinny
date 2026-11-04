@@ -57,8 +57,13 @@ import { MemberSortMenu } from '../../components/MemberSortMenu';
 import { useOpenUserRoomProfile, useUserRoomProfileState } from '../../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import { ContainerColor } from '../../styles/ContainerColor.css';
-import { useFlattenPowerTagMembers, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
+import {
+  getPowerTagIconSrc,
+  useFlattenPowerTagMembers,
+  useGetMemberPowerTag,
+} from '../../hooks/useMemberPowerTag';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
+import { PowerIcon } from '../../components/power';
 
 type MemberDrawerHeaderProps = {
   room: Room;
@@ -385,6 +390,10 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
               >
                 {virtualizer.getVirtualItems().map((vItem) => {
                   const tagOrMember = PLTagOrRoomMember[vItem.index];
+                  const tagIconSrc =
+                    'icon' in tagOrMember && tagOrMember?.icon
+                      ? getPowerTagIconSrc(mx, useAuthentication, tagOrMember.icon)
+                      : undefined;
                   if (!('userId' in tagOrMember)) {
                     return (
                       <Text
@@ -397,6 +406,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
                         className={classNames(css.MembersGroupLabel, css.DrawerVirtualItem)}
                         size="L400"
                       >
+                        {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
                         {tagOrMember.name}
                       </Text>
                     );
