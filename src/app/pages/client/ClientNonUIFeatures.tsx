@@ -51,6 +51,14 @@ function PageZoomFeature() {
   return null;
 }
 
+function CustomFontFeature() {
+  const [customFont] = useSetting(settingsAtom, 'customFont');
+
+  document.documentElement.style.setProperty('--custom-font', `${customFont}`);
+
+  return null;
+}
+
 function FaviconUpdater() {
   const roomToUnread = useAtomValue(roomToUnreadAtom);
 
@@ -100,7 +108,7 @@ function InviteNotifications() {
         noti.close();
       };
     },
-    [navigate]
+    [navigate],
   );
 
   const playSound = useCallback(() => {
@@ -169,7 +177,7 @@ function MessageNotifications() {
       notifRef.current?.close();
       notifRef.current = noti;
     },
-    [navigate]
+    [navigate],
   );
 
   const playSound = useCallback(() => {
@@ -183,7 +191,7 @@ function MessageNotifications() {
       room,
       toStartOfTimeline,
       removed,
-      data
+      data,
     ) => {
       if (mx.getSyncState() !== 'SYNCING') return;
       if (document.hasFocus() && (selectedRoomId === room?.roomId || notificationSelected)) return;
@@ -218,7 +226,7 @@ function MessageNotifications() {
         notify({
           roomName: room.name ?? 'Unknown',
           roomAvatar: avatarMxc
-            ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined
+            ? (mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined)
             : undefined,
           username: getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender) ?? sender,
           roomId: room.roomId,
@@ -262,6 +270,7 @@ export function ClientNonUIFeatures({ children }: ClientNonUIFeaturesProps) {
     <>
       <SystemEmojiFeature />
       <PageZoomFeature />
+      <CustomFontFeature />
       <FaviconUpdater />
       <InviteNotifications />
       <MessageNotifications />
