@@ -200,9 +200,10 @@ export const MessageReadReceiptItem = as<
   'button',
   {
     eventId: string;
+    threadId?: string;
     onClose?: () => void;
   }
->(({ eventId, onClose, ...props }, ref) => {
+>(({ eventId, threadId, onClose, ...props }, ref) => {
   const [open, setOpen] = useState(false);
 
   const handleClose = () => {
@@ -223,7 +224,7 @@ export const MessageReadReceiptItem = as<
             }}
           >
             <Modal variant="Surface" size="300">
-              <EventReaders eventId={eventId} requestClose={handleClose} />
+              <EventReaders eventId={eventId} threadId={threadId} requestClose={handleClose} />
             </Modal>
           </FocusTrap>
         </OverlayCenter>
@@ -930,6 +931,7 @@ function EditButtonHost({
 
 export type MessageProps = {
   event: MessageEventWithoutRoomId;
+  threadId?: string;
   collapse: boolean;
   highlight: boolean;
   selected?: boolean;
@@ -964,6 +966,7 @@ export const Message = as<'div', MessageProps>(
     {
       className,
       event,
+      threadId,
       collapse,
       highlight,
       selected,
@@ -1251,7 +1254,11 @@ export const Message = as<'div', MessageProps>(
                       </>
                     )}
                     {!hideReadReceipts && (
-                      <MessageReadReceiptItem eventId={event.event_id} onClose={closeMenu} />
+                      <MessageReadReceiptItem
+                        eventId={event.event_id}
+                        threadId={threadId}
+                        onClose={closeMenu}
+                      />
                     )}
                     {showDeveloperTools && (
                       <MessageSourceCodeItem event={event} onClose={closeMenu} />

@@ -12,6 +12,7 @@ import { useClient } from '../../hooks/useClient';
 import { useObservableValue } from '../../hooks/useObservableValue';
 import { useRoom } from '../../hooks/useRoom';
 import { FollowingMembers } from './components';
+import { FollowingMembersPlaceholder } from './components/styles.css';
 
 export function RoomViewFollowing() {
   const ct = useClient();
@@ -21,5 +22,5 @@ export function RoomViewFollowing() {
   const latestEvent = roomToLatestEvent.get(roomId);
   const eventId = latestEvent?.event_id;
 
-  return <FollowingMembers eventId={eventId} />;
+  return eventId ? <FollowingMembers eventId={eventId} /> : <FollowingMembersPlaceholder />;
 }

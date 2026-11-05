@@ -11,9 +11,15 @@ import React from 'react';
 import { ThreadTimeline } from '../../../../client/room/ThreadTimeline';
 import { useObservableValue } from '../../../hooks/useObservableValue';
 import { FollowingMembers } from '../components';
+import { FollowingMembersPlaceholder } from '../components/styles.css';
 
 export function ThreadViewFollowing({ threadTimeline }: { threadTimeline: ThreadTimeline }) {
   const meta = useObservableValue(threadTimeline.meta);
+  const eventId = meta?.latestReplyEvent?.event_id;
 
-  return <FollowingMembers eventId={meta?.latestReplyEvent?.event_id} />;
+  return eventId ? (
+    <FollowingMembers threadId={threadTimeline.threadId} eventId={eventId} />
+  ) : (
+    <FollowingMembersPlaceholder />
+  );
 }

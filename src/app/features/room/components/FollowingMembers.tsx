@@ -19,31 +19,24 @@ import {
   Text,
   config,
 } from 'folds';
-import { ObservableValue } from 'neurone/lib/utils/observable';
 import FocusTrap from 'focus-trap-react';
 import * as css from './styles.css';
 import { EventReaders } from '../../../components/event-readers';
 import { stopPropagation } from '../../../utils/keyboard';
 import { useClient } from '../../../hooks/useClient';
-import { useObservableValuePromise } from '../../../hooks/useObservableValue';
 import { useRoomMembersAPI } from '../../../hooks/useRoomMembers';
+import { useEventReciepts } from '../../../hooks/useEventReceipts';
 
 export function FollowingMembersPlaceholder() {
   return <div className={css.FollowingMembersPlaceholder} />;
 }
 
-export function FollowingMembers({ eventId }: { eventId?: string }) {
+export function FollowingMembers({ eventId, threadId }: { eventId: string; threadId?: string }) {
   const ct = useClient();
   const [open, setOpen] = useState(false);
   const membersAPI = useRoomMembersAPI();
 
-  const receiptsResult = useObservableValuePromise(
-    useMemo(() => {
-      if (!eventId) return Promise.resolve(new ObservableValue(undefined, ''));
-      return ct.storage.readReceipt.observableRead.queryIndex('eventId', eventId);
-    }, [ct, eventId])
-  );
-  const receipts = receiptsResult.value;
+  const receipts = useEventReciepts(eventId, threadId);
 
   const names = useMemo(
     () =>
@@ -68,7 +61,11 @@ export function FollowingMembers({ eventId }: { eventId?: string }) {
               }}
             >
               <Modal variant="Surface" size="300">
-                <EventReaders eventId={eventId} requestClose={() => setOpen(false)} />
+                <EventReaders
+                  eventId={eventId}
+                  threadId={threadId}
+                  requestClose={() => setOpen(false)}
+                />
               </Modal>
             </FocusTrap>
           </OverlayCenter>

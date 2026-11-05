@@ -344,6 +344,7 @@ export function TimelineView({ timeline, threadInputRef, editor, eventId }: Time
         data-message-id={event.event_id}
         data-sender-id={event.sender}
         event={event}
+        threadId={timeline.threadId}
         membersAPI={membersAPI}
         messageSpacing={messageSpacing}
         messageLayout={messageLayout}

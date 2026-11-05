@@ -7,7 +7,7 @@ https://cinny.in
 Please see LICENSE file in root of repository for full details.
 */
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import classNames from 'classnames';
 import {
   Avatar,
@@ -29,30 +29,26 @@ import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import { getMouseEventCords } from '../../utils/dom';
 import { useClient } from '../../hooks/useClient';
-import { useObservableValuePromise } from '../../hooks/useObservableValue';
 import { useRoomMembersAPI } from '../../hooks/useRoomMembers';
 import { mxcToHttp } from '../../../client/mxcToHttp';
 import { useRoom } from '../../hooks/useRoom';
 import { Time } from '../message';
 import { useSettings } from '../../state/hooks/settings';
+import { useEventReciepts } from '../../hooks/useEventReceipts';
 
 export type EventReadersProps = {
   eventId: string;
+  threadId?: string;
   requestClose: () => void;
 };
 export const EventReaders = as<'div', EventReadersProps>(
-  ({ className, eventId, requestClose, ...props }, ref) => {
+  ({ className, eventId, threadId, requestClose, ...props }, ref) => {
     const ct = useClient();
     const roomId = useRoom();
     const membersAPI = useRoomMembersAPI();
     const { hour24Clock, dateFormatString } = useSettings();
 
-    const eventReceipt = useObservableValuePromise(
-      useMemo(
-        () => ct.storage.readReceipt.observableRead.queryIndex('eventId', eventId),
-        [ct, eventId]
-      )
-    );
+    const eventReceipt = useEventReciepts(eventId, threadId);
 
     const useAuthentication = useMediaAuthentication();
     const openProfile = useOpenUserRoomProfile();
@@ -76,8 +72,8 @@ export const EventReaders = as<'div', EventReadersProps>(
         <Box grow="Yes">
           <Scroll visibility="Hover" hideTrack size="300">
             <Box className={css.Content} direction="Column">
-              {Array.from(eventReceipt.value ?? [])
-                .sort((a, b) => b.ts - a.ts)
+              {Array.from(eventReceipt)
+                .sort((a, b) => a.ts - b.ts)
                 ?.map((receipt) => {
                   const { userId, ts } = receipt;
                   const name = membersAPI.getName(userId);
