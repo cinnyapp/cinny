@@ -10,25 +10,21 @@ Please see LICENSE file in root of repository for full details.
 import React from 'react';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts } from 'linkifyjs';
-import { Text } from 'folds';
+import { Icons, Text } from 'folds';
 import {
-  MessageAudioContent,
-  MessageFileContent,
-  MessageImageContent,
-  MessageStickerContent,
-  MessageVideoContent,
   UnsupportedContent,
   ReplyMEmote,
   ReplyMNotice,
   ReplyMText,
   ReplyMLocation,
   EmptyContent,
+  FallbackContent,
 } from './message';
 import { MsgType } from '../../types/matrix/common';
 import { rContent } from '../../client/reader';
 import { MessageEvent } from '../../types/matrix/room';
 
-type RenderReplyContentProps = {
+type RenderInlineContentProps = {
   displayName: string;
   eventType: string;
   edited?: boolean;
@@ -38,7 +34,7 @@ type RenderReplyContentProps = {
   linkifyOpts: Opts;
 };
 
-export function RenderReplyContent({
+export function RenderInlineContent({
   displayName,
   eventType,
   edited,
@@ -46,17 +42,19 @@ export function RenderReplyContent({
   highlightRegex,
   htmlReactParserOptions,
   linkifyOpts,
-}: RenderReplyContentProps) {
+}: RenderInlineContentProps) {
   if (eventType === MessageEvent.Sticker) {
     return (
-      <Text size="T300" priority="300">
-        <MessageStickerContent />
-      </Text>
+      <FallbackContent iconSrc={Icons.Sticker}>
+        <Text size="T300" priority="300" truncate>
+          <i>Sticker</i>
+        </Text>
+      </FallbackContent>
     );
   }
 
   if (eventType !== MessageEvent.RoomMessage) {
-    return <UnsupportedContent size="T300" eventType={eventType} />;
+    return <UnsupportedContent size="T300" eventType={eventType} truncate />;
   }
 
   const msgType = rContent.msgtype(content);
@@ -100,33 +98,41 @@ export function RenderReplyContent({
 
   if (msgType === MsgType.Image) {
     return (
-      <Text size="T300" priority="300">
-        <MessageImageContent />
-      </Text>
+      <FallbackContent iconSrc={Icons.Photo}>
+        <Text size="T300" priority="300" truncate>
+          <i>Image</i>
+        </Text>
+      </FallbackContent>
     );
   }
 
   if (msgType === MsgType.Video) {
     return (
-      <Text size="T300" priority="300">
-        <MessageVideoContent />
-      </Text>
+      <FallbackContent iconSrc={Icons.Vlc}>
+        <Text size="T300" priority="300" truncate>
+          <i>Video</i>
+        </Text>
+      </FallbackContent>
     );
   }
 
   if (msgType === MsgType.Audio) {
     return (
-      <Text size="T300" priority="300">
-        <MessageAudioContent />
-      </Text>
+      <FallbackContent iconSrc={Icons.Play}>
+        <Text size="T300" priority="300" truncate>
+          <i>Audio</i>
+        </Text>
+      </FallbackContent>
     );
   }
 
   if (msgType === MsgType.File) {
     return (
-      <Text size="T300" priority="300">
-        <MessageFileContent />
-      </Text>
+      <FallbackContent iconSrc={Icons.File}>
+        <Text size="T300" priority="300" truncate>
+          <i>File</i>
+        </Text>
+      </FallbackContent>
     );
   }
 
@@ -135,7 +141,7 @@ export function RenderReplyContent({
   }
 
   if (Object.keys(content).length === 0) {
-    return <EmptyContent size="T300" />;
+    return <EmptyContent size="T300" truncate />;
   }
 
   return (

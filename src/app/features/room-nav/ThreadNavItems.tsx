@@ -21,7 +21,7 @@ import * as css from './styles.css';
 import { MessageContent } from '../../components/MessageContent';
 import { useClient } from '../../hooks/useClient';
 import { NavItemContent } from '../../components/nav/styles.css';
-import { RenderReplyContent } from '../../components/RenderReplyContent';
+import { RenderInlineContent } from '../../components/RenderInlineContent';
 import { rContent, rUnsigned } from '../../../client/reader';
 import { getLatestEditEvent } from '../../utils/room';
 import { RedactedContent } from '../../components/message';
@@ -33,6 +33,7 @@ import {
   renderMatrixMention,
 } from '../../plugins/react-custom-html-parser';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { getMxIdLocalPart } from '../../utils/matrix';
 
 type ThreadNavItemProps = {
   thread: ThreadTimeline;
@@ -66,7 +67,7 @@ function ThreadNavItem({
       redactedEvents?.has(event.event_id) || !!rUnsigned.redactedBecause(event.unsigned);
 
     if (redacted) {
-      return <RedactedContent size="T300" />;
+      return <RedactedContent size="T300" truncate />;
     }
 
     return (
@@ -78,7 +79,7 @@ function ThreadNavItem({
         inline
       >
         {(contentEvent) => (
-          <RenderReplyContent
+          <RenderInlineContent
             displayName={event.sender}
             eventType={contentEvent.type}
             edited={!!editedEvent}
@@ -147,7 +148,7 @@ export function ThreadNavItems({
           timeline.roomId,
           href,
           makeMentionCustomProps((evt) => evt.preventDefault()),
-          (userId) => userId,
+          (userId) => getMxIdLocalPart(userId) ?? userId,
           (roomId) => ct.roomToName.read.get(roomId) ?? roomId
         )
       ),
@@ -160,8 +161,7 @@ export function ThreadNavItems({
       getReactCustomHtmlInlineParser(ct, timeline.roomId, {
         linkifyOpts,
         useAuthentication,
-        handleMentionClick: () => undefined,
-        getMemberName: (userId) => userId,
+        getMemberName: (userId) => getMxIdLocalPart(userId) ?? userId,
         getRoomName: (roomId) => ct.roomToName.read.get(roomId) ?? roomId,
       }),
     [ct, timeline, linkifyOpts, useAuthentication]

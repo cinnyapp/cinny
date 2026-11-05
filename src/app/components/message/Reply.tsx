@@ -14,15 +14,14 @@ import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts } from 'linkifyjs';
 import { LinePlaceholder } from './placeholder';
 import { randomNumberBetween } from '../../utils/common';
-import { MessageFailedContent } from './content';
 import { useRoomEvent } from '../../hooks/useRoomEvent';
 import colorMXID from '../../../util/colorMXID';
 import { GetMemberPowerTag } from '../../hooks/useMemberPowerTag';
 import { GetRoomMemberNameCallback } from '../../hooks/useRoomMembers';
 import { rContent, rUnsigned } from '../../../client/reader';
 import { TimelineView } from '../../../client/room';
-import { RenderReplyContent } from '../RenderReplyContent';
-import { RedactedContent } from './MsgTypeRenderers';
+import { RenderInlineContent } from '../RenderInlineContent';
+import { FailedToLoadContent, RedactedContent } from './MsgTypeRenderers';
 import { HoverUnderline } from '../../styles/Text.css';
 import { useObservableValueOptionally } from '../../hooks/useObservableValue';
 import { getLatestEditEvent } from '../../utils/room';
@@ -144,7 +143,7 @@ export function Reply({
             inline
           >
             {(contentEvent) => (
-              <RenderReplyContent
+              <RenderInlineContent
                 displayName={getMemberName(event.sender)}
                 eventType={contentEvent.type}
                 edited={!!editedEvent}
@@ -184,11 +183,7 @@ export function Reply({
       data-event-id={eventId}
     >
       {replyEvent && renderEventContent(replyEvent)}
-      {replyEvent === null && (
-        <Text size="T300">
-          <MessageFailedContent />
-        </Text>
-      )}
+      {replyEvent === null && <FailedToLoadContent size="T300" truncate />}
       {replyEvent === undefined && (
         <LinePlaceholder
           style={{

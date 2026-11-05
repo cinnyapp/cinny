@@ -135,5 +135,9 @@ export function ReplyMLocation({ content }: ReplyMLocationProps) {
   const location = parseGeoUri(geoUri);
   if (!location) return <BrokenContent />;
 
-  return <Text size="T300">{geoUri}</Text>;
+  return (
+    <Text size="T300" truncate>
+      {geoUri}
+    </Text>
+  );
 }

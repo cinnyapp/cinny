@@ -18,14 +18,9 @@ import {
   AudioContent,
   FileContent,
   ImageContent,
-  MessageBadEncryptedContent,
-  MessageBrokenContent,
-  MessageDeletedContent,
   MessageEditedContent,
-  UnsupportedMessageEventType,
-  MessageUnsupportedContent,
   VideoContent,
-  MessageEmptyContent,
+  FallbackContent,
 } from './content';
 import { FALLBACK_MIMETYPE, getBlobSafeMimeType } from '../../utils/mimeTypes';
 import { parseGeoUri, scaleYDimension } from '../../utils/common';
@@ -35,56 +30,81 @@ import { RenderBody } from './RenderBody';
 import { rContent, rEncryptedFile, rInfo } from '../../../client/reader';
 import { UrlPreviewCard, UrlPreviewHolder } from '../url-preview';
 import { testMatrixTo } from '../../plugins/matrix-to';
+import { Code } from '../../styles/CustomHtml.css';
 
 type TextProps = {
   size?: 'T400' | 'T300';
+  truncate?: boolean;
 };
-
-export function MBadEncrypted({ size }: TextProps) {
-  return (
-    <Text size={size}>
-      <MessageBadEncryptedContent />
-    </Text>
-  );
-}
 
 type RedactedContentProps = TextProps & {
   reason?: string;
 };
 
-export function RedactedContent({ size, reason }: RedactedContentProps) {
+export function RedactedContent({ size, reason, truncate }: RedactedContentProps) {
   return (
-    <Text size={size}>
-      <MessageDeletedContent reason={reason} />
-    </Text>
+    <FallbackContent variant="Warning" iconSrc={Icons.Delete}>
+      <Text size={size} truncate={truncate}>
+        {reason ? (
+          <i>This message has been deleted. {reason}</i>
+        ) : (
+          <i>This message has been deleted</i>
+        )}
+      </Text>
+    </FallbackContent>
   );
 }
 
-export function UnsupportedContent({ size, eventType }: TextProps & { eventType?: string }) {
+export function UnsupportedContent({
+  size,
+  truncate,
+  eventType,
+}: TextProps & { eventType?: string }) {
   return (
-    <Text size={size}>
-      {eventType ? (
-        <UnsupportedMessageEventType eventType={eventType} />
-      ) : (
-        <MessageUnsupportedContent />
-      )}
-    </Text>
+    <FallbackContent
+      variant={eventType ? undefined : 'Critical'}
+      iconSrc={eventType ? Icons.Code : Icons.Warning}
+    >
+      <Text size={size} truncate={truncate}>
+        {eventType ? (
+          <>
+            Sent <code className={Code}>{eventType}</code> event
+          </>
+        ) : (
+          <i>Unsupported message</i>
+        )}
+      </Text>
+    </FallbackContent>
   );
 }
 
-export function BrokenContent({ size }: TextProps) {
+export function FailedToLoadContent({ size, truncate }: TextProps) {
   return (
-    <Text size={size}>
-      <MessageBrokenContent />
-    </Text>
+    <FallbackContent variant="Critical" iconSrc={Icons.Warning}>
+      <Text size={size} truncate={truncate}>
+        <i>Failed to load message</i>
+      </Text>
+    </FallbackContent>
   );
 }
 
-export function EmptyContent({ size }: TextProps) {
+export function BrokenContent({ size, truncate }: TextProps) {
   return (
-    <Text size={size}>
-      <MessageEmptyContent />
-    </Text>
+    <FallbackContent variant="Critical" iconSrc={Icons.Warning}>
+      <Text size={size} truncate={truncate}>
+        <i>Broken message</i>
+      </Text>
+    </FallbackContent>
+  );
+}
+
+export function EmptyContent({ size, truncate }: TextProps) {
+  return (
+    <FallbackContent variant="Critical" iconSrc={Icons.Warning}>
+      <Text size={size} truncate={truncate}>
+        <i>Empty message</i>
+      </Text>
+    </FallbackContent>
   );
 }
 
@@ -464,7 +484,7 @@ export function MSticker({ content, mediaAutoLoad, outlineAttachment }: MSticker
   const mxcUrl = rEncryptedFile.url(rContent.file(content)) ?? rContent.url(content);
 
   if (typeof mxcUrl !== 'string') {
-    return <MessageBrokenContent />;
+    return <BrokenContent />;
   }
   const height = scaleYDimension(rInfo.w(imgInfo) || 152, 152, rInfo.h(imgInfo) || 152);
 
