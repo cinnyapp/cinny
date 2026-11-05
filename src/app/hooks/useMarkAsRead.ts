@@ -12,9 +12,11 @@ import { useClient } from './useClient';
 import { getReadReceiptId, getUnreadThreadNotificationId } from '../../client/storage/collections';
 import { ThreadId } from '../../types/matrix/room';
 import { ReadMarker } from '../../client/ReadMarker';
+import { useSettings } from '../state/hooks/settings';
 
 export const useMarkAsRead = (roomId: string, threadId?: string) => {
   const ct = useClient();
+  const { hideActivity } = useSettings();
 
   const clearNotificationCount = useCallback(async () => {
     if (threadId) {
@@ -45,8 +47,13 @@ export const useMarkAsRead = (roomId: string, threadId?: string) => {
       return;
     }
     if (count > 0) {
-      await ct.readMarker.markAsRead(roomId, 'm.read', latestEvent.event_id, threadId);
       await clearNotificationCount();
+      await ct.readMarker.markAsRead(
+        roomId,
+        hideActivity ? 'm.read.private' : 'm.read',
+        latestEvent.event_id,
+        threadId
+      );
     }
 
     const receiptId = getReadReceiptId(roomId, ct.session.userId, threadId ?? ThreadId.Main);
@@ -56,8 +63,13 @@ export const useMarkAsRead = (roomId: string, threadId?: string) => {
       return;
     }
 
-    await ct.readMarker.markAsRead(roomId, 'm.read', latestEvent.event_id, threadId);
-  }, [ct, roomId, threadId, clearNotificationCount]);
+    await ct.readMarker.markAsRead(
+      roomId,
+      hideActivity ? 'm.read.private' : 'm.read',
+      latestEvent.event_id,
+      threadId
+    );
+  }, [ct, roomId, threadId, clearNotificationCount, hideActivity]);
 
   return markAsRead;
 };

@@ -55,6 +55,9 @@ export class ReadMarker {
   ): Promise<void> {
     const retrier = new MatrixRequestRetrier(sleep);
 
+    // clear locally, sending thread event receipt with "main" as threadId errors.
+    await this.updateStore(roomId, receiptType, eventId, threadId);
+
     const [, latestEventId] = await to(this.fetchTrueLatestEventId(roomId, threadId));
 
     const endpoint = postReceiptEventId({
@@ -69,7 +72,6 @@ export class ReadMarker {
     if (err) {
       throw err.data.error ?? err.data.errcode ?? 'Unknown Error';
     }
-    await this.updateStore(roomId, receiptType, eventId, threadId);
   }
 
   // fetch the actual latest event from the server.
