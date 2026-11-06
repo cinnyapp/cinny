@@ -68,12 +68,10 @@ export const ReactionViewer = as<'div', ReactionViewerProps>(
               {reactions.map((reaction) => (
                 <Reaction
                   key={reaction.key}
-                  ct={ct}
                   reaction={reaction.key}
                   count={reaction.users.size}
                   aria-selected={reaction.key === selectedReaction?.key}
                   onClick={() => setSelectedReaction(reaction)}
-                  useAuthentication={useAuthentication}
                 />
               ))}
             </Box>
