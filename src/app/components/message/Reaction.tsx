@@ -42,7 +42,7 @@ export const Reaction = as<
       <Text
         className={classNames(css.ReactionText, { [css.ReactionChangeAnimation]: adding })}
         as="span"
-        size="T400"
+        size="T500"
       >
         {reaction.startsWith('mxc://') ? (
           <img
