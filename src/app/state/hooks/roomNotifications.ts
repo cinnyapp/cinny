@@ -112,13 +112,19 @@ export const getRoomsTotalNotifications = (
 export const useRoomsTotalNotifications = (roomsToNotifications: RoomToNotifications) =>
   useMemo(() => getRoomsTotalNotifications(roomsToNotifications), [roomsToNotifications]);
 
-export const getRoomTotalNotifications = (notifications?: Notifications): TotalNotifications => {
+export const getRoomTotalNotifications = (
+  notifications?: Notifications,
+  excludeThreads?: boolean
+): TotalNotifications => {
   const total: TotalNotifications = {
     count: 0,
     highlight: false,
   };
 
   setTotal(total, notifications ?? {});
+
+  if (excludeThreads) return total;
+
   notifications?.threads.forEach((tn) => setTotal(total, tn));
 
   return total;

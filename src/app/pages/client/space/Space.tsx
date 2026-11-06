@@ -55,7 +55,7 @@ import {
 } from '../../../hooks/router/useSelectedSpace';
 import { useSpace } from '../../../hooks/useSpace';
 import { VirtualTile } from '../../../components/virtualizer';
-import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
+import { RoomNavCategoryButton, RoomNavItem, ThreadNavItems } from '../../../features/room-nav';
 import { makeNavCategoryId } from '../../../state/closedNavCategories';
 import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
@@ -102,7 +102,6 @@ import { useAllJoinedRoomsSet } from '../../../hooks/useAllJoinedRoomsSet';
 import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { RoomAccessIndicator } from '../../../components/RoomAccessIndicator';
-import { ThreadNavItems } from '../../../features/room-nav/ThreadNavItems';
 
 type SpaceMenuProps = {
   requestClose: () => void;
@@ -528,7 +527,7 @@ export function Space() {
               }
 
               const n = roomToNotifications.get(roomId);
-              const notifications = n && getRoomTotalNotifications(n);
+              const notifications = n && getRoomTotalNotifications(n, true);
               const threadNotifications = n?.threads;
               const timeline = roomToTimeline.get(roomId);
 
@@ -548,6 +547,7 @@ export function Space() {
                   />
                   {timeline && threadNotifications && threadNotifications.size > 0 && (
                     <ThreadNavItems
+                      linkPath={getToLink(roomId)}
                       roomSelected={selectedRoomId === roomId}
                       timeline={timeline}
                       threadNotifications={threadNotifications}

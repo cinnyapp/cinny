@@ -40,7 +40,7 @@ import {
 import { getDirectCreatePath, getDirectRoomPath } from '../../pathUtils';
 import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import { VirtualTile } from '../../../components/virtualizer';
-import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
+import { RoomNavCategoryButton, RoomNavItem, ThreadNavItems } from '../../../features/room-nav';
 import { makeNavCategoryId } from '../../../state/closedNavCategories';
 import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
@@ -199,6 +199,7 @@ export function Direct() {
   const roomToNotifications = useRoomsNotifications(directs, roomToNotificationsAtom);
   const unreadRooms = useRoomsUnread(directs, unreadRoomsAtom);
   const roomToLatestEvent = useRoomsLatestEvent(directs);
+  const roomToTimeline = useObservableValue(ct.roomToTimeline);
 
   const notificationPreferences = useRoomsNotificationPreferencesContext();
   const navigate = useNavigate();
@@ -291,7 +292,9 @@ export function Direct() {
                   const roomId = sortedDirects[vItem.index];
                   const selected = selectedRoomId === roomId;
                   const n = roomToNotifications.get(roomId);
-                  const notifications = n && getRoomTotalNotifications(n);
+                  const notifications = n && getRoomTotalNotifications(n, true);
+                  const threadNotifications = n?.threads;
+                  const timeline = roomToTimeline.get(roomId);
 
                   return (
                     <VirtualTile
@@ -312,6 +315,15 @@ export function Direct() {
                         notifications={notifications}
                         unread={unreadRooms.has(roomId)}
                       />
+
+                      {timeline && threadNotifications && threadNotifications.size > 0 && (
+                        <ThreadNavItems
+                          linkPath={getDirectRoomPath(ct.roomToAlias.read.get(roomId) ?? roomId)}
+                          roomSelected={selectedRoomId === roomId}
+                          timeline={timeline}
+                          threadNotifications={threadNotifications}
+                        />
+                      )}
                     </VirtualTile>
                   );
                 })}

@@ -9,3 +9,4 @@ Please see LICENSE file in root of repository for full details.
 
 export * from './RoomNavItem';
 export * from './RoomNavCategoryButton';
+export * from './ThreadNavItems';

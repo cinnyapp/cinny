@@ -12,6 +12,7 @@ import { MessageEventWithoutRoomId, UnreadNotificationCounts } from 'neurone/lib
 import { Box, Chip, Icon, Icons, Text } from 'folds';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts as LinkifyOpts } from 'linkifyjs';
+import { useNavigate } from 'react-router-dom';
 import { Timeline } from '../../../client/room';
 import { useObservableValue } from '../../hooks/useObservableValue';
 import { NavButton, NavItem } from '../../components/nav';
@@ -39,7 +40,6 @@ import { useRoomHeroes } from '../../hooks/storage/useRoomHeros';
 type ThreadNavItemProps = {
   thread: ThreadTimeline;
   notification?: UnreadNotificationCounts;
-  selected: boolean;
   redactedEvents?: Set<string>;
   editEvents?: MessageEventWithoutRoomId[];
   htmlReactParserOptions: HTMLReactParserOptions;
@@ -49,7 +49,6 @@ type ThreadNavItemProps = {
 function ThreadNavItem({
   thread,
   notification,
-  selected,
   redactedEvents,
   editEvents,
   htmlReactParserOptions,
@@ -121,17 +120,20 @@ function ThreadNavItem({
 }
 
 type ThreadNavItemsProps = {
+  linkPath: string;
   timeline: Timeline;
   roomSelected: boolean;
   threadNotifications: Map<string, UnreadNotificationCounts>;
 };
 export function ThreadNavItems({
+  linkPath,
   timeline,
   roomSelected,
   threadNotifications,
 }: ThreadNavItemsProps) {
   const ct = useClient();
   const useAuthentication = useMediaAuthentication();
+  const navigate = useNavigate();
   const [viewMore, setViewMore] = useState(false);
 
   const threads = useObservableValue(timeline.threads);
@@ -175,6 +177,15 @@ export function ThreadNavItems({
   const threadIds = Array.from(threadNotifications.keys());
   const slicedThreadIds = viewMore ? threadIds : threadIds.slice(0, 5);
 
+  const handleOpenThread = (threadId: string) => {
+    if (!activeThread) {
+      timeline.openThread(threadId);
+    }
+    if (!roomSelected) {
+      navigate(linkPath);
+    }
+  };
+
   return (
     <>
       <Box className={css.ThreadNavItems} direction="Column">
@@ -187,13 +198,12 @@ export function ThreadNavItems({
             <ThreadNavItem
               key={threadId}
               thread={thread}
-              selected={roomSelected && threadId === activeThread}
               notification={notification}
               editEvents={edits.get(threadId)}
               redactedEvents={redactedSet}
               htmlReactParserOptions={htmlReactParserInlineOptions}
               linkifyOpts={linkifyOpts}
-              onClick={() => timeline.openThread(threadId)}
+              onClick={() => handleOpenThread(threadId)}
             />
           );
         })}
