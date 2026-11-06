@@ -10,8 +10,7 @@ Please see LICENSE file in root of repository for full details.
 import React from 'react';
 import { ThreadTimeline } from '../../../../client/room/ThreadTimeline';
 import { useObservableValue } from '../../../hooks/useObservableValue';
-import { FollowingMembers } from '../components';
-import { FollowingMembersPlaceholder } from '../components/styles.css';
+import { FollowingMembers, FollowingMembersPlaceholder } from '../components';
 
 export function ThreadViewFollowing({ threadTimeline }: { threadTimeline: ThreadTimeline }) {
   const meta = useObservableValue(threadTimeline.meta);

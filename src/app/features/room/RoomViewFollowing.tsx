@@ -11,8 +11,7 @@ import React from 'react';
 import { useClient } from '../../hooks/useClient';
 import { useObservableValue } from '../../hooks/useObservableValue';
 import { useRoom } from '../../hooks/useRoom';
-import { FollowingMembers } from './components';
-import { FollowingMembersPlaceholder } from './components/styles.css';
+import { FollowingMembers, FollowingMembersPlaceholder } from './components';
 
 export function RoomViewFollowing() {
   const ct = useClient();
