@@ -29,11 +29,12 @@ import {
   factoryRenderLinkifyWithMention,
   getReactCustomHtmlInlineParser,
   LINKIFY_OPTS,
-  makeMentionCustomProps,
   renderMatrixMention,
 } from '../../plugins/react-custom-html-parser';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { getMxIdLocalPart } from '../../utils/matrix';
+import { useGetRoomName } from '../../hooks/storage/useGetRoomName';
+import { useRoomHeroes } from '../../hooks/storage/useRoomHeros';
 
 type ThreadNavItemProps = {
   thread: ThreadTimeline;
@@ -138,23 +139,26 @@ export function ThreadNavItems({
   const redactedSet = useObservableValue(timeline.relations.redacted);
 
   const activeThread = useObservableValue(timeline.activeThread);
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
 
-  const linkifyOpts = useMemo<LinkifyOpts>(
-    () => ({
+  const linkifyOpts = useMemo<LinkifyOpts>(() => {
+    const renderMention = (href: string) =>
+      renderMatrixMention(
+        ct,
+        timeline.roomId,
+        href,
+        {},
+        (userId) => getMxIdLocalPart(userId) ?? userId,
+        (roomId) => getRoomName(roomId),
+        true
+      );
+
+    return {
       ...LINKIFY_OPTS,
-      render: factoryRenderLinkifyWithMention((href) =>
-        renderMatrixMention(
-          ct,
-          timeline.roomId,
-          href,
-          makeMentionCustomProps((evt) => evt.preventDefault()),
-          (userId) => getMxIdLocalPart(userId) ?? userId,
-          (roomId) => ct.roomToName.read.get(roomId) ?? roomId
-        )
-      ),
-    }),
-    [ct, timeline]
-  );
+      render: factoryRenderLinkifyWithMention(renderMention, true),
+    };
+  }, [ct, timeline, getRoomName]);
 
   const htmlReactParserInlineOptions = useMemo<HTMLReactParserOptions>(
     () =>
@@ -162,9 +166,10 @@ export function ThreadNavItems({
         linkifyOpts,
         useAuthentication,
         getMemberName: (userId) => getMxIdLocalPart(userId) ?? userId,
-        getRoomName: (roomId) => ct.roomToName.read.get(roomId) ?? roomId,
+        getRoomName: (roomId) => getRoomName(roomId),
+        noLink: true,
       }),
-    [ct, timeline, linkifyOpts, useAuthentication]
+    [ct, timeline, linkifyOpts, useAuthentication, getRoomName]
   );
 
   const threadIds = Array.from(threadNotifications.keys());

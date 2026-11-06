@@ -96,18 +96,25 @@ export const renderMatrixMention = (
   href: string,
   customProps: ComponentPropsWithoutRef<'a'>,
   getMemberName: GetRoomMemberNameCallback,
-  getRoomName: GetRoomNameCallback
+  getRoomName: GetRoomNameCallback,
+  noLink?: boolean
 ) => {
   const userId = parseMatrixToUser(href);
   if (userId) {
+    const highlight = ct.session.userId === userId;
+    const name = getMemberName(userId);
+    const children = name.startsWith('@') ? name : `@${name}`;
+
+    if (noLink) return <span className={css.Mention({ highlight })}>{children}</span>;
+
     return (
       <a
         href={href}
         {...customProps}
-        className={css.Mention({ highlight: ct.session.userId === userId })}
+        className={css.Mention({ highlight })}
         data-mention-id={userId}
       >
-        {`@${getMemberName(userId)}`}
+        {children}
       </a>
     );
   }
@@ -122,17 +129,22 @@ export const renderMatrixMention = (
 
     const fallbackContent = mentionRoomId ? `#${getRoomName(mentionRoomId)}` : roomIdOrAlias;
 
+    const highlight = currentRoomId === (mentionRoomId ?? roomIdOrAlias);
+    const children = customProps.children ? customProps.children : fallbackContent;
+
+    if (noLink) return <span className={css.Mention({ highlight })}>{children}</span>;
+
     return (
       <a
         href={href}
         {...customProps}
         className={css.Mention({
-          highlight: currentRoomId === (mentionRoomId ?? roomIdOrAlias),
+          highlight,
         })}
         data-mention-id={mentionRoomId ?? roomIdOrAlias}
         data-mention-via={viaServers?.join(',')}
       >
-        {customProps.children ? customProps.children : fallbackContent}
+        {children}
       </a>
     );
   }
@@ -144,20 +156,25 @@ export const renderMatrixMention = (
       ? ct.rooms.join.read.find((roomId) => ct.roomToAlias.read.get(roomId) === roomIdOrAlias)
       : undefined;
 
+    const highlight = currentRoomId === (mentionRoomId ?? roomIdOrAlias);
+    const children = customProps.children
+      ? customProps.children
+      : `Message: ${mentionRoomId ? `#${getRoomName(mentionRoomId)}` : roomIdOrAlias}`;
+
+    if (noLink) {
+      return <span className={css.Mention({ highlight })}>{children}</span>;
+    }
+
     return (
       <a
         href={href}
         {...customProps}
-        className={css.Mention({
-          highlight: currentRoomId === (mentionRoomId ?? roomIdOrAlias),
-        })}
+        className={css.Mention({ highlight })}
         data-mention-id={mentionRoomId ?? roomIdOrAlias}
         data-mention-event-id={eventId}
         data-mention-via={viaServers?.join(',')}
       >
-        {customProps.children
-          ? customProps.children
-          : `Message: ${mentionRoomId ? `#${getRoomName(mentionRoomId)}` : roomIdOrAlias}`}
+        {children}
       </a>
     );
   }
@@ -166,7 +183,8 @@ export const renderMatrixMention = (
 };
 
 export const factoryRenderLinkifyWithMention = (
-  mentionRender: (href: string) => JSX.Element | undefined
+  mentionRender: (href: string) => JSX.Element | undefined,
+  noLink?: boolean
 ): OptFn<(ir: IntermediateRepresentation) => any> => {
   const render: OptFn<(ir: IntermediateRepresentation) => any> = ({
     tagName,
@@ -177,6 +195,8 @@ export const factoryRenderLinkifyWithMention = (
       const mention = mentionRender(tryDecodeURIComponent(attributes.href));
       if (mention) return mention;
     }
+
+    if (noLink) return <span>{content}</span>;
 
     return <a {...attributes}>{content}</a>;
   };
@@ -576,6 +596,7 @@ export const getReactCustomHtmlInlineParser = (
     handleMentionClick?: ReactEventHandler<HTMLElement>;
     getMemberName: GetRoomMemberNameCallback;
     getRoomName: GetRoomNameCallback;
+    noLink?: boolean;
   }
 ): HTMLReactParserOptions => {
   const opts: HTMLReactParserOptions = {
@@ -633,21 +654,30 @@ export const getReactCustomHtmlInlineParser = (
           }
         }
 
-        if (name === 'a' && testMatrixTo(tryDecodeURIComponent(props.href))) {
-          const content = children.find((child) => !(child instanceof DOMText))
-            ? undefined
-            : children.map((c) => (c instanceof DOMText ? c.data : '')).join();
+        if (name === 'a') {
+          if (testMatrixTo(tryDecodeURIComponent(props.href))) {
+            const content = children.find((child) => !(child instanceof DOMText))
+              ? undefined
+              : children.map((c) => (c instanceof DOMText ? c.data : '')).join();
 
-          const mention = renderMatrixMention(
-            ct,
-            roomId,
-            tryDecodeURIComponent(props.href),
-            makeMentionCustomProps(params.handleMentionClick, content),
-            params.getMemberName,
-            params.getRoomName
-          );
+            const mention = renderMatrixMention(
+              ct,
+              roomId,
+              tryDecodeURIComponent(props.href),
+              makeMentionCustomProps(params.handleMentionClick, content),
+              params.getMemberName,
+              params.getRoomName,
+              params.noLink
+            );
 
-          if (mention) return mention;
+            if (mention) return mention;
+          }
+
+          if (params.noLink) {
+            return <span>{domToReact(children, opts)}</span>;
+          }
+
+          return undefined;
         }
 
         if (name === 'span' && 'data-mx-spoiler' in props) {
@@ -660,6 +690,9 @@ export const getReactCustomHtmlInlineParser = (
 
         if (name === 'img') {
           if (props.src && props.src.startsWith('mxc://') === false) {
+            if (params.noLink) {
+              return <span>{props.alt || props.title || props.src}</span>;
+            }
             return (
               <a href={props.src} target="_blank" rel="noreferrer noopener">
                 {props.alt || props.title || props.src}

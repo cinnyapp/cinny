@@ -78,7 +78,7 @@ export function ReplyMEmote({
   const trimmedBody = trimReplyFromBody(body);
 
   return (
-    <MessageTextBody size="T300" emote preWrap={typeof customBody !== 'string'} truncate>
+    <MessageTextBody size="T300" emote truncate>
       <b>{`${displayName} `}</b>
       <RenderBody
         body={trimmedBody}
@@ -113,7 +113,7 @@ export function ReplyMNotice({
   const trimmedBody = trimReplyFromBody(body);
 
   return (
-    <MessageTextBody size="T300" notice preWrap={typeof customBody !== 'string'} truncate>
+    <MessageTextBody size="T300" notice truncate>
       <RenderBody
         body={trimmedBody}
         customBody={customBody}
