@@ -9,6 +9,7 @@ Please see LICENSE file in root of repository for full details.
 
 import {
   Avatar,
+  Badge,
   Box,
   Button,
   Chip,
@@ -20,6 +21,7 @@ import {
   Icons,
   Input,
   Line,
+  MainColor,
   Menu,
   MenuItem,
   Modal,
@@ -90,7 +92,7 @@ import { useClient } from '../../../hooks/useClient';
 import { useRoom } from '../../../hooks/useRoom';
 import { mxcToHttp } from '../../../../client/mxcToHttp';
 import { ReactionContent } from '../../../../types/matrix/common';
-import { RoomMembersAPI } from '../../../hooks/useRoomMembers';
+import { MemberChangeType, RoomMembersAPI } from '../../../hooks/useRoomMembers';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { usePowerLevelsContext } from '../../../hooks/usePowerLevels';
 import { useCanMessage } from '../hooks/useCanMessage';
@@ -701,24 +703,104 @@ export const MessageReportItem = as<
   );
 });
 
+type MemberChangeBadgeProps = {
+  memberChange: MemberChangeType;
+  isNewChange: boolean;
+  bubbleLayout?: boolean;
+};
+
+export function MemberChangeBadge({
+  memberChange,
+  isNewChange,
+  bubbleLayout = false,
+}: MemberChangeBadgeProps) {
+  let text: string | undefined;
+  let variant: MainColor = 'Success';
+
+  switch (memberChange) {
+    case 'kick':
+      text = 'Kicked';
+      variant = 'Warning';
+      break;
+
+    case 'leave':
+      text = 'Left';
+      variant = 'Secondary';
+      break;
+
+    case 'ban':
+      text = 'Banned';
+      variant = 'Critical';
+      break;
+
+    case 'invite':
+      text = 'Invited';
+      variant = 'Success';
+      break;
+
+    case 'knock':
+      text = 'Knocks';
+      variant = 'Success';
+      break;
+
+    case 'join':
+    case 'nameChange':
+    case 'avatarChange':
+    case 'profileChange':
+      if (isNewChange) {
+        text = 'New';
+        variant = 'Primary';
+      }
+      break;
+
+    default:
+      break;
+  }
+
+  if (!text) return null;
+
+  return (
+    <Badge
+      className={css.MemberChangeBadge({ bubbleLayout })}
+      size="400"
+      variant={variant}
+      fill="Soft"
+      radii="300"
+    >
+      <Text size="L400">{text}</Text>
+    </Badge>
+  );
+}
+
 export function MessageAvatar({
   userId,
   displayName,
   avatarUrl,
   onUserClick,
   bubbleLayout,
+  memberChange,
+  isNewChange,
 }: {
   userId: string;
   displayName: string;
   avatarUrl?: string;
   onUserClick?: MouseEventHandler<HTMLButtonElement>;
   bubbleLayout?: boolean;
+  memberChange?: MemberChangeType;
+  isNewChange: boolean;
 }) {
   const ct = useClient();
   const useAuthentication = useMediaAuthentication();
 
   return (
     <AvatarBase className={bubbleLayout ? css.BubbleAvatarBase : undefined}>
+      {memberChange && (
+        <MemberChangeBadge
+          memberChange={memberChange}
+          isNewChange={isNewChange}
+          bubbleLayout={bubbleLayout}
+        />
+      )}
       <Avatar
         className={css.MessageAvatar}
         as="button"
@@ -1012,6 +1094,8 @@ export const Message = as<'div', MessageProps>(
 
     const senderDisplayName = membersAPI.getName(senderId);
     const senderAvatarMxc = membersAPI.getAvatar(senderId);
+    const memberChange = membersAPI.getMemberChangeType(senderId);
+    const isNewChange = membersAPI.isNewChange(senderId);
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
       if (evt.altKey || !window.getSelection()?.isCollapsed || edit) return;
@@ -1297,6 +1381,8 @@ export const Message = as<'div', MessageProps>(
                 avatarUrl={senderAvatarMxc}
                 onUserClick={onUserClick}
                 bubbleLayout={messageLayout === MessageLayout.Bubble}
+                memberChange={memberChange}
+                isNewChange={isNewChange}
               />
             )
           }

@@ -10,6 +10,7 @@ Please see LICENSE file in root of repository for full details.
 import { createContext, useContext, useMemo } from 'react';
 import { PendingObservableResult } from 'neurone/lib/utils/observable';
 import { RoomMembership } from 'neurone/lib/api/types';
+import { ObjectReader } from 'neurone/lib/utils';
 import { useClient } from './useClient';
 import { useObservableValuePromise } from './useObservableValue';
 import { getJoinRoomMemberId, JoinRoomMemberObject } from '../../client/storage/collections';
@@ -20,16 +21,35 @@ import {
   roomMemberContentMembership,
 } from '../utils/room';
 import { MemberCache } from '../../client/MemberCache';
+import { StateEventType } from '../../types/matrix/room';
+import { rUnsigned } from '../../client/reader';
+
+export type MemberChangeType =
+  | 'join'
+  | 'leave'
+  | 'kick'
+  | 'ban'
+  | 'knock'
+  | 'invite'
+  | 'nameChange'
+  | 'avatarChange'
+  | 'profileChange';
 
 export type GetRoomMemberCallback = (userId: string) => JoinRoomMemberObject | undefined;
 export type GetRoomMemberNameCallback = (userId: string) => string;
 export type GetRoomMemberAvatarCallback = (userId: string) => string | undefined;
 export type GetRoomMemberMembershipCallback = (userId: string) => RoomMembership | undefined;
+export type GetRoomMemberMemberChangeTypeCallback = (
+  userId: string
+) => MemberChangeType | undefined;
+export type GetRoomMemberIsNewChnageCallback = (userId: string) => boolean;
 export type RoomMembersAPI = {
   getMember: GetRoomMemberCallback;
   getName: GetRoomMemberNameCallback;
   getAvatar: GetRoomMemberAvatarCallback;
   getMembership: GetRoomMemberMembershipCallback;
+  getMemberChangeType: GetRoomMemberMemberChangeTypeCallback;
+  isNewChange: GetRoomMemberIsNewChnageCallback;
   memberEventsResult: PendingObservableResult<JoinRoomMemberObject[]>;
   userIdToMemberEvent: Record<string, JoinRoomMemberObject>;
 };
@@ -79,6 +99,74 @@ class MembersAPI implements RoomMembersAPI {
     if (!content) return undefined;
 
     return roomMemberContentMembership(content);
+  };
+
+  getMemberChangeType = (userId: string): MemberChangeType | undefined => {
+    const member = this.getMember(userId);
+
+    if (!member) {
+      return undefined;
+    }
+
+    const { event } = member;
+
+    if (event.type !== StateEventType.RoomMember) {
+      return undefined;
+    }
+
+    const { content } = event;
+    const membership = roomMemberContentMembership(content);
+
+    const previousContent = rUnsigned.prevContent(event.unsigned);
+    const previousMembership = previousContent && roomMemberContentMembership(previousContent);
+
+    if (!membership) return membership;
+
+    // Membership transitions
+    if (!previousContent || previousMembership !== membership) {
+      if (membership === 'leave' && event.sender !== userId) {
+        return 'kick';
+      }
+      return membership;
+    }
+
+    // Profile changes
+    if (
+      ObjectReader.string(previousContent, 'displayname') !==
+      ObjectReader.string(content, 'displayname')
+    ) {
+      return 'nameChange';
+    }
+
+    if (
+      ObjectReader.string(previousContent, 'avatar_url') !==
+      ObjectReader.string(content, 'avatar_url')
+    ) {
+      return 'avatarChange';
+    }
+
+    return membership;
+  };
+
+  /**
+   * Detect if user has changed there member state event within last 24 hours.
+   * @param userId
+   * @returns true if `m.room.member` was sent withint 24 hours
+   */
+  isNewChange = (userId: string): boolean => {
+    const member = this.getMember(userId);
+
+    if (!member) return false;
+
+    const { event } = member;
+
+    if (event.type !== StateEventType.RoomMember) {
+      return false;
+    }
+
+    const last24Hours = Date.now() - 24 * 60 * 60 * 1000;
+
+    return event.origin_server_ts >= last24Hours;
   };
 }
 

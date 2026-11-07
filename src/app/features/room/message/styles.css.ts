@@ -8,7 +8,9 @@ Please see LICENSE file in root of repository for full details.
 */
 
 import { style } from '@vanilla-extract/css';
-import { DefaultReset, config, toRem } from 'folds';
+import { recipe } from '@vanilla-extract/recipes';
+import { DefaultReset, color, config, toRem } from 'folds';
+import { BubbleLayout } from '../../../components/message';
 
 export const MessageBase = style({
   position: 'relative',
@@ -35,6 +37,25 @@ export const MessageOptionsBar = style([
 
 export const BubbleAvatarBase = style({
   paddingTop: 0,
+});
+
+export const MemberChangeBadge = recipe({
+  base: {
+    position: 'absolute',
+    top: toRem(4),
+    left: toRem(8),
+    transform: 'translate(-45%, -45%) rotateZ(-25deg)',
+    transformOrigin: 'center',
+    zIndex: 1,
+    outline: `${config.borderWidth.B500} solid ${color.Surface.Container}`,
+  },
+  variants: {
+    bubbleLayout: {
+      true: {
+        top: 0,
+      },
+    },
+  },
 });
 
 export const MessageAvatar = style({

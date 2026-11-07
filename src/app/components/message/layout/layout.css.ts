@@ -130,6 +130,7 @@ export const AvatarBase = style({
   transition: 'transform 200ms cubic-bezier(0, 0.8, 0.67, 0.97)',
   display: 'flex',
   alignSelf: 'start',
+  position: 'relative',
 
   selectors: {
     '&:hover': {
