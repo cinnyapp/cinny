@@ -110,7 +110,7 @@ export class ThreadTimeline implements TimelineView, Disposable {
     }
   }
 
-  private processTheadMeta(rootEvent: MessageEventWithoutRoomId): void {
+  static makeThreadMeta(rootEvent: MessageEventWithoutRoomId): ThreadMeta {
     const relations = rUnsigned.relations(rootEvent.unsigned);
     const threadRelation = rRelations.thread(relations);
     const latestReply = rThread.latestEvent(threadRelation) as
@@ -119,12 +119,15 @@ export class ThreadTimeline implements TimelineView, Disposable {
     const replyCount = rThread.count(threadRelation) ?? 0;
     const currentUserParticipated = rThread.currentUserParticipated(threadRelation) ?? false;
 
-    this.meta.publish(
-      this.publishKey,
-      new ThreadMeta(rootEvent, latestReply, replyCount, currentUserParticipated)
-    );
+    return new ThreadMeta(rootEvent, latestReply, replyCount, currentUserParticipated);
+  }
 
-    if (!latestReply) {
+  private processTheadMeta(rootEvent: MessageEventWithoutRoomId): void {
+    const meta = ThreadTimeline.makeThreadMeta(rootEvent);
+
+    this.meta.publish(this.publishKey, meta);
+
+    if (!meta.latestReplyEvent) {
       this.batchManager.markTimelineStart();
     }
   }

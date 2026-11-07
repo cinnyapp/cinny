@@ -86,6 +86,7 @@ import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 import { webRTCSupported } from '../../utils/rtc';
 import { StateEvent } from '../../../types/matrix/room';
 import { isCallRoom } from '../../utils/room';
+import { ThreadsMenu } from './threads-menu';
 
 type RoomMenuProps = {
   requestClose: () => void;
@@ -93,6 +94,9 @@ type RoomMenuProps = {
 const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ requestClose }, ref) => {
   const ct = useClient();
   const roomId = useRoom();
+  const navigate = useNavigate();
+  const spaceId = useSpaceOptionally();
+  const encryptedRooms = useObservableValue(ct.encryptedRooms);
   const [hideActivity] = useSetting('hideActivity');
 
   const roomNotifications = useRoomNotifications(roomId, roomToNotificationsAtom);
@@ -112,6 +116,16 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ requestClose }, re
   const handleMarkAsRead = () => {
     // markAsRead(mx, room.roomId, hideActivity);
     requestClose();
+  };
+
+  const handleSearchClick = () => {
+    const searchParams: _SearchPathSearchParams = {
+      rooms: roomId,
+    };
+    const path = spaceId
+      ? getSpaceSearchPath(ct.roomToAlias.read.get(spaceId) ?? spaceId)
+      : getHomeSearchPath();
+    navigate(withSearchParam(path, searchParams));
   };
 
   const handleInvite = () => {
@@ -193,6 +207,22 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ requestClose }, re
             Invite
           </Text>
         </MenuItem>
+        {!encryptedRooms.has(roomId) && (
+          <MenuItem
+            onClick={handleSearchClick}
+            variant="Surface"
+            fill="None"
+            size="300"
+            after={<Icon size="100" src={Icons.Search} />}
+            radii="300"
+            aria-pressed={invitePrompt}
+            disabled={!canInvite}
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              Search
+            </Text>
+          </MenuItem>
+        )}
         <MenuItem
           onClick={handleCopyLink}
           size="300"
@@ -400,7 +430,6 @@ function CallButton() {
 }
 
 export function RoomViewHeader({ callView }: { callView?: boolean }) {
-  const navigate = useNavigate();
   const ct = useClient();
   const useAuthentication = useMediaAuthentication();
   const screenSize = useScreenSizeContext();
@@ -408,7 +437,7 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
   const spaceId = useSpaceOptionally();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const [pinMenuAnchor, setPinMenuAnchor] = useState<RectCords>();
-  const encryptedRooms = useObservableValue(ct.encryptedRooms);
+  const [threadsMenuAnchor, setThreadsMenuAnchor] = useState<RectCords>();
   const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
 
   const creators = useRoomCreators(roomId);
@@ -440,22 +469,16 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
 
   const [peopleDrawer, setPeopleDrawer] = useSetting('isPeopleDrawer');
 
-  const handleSearchClick = () => {
-    const searchParams: _SearchPathSearchParams = {
-      rooms: roomId,
-    };
-    const path = spaceId
-      ? getSpaceSearchPath(ct.roomToAlias.read.get(spaceId) ?? spaceId)
-      : getHomeSearchPath();
-    navigate(withSearchParam(path, searchParams));
-  };
-
   const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
     setMenuAnchor(evt.currentTarget.getBoundingClientRect());
   };
 
   const handleOpenPinMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
     setPinMenuAnchor(evt.currentTarget.getBoundingClientRect());
+  };
+
+  const handleOpenThreadsMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
+    setThreadsMenuAnchor(evt.currentTarget.getBoundingClientRect());
   };
 
   const openSettings = useOpenRoomSettings();
@@ -550,23 +573,6 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
         </Box>
 
         <Box shrink="No">
-          {!encryptedRooms.has(roomId) && (
-            <TooltipProvider
-              position="Bottom"
-              offset={4}
-              tooltip={
-                <Tooltip>
-                  <Text>Search</Text>
-                </Tooltip>
-              }
-            >
-              {(triggerRef) => (
-                <IconButton fill="None" ref={triggerRef} onClick={handleSearchClick}>
-                  <Icon size="400" src={Icons.Search} />
-                </IconButton>
-              )}
-            </TooltipProvider>
-          )}
           <TooltipProvider
             position="Bottom"
             offset={4}
@@ -605,6 +611,28 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
               </IconButton>
             )}
           </TooltipProvider>
+
+          <TooltipProvider
+            position="Bottom"
+            offset={4}
+            tooltip={
+              <Tooltip>
+                <Text>Threads</Text>
+              </Tooltip>
+            }
+          >
+            {(triggerRef) => (
+              <IconButton
+                style={{ position: 'relative' }}
+                onClick={handleOpenThreadsMenu}
+                ref={triggerRef}
+                aria-pressed={!!threadsMenuAnchor}
+              >
+                <Icon size="400" src={Icons.Thread} filled={!!threadsMenuAnchor} />
+              </IconButton>
+            )}
+          </TooltipProvider>
+
           <PopOut
             anchor={pinMenuAnchor}
             position="Bottom"
@@ -624,6 +652,29 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
               </FocusTrap>
             }
           />
+
+          {threadsMenuAnchor && (
+            <PopOut
+              anchor={threadsMenuAnchor}
+              position="Bottom"
+              content={
+                <FocusTrap
+                  focusTrapOptions={{
+                    initialFocus: false,
+                    returnFocusOnDeactivate: false,
+                    onDeactivate: () => setThreadsMenuAnchor(undefined),
+                    clickOutsideDeactivates: true,
+                    isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                    isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                    escapeDeactivates: stopPropagation,
+                  }}
+                >
+                  <ThreadsMenu requestClose={() => setThreadsMenuAnchor(undefined)} />
+                </FocusTrap>
+              }
+            />
+          )}
+
           {!isCallRoom(ct.roomToType.read.get(roomId)) &&
             livekitSupported &&
             rtcSupported &&
