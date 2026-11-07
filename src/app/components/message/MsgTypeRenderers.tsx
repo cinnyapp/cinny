@@ -33,7 +33,7 @@ import { testMatrixTo } from '../../plugins/matrix-to';
 import { Code } from '../../styles/CustomHtml.css';
 
 type TextProps = {
-  size?: 'T400' | 'T300';
+  size?: 'T400' | 'T300' | 'T200';
   truncate?: boolean;
 };
 

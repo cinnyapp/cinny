@@ -19,7 +19,10 @@ import { rContent } from '../../../client/reader';
 import { parseGeoUri } from '../../utils/common';
 import { BrokenContent } from './MsgTypeRenderers';
 
-type ReplyMTextProps = {
+type InlineTextSize = 'T300' | 'T200' | 'T400';
+
+type InlineMTextProps = {
+  size?: InlineTextSize;
   edited?: boolean;
   content: object;
   style?: CSSProperties;
@@ -27,14 +30,16 @@ type ReplyMTextProps = {
   htmlReactParserOptions: HTMLReactParserOptions;
   linkifyOpts: Opts;
 };
-export function ReplyMText({
+
+export function InlineMText({
+  size = 'T300',
   edited,
   content,
   style,
   highlightRegex,
   linkifyOpts,
   htmlReactParserOptions,
-}: ReplyMTextProps) {
+}: InlineMTextProps) {
   const body = rContent.body(content);
   const customBody = rContent.formattedBody(content);
   const trimmedBody = trimReplyFromBody(body ?? '');
@@ -42,7 +47,7 @@ export function ReplyMText({
   if (typeof body !== 'string') return <BrokenContent />;
 
   return (
-    <MessageTextBody size="T300" style={style} truncate>
+    <MessageTextBody size={size} style={style} truncate>
       <RenderBody
         body={trimmedBody}
         customBody={customBody}
@@ -55,7 +60,8 @@ export function ReplyMText({
   );
 }
 
-type ReplyMEmoteProps = {
+type InlineMEmoteProps = {
+  size?: InlineTextSize;
   displayName: string;
   edited?: boolean;
   content: object;
@@ -63,14 +69,16 @@ type ReplyMEmoteProps = {
   htmlReactParserOptions: HTMLReactParserOptions;
   linkifyOpts: Opts;
 };
-export function ReplyMEmote({
+
+export function InlineMEmote({
+  size = 'T300',
   displayName,
   edited,
   content,
   highlightRegex,
   linkifyOpts,
   htmlReactParserOptions,
-}: ReplyMEmoteProps) {
+}: InlineMEmoteProps) {
   const body = rContent.body(content);
   const customBody = rContent.formattedBody(content);
 
@@ -78,7 +86,7 @@ export function ReplyMEmote({
   const trimmedBody = trimReplyFromBody(body);
 
   return (
-    <MessageTextBody size="T300" emote truncate>
+    <MessageTextBody size={size} emote truncate>
       <b>{`${displayName} `}</b>
       <RenderBody
         body={trimmedBody}
@@ -92,20 +100,23 @@ export function ReplyMEmote({
   );
 }
 
-type ReplyMNoticeProps = {
+type InlineMNoticeProps = {
+  size?: InlineTextSize;
   edited?: boolean;
   content: object;
   highlightRegex?: RegExp;
   htmlReactParserOptions: HTMLReactParserOptions;
   linkifyOpts: Opts;
 };
-export function ReplyMNotice({
+
+export function InlineMNotice({
+  size = 'T300',
   edited,
   content,
   highlightRegex,
   linkifyOpts,
   htmlReactParserOptions,
-}: ReplyMNoticeProps) {
+}: InlineMNoticeProps) {
   const body = rContent.body(content);
   const customBody = rContent.formattedBody(content);
 
@@ -113,7 +124,7 @@ export function ReplyMNotice({
   const trimmedBody = trimReplyFromBody(body);
 
   return (
-    <MessageTextBody size="T300" notice truncate>
+    <MessageTextBody size={size} notice truncate>
       <RenderBody
         body={trimmedBody}
         customBody={customBody}
@@ -126,17 +137,19 @@ export function ReplyMNotice({
   );
 }
 
-type ReplyMLocationProps = {
+type InlineMLocationProps = {
+  size?: InlineTextSize;
   content: object;
 };
-export function ReplyMLocation({ content }: ReplyMLocationProps) {
+
+export function InlineMLocation({ size = 'T300', content }: InlineMLocationProps) {
   const geoUri = rContent.geoUri(content);
   if (!geoUri) return <BrokenContent />;
   const location = parseGeoUri(geoUri);
   if (!location) return <BrokenContent />;
 
   return (
-    <Text size="T300" truncate>
+    <Text size={size} truncate>
       {geoUri}
     </Text>
   );

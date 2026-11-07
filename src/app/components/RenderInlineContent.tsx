@@ -13,10 +13,10 @@ import { Opts } from 'linkifyjs';
 import { Icons, Text } from 'folds';
 import {
   UnsupportedContent,
-  ReplyMEmote,
-  ReplyMNotice,
-  ReplyMText,
-  ReplyMLocation,
+  InlineMEmote,
+  InlineMNotice,
+  InlineMText,
+  InlineMLocation,
   EmptyContent,
   FallbackContent,
 } from './message';
@@ -24,7 +24,10 @@ import { MsgType } from '../../types/matrix/common';
 import { rContent } from '../../client/reader';
 import { MessageEvent } from '../../types/matrix/room';
 
+type InlineTextSize = 'T300' | 'T200' | 'T400';
+
 type RenderInlineContentProps = {
+  size?: InlineTextSize;
   displayName: string;
   eventType: string;
   edited?: boolean;
@@ -35,6 +38,7 @@ type RenderInlineContentProps = {
 };
 
 export function RenderInlineContent({
+  size = 'T300',
   displayName,
   eventType,
   edited,
@@ -46,7 +50,7 @@ export function RenderInlineContent({
   if (eventType === MessageEvent.Sticker) {
     return (
       <FallbackContent iconSrc={Icons.Sticker}>
-        <Text size="T300" priority="300" truncate>
+        <Text size={size} priority="300" truncate>
           <i>Sticker</i>
         </Text>
       </FallbackContent>
@@ -54,14 +58,15 @@ export function RenderInlineContent({
   }
 
   if (eventType !== MessageEvent.RoomMessage) {
-    return <UnsupportedContent size="T300" eventType={eventType} truncate />;
+    return <UnsupportedContent size={size} eventType={eventType} truncate />;
   }
 
   const msgType = rContent.msgtype(content);
 
   if (msgType === MsgType.Text) {
     return (
-      <ReplyMText
+      <InlineMText
+        size={size}
         edited={edited}
         content={content}
         highlightRegex={highlightRegex}
@@ -73,7 +78,8 @@ export function RenderInlineContent({
 
   if (msgType === MsgType.Emote) {
     return (
-      <ReplyMEmote
+      <InlineMEmote
+        size={size}
         displayName={displayName}
         edited={edited}
         content={content}
@@ -86,7 +92,8 @@ export function RenderInlineContent({
 
   if (msgType === MsgType.Notice) {
     return (
-      <ReplyMNotice
+      <InlineMNotice
+        size={size}
         edited={edited}
         content={content}
         highlightRegex={highlightRegex}
@@ -99,7 +106,7 @@ export function RenderInlineContent({
   if (msgType === MsgType.Image) {
     return (
       <FallbackContent iconSrc={Icons.Photo}>
-        <Text size="T300" priority="300" truncate>
+        <Text size={size} priority="300" truncate>
           <i>Image</i>
         </Text>
       </FallbackContent>
@@ -109,7 +116,7 @@ export function RenderInlineContent({
   if (msgType === MsgType.Video) {
     return (
       <FallbackContent iconSrc={Icons.Vlc}>
-        <Text size="T300" priority="300" truncate>
+        <Text size={size} priority="300" truncate>
           <i>Video</i>
         </Text>
       </FallbackContent>
@@ -119,7 +126,7 @@ export function RenderInlineContent({
   if (msgType === MsgType.Audio) {
     return (
       <FallbackContent iconSrc={Icons.Play}>
-        <Text size="T300" priority="300" truncate>
+        <Text size={size} priority="300" truncate>
           <i>Audio</i>
         </Text>
       </FallbackContent>
@@ -129,7 +136,7 @@ export function RenderInlineContent({
   if (msgType === MsgType.File) {
     return (
       <FallbackContent iconSrc={Icons.File}>
-        <Text size="T300" priority="300" truncate>
+        <Text size={size} priority="300" truncate>
           <i>File</i>
         </Text>
       </FallbackContent>
@@ -137,15 +144,16 @@ export function RenderInlineContent({
   }
 
   if (msgType === MsgType.Location) {
-    return <ReplyMLocation content={content} />;
+    return <InlineMLocation size={size} content={content} />;
   }
 
   if (Object.keys(content).length === 0) {
-    return <EmptyContent size="T300" truncate />;
+    return <EmptyContent size={size} truncate />;
   }
 
   return (
-    <ReplyMText
+    <InlineMText
+      size={size}
       edited={edited}
       content={content}
       highlightRegex={highlightRegex}

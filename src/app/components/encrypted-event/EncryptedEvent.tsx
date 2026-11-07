@@ -52,14 +52,17 @@ type EncryptedMessageEventProps = {
   decryptionManager: DecryptionManager;
   roomId: string;
   event: MessageEventWithoutRoomId;
-  inline?: boolean;
+  size?: 'T300' | 'T200' | 'T400';
+  truncate?: boolean;
   children: (decryptedEvent: MessageEventWithoutRoomId) => ReactNode;
 };
+
 export function EncryptedMessageEvent({
   decryptionManager,
   roomId,
   event,
-  inline,
+  size = 'T400',
+  truncate = false,
   children,
 }: EncryptedMessageEventProps) {
   // Memoize the result because it can return new EncryptedEvent
@@ -69,14 +72,16 @@ export function EncryptedMessageEvent({
     () => decryptionManager.decryptableMessageEvent(roomId, event),
     [roomId, event, decryptionManager]
   );
+
   if (encryptedEvent.decryption.read instanceof EventDecryptionIdle) {
     encryptedEvent.decrypt();
   }
+
   const decryption = useObservableValue(encryptedEvent.decryption);
 
   if (decryption instanceof EventDecryptionIdle) {
     return (
-      <Text size={inline ? 'T300' : 'T400'} truncate={inline}>
+      <Text size={size} truncate={truncate}>
         <MessageDecryptionIdle />
       </Text>
     );
@@ -84,7 +89,7 @@ export function EncryptedMessageEvent({
 
   if (decryption instanceof EventDecryptionPending) {
     return (
-      <Text size={inline ? 'T300' : 'T400'} truncate={inline}>
+      <Text size={size} truncate={truncate}>
         <MessageDecryptionPending />
       </Text>
     );
@@ -98,7 +103,7 @@ export function EncryptedMessageEvent({
 
   if (cause) {
     return (
-      <Text size={inline ? 'T300' : 'T400'} truncate={inline}>
+      <Text size={size} truncate={truncate}>
         <MessageDecryptionError
           message={
             cause instanceof Error
@@ -112,14 +117,14 @@ export function EncryptedMessageEvent({
 
   if (!error) {
     return (
-      <Text size={inline ? 'T300' : 'T400'} truncate={inline}>
+      <Text size={size} truncate={truncate}>
         <MessageDecryptionError message="Unknown error occurs while decrypting message." />
       </Text>
     );
   }
 
   return (
-    <Text size={inline ? 'T300' : 'T400'} truncate={inline}>
+    <Text size={size} truncate={truncate}>
       <MessageDecryptionError message={error.description} />
     </Text>
   );

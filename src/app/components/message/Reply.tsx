@@ -140,7 +140,8 @@ export function Reply({
             editedEvent={editedEvent}
             roomId={roomId}
             decryptionManager={ct.decryption}
-            inline
+            size="T300"
+            truncate
           >
             {(contentEvent) => (
               <RenderInlineContent

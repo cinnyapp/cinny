@@ -39,7 +39,11 @@ export const UsernameBold = as<'b'>(({ as: AsUsernameBold = 'b', className, ...p
 
 export const MessageTextBody = as<
   'div',
-  css.MessageTextBodyVariants & { size?: 'T400' | 'T300'; notice?: boolean; truncate?: boolean }
+  css.MessageTextBodyVariants & {
+    size?: 'T400' | 'T300' | 'T200';
+    notice?: boolean;
+    truncate?: boolean;
+  }
 >(
   (
     { as: asComp = 'div', className, size, preWrap, jumboEmoji, emote, notice, truncate, ...props },
