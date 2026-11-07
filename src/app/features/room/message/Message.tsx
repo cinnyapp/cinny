@@ -715,40 +715,65 @@ export function MemberChangeBadge({
   bubbleLayout = false,
 }: MemberChangeBadgeProps) {
   let text: string | undefined;
+  let iconSrc: IconSrc | undefined;
   let variant: MainColor = 'Success';
 
   switch (memberChange) {
     case 'kick':
       text = 'Kicked';
+      iconSrc = Icons.ArrowLeft;
       variant = 'Warning';
       break;
 
     case 'leave':
       text = 'Left';
+      iconSrc = Icons.ArrowLeft;
       variant = 'Secondary';
       break;
 
     case 'ban':
       text = 'Banned';
+      iconSrc = Icons.NoEntry;
       variant = 'Critical';
       break;
 
     case 'invite':
       text = 'Invited';
+      iconSrc = Icons.Mail;
       variant = 'Success';
       break;
 
     case 'knock':
       text = 'Knocks';
+      iconSrc = Icons.MailPlus;
       variant = 'Success';
       break;
 
     case 'join':
+      if (isNewChange) {
+        text = 'Newly Joined';
+        iconSrc = Icons.ArrowRight;
+        variant = 'Success';
+      }
+      break;
     case 'nameChange':
+      if (isNewChange) {
+        text = 'Name Changed';
+        iconSrc = Icons.Mention;
+        variant = 'Primary';
+      }
+      break;
     case 'avatarChange':
+      if (isNewChange) {
+        text = 'Avatar Changed';
+        iconSrc = Icons.Photo;
+        variant = 'Primary';
+      }
+      break;
     case 'profileChange':
       if (isNewChange) {
-        text = 'New';
+        text = 'Profile Changed';
+        iconSrc = Icons.User;
         variant = 'Primary';
       }
       break;
@@ -757,18 +782,31 @@ export function MemberChangeBadge({
       break;
   }
 
-  if (!text) return null;
+  if (!text || !iconSrc) return null;
 
   return (
-    <Badge
-      className={css.MemberChangeBadge({ bubbleLayout })}
-      size="400"
-      variant={variant}
-      fill="Soft"
-      radii="300"
+    <TooltipProvider
+      position="Top"
+      offset={4}
+      tooltip={
+        <Tooltip variant={variant}>
+          <Text size="L400">{text}</Text>
+        </Tooltip>
+      }
     >
-      <Text size="L400">{text}</Text>
-    </Badge>
+      {(triggerRef) => (
+        <Badge
+          ref={triggerRef}
+          className={css.MemberChangeBadge({ bubbleLayout })}
+          size="500"
+          variant={variant}
+          fill="Soft"
+          radii="300"
+        >
+          <Icon size="50" src={iconSrc} />
+        </Badge>
+      )}
+    </TooltipProvider>
   );
 }
 
@@ -1085,6 +1123,7 @@ export const Message = as<'div', MessageProps>(
     const ct = useClient();
     const senderId = event.sender;
     const canMessage = useCanMessage();
+    const roomId = useRoom();
 
     const [hover, setHover] = useState(false);
     const { hoverProps } = useHover({ onHoverChange: setHover });
@@ -1095,7 +1134,7 @@ export const Message = as<'div', MessageProps>(
     const senderDisplayName = membersAPI.getName(senderId);
     const senderAvatarMxc = membersAPI.getAvatar(senderId);
     const memberChange = membersAPI.getMemberChangeType(senderId);
-    const isNewChange = membersAPI.isNewChange(senderId);
+    const isNewChange = ct.directRooms.read.has(roomId) ? false : membersAPI.isNewChange(senderId);
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
       if (evt.altKey || !window.getSelection()?.isCollapsed || edit) return;

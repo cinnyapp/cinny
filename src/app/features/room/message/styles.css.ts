@@ -10,7 +10,6 @@ Please see LICENSE file in root of repository for full details.
 import { style } from '@vanilla-extract/css';
 import { recipe } from '@vanilla-extract/recipes';
 import { DefaultReset, color, config, toRem } from 'folds';
-import { BubbleLayout } from '../../../components/message';
 
 export const MessageBase = style({
   position: 'relative',
@@ -42,9 +41,10 @@ export const BubbleAvatarBase = style({
 export const MemberChangeBadge = recipe({
   base: {
     position: 'absolute',
+    padding: toRem(2),
     top: toRem(4),
-    left: toRem(8),
-    transform: 'translate(-45%, -45%) rotateZ(-25deg)',
+    left: 0,
+    transform: 'translate(-40%, -40%) scale(.8)',
     transformOrigin: 'center',
     zIndex: 1,
     outline: `${config.borderWidth.B500} solid ${color.Surface.Container}`,
