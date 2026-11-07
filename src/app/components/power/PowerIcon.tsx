@@ -9,14 +9,15 @@ Please see LICENSE file in root of repository for full details.
 
 import React from 'react';
 import * as css from './style.css';
-import { JUMBO_EMOJI_REG } from '../../utils/regex';
+import { useClient } from '../../hooks/useClient';
 
 type PowerIconProps = css.PowerIconVariants & {
   iconSrc: string;
   name?: string;
 };
 export function PowerIcon({ size, iconSrc, name }: PowerIconProps) {
-  return JUMBO_EMOJI_REG.test(iconSrc) ? (
+  const ct = useClient();
+  return !iconSrc.startsWith(ct.session.baseUrl) ? (
     <span className={css.PowerIcon({ size })}>{iconSrc}</span>
   ) : (
     <img className={css.PowerIcon({ size })} src={iconSrc} alt={name} />
