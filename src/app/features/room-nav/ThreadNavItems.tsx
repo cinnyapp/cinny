@@ -76,10 +76,12 @@ function ThreadNavItem({
         editedEvent={undefined}
         roomId={roomId}
         decryptionManager={ct.decryption}
-        inline
+        size="T300"
+        truncate
       >
         {(contentEvent) => (
           <RenderInlineContent
+            size="T300"
             displayName={event.sender}
             eventType={contentEvent.type}
             edited={!!editedEvent}
@@ -96,9 +98,9 @@ function ThreadNavItem({
     <NavItem className={css.ThreadNavItem} variant="Background" radii="400">
       <NavButton onClick={onClick}>
         <Box className={NavItemContent} as="span" grow="Yes" alignItems="Center" gap="200">
-          <Box as="span" grow="Yes">
+          <Box as="span" grow="Yes" gap="100" alignItems="Center">
             {rootEvent ? (
-              renderRoot(rootEvent)
+              <>{renderRoot(rootEvent)}</>
             ) : (
               <Text as="span" size="T300" truncate>
                 loading...

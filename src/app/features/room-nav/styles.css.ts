@@ -27,27 +27,28 @@ export const ThreadNavItems = style({
     '&::before': {
       content: '',
       display: 'block',
-      borderLeft: `${config.borderWidth.B300} solid ${color.Background.ContainerLine}`,
+      borderLeft: `${config.borderWidth.B500} solid ${color.Background.ContainerLine}`,
 
       position: 'absolute',
       top: 0,
       left: toRem(-8),
-      bottom: toRem(22),
+      bottom: toRem(20),
     },
   },
 });
 
 export const ThreadNavItem = style({
   position: 'relative',
-  minHeight: toRem(30),
+  minHeight: toRem(28),
+  paddingLeft: toRem(4),
 
   selectors: {
     '&::before': {
       content: '',
       display: 'block',
       border: `0 solid ${color.Background.ContainerLine}`,
-      borderLeftWidth: config.borderWidth.B300,
-      borderBottomWidth: config.borderWidth.B300,
+      borderLeftWidth: config.borderWidth.B500,
+      borderBottomWidth: config.borderWidth.B500,
 
       borderBottomLeftRadius: toRem(4),
       width: toRem(8),
@@ -56,12 +57,12 @@ export const ThreadNavItem = style({
       position: 'absolute',
       top: '50%',
       left: toRem(-8),
-      transform: `translateY(calc(-50% - ${toRem(4)}))`,
+      transform: `translateY(calc(-50% - ${toRem(3)}))`,
     },
   },
 });
 
 export const ThreadViewMoreChip = style({
-  marginLeft: toRem(6),
+  marginLeft: toRem(8),
   marginBottom: config.space.S200,
 });
