@@ -62,6 +62,9 @@ import { rContent } from '../../../../client/reader';
 import { SequenceCard } from '../../../components/sequence-card';
 import { RenderInlineContent } from '../../../components/RenderInlineContent';
 import { ThreadTimeline } from '../../../../client/room/ThreadTimeline';
+import { getTotalCount, useRoomNotifications } from '../../../state/hooks/roomNotifications';
+import { roomToNotificationsAtom } from '../../../state/room/roomToNotifications';
+import { UnreadBadge } from '../../../components/unread-badge';
 
 function NoThreads() {
   return (
@@ -100,6 +103,7 @@ export const ThreadsMenu = forwardRef<HTMLDivElement, ThreadsMenuProps>(({ reque
   const useAuthentication = useMediaAuthentication();
   const roomId = useRoom();
   const direct = useIsDirectRoom();
+  const notifications = useRoomNotifications(roomId, roomToNotificationsAtom);
 
   const roomToTimeline = useObservableValue(ct.roomToTimeline);
   const timeline = roomToTimeline.get(roomId);
@@ -235,6 +239,9 @@ export const ThreadsMenu = forwardRef<HTMLDivElement, ThreadsMenuProps>(({ reque
                     const meta = ThreadTimeline.makeThreadMeta(event);
                     const { latestReplyEvent } = meta;
 
+                    const threadNotification = notifications?.threads.get(event.event_id);
+                    const count = threadNotification && getTotalCount(threadNotification);
+
                     return (
                       <VirtualTile
                         key={vItem.key}
@@ -277,6 +284,16 @@ export const ThreadsMenu = forwardRef<HTMLDivElement, ThreadsMenuProps>(({ reque
                               </Text>
                             </Box>
                             <Box shrink="No" gap="200" alignItems="Center">
+                              {count && count > 0 && (
+                                <UnreadBadge
+                                  highlight={
+                                    threadNotification?.highlight_count
+                                      ? threadNotification.highlight_count > 0
+                                      : false
+                                  }
+                                  count={count}
+                                />
+                              )}
                               <Chip
                                 data-event-id={event.event_id}
                                 onClick={handleOpenClick}

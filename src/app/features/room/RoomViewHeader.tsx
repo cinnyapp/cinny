@@ -76,6 +76,7 @@ import { useRoomTopic } from '../../hooks/storage/useRoomTopic';
 import {
   useRoomNotifications,
   useRoomTotalNotifications,
+  useThreadsTotalNotifications,
 } from '../../state/hooks/roomNotifications';
 import { roomToNotificationsAtom } from '../../state/room/roomToNotifications';
 import { ContainerColor } from '../../styles/ContainerColor.css';
@@ -87,6 +88,7 @@ import { webRTCSupported } from '../../utils/rtc';
 import { StateEvent } from '../../../types/matrix/room';
 import { isCallRoom } from '../../utils/room';
 import { ThreadsMenu } from './threads-menu';
+import { millify } from '../../plugins/millify';
 
 type RoomMenuProps = {
   requestClose: () => void;
@@ -439,6 +441,8 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
   const [pinMenuAnchor, setPinMenuAnchor] = useState<RectCords>();
   const [threadsMenuAnchor, setThreadsMenuAnchor] = useState<RectCords>();
   const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
+  const notifications = useRoomNotifications(roomId, roomToNotificationsAtom);
+  const threadNotifications = useThreadsTotalNotifications(notifications?.threads);
 
   const creators = useRoomCreators(roomId);
   const powerLevels = usePowerLevelsContext();
@@ -628,6 +632,23 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
                 ref={triggerRef}
                 aria-pressed={!!threadsMenuAnchor}
               >
+                {threadNotifications.count > 0 && (
+                  <Badge
+                    style={{
+                      position: 'absolute',
+                      left: toRem(3),
+                      top: toRem(3),
+                    }}
+                    variant={threadNotifications.highlight ? 'Success' : 'Secondary'}
+                    size="400"
+                    fill="Solid"
+                    radii="Pill"
+                  >
+                    <Text as="span" size="L400">
+                      {millify(threadNotifications.count)}
+                    </Text>
+                  </Badge>
+                )}
                 <Icon size="400" src={Icons.Thread} filled={!!threadsMenuAnchor} />
               </IconButton>
             )}

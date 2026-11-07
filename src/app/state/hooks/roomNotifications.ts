@@ -76,7 +76,7 @@ export type TotalNotifications = {
   highlight: boolean;
 };
 
-const getTotalCount = (n: UnreadNotificationCounts): number => {
+export const getTotalCount = (n: UnreadNotificationCounts): number => {
   const highlight = n.highlight_count ?? 0;
   const total = n.notification_count ?? 0;
 
@@ -145,5 +145,9 @@ export const getThreadsTotalNotifications = (
   return total;
 };
 export const useThreadsTotalNotifications = (
-  threadsNotifications: Map<string, UnreadNotificationCounts>
-) => useMemo(() => getThreadsTotalNotifications(threadsNotifications), [threadsNotifications]);
+  threadsNotifications?: Map<string, UnreadNotificationCounts>
+) =>
+  useMemo(() => {
+    if (!threadsNotifications) return getThreadsTotalNotifications(new Map());
+    return getThreadsTotalNotifications(threadsNotifications);
+  }, [threadsNotifications]);
