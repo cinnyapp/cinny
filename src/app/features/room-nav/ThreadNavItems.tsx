@@ -178,7 +178,7 @@ export function ThreadNavItems({
   const slicedThreadIds = viewMore ? threadIds : threadIds.slice(0, 5);
 
   const handleOpenThread = (threadId: string) => {
-    if (!activeThread) {
+    if (activeThread !== threadId) {
       timeline.openThread(threadId);
     }
     if (!roomSelected) {
