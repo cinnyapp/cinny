@@ -11,7 +11,7 @@ import React, { CSSProperties } from 'react';
 import { Box, Chip, Icon, Icons, Text, toRem } from 'folds';
 import { HTMLReactParserOptions } from 'html-react-parser';
 import { Opts } from 'linkifyjs';
-import { JUMBO_EMOJI_REG, URL_REG } from '../../utils/regex';
+import { isJumboEmoji, URL_REG } from '../../utils/regex';
 import { trimReplyFromBody } from '../../utils/room';
 import { MessageTextBody } from './layout';
 import {
@@ -160,7 +160,7 @@ export function MText({
     <>
       <MessageTextBody
         preWrap={typeof customBody !== 'string'}
-        jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
+        jumboEmoji={isJumboEmoji(trimmedBody)}
         style={style}
       >
         <RenderBody
@@ -208,7 +208,7 @@ export function MEmote({
       <MessageTextBody
         emote
         preWrap={typeof customBody !== 'string'}
-        jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
+        jumboEmoji={isJumboEmoji(trimmedBody)}
       >
         <b>{`${displayName} `}</b>
         <RenderBody
@@ -254,7 +254,7 @@ export function MNotice({
       <MessageTextBody
         notice
         preWrap={typeof customBody !== 'string'}
-        jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
+        jumboEmoji={isJumboEmoji(trimmedBody)}
       >
         <RenderBody
           body={trimmedBody}
