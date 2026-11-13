@@ -212,13 +212,9 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ requestClose }, re
         {!encryptedRooms.has(roomId) && (
           <MenuItem
             onClick={handleSearchClick}
-            variant="Surface"
-            fill="None"
             size="300"
             after={<Icon size="100" src={Icons.Search} />}
             radii="300"
-            aria-pressed={invitePrompt}
-            disabled={!canInvite}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
               Search
