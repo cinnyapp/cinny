@@ -1,0 +1,9 @@
+
+/* Highlight messages containing mentions of the current user*/
+[data-message-id]:has([data-reply-highlight="true"], [data-highlight="true"][data-mention-id]) {
+  background: #AAAA001A;
+
+  &:hover {
+    background: #8888001A !important;
+  }
+}
