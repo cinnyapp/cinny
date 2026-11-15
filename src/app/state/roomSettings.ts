@@ -15,6 +15,7 @@ export enum RoomSettingsPage {
   PermissionsPage,
   EmojisStickersPage,
   DeveloperToolsPage,
+  ActivityPage,
 }
 
 export type RoomSettingsState = {

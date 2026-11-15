@@ -77,3 +77,17 @@ export const getMessagesFilter = (): RoomEventFilter => {
 
   return filter;
 };
+
+export const getActivityFilter = (types?: string[], senders?: string[]): RoomEventFilter => {
+  const filter: RoomEventFilter = {
+    senders,
+    not_types: [
+      MessageEvent.RoomMessage,
+      MessageEvent.RoomMessageEncrypted,
+      MessageEvent.Sticker,
+      MessageEvent.Reaction,
+    ],
+  };
+
+  return filter;
+};

@@ -38,6 +38,7 @@ import {
 } from '../../hooks/usePowerLevelTags';
 import { RoomMembersAPIProvider, useCreateRoomMembersAPI } from '../../hooks/useRoomMembers';
 import { usePendingMemberLoader, usePendingMembers } from '../../hooks/usePendingMembers';
+import { Activity } from '../common-settings/activity';
 
 type RoomSettingsMenuItem = {
   page: RoomSettingsPage;
@@ -62,6 +63,11 @@ const useRoomSettingsMenuItems = (): RoomSettingsMenuItem[] =>
         page: RoomSettingsPage.PermissionsPage,
         name: 'Permissions',
         icon: Icons.Lock,
+      },
+      {
+        page: RoomSettingsPage.ActivityPage,
+        name: 'Activity',
+        icon: Icons.Clock,
       },
       {
         page: RoomSettingsPage.EmojisStickersPage,
@@ -205,6 +211,9 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
             )}
             {activePage === RoomSettingsPage.PermissionsPage && (
               <Permissions requestClose={handlePageRequestClose} />
+            )}
+            {activePage === RoomSettingsPage.ActivityPage && (
+              <Activity requestClose={handlePageRequestClose} />
             )}
             {activePage === RoomSettingsPage.EmojisStickersPage && (
               <EmojisStickers requestClose={handlePageRequestClose} />
