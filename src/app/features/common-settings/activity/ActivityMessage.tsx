@@ -92,18 +92,20 @@ export function ActivityMessage({
         </Avatar>
       </Box>
       <Box className={css.ActivityMessageContent} grow="Yes" direction="Column">
-        <Box gap="200" justifyContent="SpaceBetween" alignItems="Baseline">
-          <Text className={BreakWord} size="T300" as="p">
-            <Username
-              as="button"
-              data-user-id={userId}
-              onClick={handleUsernameClick}
-              style={{ color: usernameColor }}
-            >
-              <UsernameBold>{displayName}</UsernameBold>
-            </Username>{' '}
-            {text}
-          </Text>
+        <Box gap="200" alignItems="Baseline">
+          <Box grow="Yes" direction="Column">
+            <Text className={BreakWord} size="T300" as="p">
+              <Username
+                as="button"
+                data-user-id={userId}
+                onClick={handleUsernameClick}
+                style={{ color: usernameColor }}
+              >
+                <UsernameBold>{displayName}</UsernameBold>
+              </Username>{' '}
+              {text}
+            </Text>
+          </Box>
           <Time
             compact
             ts={event.origin_server_ts}
