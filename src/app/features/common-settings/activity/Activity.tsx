@@ -7,7 +7,14 @@ https://cinny.in
 Please see LICENSE file in root of repository for full details.
 */
 
-import React, { ReactNode, useRef, useEffect, useCallback, MouseEventHandler } from 'react';
+import React, {
+  ReactNode,
+  useRef,
+  useEffect,
+  useCallback,
+  MouseEventHandler,
+  useState,
+} from 'react';
 import {
   Box,
   Text,
@@ -68,67 +75,180 @@ import { inSameDay } from '../../../utils/time';
 import { DividerTime } from '../../../components/message';
 import { UseStateProvider } from '../../../components/UseStateProvider';
 import { stopPropagation } from '../../../utils/keyboard';
+import { useRoomMembersAPI } from '../../../hooks/useRoomMembers';
 
-function ActivityFilter() {
+const TYPE_FILTERS: { label: string; types: string[] }[] = [
+  { label: 'Members', types: ['m.room.member'] },
+  {
+    label: 'Room details',
+    types: ['m.room.name', 'm.room.topic', 'm.room.avatar', 'm.room.canonical_alias'],
+  },
+  { label: 'Permissions', types: ['m.room.power_levels'] },
+  {
+    label: 'Access & privacy',
+    types: [
+      'm.room.join_rules',
+      'm.room.history_visibility',
+      'm.room.guest_access',
+      'm.room.encryption',
+      'm.room.server_acl',
+    ],
+  },
+  { label: 'Pinned messages', types: ['m.room.pinned_events'] },
+  { label: 'Removed messages', types: ['m.room.redaction'] },
+  { label: 'Reactions', types: ['m.reaction'] },
+  { label: 'Spaces', types: ['m.space.child', 'm.space.parent'] },
+  { label: 'Created & upgraded', types: ['m.room.create', 'm.room.tombstone'] },
+];
+
+type FilterOption = { id: string; label: string; selected: boolean; onToggle: () => void };
+
+type FilterChipProps = {
+  icon: typeof Icons[keyof typeof Icons];
+  label: string;
+  options: FilterOption[];
+  onClear: () => void;
+};
+
+function FilterChip({ icon, label, options, onClear }: FilterChipProps) {
+  const count = options.filter((o) => o.selected).length;
+
+  return (
+    <UseStateProvider initial={undefined}>
+      {(anchor: RectCords | undefined, setAnchor) => (
+        <PopOut
+          anchor={anchor}
+          position="Bottom"
+          align="Start"
+          offset={4}
+          content={
+            <FocusTrap
+              focusTrapOptions={{
+                initialFocus: false,
+                onDeactivate: () => setAnchor(undefined),
+                clickOutsideDeactivates: true,
+                isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                escapeDeactivates: stopPropagation,
+              }}
+            >
+              <Menu style={{ padding: config.space.S100 }}>
+                <Box direction="Column" style={{ maxHeight: '320px', overflowY: 'auto' }} gap="100">
+                  {options.length === 0 && (
+                    <Text size="T300" style={{ padding: config.space.S200 }}>
+                      Nothing to filter yet
+                    </Text>
+                  )}
+                  {options.map((option) => (
+                    <MenuItem
+                      key={option.id}
+                      variant={option.selected ? 'Success' : 'Surface'}
+                      size="300"
+                      radii="300"
+                      aria-pressed={option.selected}
+                      onClick={option.onToggle}
+                      after={option.selected && <Icon size="100" src={Icons.Check} />}
+                    >
+                      <Text size="T300" truncate>
+                        {option.label}
+                      </Text>
+                    </MenuItem>
+                  ))}
+                </Box>
+                {count > 0 && (
+                  <MenuItem variant="Critical" size="300" radii="300" onClick={onClear}>
+                    <Text size="T300">Clear</Text>
+                  </MenuItem>
+                )}
+              </Menu>
+            </FocusTrap>
+          }
+        >
+          <Chip
+            variant={count > 0 ? 'Primary' : 'SurfaceVariant'}
+            radii="400"
+            before={<Icon size="50" src={icon} />}
+            onClick={
+              ((evt) =>
+                setAnchor(
+                  evt.currentTarget.getBoundingClientRect()
+                )) as MouseEventHandler<HTMLButtonElement>
+            }
+          >
+            <Text as="span" size="L400">
+              {count > 0 ? `${label} (${count})` : label}
+            </Text>
+          </Chip>
+        </PopOut>
+      )}
+    </UseStateProvider>
+  );
+}
+
+type ActivityFilterProps = {
+  types?: string[];
+  onTypesChange: (types?: string[]) => void;
+  senders?: string[];
+  onSendersChange: (senders?: string[]) => void;
+  senderOptions: string[];
+};
+
+function ActivityFilter({
+  types,
+  onTypesChange,
+  senders,
+  onSendersChange,
+  senderOptions,
+}: ActivityFilterProps) {
+  const membersAPI = useRoomMembersAPI();
+
+  const typeOptions: FilterOption[] = TYPE_FILTERS.map((group) => {
+    const selected = group.types.every((t) => types?.includes(t));
+    return {
+      id: group.label,
+      label: group.label,
+      selected,
+      onToggle: () => {
+        const next = new Set(types);
+        group.types.forEach((t) => (selected ? next.delete(t) : next.add(t)));
+        onTypesChange(next.size > 0 ? Array.from(next) : undefined);
+      },
+    };
+  });
+
+  const senderFilterOptions: FilterOption[] = senderOptions
+    .map((userId) => {
+      const selected = !!senders?.includes(userId);
+      return {
+        id: userId,
+        label: membersAPI.getName(userId),
+        selected,
+        onToggle: () => {
+          const next = new Set(senders);
+          if (selected) next.delete(userId);
+          else next.add(userId);
+          onSendersChange(next.size > 0 ? Array.from(next) : undefined);
+        },
+      };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label));
+
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">Filter</Text>
       <Box gap="200">
-        <UseStateProvider initial={undefined}>
-          {(anchor: RectCords | undefined, setAnchor) => (
-            <PopOut
-              anchor={anchor}
-              position="Bottom"
-              align="Start"
-              offset={4}
-              content={
-                <FocusTrap
-                  focusTrapOptions={{
-                    initialFocus: false,
-                    onDeactivate: () => setAnchor(undefined),
-                    clickOutsideDeactivates: true,
-                    isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
-                    isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
-                    escapeDeactivates: stopPropagation,
-                  }}
-                >
-                  <Menu style={{ padding: config.space.S100 }}>
-                    <MenuItem variant="Surface" size="300" radii="300">
-                      <Text size="T300">Member Events</Text>
-                    </MenuItem>
-                    <MenuItem variant="Surface" size="300" radii="300">
-                      <Text size="T300">Create Event</Text>
-                    </MenuItem>
-                    <MenuItem variant="Surface" size="300" radii="300">
-                      <Text size="T300">Room Name</Text>
-                    </MenuItem>
-                  </Menu>
-                </FocusTrap>
-              }
-            >
-              <Chip
-                variant="SurfaceVariant"
-                radii="400"
-                before={<Icon size="50" src={Icons.Filter} />}
-                onClick={
-                  ((evt) =>
-                    setAnchor(
-                      evt.currentTarget.getBoundingClientRect()
-                    )) as MouseEventHandler<HTMLButtonElement>
-                }
-              >
-                <Text as="span" size="L400">
-                  By Type
-                </Text>
-              </Chip>
-            </PopOut>
-          )}
-        </UseStateProvider>
-        <Chip variant="SurfaceVariant" radii="400" before={<Icon size="50" src={Icons.User} />}>
-          <Text as="span" size="L400">
-            By User
-          </Text>
-        </Chip>
+        <FilterChip
+          icon={Icons.Filter}
+          label="By Type"
+          options={typeOptions}
+          onClear={() => onTypesChange(undefined)}
+        />
+        <FilterChip
+          icon={Icons.User}
+          label="By Sender"
+          options={senderFilterOptions}
+          onClear={() => onSendersChange(undefined)}
+        />
       </Box>
     </Box>
   );
@@ -167,8 +287,24 @@ export function Activity({ requestClose }: ActivityProps) {
     [ct, accessibleTagColors, legacyUsernameColor, roomId, getMemberPowerTag]
   );
 
-  // const [types, setTypes] =
-  const { events, hasMore, isLoadingMore, loadMore, isLoading } = useActivityMessages(roomId);
+  const [types, setTypes] = useState<string[]>();
+  const [sender, setSenders] = useState<string[]>();
+  const { events, hasMore, isLoadingMore, loadMore, isLoading } = useActivityMessages(
+    roomId,
+    types,
+    sender
+  );
+
+  // TODO: use room mebmers
+  const [knownSenders, setKnownSenders] = useState<string[]>([]);
+
+  useEffect(() => {
+    setKnownSenders((prev) => {
+      const next = new Set(prev);
+      events.forEach((e) => next.add(e.sender));
+      return next.size === prev.length ? prev : Array.from(next);
+    });
+  }, [events]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
@@ -211,7 +347,13 @@ export function Activity({ requestClose }: ActivityProps) {
         <Scroll ref={scrollRef} hideTrack visibility="Hover">
           <PageContent>
             <Box direction="Column" gap="400">
-              <ActivityFilter />
+              <ActivityFilter
+                types={types}
+                onTypesChange={setTypes}
+                senders={sender}
+                onSendersChange={setSenders}
+                senderOptions={knownSenders}
+              />
 
               <div
                 style={{
