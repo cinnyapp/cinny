@@ -60,14 +60,14 @@ const useRoomSettingsMenuItems = (): RoomSettingsMenuItem[] =>
         icon: Icons.User,
       },
       {
-        page: RoomSettingsPage.PermissionsPage,
-        name: 'Permissions',
-        icon: Icons.Lock,
-      },
-      {
         page: RoomSettingsPage.ActivityPage,
         name: 'Activity',
         icon: Icons.Clock,
+      },
+      {
+        page: RoomSettingsPage.PermissionsPage,
+        name: 'Permissions',
+        icon: Icons.Lock,
       },
       {
         page: RoomSettingsPage.EmojisStickersPage,

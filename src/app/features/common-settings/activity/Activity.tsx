@@ -14,6 +14,8 @@ import React, {
   useCallback,
   MouseEventHandler,
   useState,
+  useMemo,
+  ChangeEventHandler,
 } from 'react';
 import {
   Box,
@@ -29,6 +31,13 @@ import {
   RectCords,
   Menu,
   MenuItem,
+  Badge,
+  Header,
+  Avatar,
+  toRem,
+  Input,
+  Line,
+  Button,
 } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { ClientEvent } from 'neurone/lib/api/types';
@@ -76,41 +85,57 @@ import { DividerTime } from '../../../components/message';
 import { UseStateProvider } from '../../../components/UseStateProvider';
 import { stopPropagation } from '../../../utils/keyboard';
 import { useRoomMembersAPI } from '../../../hooks/useRoomMembers';
+import { JoinRoomMemberObject } from '../../../../client/storage/collections';
+import { useAsyncSearch, UseAsyncSearchOptions } from '../../../hooks/useAsyncSearch';
+import { highlightText, makeHighlightRegex } from '../../../plugins/react-custom-html-parser';
+import { UserAvatar } from '../../../components/user-avatar';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
+import { getMxIdLocalPart } from '../../../utils/matrix';
+import { getMemberSort } from '../../../hooks/useMemberSort';
 
-const TYPE_FILTERS: { label: string; types: string[] }[] = [
-  { label: 'Members', types: ['m.room.member'] },
-  {
-    label: 'Room details',
-    types: ['m.room.name', 'm.room.topic', 'm.room.avatar', 'm.room.canonical_alias'],
-  },
-  { label: 'Permissions', types: ['m.room.power_levels'] },
-  {
-    label: 'Access & privacy',
-    types: [
-      'm.room.join_rules',
-      'm.room.history_visibility',
-      'm.room.guest_access',
-      'm.room.encryption',
-      'm.room.server_acl',
+const useTypeFilter = () => {
+  const typeFilter: { label: string; types: string[] }[] = useMemo(
+    () => [
+      { label: 'Members', types: ['m.room.member'] },
+      {
+        label: 'Room details',
+        types: ['m.room.name', 'm.room.topic', 'm.room.avatar', 'm.room.canonical_alias'],
+      },
+      { label: 'Permissions', types: ['m.room.power_levels'] },
+      {
+        label: 'Access & privacy',
+        types: [
+          'm.room.join_rules',
+          'm.room.history_visibility',
+          'm.room.guest_access',
+          'm.room.encryption',
+          'm.room.server_acl',
+        ],
+      },
+      { label: 'Pinned messages', types: ['m.room.pinned_events'] },
+      { label: 'Removed messages', types: ['m.room.redaction'] },
+      { label: 'Reactions', types: ['m.reaction'] },
+      { label: 'Spaces', types: ['m.space.child', 'm.space.parent'] },
+      { label: 'Created & upgraded', types: ['m.room.create', 'm.room.tombstone'] },
     ],
-  },
-  { label: 'Pinned messages', types: ['m.room.pinned_events'] },
-  { label: 'Removed messages', types: ['m.room.redaction'] },
-  { label: 'Reactions', types: ['m.reaction'] },
-  { label: 'Spaces', types: ['m.space.child', 'm.space.parent'] },
-  { label: 'Created & upgraded', types: ['m.room.create', 'm.room.tombstone'] },
-];
+    []
+  );
+
+  return typeFilter;
+};
 
 type FilterOption = { id: string; label: string; selected: boolean; onToggle: () => void };
 
 type FilterChipProps = {
+  title: string;
   icon: typeof Icons[keyof typeof Icons];
   label: string;
   options: FilterOption[];
   onClear: () => void;
 };
 
-function FilterChip({ icon, label, options, onClear }: FilterChipProps) {
+function FilterChip({ title, icon, label, options, onClear }: FilterChipProps) {
   const count = options.filter((o) => o.selected).length;
 
   return (
@@ -132,34 +157,43 @@ function FilterChip({ icon, label, options, onClear }: FilterChipProps) {
                 escapeDeactivates: stopPropagation,
               }}
             >
-              <Menu style={{ padding: config.space.S100 }}>
-                <Box direction="Column" style={{ maxHeight: '320px', overflowY: 'auto' }} gap="100">
-                  {options.length === 0 && (
-                    <Text size="T300" style={{ padding: config.space.S200 }}>
-                      Nothing to filter yet
-                    </Text>
+              <Menu style={{ width: toRem(200) }}>
+                <Header
+                  size="300"
+                  style={{
+                    paddingLeft: config.space.S200,
+                    paddingRight: config.space.S100,
+                    borderBottomWidth: config.borderWidth.B300,
+                  }}
+                >
+                  <Box grow="Yes">
+                    <Text size="L400">{title}</Text>
+                  </Box>
+                  {count > 0 && (
+                    <Chip onClick={onClear} variant="Critical" radii="Pill" outlined>
+                      <Text as="span" size="L400">
+                        Clear
+                      </Text>
+                    </Chip>
                   )}
+                </Header>
+                <Box style={{ padding: config.space.S100 }} direction="Column" gap="100">
                   {options.map((option) => (
                     <MenuItem
                       key={option.id}
-                      variant={option.selected ? 'Success' : 'Surface'}
+                      variant={option.selected ? 'Primary' : 'Surface'}
                       size="300"
                       radii="300"
                       aria-pressed={option.selected}
                       onClick={option.onToggle}
                       after={option.selected && <Icon size="100" src={Icons.Check} />}
                     >
-                      <Text size="T300" truncate>
+                      <Text style={{ flexGrow: 1 }} size="T300" truncate>
                         {option.label}
                       </Text>
                     </MenuItem>
                   ))}
                 </Box>
-                {count > 0 && (
-                  <MenuItem variant="Critical" size="300" radii="300" onClick={onClear}>
-                    <Text size="T300">Clear</Text>
-                  </MenuItem>
-                )}
               </Menu>
             </FocusTrap>
           }
@@ -174,9 +208,16 @@ function FilterChip({ icon, label, options, onClear }: FilterChipProps) {
                   evt.currentTarget.getBoundingClientRect()
                 )) as MouseEventHandler<HTMLButtonElement>
             }
+            after={
+              count > 0 && (
+                <Badge variant="Primary" fill="Solid" radii="Pill">
+                  <Text size="L400">{count}</Text>
+                </Badge>
+              )
+            }
           >
             <Text as="span" size="L400">
-              {count > 0 ? `${label} (${count})` : label}
+              {label}
             </Text>
           </Chip>
         </PopOut>
@@ -185,24 +226,273 @@ function FilterChip({ icon, label, options, onClear }: FilterChipProps) {
   );
 }
 
+const FALLBACK_MEMBERS: JoinRoomMemberObject[] = [];
+const SEARCH_OPTIONS: UseAsyncSearchOptions = {
+  limit: 1000,
+  matchOptions: {
+    contain: true,
+  },
+};
+function SenderFilterChip({
+  senders,
+  onSendersChange,
+}: {
+  senders: string[];
+  onSendersChange: (senders: string[]) => void;
+}) {
+  const ct = useClient();
+  const useAuthentication = useMediaAuthentication();
+  const membersAPI = useRoomMembersAPI();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const [anchor, setAnchor] = useState<RectCords>();
+
+  const members = useMemo(
+    () =>
+      Array.from(membersAPI.memberEventsResult.value ?? FALLBACK_MEMBERS).sort(
+        getMemberSort(membersAPI.getName).NewestFirst
+      ),
+    [membersAPI]
+  );
+  const [result, search, resetSearch] = useAsyncSearch(
+    members,
+    useCallback(
+      (memberEvent) => [
+        membersAPI.getName(memberEvent.userId),
+        getMxIdLocalPart(memberEvent.userId) ?? memberEvent.userId,
+        memberEvent.userId,
+      ],
+      [membersAPI]
+    ),
+    SEARCH_OPTIONS
+  );
+  const queryHighlighRegex = result?.query ? makeHighlightRegex([result.query]) : undefined;
+
+  const memberItems = result?.items ?? members;
+
+  const virtualizer = useVirtualizer({
+    count: memberItems.length,
+    getScrollElement: () => scrollRef.current,
+    estimateSize: () => 32,
+    overscan: 5,
+  });
+  const vItems = virtualizer.getVirtualItems();
+
+  const handleToggle = (userId: string) => {
+    const next = new Set(senders);
+    if (senders.includes(userId)) next.delete(userId);
+    else next.add(userId);
+    onSendersChange(Array.from(next));
+  };
+
+  const handleInputChange: ChangeEventHandler<HTMLInputElement> = (evt) => {
+    const input = evt.currentTarget;
+    const term = input.value.trim();
+    if (term) {
+      search(term);
+    } else {
+      resetSearch();
+    }
+  };
+
+  return (
+    <>
+      <Chip
+        variant={senders.length > 0 ? 'Primary' : 'SurfaceVariant'}
+        radii="400"
+        before={<Icon size="50" src={Icons.User} />}
+        onClick={
+          ((evt) =>
+            setAnchor(
+              evt.currentTarget.getBoundingClientRect()
+            )) as MouseEventHandler<HTMLButtonElement>
+        }
+        after={
+          senders.length > 0 && (
+            <Badge variant="Primary" fill="Solid" radii="Pill">
+              <Text size="L400">{senders.length}</Text>
+            </Badge>
+          )
+        }
+      >
+        <Text as="span" size="L400">
+          By Sender
+        </Text>
+      </Chip>
+      {anchor && (
+        <PopOut
+          anchor={anchor}
+          position="Bottom"
+          align="Start"
+          offset={4}
+          content={
+            <FocusTrap
+              focusTrapOptions={{
+                initialFocus: false,
+                onDeactivate: () => setAnchor(undefined),
+                clickOutsideDeactivates: true,
+                isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                escapeDeactivates: stopPropagation,
+              }}
+            >
+              <Menu>
+                <Box style={{ padding: config.space.S200 }} direction="Column" gap="100">
+                  <Text size="L400">Members</Text>
+                  <Box grow="Yes" direction="Column" gap="100">
+                    <Input
+                      before={<Icon size="50" src={Icons.Search} />}
+                      size="400"
+                      variant="Background"
+                      radii="300"
+                      outlined
+                      placeholder="username"
+                      onChange={handleInputChange}
+                      style={{ paddingRight: config.space.S200 }}
+                      after={
+                        result && (
+                          <IconButton
+                            size="300"
+                            radii="300"
+                            variant="Background"
+                            onClick={() => resetSearch()}
+                          >
+                            <Icon src={Icons.Cross} size="100" />
+                          </IconButton>
+                        )
+                      }
+                    />
+                  </Box>
+                </Box>
+                <Line size="300" />
+                <Scroll
+                  ref={scrollRef}
+                  size="300"
+                  hideTrack
+                  style={{ height: toRem(300), width: toRem(250) }}
+                >
+                  <div
+                    style={{
+                      padding: `${config.space.S200} 0 ${config.space.S200} ${config.space.S200}`,
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: 'relative',
+                        height: virtualizer.getTotalSize(),
+                      }}
+                    >
+                      {vItems.length === 0 ? (
+                        <Text style={{ padding: config.space.S400 }} size="L400" align="Center">
+                          No Members
+                        </Text>
+                      ) : (
+                        vItems.map((vItem) => {
+                          const member = memberItems[vItem.index];
+                          const selected = senders.includes(member.userId);
+                          const avatarMxc = membersAPI.getAvatar(member.userId);
+
+                          const username = getMxIdLocalPart(member.userId) ?? member.userId;
+
+                          return (
+                            <VirtualTile
+                              virtualItem={vItem}
+                              style={{ paddingBottom: config.space.S100 }}
+                              ref={virtualizer.measureElement}
+                              key={vItem.index}
+                            >
+                              <MenuItem
+                                key={member.userId}
+                                variant={selected ? 'Primary' : 'Surface'}
+                                size="300"
+                                radii="300"
+                                aria-pressed={selected}
+                                onClick={() => handleToggle(member.userId)}
+                                after={selected && <Icon size="100" src={Icons.Check} />}
+                              >
+                                <Box grow="Yes" alignItems="Center" gap="200">
+                                  <Avatar size="200" radii="Pill">
+                                    <UserAvatar
+                                      userId={member.userId}
+                                      src={
+                                        avatarMxc
+                                          ? mxcToHttp(
+                                              ct.session.baseUrl,
+                                              avatarMxc,
+                                              useAuthentication
+                                            ).thumbnail({
+                                              width: 96,
+                                              height: 96,
+                                              method: 'crop',
+                                            })
+                                          : undefined
+                                      }
+                                      alt={membersAPI.getName(member.userId)}
+                                      renderFallback={() => (
+                                        <Icon size="50" src={Icons.User} filled />
+                                      )}
+                                    />
+                                  </Avatar>
+                                  <Text size="T300" truncate>
+                                    {queryHighlighRegex
+                                      ? highlightText(queryHighlighRegex, [
+                                          membersAPI.getName(member.userId),
+                                        ])
+                                      : membersAPI.getName(member.userId)}
+                                  </Text>
+                                  <Text size="T200" truncate>
+                                    @
+                                    {queryHighlighRegex
+                                      ? highlightText(queryHighlighRegex, [username])
+                                      : username}
+                                  </Text>
+                                </Box>
+                              </MenuItem>
+                            </VirtualTile>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                </Scroll>
+                {senders.length > 0 && (
+                  <>
+                    <Line size="300" />
+                    <Box direction="Column" style={{ margin: config.space.S100 }}>
+                      <Button
+                        size="300"
+                        variant="Critical"
+                        fill="Soft"
+                        radii="300"
+                        onClick={() => onSendersChange([])}
+                      >
+                        <Text as="span" size="B300">
+                          Clear ({senders.length})
+                        </Text>
+                      </Button>
+                    </Box>
+                  </>
+                )}
+              </Menu>
+            </FocusTrap>
+          }
+        />
+      )}
+    </>
+  );
+}
+
 type ActivityFilterProps = {
   types?: string[];
   onTypesChange: (types?: string[]) => void;
-  senders?: string[];
-  onSendersChange: (senders?: string[]) => void;
-  senderOptions: string[];
+  senders: string[];
+  onSendersChange: (senders: string[]) => void;
 };
 
-function ActivityFilter({
-  types,
-  onTypesChange,
-  senders,
-  onSendersChange,
-  senderOptions,
-}: ActivityFilterProps) {
-  const membersAPI = useRoomMembersAPI();
+function ActivityFilter({ types, onTypesChange, senders, onSendersChange }: ActivityFilterProps) {
+  const typeFilter = useTypeFilter();
 
-  const typeOptions: FilterOption[] = TYPE_FILTERS.map((group) => {
+  const typeOptions: FilterOption[] = typeFilter.map((group) => {
     const selected = group.types.every((t) => types?.includes(t));
     return {
       id: group.label,
@@ -216,39 +506,18 @@ function ActivityFilter({
     };
   });
 
-  const senderFilterOptions: FilterOption[] = senderOptions
-    .map((userId) => {
-      const selected = !!senders?.includes(userId);
-      return {
-        id: userId,
-        label: membersAPI.getName(userId),
-        selected,
-        onToggle: () => {
-          const next = new Set(senders);
-          if (selected) next.delete(userId);
-          else next.add(userId);
-          onSendersChange(next.size > 0 ? Array.from(next) : undefined);
-        },
-      };
-    })
-    .sort((a, b) => a.label.localeCompare(b.label));
-
   return (
     <Box direction="Column" gap="100">
       <Text size="L400">Filter</Text>
       <Box gap="200">
         <FilterChip
+          title="Activity Types"
           icon={Icons.Filter}
           label="By Type"
           options={typeOptions}
           onClear={() => onTypesChange(undefined)}
         />
-        <FilterChip
-          icon={Icons.User}
-          label="By Sender"
-          options={senderFilterOptions}
-          onClear={() => onSendersChange(undefined)}
-        />
+        <SenderFilterChip senders={senders} onSendersChange={onSendersChange} />
       </Box>
     </Box>
   );
@@ -288,23 +557,12 @@ export function Activity({ requestClose }: ActivityProps) {
   );
 
   const [types, setTypes] = useState<string[]>();
-  const [sender, setSenders] = useState<string[]>();
+  const [senders, setSenders] = useState<string[]>([]);
   const { events, hasMore, isLoadingMore, loadMore, isLoading } = useActivityMessages(
     roomId,
     types,
-    sender
+    senders.length === 0 ? undefined : senders
   );
-
-  // TODO: use room mebmers
-  const [knownSenders, setKnownSenders] = useState<string[]>([]);
-
-  useEffect(() => {
-    setKnownSenders((prev) => {
-      const next = new Set(prev);
-      events.forEach((e) => next.add(e.sender));
-      return next.size === prev.length ? prev : Array.from(next);
-    });
-  }, [events]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
@@ -350,9 +608,8 @@ export function Activity({ requestClose }: ActivityProps) {
               <ActivityFilter
                 types={types}
                 onTypesChange={setTypes}
-                senders={sender}
+                senders={senders}
                 onSendersChange={setSenders}
-                senderOptions={knownSenders}
               />
 
               <div

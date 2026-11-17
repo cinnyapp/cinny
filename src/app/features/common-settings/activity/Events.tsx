@@ -11,7 +11,7 @@ import React, { ReactNode } from 'react';
 import { Icons, MainColor } from 'folds';
 import type { ClientEventWithoutRoomId } from 'neurone/lib/api/types';
 import { ObjectReader } from 'neurone/lib/utils';
-import { rRelatesTo, rUnsigned } from '../../../../client/reader';
+import { rContent, rRelatesTo, rUnsigned } from '../../../../client/reader';
 import { useRoomMembersAPI } from '../../../hooks/useRoomMembers';
 import { getPowerLevelTag, usePowerLevelTagsContext } from '../../../hooks/usePowerLevelTags';
 import { ActivityMessage } from './ActivityMessage';
@@ -551,14 +551,14 @@ export function PowerLevelsChange({ event, getUsernameColor }: EventProps) {
 }
 
 export function ReactionEvent({ event, getUsernameColor }: EventProps) {
-  const reaction = rRelatesTo.key(event.content);
+  const reaction = rRelatesTo.key(rContent.relatesTo(event.content));
 
   return (
     <ActivityMessage
       event={event}
       getUsernameColor={getUsernameColor}
       variant="Primary"
-      iconSrc={Icons.Pencil}
+      iconSrc={Icons.Smile}
       text={<>reacted with {reaction}</>}
     />
   );
