@@ -115,7 +115,6 @@ const useTypeFilter = () => {
       },
       { label: 'Pinned messages', types: ['m.room.pinned_events'] },
       { label: 'Removed messages', types: ['m.room.redaction'] },
-      { label: 'Reactions', types: ['m.reaction'] },
       { label: 'Spaces', types: ['m.space.child', 'm.space.parent'] },
       { label: 'Created & upgraded', types: ['m.room.create', 'm.room.tombstone'] },
     ],

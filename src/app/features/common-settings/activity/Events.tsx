@@ -7,16 +7,68 @@ https://cinny.in
 Please see LICENSE file in root of repository for full details.
 */
 
-import React, { ReactNode } from 'react';
-import { Icons, MainColor } from 'folds';
+import React, { MouseEventHandler, ReactNode, useState } from 'react';
+import {
+  Box,
+  Chip,
+  color,
+  config,
+  Icons,
+  MainColor,
+  Modal,
+  Overlay,
+  OverlayBackdrop,
+  OverlayCenter,
+  Text,
+} from 'folds';
 import type { ClientEventWithoutRoomId } from 'neurone/lib/api/types';
 import { ObjectReader } from 'neurone/lib/utils';
+import FocusTrap from 'focus-trap-react';
 import { rContent, rRelatesTo, rUnsigned } from '../../../../client/reader';
 import { useRoomMembersAPI } from '../../../hooks/useRoomMembers';
 import { getPowerLevelTag, usePowerLevelTagsContext } from '../../../hooks/usePowerLevelTags';
 import { ActivityMessage } from './ActivityMessage';
 import { Username, UsernameBold } from '../../../components/message';
 import { Code } from '../../../styles/CustomHtml.css';
+import { ImageViewer } from '../../../components/image-viewer';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
+import { useClient } from '../../../hooks/useClient';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+import { stopPropagation } from '../../../utils/keyboard';
+import { CutoutCard } from '../../../components/cutout-card';
+import { useGetRoomName } from '../../../hooks/storage/useGetRoomName';
+import { useRoomHeroes } from '../../../hooks/storage/useRoomHeros';
+import { useOpenUserRoomProfile } from '../../../state/hooks/userRoomProfile';
+import { useRoom } from '../../../hooks/useRoom';
+import { useSpaceOptionally } from '../../../hooks/useSpace';
+
+function MxcViewer({ mxc, onClose }: { mxc: string; onClose: () => void }) {
+  const ct = useClient();
+  const useAuthentication = useMediaAuthentication();
+
+  return (
+    <Overlay open backdrop={<OverlayBackdrop />}>
+      <OverlayCenter>
+        <FocusTrap
+          focusTrapOptions={{
+            initialFocus: false,
+            onDeactivate: () => onClose(),
+            clickOutsideDeactivates: true,
+            escapeDeactivates: stopPropagation,
+          }}
+        >
+          <Modal size="500" onContextMenu={(evt: any) => evt.stopPropagation()}>
+            <ImageViewer
+              src={mxcToHttp(ct.session.baseUrl, mxc, useAuthentication).url()}
+              alt="Room Avatar"
+              requestClose={onClose}
+            />
+          </Modal>
+        </FocusTrap>
+      </OverlayCenter>
+    </Overlay>
+  );
+}
 
 type EventProps = {
   event: ClientEventWithoutRoomId;
@@ -65,6 +117,20 @@ export function RoomNameChange({ event, getUsernameColor }: EventProps) {
 
 export function RoomTopicChange({ event, getUsernameColor }: EventProps) {
   const topic = ObjectReader.string(event.content, 'topic');
+  const prevTopic = ObjectReader.string(rUnsigned.prevContent(event), 'topic');
+
+  let text = <>removed the room topic</>;
+  if (topic) {
+    text = prevTopic ? (
+      <>
+        changed the room topic from <b>{prevTopic}</b> to <b>{topic}</b>
+      </>
+    ) : (
+      <>
+        set the room topic to <b>{topic}</b>
+      </>
+    );
+  }
 
   return (
     <ActivityMessage
@@ -72,32 +138,56 @@ export function RoomTopicChange({ event, getUsernameColor }: EventProps) {
       getUsernameColor={getUsernameColor}
       variant="Primary"
       iconSrc={Icons.Pencil}
-      text={
-        topic ? (
-          <>
-            changed the topic to <b>{topic}</b>
-          </>
-        ) : (
-          <>removed the room topic</>
-        )
-      }
+      text={text}
     />
   );
 }
 
 export function RoomAvatarChange({ event, getUsernameColor }: EventProps) {
+  const [viewerMxc, setViewer] = useState<string>();
+
+  const avatarMxc = ObjectReader.string(event.content, 'url');
+  const prevAvatarMxc = ObjectReader.string(rUnsigned.prevContent(event), 'url');
+
+  let text = 'removed the room avatar';
+  if (avatarMxc) {
+    text = prevAvatarMxc ? 'changed the room avatar' : 'set the room avatar';
+  }
+
   return (
-    <ActivityMessage
-      event={event}
-      getUsernameColor={getUsernameColor}
-      variant="Primary"
-      iconSrc={Icons.Photo}
-      text={
-        ObjectReader.string(event.content, 'url')
-          ? 'changed the room avatar'
-          : 'removed the room avatar'
-      }
-    />
+    <>
+      <ActivityMessage
+        event={event}
+        getUsernameColor={getUsernameColor}
+        variant="Primary"
+        iconSrc={Icons.Photo}
+        text={
+          <>
+            {text}{' '}
+            {avatarMxc && (
+              <Chip variant="Primary" fill="None" radii="Pill" onClick={() => setViewer(avatarMxc)}>
+                <Text as="span" size="L400">
+                  View
+                </Text>
+              </Chip>
+            )}
+            {prevAvatarMxc && (
+              <Chip
+                variant="Primary"
+                fill="None"
+                radii="Pill"
+                onClick={() => setViewer(prevAvatarMxc)}
+              >
+                <Text as="span" size="L400">
+                  Old
+                </Text>
+              </Chip>
+            )}
+          </>
+        }
+      />
+      {viewerMxc && <MxcViewer mxc={viewerMxc} onClose={() => setViewer(undefined)} />}
+    </>
   );
 }
 
@@ -142,19 +232,19 @@ export function CanonicalAliasChange({ event, getUsernameColor }: EventProps) {
       event={event}
       getUsernameColor={getUsernameColor}
       variant="Secondary"
-      iconSrc={Icons.HashGlobe}
+      iconSrc={Icons.Link}
       text={text}
     />
   );
 }
 
 const JOIN_RULES: Record<string, string> = {
-  public: 'anyone can join',
+  public: 'public',
   invite: 'invite only',
-  knock: 'anyone can ask to join',
-  restricted: 'members of allowed spaces can join',
-  knock_restricted: 'members of allowed spaces can join, others can ask to join',
-  private: 'private',
+  knock: 'knock & invite',
+  restricted: 'space members',
+  knock_restricted: 'space members or knock',
+  private: 'invite only',
 };
 
 export function JoinRulesChange({ event, getUsernameColor }: EventProps) {
@@ -165,10 +255,10 @@ export function JoinRulesChange({ event, getUsernameColor }: EventProps) {
       event={event}
       getUsernameColor={getUsernameColor}
       variant="Secondary"
-      iconSrc={Icons.Lock}
+      iconSrc={rule === 'public' ? Icons.Globe : Icons.Lock}
       text={
         <>
-          changed who can join to <b>{JOIN_RULES[rule] ?? rule}</b>
+          changed room access to <b>{JOIN_RULES[rule] ?? rule}</b>
         </>
       }
     />
@@ -176,10 +266,10 @@ export function JoinRulesChange({ event, getUsernameColor }: EventProps) {
 }
 
 const HISTORY: Record<string, string> = {
-  invited: 'members, since they were invited',
-  joined: 'members, since they joined',
-  shared: 'members, for the entire history',
-  world_readable: 'anyone',
+  invited: 'after invite',
+  joined: 'after join',
+  shared: 'all messages',
+  world_readable: 'all messages (guests)',
 };
 
 export function HistoryVisibilityChange({ event, getUsernameColor }: EventProps) {
@@ -190,10 +280,10 @@ export function HistoryVisibilityChange({ event, getUsernameColor }: EventProps)
       event={event}
       getUsernameColor={getUsernameColor}
       variant="Secondary"
-      iconSrc={Icons.HashGlobe}
+      iconSrc={Icons.Message}
       text={
         <>
-          made future history visible to <b>{HISTORY[v] ?? v}</b>
+          changed message history visibility to <b>{HISTORY[v] ?? v}</b>
         </>
       }
     />
@@ -253,6 +343,34 @@ export function PinnedEventsChange({ event, getUsernameColor }: EventProps) {
 }
 
 export function ServerAclChange({ event, getUsernameColor }: EventProps) {
+  const { content } = event;
+  const prevContent = rUnsigned.prevContent(event);
+
+  const allowIP = ObjectReader.boolean(content, 'allow_ip_literals');
+  const prevAllowIP = ObjectReader.boolean(prevContent, 'allow_ip_literals');
+
+  const allow = ObjectReader.array(content, 'allow')?.filter((i) => typeof i === 'string') ?? [];
+  const deny = ObjectReader.array(content, 'deny')?.filter((i) => typeof i === 'string') ?? [];
+  const prevAllow =
+    ObjectReader.array(prevContent, 'allow')?.filter((i) => typeof i === 'string') ?? [];
+  const prevDeny =
+    ObjectReader.array(prevContent, 'deny')?.filter((i) => typeof i === 'string') ?? [];
+
+  const addedAllow = allow.filter((i) => !prevAllow.includes(i));
+  const removedAllow = prevAllow.filter((i) => !allow.includes(i));
+
+  const addedDeny = deny.filter((i) => !prevDeny.includes(i));
+  const removedDeny = prevDeny.filter((i) => !deny.includes(i));
+
+  const hasAllowIPChange = allowIP !== prevAllowIP;
+
+  const hasChanges =
+    hasAllowIPChange ||
+    addedAllow.length > 0 ||
+    removedAllow.length > 0 ||
+    addedDeny.length > 0 ||
+    removedDeny.length > 0;
+
   return (
     <ActivityMessage
       event={event}
@@ -260,7 +378,62 @@ export function ServerAclChange({ event, getUsernameColor }: EventProps) {
       variant="Warning"
       iconSrc={Icons.Server}
       text={<>changed the server access control list</>}
-    />
+    >
+      <CutoutCard variant="SurfaceVariant" style={{ padding: config.space.S200 }}>
+        {!hasChanges ? (
+          <Text size="T200">No changes detected.</Text>
+        ) : (
+          <>
+            {hasAllowIPChange && (
+              <>
+                <Text size="L400">IP literals</Text>
+                <Text size="T200">{allowIP ? 'Enabled' : 'Disabled'}</Text>
+              </>
+            )}
+
+            {(addedAllow.length > 0 || removedAllow.length > 0) && (
+              <>
+                <Text size="L400">Allowed addresses</Text>
+                {addedAllow.map((item) => (
+                  <Text style={{ color: color.Success.Main }} size="T200" key={`allow-add-${item}`}>
+                    + {item}
+                  </Text>
+                ))}
+                {removedAllow.map((item) => (
+                  <Text
+                    style={{ color: color.Critical.Main }}
+                    size="T200"
+                    key={`allow-remove-${item}`}
+                  >
+                    − {item}
+                  </Text>
+                ))}
+              </>
+            )}
+
+            {(addedDeny.length > 0 || removedDeny.length > 0) && (
+              <>
+                <Text size="L400">Denied addresses</Text>
+                {addedDeny.map((item) => (
+                  <Text style={{ color: color.Success.Main }} size="T200" key={`deny-add-${item}`}>
+                    + {item}
+                  </Text>
+                ))}
+                {removedDeny.map((item) => (
+                  <Text
+                    style={{ color: color.Critical.Main }}
+                    size="T200"
+                    key={`deny-remove-${item}`}
+                  >
+                    − {item}
+                  </Text>
+                ))}
+              </>
+            )}
+          </>
+        )}
+      </CutoutCard>
+    </ActivityMessage>
   );
 }
 
@@ -282,6 +455,9 @@ export function SpaceChildChange({ event, getUsernameColor }: EventProps) {
 
   const stateKey = 'state_key' in event ? event.state_key : undefined;
 
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+
   return (
     <ActivityMessage
       event={event}
@@ -290,7 +466,8 @@ export function SpaceChildChange({ event, getUsernameColor }: EventProps) {
       iconSrc={Icons.Hash}
       text={
         <>
-          {removed ? 'removed' : 'added'} <b>{stateKey}</b> {removed ? 'from' : 'to'} the space
+          {removed ? 'removed' : 'added'} <b>{stateKey ? getRoomName(stateKey) : stateKey}</b>{' '}
+          {removed ? 'from' : 'to'} the space
         </>
       }
     />
@@ -301,6 +478,9 @@ export function SpaceParentChange({ event, getUsernameColor }: EventProps) {
   const removed = Object.keys(event.content).length === 0;
   const stateKey = 'state_key' in event ? event.state_key : undefined;
 
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+
   return (
     <ActivityMessage
       event={event}
@@ -309,7 +489,8 @@ export function SpaceParentChange({ event, getUsernameColor }: EventProps) {
       iconSrc={Icons.Space}
       text={
         <>
-          {removed ? 'unlinked this room from' : 'linked this room to'} <b>{stateKey}</b>
+          {removed ? 'unlinked this room from' : 'linked this room to'}{' '}
+          <b>{stateKey ? getRoomName(stateKey) : stateKey}</b>
         </>
       }
     />
@@ -329,6 +510,81 @@ export function RoomRedaction({ event, getUsernameColor }: EventProps) {
   );
 }
 
+function ProfileChange({ event, getUsernameColor }: EventProps) {
+  const [viewerMxc, setViewer] = useState<string>();
+
+  const prev = rUnsigned.prevContent(event);
+
+  const prevName = ObjectReader.string(prev, 'displayname');
+  const name = ObjectReader.string(event.content, 'displayname');
+
+  const prevAvatar = ObjectReader.string(prev, 'avatar_url');
+  const avatar = ObjectReader.string(event.content, 'avatar_url');
+
+  const nameChange = name !== prevName;
+  const avatarChange = avatar !== prevAvatar;
+
+  let avatarText = <>changed their profile picture</>;
+  if (avatarChange) {
+    if (!avatar) avatarText = <>removed their profile picture</>;
+    else
+      avatarText = (
+        <>
+          {!prevAvatar ? 'set' : 'changed'} their profile picture{' '}
+          {avatar && (
+            <Chip variant="Primary" fill="None" radii="Pill" onClick={() => setViewer(avatar)}>
+              <Text as="span" size="L400">
+                View
+              </Text>
+            </Chip>
+          )}
+        </>
+      );
+  }
+
+  let text = <>changed their profile</>;
+  if (nameChange) {
+    if (!name) text = <>removed their display name</>;
+    else if (!prevName)
+      text = (
+        <>
+          set their display name to <b>{name}</b>
+        </>
+      );
+    else
+      text = (
+        <>
+          changed their display name from <b>{prevName}</b> to <b>{name}</b>
+        </>
+      );
+  }
+
+  let iconSrc = Icons.User;
+  if (nameChange) iconSrc = Icons.Mention;
+  if (avatarChange) iconSrc = Icons.Photo;
+  if (nameChange && avatarChange) iconSrc = Icons.User;
+
+  return (
+    <>
+      <ActivityMessage
+        event={event}
+        getUsernameColor={getUsernameColor}
+        variant="Primary"
+        iconSrc={iconSrc}
+        text={
+          <>
+            {!nameChange && !avatarChange && <>does not changed their profile</>}
+            {nameChange ? text : undefined}
+            {nameChange && avatarChange ? ' & ' : undefined}
+            {avatarChange ? avatarText : undefined}
+          </>
+        }
+      />
+      {viewerMxc && <MxcViewer mxc={viewerMxc} onClose={() => setViewer(undefined)} />}
+    </>
+  );
+}
+
 export function RoomMemberChange({ event, getUsernameColor }: EventProps) {
   const membersAPI = useRoomMembersAPI();
   const stateKey = 'state_key' in event ? event.state_key : undefined;
@@ -345,43 +601,34 @@ export function RoomMemberChange({ event, getUsernameColor }: EventProps) {
   let variant: MainColor = 'Success';
   let text: ReactNode = null;
 
+  const roomId = useRoom();
+  const spaceId = useSpaceOptionally();
+  const openProfile = useOpenUserRoomProfile();
+
+  const handleUsernameClick: MouseEventHandler<HTMLButtonElement> = (e) => {
+    const cords = e.currentTarget.getBoundingClientRect();
+    const userId = e.currentTarget.getAttribute('data-user-id');
+    if (!userId) return;
+    openProfile(roomId, spaceId, userId, cords);
+  };
+
   const getTarget = (tUserId: string) => (
-    <Username style={{ color: getUsernameColor(tUserId) }}>
+    <Username
+      as="button"
+      data-user-id={tUserId}
+      onClick={handleUsernameClick}
+      style={{ color: getUsernameColor(tUserId) }}
+    >
       <UsernameBold>{membersAPI.getName(tUserId)}</UsernameBold>
     </Username>
   );
 
+  if (membership === 'join' && prevMembership === 'join') {
+    return <ProfileChange event={event} getUsernameColor={getUsernameColor} />;
+  }
+
   if (membership === 'join') {
-    if (prevMembership === 'join') {
-      variant = 'Primary';
-
-      const from = ObjectReader.string(prev, 'displayname');
-      const to = ObjectReader.string(event.content, 'displayname');
-
-      if (from !== to) {
-        iconSrc = Icons.Mention;
-        if (!to) text = <>removed their display name</>;
-        else if (!from)
-          text = (
-            <>
-              set their display name to <b>{to}</b>
-            </>
-          );
-        else
-          text = (
-            <>
-              changed their display name from <b>{from}</b> to <b>{to}</b>
-            </>
-          );
-      } else {
-        iconSrc = Icons.User;
-        text = ObjectReader.string(event.content, 'avatar_url') ? (
-          <>changed their avatar</>
-        ) : (
-          <>removed their avatar</>
-        );
-      }
-    } else if (prevMembership === 'invite') {
+    if (prevMembership === 'invite') {
       text = <>accepted the invitation</>;
     } else {
       text = <>joined the room</>;
@@ -398,8 +645,9 @@ export function RoomMemberChange({ event, getUsernameColor }: EventProps) {
     text = <>banned {getTarget(target)}</>;
   } else if (membership === 'leave') {
     iconSrc = Icons.ArrowLeft;
-    variant = 'Secondary';
+    variant = 'Warning';
     if (self) {
+      variant = 'Secondary';
       if (prevMembership === 'invite') text = <>rejected the invitation</>;
       else if (prevMembership === 'knock') text = <>withdrew their request to join</>;
       else text = <>left the room</>;
@@ -410,7 +658,7 @@ export function RoomMemberChange({ event, getUsernameColor }: EventProps) {
     } else if (prevMembership === 'knock') {
       text = <>declined join request of {getTarget(target)}</>;
     } else {
-      text = <>removed {getTarget(target)}</>;
+      text = <>kicked {getTarget(target)}</>;
     }
   }
 
@@ -431,13 +679,13 @@ export function RoomMemberChange({ event, getUsernameColor }: EventProps) {
 }
 
 const POWER_LEVEL_ACTIONS: Record<string, string> = {
-  users_default: 'default user power level',
-  events_default: 'power level required to send messages',
-  state_default: 'power level required to change room state',
-  ban: 'power level required to ban',
-  kick: 'power level required to kick',
-  redact: 'power level required to remove messages',
-  invite: 'power level required to invite',
+  users_default: 'Default user power level',
+  events_default: 'Send messages',
+  state_default: 'Change room state',
+  ban: 'Ban members',
+  kick: 'Kick members',
+  redact: 'Remove messages',
+  invite: 'Invite members',
 };
 
 export function PowerLevelsChange({ event, getUsernameColor }: EventProps) {
@@ -446,107 +694,141 @@ export function PowerLevelsChange({ event, getUsernameColor }: EventProps) {
 
   const powerLevelTags = usePowerLevelTagsContext();
 
+  const { content } = event;
+
+  const roomId = useRoom();
+  const spaceId = useSpaceOptionally();
+  const openProfile = useOpenUserRoomProfile();
+
+  const handleUsernameClick: MouseEventHandler<HTMLButtonElement> = (e) => {
+    const cords = e.currentTarget.getBoundingClientRect();
+    const userId = e.currentTarget.getAttribute('data-user-id');
+    if (!userId) return;
+    openProfile(roomId, spaceId, userId, cords);
+  };
+
+  const getTarget = (tUserId: string) => (
+    <Username
+      as="button"
+      data-user-id={tUserId}
+      onClick={handleUsernameClick}
+      style={{ color: getUsernameColor(tUserId) }}
+    >
+      <UsernameBold>{membersAPI.getName(tUserId)}</UsernameBold>
+    </Username>
+  );
+
   if (!prev) {
     return (
       <ActivityMessage
         event={event}
         getUsernameColor={getUsernameColor}
         variant="Secondary"
-        iconSrc={Icons.Shield}
+        iconSrc={Icons.Lock}
         text={<>set the power levels</>}
       />
     );
   }
 
-  const lines: ReactNode[] = [];
-  const prevDefault = ObjectReader.number(prev, 'users_default');
-  const newDefault = ObjectReader.number(event.content, 'users_default');
+  const getLevelName = (level: number) => getPowerLevelTag(powerLevelTags, level).name;
 
-  // per-user changes
-  const prevUsers = (ObjectReader.object(prev, 'users') ?? {}) as Record<string, unknown>;
-  const newUsers = (ObjectReader.object(event.content, 'users') ?? {}) as Record<string, unknown>;
-  new Set([...Object.keys(prevUsers), ...Object.keys(newUsers)]).forEach((userId) => {
-    if (prevUsers[userId] === newUsers[userId]) return;
-    const from =
-      typeof prevUsers[userId] === 'number' ? (prevUsers[userId] as number) : prevDefault;
-    const to = typeof newUsers[userId] === 'number' ? (newUsers[userId] as number) : newDefault;
-    lines.push(
-      <>
-        power level of <b>{membersAPI.getName(userId)}</b>:{' '}
-        {getPowerLevelTag(powerLevelTags, from ?? 0).name} →{' '}
-        {getPowerLevelTag(powerLevelTags, to ?? 0).name}
-      </>
-    );
-  });
+  const actionChanges: ReactNode[] = [];
 
-  // room-wide levels
   Object.entries(POWER_LEVEL_ACTIONS).forEach(([key, label]) => {
     const from = ObjectReader.number(prev, key);
-    const to = ObjectReader.number(event.content, key);
-    if (from !== to) {
-      lines.push(
-        <>
-          {label}: {from ?? 0} → {to ?? 0}
-        </>
-      );
-    }
+    const to = ObjectReader.number(content, key);
+
+    if (from === to) return;
+
+    actionChanges.push(
+      <Text size="T200" key={key}>
+        {label}: {from ?? 0} to {to ?? 0}
+      </Text>
+    );
   });
 
-  // per-event-type levels
+  // Event-specific power levels
   const prevEvents = (ObjectReader.object(prev, 'events') ?? {}) as Record<string, unknown>;
-  const newEvents = (ObjectReader.object(event.content, 'events') ?? {}) as Record<string, unknown>;
+  const newEvents = (ObjectReader.object(content, 'events') ?? {}) as Record<string, unknown>;
+
+  const eventChanges: ReactNode[] = [];
+
   new Set([...Object.keys(prevEvents), ...Object.keys(newEvents)]).forEach((type) => {
     if (prevEvents[type] === newEvents[type]) return;
-    lines.push(
-      <>
-        <code>{type}</code>: {String(prevEvents[type] ?? 'default')} →{' '}
+
+    eventChanges.push(
+      <Text size="T200" key={type}>
+        <code>{type}</code>: {String(prevEvents[type] ?? 'default')} to{' '}
         {String(newEvents[type] ?? 'default')}
-      </>
+      </Text>
     );
   });
 
-  if (lines.length === 0) {
-    return (
-      <ActivityMessage
-        event={event}
-        getUsernameColor={getUsernameColor}
-        variant="Secondary"
-        iconSrc={Icons.Shield}
-        text={<>updated the rooms power levels</>}
-      />
-    );
-  }
+  // Per-user power levels
+  const prevUsers = (ObjectReader.object(prev, 'users') ?? {}) as Record<string, unknown>;
+  const newUsers = (ObjectReader.object(content, 'users') ?? {}) as Record<string, unknown>;
 
-  if (lines.length === 1) {
-    return (
-      <ActivityMessage
-        event={event}
-        getUsernameColor={getUsernameColor}
-        variant="Secondary"
-        iconSrc={Icons.Shield}
-        text={<>changed the {lines[0]}</>}
-      />
+  const prevDefault = ObjectReader.number(prev, 'users_default');
+  const newDefault = ObjectReader.number(content, 'users_default');
+
+  const memberChanges: ReactNode[] = [];
+
+  new Set([...Object.keys(prevUsers), ...Object.keys(newUsers)]).forEach((userId) => {
+    if (prevUsers[userId] === newUsers[userId]) return;
+
+    const from = typeof prevUsers[userId] === 'number' ? prevUsers[userId] : undefined;
+    const to = typeof newUsers[userId] === 'number' ? newUsers[userId] : undefined;
+
+    memberChanges.push(
+      <Text size="T200" key={userId}>
+        {getTarget(userId)}: {getLevelName(from ?? prevDefault ?? 0)} to{' '}
+        {getLevelName(to ?? newDefault ?? 0)}
+      </Text>
     );
-  }
+  });
+
+  const hasChanges =
+    actionChanges.length > 0 || eventChanges.length > 0 || memberChanges.length > 0;
 
   return (
     <ActivityMessage
       event={event}
       getUsernameColor={getUsernameColor}
       variant="Secondary"
-      iconSrc={Icons.Shield}
-      text={
-        <>
-          changed the room power levels
-          {lines.map((line, i) => (
-            // eslint-disable-next-line react/no-array-index-key
-            <React.Fragment key={i}>
-              <br />• {line}
-            </React.Fragment>
-          ))}
-        </>
-      }
-    />
+      iconSrc={Icons.Lock}
+      text={<>changed the room permissions</>}
+    >
+      <CutoutCard variant="SurfaceVariant" style={{ padding: config.space.S200 }}>
+        <Box direction="Column" gap="300">
+          {!hasChanges ? (
+            <Text size="T200">No permission changes detected.</Text>
+          ) : (
+            <>
+              {actionChanges.length > 0 && (
+                <Box direction="Column" gap="100">
+                  <Text size="L400">Actions</Text>
+                  {actionChanges}
+                </Box>
+              )}
+
+              {eventChanges.length > 0 && (
+                <Box direction="Column" gap="100">
+                  <Text size="L400">Events</Text>
+                  {eventChanges}
+                </Box>
+              )}
+
+              {memberChanges.length > 0 && (
+                <Box direction="Column" gap="100">
+                  <Text size="L400">Members</Text>
+                  {memberChanges}
+                </Box>
+              )}
+            </>
+          )}
+        </Box>
+      </CutoutCard>
+    </ActivityMessage>
   );
 }
 
