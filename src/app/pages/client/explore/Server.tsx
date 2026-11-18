@@ -329,6 +329,7 @@ function LimitButton({ limit, onLimitChange }: LimitButtonProps) {
                     variant="Background"
                     defaultValue={limit}
                     min={1}
+                    max={1092}
                     step={1}
                     outlined
                     type="number"
