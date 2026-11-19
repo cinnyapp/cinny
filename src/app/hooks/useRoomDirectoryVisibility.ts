@@ -1,16 +1,32 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import {
+  getListRoom,
+  GetListRoomOK,
+  putListRoom,
+} from 'neurone/lib/api/matrix/client/v3/directory';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { useCallback, useEffect } from 'react';
-import { Visibility } from 'matrix-js-sdk';
 import { useAsyncCallback } from './useAsyncCallback';
-import { useMatrixClient } from './useMatrixClient';
+import { useClient } from './useClient';
 
 export const useRoomDirectoryVisibility = (roomId: string) => {
-  const mx = useMatrixClient();
+  const ct = useClient();
 
   const [visibilityState, loadVisibility] = useAsyncCallback(
     useCallback(async () => {
-      const v = await mx.getRoomDirectoryVisibility(roomId);
-      return v.visibility === Visibility.Public;
-    }, [mx, roomId])
+      const resp = await ct.requestAuthJSON(getListRoom({ pathParams: { roomId } }));
+      const [err, result] = await parseMatrixResp<GetListRoomOK>(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
+      return result?.visibility === 'public';
+    }, [ct, roomId])
   );
 
   useEffect(() => {
@@ -18,14 +34,18 @@ export const useRoomDirectoryVisibility = (roomId: string) => {
   }, [loadVisibility]);
 
   const setVisibility = useCallback(
-    async (visibility: boolean) => {
-      await mx.setRoomDirectoryVisibility(
-        roomId,
-        visibility ? Visibility.Public : Visibility.Private
+    async (visible: boolean) => {
+      const resp = await ct.requestAuthJSON(
+        putListRoom({
+          pathParams: { roomId },
+          body: { visibility: visible ? 'public' : 'private' },
+        })
       );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
       await loadVisibility();
     },
-    [mx, roomId, loadVisibility]
+    [ct, roomId, loadVisibility]
   );
 
   return {

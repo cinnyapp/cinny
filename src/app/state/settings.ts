@@ -1,6 +1,16 @@
-import { atom } from 'jotai';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
 
-const STORAGE_KEY = 'settings';
+Please see LICENSE file in root of repository for full details.
+*/
+
+import { WritableAtom } from 'jotai';
+import { atomWithLocalStorage } from './utils/atomWithLocalStorage';
+import { getLocalStorageItem, setLocalStorageItem } from '../../client/localStorage';
+
 export type DateFormat =
   | 'D MMM YYYY'
   | 'DD/MM/YYYY'
@@ -26,6 +36,8 @@ export interface Settings {
   twitterEmoji: boolean;
   pageZoom: number;
   hideActivity: boolean;
+  roomListShowAvatar: boolean;
+  roomListByActivity: boolean;
 
   isPeopleDrawer: boolean;
   memberSortFilterIndex: number;
@@ -60,6 +72,8 @@ const defaultSettings: Settings = {
   twitterEmoji: false,
   pageZoom: 100,
   hideActivity: false,
+  roomListShowAvatar: false,
+  roomListByActivity: false,
 
   isPeopleDrawer: true,
   memberSortFilterIndex: 0,
@@ -83,24 +97,33 @@ const defaultSettings: Settings = {
   developerTools: false,
 };
 
-export const getSettings = () => {
-  const settings = localStorage.getItem(STORAGE_KEY);
-  if (settings === null) return defaultSettings;
-  return {
-    ...defaultSettings,
-    ...(JSON.parse(settings) as Settings),
-  };
+const STORAGE_KEY = 'settings';
+const getStoreKey = (userId: string): string => `${STORAGE_KEY}${userId}`;
+
+export type SettingsAtom = WritableAtom<Settings, [Settings], void>;
+
+export const makeSettingsAtom = (userId: string): SettingsAtom => {
+  const settingsAtom = atomWithLocalStorage<Settings>(
+    getStoreKey(userId),
+    (key) => {
+      // migrate from settings item without username postfix
+      const migrateSettings = getLocalStorageItem<Settings>(STORAGE_KEY, defaultSettings);
+      if (migrateSettings !== defaultSettings) {
+        setLocalStorageItem(key, migrateSettings);
+        localStorage.removeItem(STORAGE_KEY);
+      }
+      // end of migration
+
+      return getLocalStorageItem<Settings>(key, migrateSettings);
+    },
+    (key, settings) => {
+      setLocalStorageItem(key, settings);
+    }
+  );
+
+  return settingsAtom;
 };
 
-export const setSettings = (settings: Settings) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+export const clearSettingsStore = (userId: string) => {
+  localStorage.removeItem(getStoreKey(userId));
 };
-
-const baseSettings = atom<Settings>(getSettings());
-export const settingsAtom = atom<Settings, [Settings], undefined>(
-  (get) => get(baseSettings),
-  (get, set, update) => {
-    set(baseSettings, update);
-    setSettings(update);
-  }
-);

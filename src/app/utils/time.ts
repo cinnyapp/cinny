@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
 import isYesterday from 'dayjs/plugin/isYesterday';
@@ -84,3 +93,21 @@ export const getYesterday = () => {
   const date = dayjs(nowTs);
   return dateFor(date.year(), date.month() + 1, date.date());
 };
+
+/**
+ * Formats a date as a filename-safe timestamp.
+ *
+ * Output format: `YYYY-MM-DD_HH-mm-ss`
+ *
+ * Example: `2026-08-05_17-34-21`
+ *
+ * @param date - The date to format. Defaults to the current date and time.
+ * @returns A filename-safe timestamp string.
+ */
+export function formatFileTimestamp(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(
+    date.getDate()
+  ).padStart(2, '0')}_${String(date.getHours()).padStart(2, '0')}-${String(
+    date.getMinutes()
+  ).padStart(2, '0')}-${String(date.getSeconds()).padStart(2, '0')}`;
+}

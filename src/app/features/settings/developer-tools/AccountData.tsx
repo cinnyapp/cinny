@@ -1,29 +1,29 @@
-import React, { useCallback, useState } from 'react';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import React from 'react';
 import { Box, Text, Icon, Icons, Button, MenuItem } from 'folds';
+import { AccountDataEvent } from 'neurone/lib/api/types';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { useAccountDataCallback } from '../../../hooks/useAccountDataCallback';
 import { CutoutCard } from '../../../components/cutout-card';
+import { useAccountDataEvents } from '../../../hooks/storage/useAccountData';
 
 type AccountDataProps = {
   expand: boolean;
   onExpandToggle: (expand: boolean) => void;
-  onSelect: (type: string | null) => void;
+  onSelect: (type: AccountDataEvent | null) => void;
 };
 export function AccountData({ expand, onExpandToggle, onSelect }: AccountDataProps) {
-  const mx = useMatrixClient();
-  const [accountDataTypes, setAccountDataKeys] = useState(() =>
-    Array.from(mx.store.accountData.keys())
-  );
-
-  useAccountDataCallback(
-    mx,
-    useCallback(() => {
-      setAccountDataKeys(Array.from(mx.store.accountData.keys()));
-    }, [mx])
-  );
+  const accountDataEventsResult = useAccountDataEvents();
+  const accountDataEvents = accountDataEventsResult.value;
 
   return (
     <Box direction="Column" gap="100">
@@ -57,7 +57,7 @@ export function AccountData({ expand, onExpandToggle, onSelect }: AccountDataPro
           <Box direction="Column" gap="100">
             <Box justifyContent="SpaceBetween">
               <Text size="L400">Events</Text>
-              <Text size="L400">Total: {accountDataTypes.length}</Text>
+              {accountDataEvents && <Text size="L400">Total: {accountDataEvents.length}</Text>}
             </Box>
             <CutoutCard>
               <MenuItem
@@ -74,23 +74,25 @@ export function AccountData({ expand, onExpandToggle, onSelect }: AccountDataPro
                   </Text>
                 </Box>
               </MenuItem>
-              {accountDataTypes.sort().map((type) => (
-                <MenuItem
-                  key={type}
-                  variant="Surface"
-                  fill="None"
-                  size="300"
-                  radii="0"
-                  after={<Icon size="50" src={Icons.ChevronRight} />}
-                  onClick={() => onSelect(type)}
-                >
-                  <Box grow="Yes">
-                    <Text size="T200" truncate>
-                      {type}
-                    </Text>
-                  </Box>
-                </MenuItem>
-              ))}
+              {accountDataEvents
+                ?.sort((e1, e2) => (e1 < e2 ? -1 : 1))
+                .map((event) => (
+                  <MenuItem
+                    key={event.type}
+                    variant="Surface"
+                    fill="None"
+                    size="300"
+                    radii="0"
+                    after={<Icon size="50" src={Icons.ChevronRight} />}
+                    onClick={() => onSelect(event)}
+                  >
+                    <Box grow="Yes">
+                      <Text size="T200" truncate>
+                        {event.type}
+                      </Text>
+                    </Box>
+                  </MenuItem>
+                ))}
             </CutoutCard>
           </Box>
         )}

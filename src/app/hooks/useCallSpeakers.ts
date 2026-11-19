@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CallEmbed } from '../plugins/call';
 import { useMutationObserver } from './useMutationObserver';
@@ -7,7 +16,7 @@ import { useCallJoined } from './useCallEmbed';
 
 export const useCallSpeakers = (callEmbed: CallEmbed): Set<string> => {
   const [speakers, setSpeakers] = useState(new Set<string>());
-  const callSession = useCallSession(callEmbed.room);
+  const callSession = useCallSession(callEmbed.roomId);
   const callMembers = useCallMembers(callSession);
   const joined = useCallJoined(callEmbed);
 

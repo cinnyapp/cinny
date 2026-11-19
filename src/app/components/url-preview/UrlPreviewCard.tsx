@@ -1,9 +1,19 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { IPreviewUrlResponse } from 'matrix-js-sdk';
 import { Box, Icon, IconButton, Icons, Scroll, Spinner, Text, as, color, config } from 'folds';
+import { getPreviewUrl, GetPreviewUrlOK } from 'neurone/lib/api/matrix/client/v1/media';
+import { parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
+import { ObjectReader } from 'neurone/lib/utils';
 import { ImageOverlay } from '../ImageOverlay';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { UrlPreview, UrlPreviewContent, UrlPreviewDescription, UrlPreviewImg } from './UrlPreview';
 import {
   getIntersectionObserverEntry,
@@ -11,8 +21,9 @@ import {
 } from '../../hooks/useIntersectionObserver';
 import * as css from './UrlPreviewCard.css';
 import { tryDecodeURIComponent } from '../../utils/dom';
-import { mxcUrlToHttp } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
+import { useClient } from '../../hooks/useClient';
+import { mxcToHttp } from '../../../client/mxcToHttp';
 import { ImageViewer } from '../image-viewer';
 import { onEnterOrSpace } from '../../utils/keyboard';
 
@@ -20,11 +31,25 @@ const linkStyles = { color: color.Success.Main };
 
 export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
   ({ url, ts, ...props }, ref) => {
-    const mx = useMatrixClient();
+    const ct = useClient();
     const useAuthentication = useMediaAuthentication();
     const [viewer, setViewer] = useState(false);
     const [previewStatus, loadPreview] = useAsyncCallback(
-      useCallback(() => mx.getUrlPreview(url, ts), [url, ts, mx])
+      useCallback(async () => {
+        const resp = await ct.requestAuthJSON(
+          getPreviewUrl({
+            searchParams: {
+              url,
+              ts,
+            },
+          })
+        );
+        const [err, result] = await parseMatrixResp<GetPreviewUrlOK>(resp);
+        if (err) {
+          throw new Error(printMatrixError(err));
+        }
+        return result;
+      }, [url, ts, ct])
     );
 
     useEffect(() => {
@@ -33,26 +58,30 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
 
     if (previewStatus.status === AsyncStatus.Error) return null;
 
-    const renderContent = (prev: IPreviewUrlResponse) => {
-      const thumbUrl = mxcUrlToHttp(
-        mx,
-        prev['og:image'] || '',
-        useAuthentication,
-        256,
-        256,
-        'scale',
-        false
-      );
+    const renderContent = (prev: GetPreviewUrlOK) => {
+      const ogImage = ObjectReader.string(prev, 'og:image');
 
-      const imgUrl = mxcUrlToHttp(mx, prev['og:image'] || '', useAuthentication);
+      const thumbUrl =
+        ogImage &&
+        mxcToHttp(ct.session.baseUrl, ogImage, useAuthentication).thumbnail({
+          width: 256,
+          height: 256,
+          method: 'scale',
+        });
+
+      const imgUrl = ogImage && mxcToHttp(ct.session.baseUrl, ogImage, useAuthentication).url();
+
+      const title = ObjectReader.string(prev, 'og:title');
+      const description = ObjectReader.string(prev, 'og:description');
+      const siteName = ObjectReader.string(prev, 'og:site_name');
 
       return (
         <>
           {thumbUrl && (
             <UrlPreviewImg
               src={thumbUrl}
-              alt={prev['og:title']}
-              title={prev['og:title']}
+              alt={title}
+              title={title}
               tabIndex={0}
               onKeyDown={(evt) => onEnterOrSpace(() => setViewer(true))(evt)}
               onClick={() => setViewer(true)}
@@ -61,7 +90,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
           {imgUrl && (
             <ImageOverlay
               src={imgUrl}
-              alt={prev['og:title']}
+              alt={title ?? imgUrl}
               viewer={viewer}
               requestClose={() => {
                 setViewer(false);
@@ -80,14 +109,14 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
               size="T200"
               priority="300"
             >
-              {typeof prev['og:site_name'] === 'string' && `${prev['og:site_name']} | `}
+              {siteName ? `${siteName} | ` : null}
               {tryDecodeURIComponent(url)}
             </Text>
             <Text truncate priority="400">
-              <b>{prev['og:title']}</b>
+              <b>{title}</b>
             </Text>
             <Text size="T200" priority="300">
-              <UrlPreviewDescription>{prev['og:description']}</UrlPreviewDescription>
+              <UrlPreviewDescription>{description}</UrlPreviewDescription>
             </Text>
           </UrlPreviewContent>
         </>

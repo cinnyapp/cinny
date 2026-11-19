@@ -1,8 +1,18 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { useCallback, useMemo } from 'react';
 import { Badge, Box, Text } from 'folds';
-import { ConditionKind, IPushRules, PushRuleCondition, PushRuleKind, RuleId } from 'matrix-js-sdk';
-import { useAccountData } from '../../../hooks/useAccountData';
-import { AccountDataEvent } from '../../../../types/matrix/accountData';
+import { PushRuleCondition, PushRules } from 'neurone/lib/api/types';
+import { putPushRuleActions } from 'neurone/lib/api/matrix/client/v3/pushrules';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
+import { AccountDataType, ConditionKind, PushRuleId } from '../../../../types/matrix/accountData';
 import { NotificationModeSwitcher } from './NotificationModeSwitcher';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
@@ -13,10 +23,11 @@ import {
   NotificationMode,
   useNotificationModeActions,
 } from '../../../hooks/useNotificationMode';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
+import { useClient } from '../../../hooks/useClient';
+import { useAccountData } from '../../../hooks/storage/useAccountData';
 
 const getAllMessageDefaultRule = (
-  ruleId: RuleId,
+  ruleId: PushRuleId,
   encrypted: boolean,
   oneToOne: boolean
 ): PushRuleData => {
@@ -33,7 +44,7 @@ const getAllMessageDefaultRule = (
   });
 
   return {
-    kind: PushRuleKind.Underride,
+    kind: 'underride',
     pushRule: {
       rule_id: ruleId,
       default: true,
@@ -45,8 +56,8 @@ const getAllMessageDefaultRule = (
 };
 
 type PushRulesProps = {
-  ruleId: RuleId.DM | RuleId.EncryptedDM | RuleId.Message | RuleId.EncryptedMessage;
-  pushRules: IPushRules;
+  ruleId: PushRuleId.DM | PushRuleId.EncryptedDM | PushRuleId.Message | PushRuleId.EncryptedMessage;
+  pushRules: PushRules;
   encrypted?: boolean;
   oneToOne?: boolean;
 };
@@ -56,7 +67,7 @@ function AllMessagesModeSwitcher({
   encrypted = false,
   oneToOne = false,
 }: PushRulesProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const defaultPushRuleData = getAllMessageDefaultRule(ruleId, encrypted, oneToOne);
   const { kind, pushRule } = usePushRule(pushRules, ruleId) ?? defaultPushRuleData;
   const getModeActions = useNotificationModeActions();
@@ -64,20 +75,28 @@ function AllMessagesModeSwitcher({
   const handleChange = useCallback(
     async (mode: NotificationMode) => {
       const actions = getModeActions(mode);
-      await mx.setPushRuleActions('global', kind, ruleId, actions);
+      const resp = await ct.requestAuthJSON(
+        putPushRuleActions({
+          pathParams: { scope: 'global', kind, ruleId },
+          body: { actions },
+        })
+      );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
     },
-    [mx, getModeActions, kind, ruleId]
+    [ct, getModeActions, kind, ruleId]
   );
 
   return <NotificationModeSwitcher pushRule={pushRule} onChange={handleChange} />;
 }
 
 export function AllMessagesNotifications() {
-  const pushRulesEvt = useAccountData(AccountDataEvent.PushRules);
-  const pushRules = useMemo(
-    () => pushRulesEvt?.getContent<IPushRules>() ?? { global: {} },
-    [pushRulesEvt]
-  );
+  const pushRuleEventResult = useAccountData(AccountDataType.PushRules);
+  const pushRules: PushRules | undefined = useMemo(() => {
+    if (pushRuleEventResult.pending) return undefined;
+    const content = pushRuleEventResult.value?.content as PushRules;
+    return content ?? { global: {} };
+  }, [pushRuleEventResult]);
 
   return (
     <Box direction="Column" gap="100">
@@ -98,7 +117,11 @@ export function AllMessagesNotifications() {
       >
         <SettingTile
           title="1-to-1 Chats"
-          after={<AllMessagesModeSwitcher pushRules={pushRules} ruleId={RuleId.DM} oneToOne />}
+          after={
+            pushRules && (
+              <AllMessagesModeSwitcher pushRules={pushRules} ruleId={PushRuleId.DM} oneToOne />
+            )
+          }
         />
       </SequenceCard>
       <SequenceCard
@@ -110,12 +133,14 @@ export function AllMessagesNotifications() {
         <SettingTile
           title="1-to-1 Chats (Encrypted)"
           after={
-            <AllMessagesModeSwitcher
-              pushRules={pushRules}
-              ruleId={RuleId.EncryptedDM}
-              encrypted
-              oneToOne
-            />
+            pushRules && (
+              <AllMessagesModeSwitcher
+                pushRules={pushRules}
+                ruleId={PushRuleId.EncryptedDM}
+                encrypted
+                oneToOne
+              />
+            )
           }
         />
       </SequenceCard>
@@ -127,7 +152,11 @@ export function AllMessagesNotifications() {
       >
         <SettingTile
           title="Rooms"
-          after={<AllMessagesModeSwitcher pushRules={pushRules} ruleId={RuleId.Message} />}
+          after={
+            pushRules && (
+              <AllMessagesModeSwitcher pushRules={pushRules} ruleId={PushRuleId.Message} />
+            )
+          }
         />
       </SequenceCard>
       <SequenceCard
@@ -139,11 +168,13 @@ export function AllMessagesNotifications() {
         <SettingTile
           title="Rooms (Encrypted)"
           after={
-            <AllMessagesModeSwitcher
-              pushRules={pushRules}
-              ruleId={RuleId.EncryptedMessage}
-              encrypted
-            />
+            pushRules && (
+              <AllMessagesModeSwitcher
+                pushRules={pushRules}
+                ruleId={PushRuleId.EncryptedMessage}
+                encrypted
+              />
+            )
           }
         />
       </SequenceCard>

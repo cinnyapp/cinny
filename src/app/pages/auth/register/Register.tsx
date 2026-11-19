@@ -1,12 +1,20 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { useMemo } from 'react';
 import { Box, Text, color } from 'folds';
 import { Link, useSearchParams } from 'react-router-dom';
-import { SSOAction } from 'matrix-js-sdk';
 import { useAuthServer } from '../../../hooks/useAuthServer';
 import { RegisterFlowStatus, useAuthFlows } from '../../../hooks/useAuthFlows';
 import { useParsedLoginFlows } from '../../../hooks/useParsedLoginFlows';
 import { PasswordRegisterForm, SUPPORTED_REGISTER_STAGES } from '../register/PasswordRegisterForm';
-import { OrDivider } from '../OrDivider';
+import { OrDivider } from '../../../components/OrDivider';
 import { SSOLogin } from '../SSOLogin';
 import { SupportedUIAFlowsLoader } from '../../../components/SupportedUIAFlowsLoader';
 import { getLoginPath } from '../../pathUtils';
@@ -28,7 +36,7 @@ export function Register() {
   const { loginFlows, registerFlows } = useAuthFlows();
   const [searchParams] = useSearchParams();
   const registerSearchParams = useRegisterSearchParams(searchParams);
-  const { sso } = useParsedLoginFlows(loginFlows.flows);
+  const { sso } = useParsedLoginFlows(loginFlows.flows ?? []);
 
   // redirect to /login because only that path handle m.login.token
   const ssoRedirectUrl = usePathWithOrigin(getLoginPath(server));
@@ -84,13 +92,13 @@ export function Register() {
           <SSOLogin
             providers={sso.identity_providers}
             redirectUrl={ssoRedirectUrl}
-            action={SSOAction.REGISTER}
+            action="register"
             saveScreenSpace={registerFlows.status === RegisterFlowStatus.FlowRequired}
           />
           <span data-spacing-node />
         </>
       )}
-      <Text align="Center">
+      <Text size="T300" align="Center">
         Already have an account? <Link to={getLoginPath(server)}>Login</Link>
       </Text>
     </Box>

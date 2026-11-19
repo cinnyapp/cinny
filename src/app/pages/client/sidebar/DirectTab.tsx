@@ -1,15 +1,18 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { MouseEventHandler, forwardRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Icon, Icons, Menu, MenuItem, PopOut, RectCords, Text, config, toRem } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { useAtomValue } from 'jotai';
-import { useDirects } from '../../../state/hooks/roomList';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { mDirectAtom } from '../../../state/mDirectList';
-import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { getDirectPath, joinPathComponent } from '../../pathUtils';
-import { useRoomsUnread } from '../../../state/hooks/unread';
 import {
   SidebarAvatar,
   SidebarItem,
@@ -21,54 +24,71 @@ import { UnreadBadge } from '../../../components/unread-badge';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
 import { useDirectRooms } from '../direct/useDirectRooms';
-import { markAsRead } from '../../../utils/notifications';
 import { stopPropagation } from '../../../utils/keyboard';
-import { settingsAtom } from '../../../state/settings';
 import { useSetting } from '../../../state/hooks/settings';
+import {
+  TotalNotifications,
+  useRoomsNotifications,
+  useRoomsTotalNotifications,
+} from '../../../state/hooks/roomNotifications';
+import {
+  RoomToNotifications,
+  roomToNotificationsAtom,
+} from '../../../state/room/roomToNotifications';
+import { useRoomsUnread } from '../../../state/hooks/unread';
+import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
 
 type DirectMenuProps = {
+  directRooms: string[];
+  roomToNotifications: RoomToNotifications;
+  notifications: TotalNotifications;
   requestClose: () => void;
 };
-const DirectMenu = forwardRef<HTMLDivElement, DirectMenuProps>(({ requestClose }, ref) => {
-  const orphanRooms = useDirectRooms();
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
-  const unread = useRoomsUnread(orphanRooms, roomToUnreadAtom);
-  const mx = useMatrixClient();
+const DirectMenu = forwardRef<HTMLDivElement, DirectMenuProps>(
+  ({ directRooms, roomToNotifications, notifications, requestClose }, ref) => {
+    const [hideActivity] = useSetting('hideActivity');
 
-  const handleMarkAsRead = () => {
-    if (!unread) return;
-    orphanRooms.forEach((rId) => markAsRead(mx, rId, hideActivity));
-    requestClose();
-  };
+    const handleMarkAsRead = () => {
+      directRooms.forEach((rId) => {
+        const n = roomToNotifications.get(rId);
+        if (n?.notification_count && n.notification_count > 0) {
+          // markAsRead(mx, rId, hideActivity)
+        }
+      });
+      requestClose();
+    };
 
-  return (
-    <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
-      <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
-        <MenuItem
-          onClick={handleMarkAsRead}
-          size="300"
-          after={<Icon size="100" src={Icons.CheckTwice} />}
-          radii="300"
-          aria-disabled={!unread}
-        >
-          <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
-            Mark as Read
-          </Text>
-        </MenuItem>
-      </Box>
-    </Menu>
-  );
-});
+    return (
+      <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
+        <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
+          <MenuItem
+            onClick={handleMarkAsRead}
+            size="300"
+            after={<Icon size="100" src={Icons.CheckTwice} />}
+            radii="300"
+            aria-disabled={notifications.count === 0}
+          >
+            <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
+              Mark as Read
+            </Text>
+          </MenuItem>
+        </Box>
+      </Menu>
+    );
+  }
+);
 
 export function DirectTab() {
   const navigate = useNavigate();
-  const mx = useMatrixClient();
   const screenSize = useScreenSizeContext();
   const navToActivePath = useAtomValue(useNavToActivePathAtom());
 
-  const mDirects = useAtomValue(mDirectAtom);
-  const directs = useDirects(mx, allRoomsAtom, mDirects);
-  const directUnread = useRoomsUnread(directs, roomToUnreadAtom);
+  const directRooms = useDirectRooms();
+  const roomsNotifications = useRoomsNotifications(directRooms, roomToNotificationsAtom);
+  const notifications = useRoomsTotalNotifications(roomsNotifications);
+  const unreadRooms = useRoomsUnread(directRooms, unreadRoomsAtom);
+  const unreadOrNotification = (notifications && notifications.count > 0) || unreadRooms.size > 0;
+
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const directSelected = useDirectSelected();
@@ -106,9 +126,9 @@ export function DirectTab() {
           </SidebarAvatar>
         )}
       </SidebarItemTooltip>
-      {directUnread && (
-        <SidebarItemBadge hasCount={directUnread.total > 0}>
-          <UnreadBadge highlight={directUnread.highlight > 0} count={directUnread.total} />
+      {unreadOrNotification && (
+        <SidebarItemBadge hasCount={notifications.count > 0}>
+          <UnreadBadge highlight={notifications.highlight} count={notifications.count} />
         </SidebarItemBadge>
       )}
       {menuAnchor && (
@@ -128,7 +148,12 @@ export function DirectTab() {
                 escapeDeactivates: stopPropagation,
               }}
             >
-              <DirectMenu requestClose={() => setMenuAnchor(undefined)} />
+              <DirectMenu
+                directRooms={directRooms}
+                roomToNotifications={roomsNotifications}
+                notifications={notifications}
+                requestClose={() => setMenuAnchor(undefined)}
+              />
             </FocusTrap>
           }
         />

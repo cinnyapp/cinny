@@ -1,14 +1,22 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { useMemo } from 'react';
 import { Box, Text, color } from 'folds';
 import { Link, useSearchParams } from 'react-router-dom';
-import { SSOAction } from 'matrix-js-sdk';
 import { useAuthFlows } from '../../../hooks/useAuthFlows';
 import { useAuthServer } from '../../../hooks/useAuthServer';
 import { useParsedLoginFlows } from '../../../hooks/useParsedLoginFlows';
 import { PasswordLoginForm } from './PasswordLoginForm';
 import { SSOLogin } from '../SSOLogin';
 import { TokenLogin } from './TokenLogin';
-import { OrDivider } from '../OrDivider';
+import { OrDivider } from '../../../components/OrDivider';
 import { getLoginPath, getRegisterPath, withSearchParam } from '../../pathUtils';
 import { usePathWithOrigin } from '../../../hooks/usePathWithOrigin';
 import { LoginPathSearchParams } from '../../paths';
@@ -52,7 +60,7 @@ export function Login() {
     );
   }
 
-  const parsedFlows = useParsedLoginFlows(loginFlows.flows);
+  const parsedFlows = useParsedLoginFlows(loginFlows.flows ?? []);
 
   return (
     <Box direction="Column" gap="500">
@@ -77,7 +85,7 @@ export function Login() {
           <SSOLogin
             providers={parsedFlows.sso.identity_providers}
             redirectUrl={ssoRedirectUrl}
-            action={SSOAction.LOGIN}
+            action="login"
             saveScreenSpace={parsedFlows.password !== undefined}
           />
           <span data-spacing-node />
@@ -91,7 +99,7 @@ export function Login() {
           <span data-spacing-node />
         </>
       )}
-      <Text align="Center">
+      <Text size="T300" align="Center">
         Do not have an account? <Link to={getRegisterPath(server)}>Register</Link>
       </Text>
     </Box>

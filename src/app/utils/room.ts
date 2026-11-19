@@ -1,104 +1,23 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { IconName, IconSrc } from 'folds';
+import { MessageEventWithoutRoomId, RoomMembership } from 'neurone/lib/api/types';
+import { JoinRule, MessageEvent, RoomToParents, RoomType } from '../../types/matrix/room';
+import { JoinRoomMemberObject } from '../../client/storage/collections';
+import { MentionsContent, MsgType, ReactionContent, RelationType } from '../../types/matrix/common';
+import { ClientContext } from '../../client/context';
+import { rContent, rInReplyTo, rRelatesTo } from '../../client/reader';
+import { replaced } from '../../client/room/relations';
+import { TimelineView } from '../../client/room';
 
-import {
-  EventTimeline,
-  EventTimelineSet,
-  EventType,
-  IMentions,
-  IPowerLevelsContent,
-  IPushRule,
-  IPushRules,
-  JoinRule,
-  MatrixClient,
-  MatrixEvent,
-  MsgType,
-  NotificationCountType,
-  RelationType,
-  Room,
-  RoomMember,
-} from 'matrix-js-sdk';
-import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
-import { AccountDataEvent } from '../../types/matrix/accountData';
-import {
-  IRoomCreateContent,
-  Membership,
-  MessageEvent,
-  NotificationType,
-  RoomToParents,
-  RoomType,
-  StateEvent,
-  UnreadInfo,
-} from '../../types/matrix/room';
-
-export const getStateEvent = (
-  room: Room,
-  eventType: StateEvent,
-  stateKey = ''
-): MatrixEvent | undefined =>
-  room.getLiveTimeline().getState(EventTimeline.FORWARDS)?.getStateEvents(eventType, stateKey) ??
-  undefined;
-
-export const getStateEvents = (room: Room, eventType: StateEvent): MatrixEvent[] =>
-  room.getLiveTimeline().getState(EventTimeline.FORWARDS)?.getStateEvents(eventType) ?? [];
-
-export const getAccountData = (
-  mx: MatrixClient,
-  eventType: AccountDataEvent
-): MatrixEvent | undefined => mx.getAccountData(eventType as any);
-
-export const getMDirects = (mDirectEvent: MatrixEvent): Set<string> => {
-  const roomIds = new Set<string>();
-  const userIdToDirects = mDirectEvent?.getContent();
-
-  if (userIdToDirects === undefined) return roomIds;
-
-  Object.keys(userIdToDirects).forEach((userId) => {
-    const directs = userIdToDirects[userId];
-    if (Array.isArray(directs)) {
-      directs.forEach((id) => {
-        if (typeof id === 'string') roomIds.add(id);
-      });
-    }
-  });
-
-  return roomIds;
-};
-
-export const isDirectInvite = (room: Room | null, myUserId: string | null): boolean => {
-  if (!room || !myUserId) return false;
-  const me = room.getMember(myUserId);
-  const memberEvent = me?.events?.member;
-  const content = memberEvent?.getContent();
-  return content?.is_direct === true;
-};
-
-export const isSpace = (room: Room | null): boolean => {
-  if (!room) return false;
-  const event = getStateEvent(room, StateEvent.RoomCreate);
-  if (!event) return false;
-  return event.getContent().type === RoomType.Space;
-};
-
-export const isRoom = (room: Room | null): boolean => {
-  if (!room) return false;
-  const event = getStateEvent(room, StateEvent.RoomCreate);
-  if (!event) return true;
-  return event.getContent().type !== RoomType.Space;
-};
-
-export const isUnsupportedRoom = (room: Room | null): boolean => {
-  if (!room) return false;
-  const event = getStateEvent(room, StateEvent.RoomCreate);
-  if (!event) return true; // Consider room unsupported if m.room.create event doesn't exist
-  return event.getContent().type !== undefined && event.getContent().type !== RoomType.Space;
-};
-
-export function isValidChild(mEvent: MatrixEvent): boolean {
-  return (
-    mEvent.getType() === StateEvent.SpaceChild &&
-    Array.isArray(mEvent.getContent<{ via: string[] }>().via)
-  );
-}
+export const isCallRoom = (roomType?: string) => roomType === 'org.matrix.msc3417.call';
 
 export const getAllParents = (roomToParents: RoomToParents, roomId: string): Set<string> => {
   const allParents = new Set<string>();
@@ -114,15 +33,6 @@ export const getAllParents = (roomToParents: RoomToParents, roomId: string): Set
   allParents.delete(roomId);
   return allParents;
 };
-
-export const getSpaceChildren = (room: Room) =>
-  getStateEvents(room, StateEvent.SpaceChild).reduce<string[]>((filtered, mEvent) => {
-    const stateKey = mEvent.getStateKey();
-    if (isValidChild(mEvent) && stateKey) {
-      filtered.push(stateKey);
-    }
-    return filtered;
-  }, []);
 
 export const mapParentWithChildren = (
   roomToParents: RoomToParents,
@@ -141,15 +51,6 @@ export const mapParentWithChildren = (
   });
 };
 
-export const getRoomToParents = (mx: MatrixClient): RoomToParents => {
-  const map: RoomToParents = new Map();
-  mx.getRooms()
-    .filter((room) => isSpace(room))
-    .forEach((room) => mapParentWithChildren(map, room.roomId, getSpaceChildren(room)));
-
-  return map;
-};
-
 export const getOrphanParents = (roomToParents: RoomToParents, roomId: string): string[] => {
   const parents = getAllParents(roomToParents, roomId);
   const orphanParents = Array.from(parents).filter(
@@ -159,172 +60,32 @@ export const getOrphanParents = (roomToParents: RoomToParents, roomId: string): 
   return orphanParents;
 };
 
-export const isMutedRule = (rule: IPushRule) =>
-  // Check for empty actions (new spec) or dont_notify (deprecated)
-  (rule.actions.length === 0 || rule.actions[0] === 'dont_notify') &&
-  rule.conditions?.[0]?.kind === 'event_match';
-
-export const findMutedRule = (overrideRules: IPushRule[], roomId: string) =>
-  overrideRules.find((rule) => rule.rule_id === roomId && isMutedRule(rule));
-
-export const getNotificationType = (mx: MatrixClient, roomId: string): NotificationType => {
-  let roomPushRule: IPushRule | undefined;
-  try {
-    roomPushRule = mx.getRoomPushRule('global', roomId);
-  } catch {
-    roomPushRule = undefined;
-  }
-
-  if (!roomPushRule) {
-    const overrideRules = mx.getAccountData(EventType.PushRules)?.getContent<IPushRules>()
-      ?.global?.override;
-    if (!overrideRules) return NotificationType.Default;
-
-    return findMutedRule(overrideRules, roomId) ? NotificationType.Mute : NotificationType.Default;
-  }
-
-  if (roomPushRule.actions[0] === 'notify') return NotificationType.AllMessages;
-  return NotificationType.MentionsAndKeywords;
-};
-
-const NOTIFICATION_EVENT_TYPES = [
-  'm.room.create',
-  'm.room.message',
-  'm.room.encrypted',
-  'm.room.member',
-  'm.sticker',
-];
-export const isNotificationEvent = (mEvent: MatrixEvent) => {
-  const eType = mEvent.getType();
-  if (!NOTIFICATION_EVENT_TYPES.includes(eType)) {
-    return false;
-  }
-  if (eType === 'm.room.member') return false;
-
-  if (mEvent.isRedacted()) return false;
-  if (mEvent.getRelation()?.rel_type === 'm.replace') return false;
-
-  return true;
-};
-
-export const roomHaveNotification = (room: Room): boolean => {
-  const total = room.getUnreadNotificationCount(NotificationCountType.Total);
-  const highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
-
-  return total > 0 || highlight > 0;
-};
-
-export const roomHaveUnread = (mx: MatrixClient, room: Room) => {
-  const userId = mx.getUserId();
-  if (!userId) return false;
-  const readUpToId = room.getEventReadUpTo(userId);
-  const liveEvents = room.getLiveTimeline().getEvents();
-
-  if (liveEvents[liveEvents.length - 1]?.getSender() === userId) {
-    return false;
-  }
-
-  for (let i = liveEvents.length - 1; i >= 0; i -= 1) {
-    const event = liveEvents[i];
-    if (!event) return false;
-    if (event.getId() === readUpToId) return false;
-    if (isNotificationEvent(event)) return true;
-  }
-  return true;
-};
-
-export const getUnreadInfo = (room: Room): UnreadInfo => {
-  const total = room.getUnreadNotificationCount(NotificationCountType.Total);
-  const highlight = room.getUnreadNotificationCount(NotificationCountType.Highlight);
-  return {
-    roomId: room.roomId,
-    highlight,
-    total: highlight > total ? highlight : total,
-  };
-};
-
-export const getUnreadInfos = (mx: MatrixClient): UnreadInfo[] => {
-  const unreadInfos = mx.getRooms().reduce<UnreadInfo[]>((unread, room) => {
-    if (room.isSpaceRoom()) return unread;
-    if (room.getMyMembership() !== 'join') return unread;
-    if (getNotificationType(mx, room.roomId) === NotificationType.Mute) return unread;
-
-    if (roomHaveNotification(room) || roomHaveUnread(mx, room)) {
-      unread.push(getUnreadInfo(room));
-    }
-
-    return unread;
-  }, []);
-  return unreadInfos;
-};
-
 export const getRoomIconSrc = (
   icons: Record<IconName, IconSrc>,
   roomType?: string,
   joinRule?: JoinRule
 ): IconSrc => {
   if (roomType === RoomType.Space) {
-    if (joinRule === JoinRule.Public) return icons.SpaceGlobe;
-    if (
-      joinRule === JoinRule.Invite ||
-      joinRule === JoinRule.Knock ||
-      joinRule === JoinRule.Private
-    ) {
+    if (joinRule === 'public') return icons.SpaceGlobe;
+    if (joinRule === 'invite' || joinRule === 'knock' || joinRule === 'private') {
       return icons.SpaceLock;
     }
     return icons.Space;
   }
 
   if (roomType === RoomType.Call) {
-    if (joinRule === JoinRule.Public) return icons.VolumeHighGlobe;
-    if (
-      joinRule === JoinRule.Invite ||
-      joinRule === JoinRule.Knock ||
-      joinRule === JoinRule.Private
-    ) {
+    if (joinRule === 'public') return icons.VolumeHighGlobe;
+    if (joinRule === 'invite' || joinRule === 'knock' || joinRule === 'private') {
       return icons.VolumeHighLock;
     }
     return icons.VolumeHigh;
   }
 
-  if (joinRule === JoinRule.Public) return icons.HashGlobe;
-  if (
-    joinRule === JoinRule.Invite ||
-    joinRule === JoinRule.Knock ||
-    joinRule === JoinRule.Private
-  ) {
+  if (joinRule === 'public') return icons.HashGlobe;
+  if (joinRule === 'invite' || joinRule === 'knock' || joinRule === 'private') {
     return icons.HashLock;
   }
   return icons.Hash;
-};
-
-export const getRoomAvatarUrl = (
-  mx: MatrixClient,
-  room: Room,
-  size: 32 | 96 = 32,
-  useAuthentication = false
-): string | undefined => {
-  const mxcUrl = room.getMxcAvatarUrl();
-  return mxcUrl
-    ? mx.mxcUrlToHttp(mxcUrl, size, size, 'crop', undefined, false, useAuthentication) ?? undefined
-    : undefined;
-};
-
-export const getDirectRoomAvatarUrl = (
-  mx: MatrixClient,
-  room: Room,
-  size: 32 | 96 = 32,
-  useAuthentication = false
-): string | undefined => {
-  const mxcUrl = room.getAvatarFallbackMember()?.getMxcAvatarUrl();
-
-  if (!mxcUrl) {
-    return getRoomAvatarUrl(mx, room, size, useAuthentication);
-  }
-
-  return (
-    mx.mxcUrlToHttp(mxcUrl, size, size, 'crop', undefined, false, useAuthentication) ?? undefined
-  );
 };
 
 export const trimReplyFromBody = (body: string): string => {
@@ -359,41 +120,41 @@ export const parseReplyFormattedBody = (
   return `<mx-reply><blockquote>${replyToLink}${userLink}<br />${formattedBody}</blockquote></mx-reply>`;
 };
 
-export const getMemberDisplayName = (room: Room, userId: string): string | undefined => {
-  const member = room.getMember(userId);
-  const name = member?.rawDisplayName;
-  if (name === userId) return undefined;
+export const roomMemberContentDisplayname = (content: object): string | undefined => {
+  const name =
+    'displayname' in content && typeof content.displayname === 'string'
+      ? content.displayname.trim()
+      : undefined;
+
   return name;
 };
 
+export const roomMemberContentAvatarUrl = (content: object): string | undefined => {
+  const url =
+    'avatar_url' in content && typeof content.avatar_url === 'string'
+      ? content.avatar_url.trim()
+      : undefined;
+
+  return url?.startsWith('mxc://') ? url : undefined;
+};
+
+export const roomMemberContentMembership = (content: object): RoomMembership | undefined => {
+  const membership =
+    'membership' in content && typeof content.membership === 'string'
+      ? (content.membership as RoomMembership)
+      : undefined;
+
+  return membership;
+};
+
 export const getMemberSearchStr = (
-  member: RoomMember,
+  member: JoinRoomMemberObject,
   query: string,
-  mxIdToName: (mxId: string) => string
+  getName: (mxId: string) => string
 ): string[] => [
-  member.rawDisplayName === member.userId ? mxIdToName(member.userId) : member.rawDisplayName,
-  query.startsWith('@') || query.indexOf(':') > -1 ? member.userId : mxIdToName(member.userId),
+  getName(member.userId),
+  query.startsWith('@') || query.indexOf(':') > -1 ? member.userId : getName(member.userId),
 ];
-
-export const getMemberAvatarMxc = (room: Room, userId: string): string | undefined => {
-  const member = room.getMember(userId);
-  return member?.getMxcAvatarUrl();
-};
-
-export const isMembershipChanged = (mEvent: MatrixEvent): boolean =>
-  mEvent.getContent().membership !== mEvent.getPrevContent().membership ||
-  mEvent.getContent().reason !== mEvent.getPrevContent().reason;
-
-export const decryptAllTimelineEvent = async (mx: MatrixClient, timeline: EventTimeline) => {
-  const crypto = mx.getCrypto();
-  if (!crypto) return;
-  const decryptionPromises = timeline
-    .getEvents()
-    .filter((event) => event.isEncrypted())
-    .reverse()
-    .map((event) => event.attemptDecryption(crypto as CryptoBackend, { isRetry: true }));
-  await Promise.allSettled(decryptionPromises);
-};
 
 export const getReactionContent = (eventId: string, key: string, shortcode?: string) => ({
   'm.relates_to': {
@@ -404,66 +165,139 @@ export const getReactionContent = (eventId: string, key: string, shortcode?: str
   shortcode,
 });
 
-export const getEventReactions = (timelineSet: EventTimelineSet, eventId: string) =>
-  timelineSet.relations.getChildEventsForEvent(
-    eventId,
-    RelationType.Annotation,
-    EventType.Reaction
-  );
+export type ReactionGroup = {
+  key: string;
+  users: Set<string>;
+  events: MessageEventWithoutRoomId<ReactionContent>[];
+  shortcode?: string;
+  firstTs: number;
+};
+export const getReactionGroups = (
+  reactions: MessageEventWithoutRoomId<ReactionContent>[]
+): Array<ReactionGroup> => {
+  const groups = new Map<string, ReactionGroup>();
 
-export const getEventEdits = (timelineSet: EventTimelineSet, eventId: string, eventType: string) =>
-  timelineSet.relations.getChildEventsForEvent(eventId, RelationType.Replace, eventType);
+  reactions.forEach((event) => {
+    const { key } = event.content['m.relates_to'];
+    const userId = event.sender;
+    const { shortcode } = event.content;
+    const ts = event.origin_server_ts;
 
-export const getLatestEdit = (
-  targetEvent: MatrixEvent,
-  editEvents: MatrixEvent[]
-): MatrixEvent | undefined => {
-  const eventByTargetSender = (rEvent: MatrixEvent) =>
-    rEvent.getSender() === targetEvent.getSender();
-  return editEvents.sort((m1, m2) => m2.getTs() - m1.getTs()).find(eventByTargetSender);
+    const existing = groups.get(key);
+
+    if (!existing) {
+      groups.set(key, {
+        key,
+        users: new Set([userId]),
+        events: [event],
+        shortcode,
+        firstTs: ts,
+      });
+    } else {
+      existing.users.add(userId);
+      existing.events.push(event);
+
+      if (!existing.shortcode && shortcode) {
+        existing.shortcode = shortcode;
+      }
+
+      // keep earliest timestamp
+      if (ts < existing.firstTs) {
+        existing.firstTs = ts;
+      }
+    }
+  });
+
+  return Array.from(groups.values()).sort((a, b) => a.firstTs - b.firstTs);
 };
 
-export const getEditedEvent = (
-  mEventId: string,
-  mEvent: MatrixEvent,
-  timelineSet: EventTimelineSet
-): MatrixEvent | undefined => {
-  const edits = getEventEdits(timelineSet, mEventId, mEvent.getType());
-  return edits && getLatestEdit(mEvent, edits.getRelations());
+export const getLatestEditEvent = (
+  event: MessageEventWithoutRoomId,
+  events?: MessageEventWithoutRoomId[],
+  redacted?: Set<string>
+): MessageEventWithoutRoomId | undefined => {
+  let replacement: MessageEventWithoutRoomId | undefined;
+  const pickLatest = (e: MessageEventWithoutRoomId) => {
+    if (redacted?.has(e.event_id) || event.sender !== e.sender) return;
+    if (!replacement) {
+      replacement = e;
+      return;
+    }
+    if (replacement.origin_server_ts < e.origin_server_ts) {
+      replacement = e;
+    }
+  };
+
+  const aggregated = replaced(event);
+  if (aggregated) pickLatest(aggregated);
+  events?.forEach(pickLatest);
+
+  return replacement;
 };
 
-export const canEditEvent = (mx: MatrixClient, mEvent: MatrixEvent) => {
-  const content = mEvent.getContent();
-  const relationType = content['m.relates_to']?.rel_type;
+export const getReplyId = (content: object): string | undefined =>
+  rInReplyTo.eventId(rRelatesTo.inReplyTo(rContent.relatesTo(content)));
+
+export const fallbackReply = (content: object): boolean => {
+  const relatesTo = rContent.relatesTo(content);
+
+  if (rRelatesTo.relType(relatesTo) === RelationType.Thread) {
+    return rRelatesTo.isFallingBack(relatesTo) ?? false;
+  }
+  return false;
+};
+
+export const getThreadId = (event: MessageEventWithoutRoomId): string | undefined => {
+  const { content } = event;
+
+  const relatesTo = rContent.relatesTo(content);
+  if (rRelatesTo.relType(relatesTo) === RelationType.Thread) {
+    return rRelatesTo.eventId(relatesTo);
+  }
+
+  return undefined;
+};
+
+export const canEditEvent = (ct: ClientContext, event: MessageEventWithoutRoomId) => {
+  const { content } = event;
+  const msgType = rContent.msgtype(content);
+  if (!msgType) return false;
+
+  const relationType = rRelatesTo.relType(rContent.relatesTo(content));
+
   return (
-    mEvent.getSender() === mx.getUserId() &&
+    event.sender === ct.session.userId &&
     (!relationType || relationType === RelationType.Thread) &&
-    mEvent.getType() === MessageEvent.RoomMessage &&
-    (content.msgtype === MsgType.Text ||
-      content.msgtype === MsgType.Emote ||
-      content.msgtype === MsgType.Notice)
+    event.type === MessageEvent.RoomMessage &&
+    (msgType === MsgType.Text || msgType === MsgType.Emote || msgType === MsgType.Notice)
   );
 };
 
-export const getLatestEditableEvt = (
-  timeline: EventTimeline,
-  canEdit: (mEvent: MatrixEvent) => boolean
-): MatrixEvent | undefined => {
-  const events = timeline.getEvents();
+export const getLatestEditableEvt = async (
+  ct: ClientContext,
+  timeline: TimelineView,
+  roomId: string,
+  canEdit: (event: MessageEventWithoutRoomId) => boolean
+): Promise<MessageEventWithoutRoomId | undefined> => {
+  const batch = timeline.batch.read;
+  if (!batch.next.end) return undefined;
+
+  const { events } = batch.messages;
 
   for (let i = events.length - 1; i >= 0; i -= 1) {
     const evt = events[i];
-    if (canEdit(evt)) return evt;
+    const targetEvent =
+      evt.type === MessageEvent.RoomMessageEncrypted
+        ? // eslint-disable-next-line no-await-in-loop
+          await ct.decryption.tryDecryptEvent(roomId, evt)
+        : evt;
+    if (canEdit(targetEvent)) return evt;
   }
   return undefined;
 };
 
-export const reactionOrEditEvent = (mEvent: MatrixEvent) =>
-  mEvent.getRelation()?.rel_type === RelationType.Annotation ||
-  mEvent.getRelation()?.rel_type === RelationType.Replace;
-
-export const getMentionContent = (userIds: string[], room: boolean): IMentions => {
-  const mMentions: IMentions = {};
+export const getMentionContent = (userIds: string[], room: boolean): MentionsContent => {
+  const mMentions: MentionsContent = {};
   if (userIds.length > 0) {
     mMentions.user_ids = userIds;
   }
@@ -474,56 +308,16 @@ export const getMentionContent = (userIds: string[], room: boolean): IMentions =
   return mMentions;
 };
 
-export const getCommonRooms = (
-  mx: MatrixClient,
-  rooms: string[],
-  otherUserId: string
-): string[] => {
-  const commonRooms: string[] = [];
-
-  rooms.forEach((roomId) => {
-    const room = mx.getRoom(roomId);
-    if (!room || room.getMyMembership() !== Membership.Join) return;
-
-    const common = room.hasMembershipState(otherUserId, Membership.Join);
-    if (common) {
-      commonRooms.push(roomId);
-    }
-  });
-
-  return commonRooms;
-};
-
-export const bannedInRooms = (mx: MatrixClient, rooms: string[], otherUserId: string): boolean =>
-  rooms.some((roomId) => {
-    const room = mx.getRoom(roomId);
-    if (!room || room.getMyMembership() !== Membership.Join) return false;
-
-    const banned = room.hasMembershipState(otherUserId, Membership.Ban);
-    return banned;
-  });
-
-export const getAllVersionsRoomCreator = (room: Room): Set<string> => {
-  const creators = new Set<string>();
-
-  const createEvent = getStateEvent(room, StateEvent.RoomCreate);
-  const createContent = createEvent?.getContent<IRoomCreateContent>();
-  const creator = createEvent?.getSender();
-  if (typeof creator === 'string') creators.add(creator);
-
-  if (createContent && Array.isArray(createContent.additional_creators)) {
-    createContent.additional_creators.forEach((c) => {
-      if (typeof c === 'string') creators.add(c);
-    });
-  }
-
-  return creators;
-};
-
 export const guessPerfectParent = (
-  mx: MatrixClient,
   roomId: string,
-  parents: string[]
+  parents: string[],
+  getCreators: (roomId: string) => Set<string> | undefined,
+  getPowerLevelContent: (roomId: string) =>
+    | {
+        users?: Record<string, number>;
+        users_default?: number;
+      }
+    | undefined
 ): string | undefined => {
   if (parents.length === 1) {
     return parents[0];
@@ -532,17 +326,9 @@ export const guessPerfectParent = (
   const getSpecialUsers = (rId: string): string[] => {
     const specialUsers: Set<string> = new Set();
 
-    const r = mx.getRoom(rId);
-    if (!r) return [];
+    getCreators(rId)?.forEach((c) => specialUsers.add(c));
 
-    getAllVersionsRoomCreator(r).forEach((c) => specialUsers.add(c));
-
-    const powerLevels = getStateEvent(
-      r,
-      StateEvent.RoomPowerLevels
-    )?.getContent<IPowerLevelsContent>();
-
-    const { users_default: usersDefault, users } = powerLevels ?? {};
+    const { users_default: usersDefault, users } = getPowerLevelContent(rId) ?? {};
     const defaultPower = typeof usersDefault === 'number' ? usersDefault : 0;
 
     if (typeof users === 'object')

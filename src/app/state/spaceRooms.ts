@@ -1,10 +1,16 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { atom } from 'jotai';
 import produce from 'immer';
-import {
-  atomWithLocalStorage,
-  getLocalStorageItem,
-  setLocalStorageItem,
-} from './utils/atomWithLocalStorage';
+import { atomWithLocalStorage } from './utils/atomWithLocalStorage';
+import { getLocalStorageItem, setLocalStorageItem } from '../../client/localStorage';
 
 const SPACE_ROOMS = 'spaceRooms';
 
@@ -30,7 +36,7 @@ type SpaceRoomsAction =
       roomIds: string[];
     };
 
-export const spaceRoomsAtom = atom<Set<string>, [SpaceRoomsAction], undefined>(
+export const spaceRoomsAtom = atom<Set<string>, [SpaceRoomsAction], void>(
   (get) => get(baseSpaceRoomsAtom),
   (get, set, action) => {
     const current = get(baseSpaceRoomsAtom);

@@ -1,22 +1,35 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { ClientWidgetApi } from 'matrix-widget-api';
-import EventEmitter from 'events';
+import { ObservableValue } from 'neurone/lib/utils/observable';
+import { Disposable } from 'neurone/lib/utils/disposable';
 import { CallControlState } from './CallControlState';
 import { ElementMediaStateDetail, ElementMediaStatePayload, ElementWidgetActions } from './types';
+import { randomStr } from '../../utils/common';
 
 export enum CallControlEvent {
   StateUpdate = 'state_update',
 }
 
-export class CallControl extends EventEmitter implements CallControlState {
-  private state: CallControlState;
+export class CallControl implements CallControlState, Disposable {
+  private readonly publishKey = randomStr();
 
-  private call: ClientWidgetApi;
+  public readonly state: ObservableValue<CallControlState>;
 
-  private iframe: HTMLIFrameElement;
+  private readonly call: ClientWidgetApi;
 
-  private bodyMutationObserver: MutationObserver;
+  private readonly iframe: HTMLIFrameElement;
 
-  private controlMutationObserver: MutationObserver;
+  private readonly bodyMutationObserver: MutationObserver;
+
+  private readonly controlMutationObserver: MutationObserver;
 
   private mediaStatePromiseResolver: undefined | (() => void);
 
@@ -72,9 +85,7 @@ export class CallControl extends EventEmitter implements CallControlState {
   }
 
   constructor(state: CallControlState, call: ClientWidgetApi, iframe: HTMLIFrameElement) {
-    super();
-
-    this.state = state;
+    this.state = new ObservableValue(state, this.publishKey);
     this.call = call;
     this.iframe = iframe;
 
@@ -82,28 +93,24 @@ export class CallControl extends EventEmitter implements CallControlState {
     this.controlMutationObserver = new MutationObserver(this.onControlMutation.bind(this));
   }
 
-  public getState(): CallControlState {
-    return this.state;
-  }
-
   public get microphone(): boolean {
-    return this.state.microphone;
+    return this.state.read.microphone;
   }
 
   public get video(): boolean {
-    return this.state.video;
+    return this.state.read.video;
   }
 
   public get sound(): boolean {
-    return this.state.sound;
+    return this.state.read.sound;
   }
 
   public get screenshare(): boolean {
-    return this.state.screenshare;
+    return this.state.read.screenshare;
   }
 
   public get spotlight(): boolean {
-    return this.state.spotlight;
+    return this.state.read.spotlight;
   }
 
   public async applyState() {
@@ -112,7 +119,6 @@ export class CallControl extends EventEmitter implements CallControlState {
       video_enabled: this.video,
     });
     this.setSound(this.sound);
-    this.emitStateUpdate();
   }
 
   public startObserving() {
@@ -124,9 +130,17 @@ export class CallControl extends EventEmitter implements CallControlState {
     });
     this.onBodyMutation();
   }
-  
+
   private onBodyMutation() {
     if (!this.document) return;
+
+    const style = this.document.createElement('style');
+    style.textContent = `
+      body::before {
+        display: none !important;
+      }
+    `;
+    this.document.head.appendChild(style);
 
     this.document.body.style.setProperty('background', 'none', 'important');
 
@@ -165,7 +179,7 @@ export class CallControl extends EventEmitter implements CallControlState {
 
   private async setMediaState(state: ElementMediaStatePayload) {
     const data = await this.call.transport.send(ElementWidgetActions.DeviceMute, state);
-    return new Promise<typeof data>(resolve => {
+    return new Promise<typeof data>((resolve) => {
       if (this.mediaStatePromiseResolver) {
         this.mediaStatePromiseResolver();
       }
@@ -195,8 +209,7 @@ export class CallControl extends EventEmitter implements CallControlState {
       this.spotlight
     );
 
-    this.state = state;
-    this.emitStateUpdate();
+    this.state.publish(this.publishKey, state);
 
     if (this.microphone && !this.sound) {
       this.toggleSound();
@@ -212,14 +225,10 @@ export class CallControl extends EventEmitter implements CallControlState {
     const screenshare: boolean = this.screenshareButton?.getAttribute('data-kind') === 'primary';
     const spotlight: boolean = this.spotlightButton?.checked ?? false;
 
-    this.state = new CallControlState(
-      this.microphone,
-      this.video,
-      this.sound,
-      screenshare,
-      spotlight
+    this.state.publish(
+      this.publishKey,
+      new CallControlState(this.microphone, this.video, this.sound, screenshare, spotlight)
     );
-    this.emitStateUpdate();
   }
 
   public toggleMicrophone() {
@@ -250,8 +259,7 @@ export class CallControl extends EventEmitter implements CallControlState {
       this.screenshare,
       this.spotlight
     );
-    this.state = state;
-    this.emitStateUpdate();
+    this.state.publish(this.publishKey, state);
 
     if (!this.sound && this.microphone) {
       this.toggleMicrophone();
@@ -281,9 +289,5 @@ export class CallControl extends EventEmitter implements CallControlState {
   public dispose() {
     this.bodyMutationObserver.disconnect();
     this.controlMutationObserver.disconnect();
-  }
-
-  private emitStateUpdate() {
-    this.emit(CallControlEvent.StateUpdate);
   }
 }

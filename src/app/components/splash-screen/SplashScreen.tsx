@@ -1,28 +1,44 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { Box, Text } from 'folds';
 import React, { ReactNode } from 'react';
 import classNames from 'classnames';
 import * as patternsCSS from '../../styles/Patterns.css';
 import * as css from './SplashScreen.css';
+import CinnySVG from '../../../../public/res/svg/cinny.svg';
 
 type SplashScreenProps = {
-  children: ReactNode;
+  footer?: ReactNode;
+  children?: ReactNode;
 };
-export function SplashScreen({ children }: SplashScreenProps) {
+export function SplashScreen({ footer, children }: SplashScreenProps) {
   return (
     <Box
       className={classNames(css.SplashScreen, patternsCSS.BackgroundDotPattern)}
       direction="Column"
     >
-      {children}
+      {children || (
+        <Box grow="Yes" direction="Column" alignItems="Center" justifyContent="Center" gap="400">
+          <img className={css.SplashLogo} src={CinnySVG} alt="Cinny Logo" />
+          <Text size="H2" align="Center">
+            Cinny
+          </Text>
+        </Box>
+      )}
       <Box
         className={css.SplashScreenFooter}
         shrink="No"
         alignItems="Center"
         justifyContent="Center"
       >
-        <Text size="H2" align="Center">
-          Cinny
-        </Text>
+        {footer}
       </Box>
     </Box>
   );

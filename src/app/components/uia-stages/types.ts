@@ -1,8 +1,16 @@
-import { AuthDict } from 'matrix-js-sdk';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { AuthStageData } from '../../hooks/useUIAFlows';
 
 export type StageComponentProps = {
   stageData: AuthStageData;
-  submitAuthDict: (authDict: AuthDict) => void;
+  submitAuthDict: (authDict: object) => void;
   onCancel: () => void;
 };

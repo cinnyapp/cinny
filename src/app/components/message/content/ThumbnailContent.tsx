@@ -1,44 +1,58 @@
-import { ReactNode, useCallback, useEffect } from 'react';
-import { IThumbnailContent } from '../../../../types/matrix/common';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import React, { useCallback, useEffect } from 'react';
+import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { decryptFile, downloadEncryptedMedia, mxcUrlToHttp } from '../../../utils/matrix';
+import { decryptFile, downloadEncryptedMedia } from '../../../utils/matrix';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { FALLBACK_MIMETYPE } from '../../../utils/mimeTypes';
+import { rEncryptedFile, rInfo, rThumbnailInfo } from '../../../../client/reader';
+import { Image } from '../../media';
+import { useClient } from '../../../hooks/useClient';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
 
 export type ThumbnailContentProps = {
-  info: IThumbnailContent;
-  renderImage: (src: string) => ReactNode;
+  info: object;
 };
-export function ThumbnailContent({ info, renderImage }: ThumbnailContentProps) {
-  const mx = useMatrixClient();
+export function ThumbnailContent({ info }: ThumbnailContentProps) {
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
 
   const [thumbSrcState, loadThumbSrc] = useAsyncCallback(
     useCallback(async () => {
-      const thumbInfo = info.thumbnail_info;
-      const thumbMxcUrl = info.thumbnail_file?.url ?? info.thumbnail_url;
-      const encInfo = info.thumbnail_file;
-      if (typeof thumbMxcUrl !== 'string' || typeof thumbInfo?.mimetype !== 'string') {
+      const thumbInfo = rInfo.thumbnailInfo(info);
+      const encInfo = rInfo.thumbnailFile(info);
+      const thumbMxcUrl = rEncryptedFile.url(encInfo) ?? rInfo.thumbnailUrl(info);
+      const mimeType = rThumbnailInfo.mimetype(thumbInfo);
+
+      if (typeof thumbMxcUrl !== 'string' || typeof mimeType !== 'string') {
         throw new Error('Failed to load thumbnail');
       }
 
-      const mediaUrl = mxcUrlToHttp(mx, thumbMxcUrl, useAuthentication);
-      if (!mediaUrl) throw new Error('Invalid media URL');
+      const mediaUrl = mxcToHttp(ct.session.baseUrl, thumbMxcUrl, useAuthentication).url();
       if (encInfo) {
         const fileContent = await downloadEncryptedMedia(mediaUrl, (encBuf) =>
-          decryptFile(encBuf, thumbInfo.mimetype ?? FALLBACK_MIMETYPE, encInfo)
+          decryptFile(encBuf, mimeType ?? FALLBACK_MIMETYPE, encInfo as EncryptedAttachmentInfo)
         );
         return URL.createObjectURL(fileContent);
       }
 
       return mediaUrl;
-    }, [mx, info, useAuthentication])
+    }, [ct, info, useAuthentication])
   );
 
   useEffect(() => {
     loadThumbSrc();
   }, [loadThumbSrc]);
 
-  return thumbSrcState.status === AsyncStatus.Success ? renderImage(thumbSrcState.data) : null;
+  return thumbSrcState.status === AsyncStatus.Success ? (
+    <Image alt="Thumbnail" title="Thumbnail" src={thumbSrcState.data} loading="lazy" />
+  ) : null;
 }

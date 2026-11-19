@@ -1,9 +1,15 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { WritableAtom } from 'jotai';
-import {
-  atomWithLocalStorage,
-  getLocalStorageItem,
-  setLocalStorageItem,
-} from './utils/atomWithLocalStorage';
+import { atomWithLocalStorage } from './utils/atomWithLocalStorage';
+import { getLocalStorageItem, setLocalStorageItem } from '../../client/localStorage';
 
 export type CallPreferences = {
   microphone: boolean;
@@ -19,10 +25,12 @@ const DEFAULT_PREFERENCES: CallPreferences = {
   sound: true,
 };
 
-export type CallPreferencesAtom = WritableAtom<CallPreferences, [CallPreferences], undefined>;
+export type CallPreferencesAtom = WritableAtom<CallPreferences, [CallPreferences], void>;
+
+const getStoreKey = (userId: string) => `${CALL_PREFERENCES}${userId}`;
 
 export const makeCallPreferencesAtom = (userId: string): CallPreferencesAtom => {
-  const storeKey = `${CALL_PREFERENCES}${userId}`;
+  const storeKey = getStoreKey(userId);
 
   const callPreferencesAtom = atomWithLocalStorage<CallPreferences>(
     storeKey,
@@ -36,4 +44,8 @@ export const makeCallPreferencesAtom = (userId: string): CallPreferencesAtom => 
   );
 
   return callPreferencesAtom;
+};
+
+export const clearCallPreferenceStore = (userId: string) => {
+  localStorage.removeItem(getStoreKey(userId));
 };

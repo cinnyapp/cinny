@@ -1,12 +1,26 @@
-import { IRequestTokenResponse } from 'matrix-js-sdk';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import { PostEmailRegisterTokenOK } from 'neurone/lib/api/matrix/client/v3/register';
+import { MatrixError } from 'neurone/lib/matrix-request';
 
 export type RequestEmailTokenResponse = {
   email: string;
   clientSecret: string;
-  result: IRequestTokenResponse;
+  result: PostEmailRegisterTokenOK;
 };
+export type RequestEmailTokenResult =
+  | [undefined, RequestEmailTokenResponse]
+  | [MatrixError, undefined];
+
 export type RequestEmailTokenCallback = (
   email: string,
   clientSecret: string,
   nextLink?: string
-) => Promise<RequestEmailTokenResponse>;
+) => Promise<RequestEmailTokenResult>;

@@ -1,7 +1,19 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import to from 'await-to-js';
-import { LoginRequest, LoginResponse, MatrixError, createClient } from 'matrix-js-sdk';
-import { useEffect } from 'react';
+import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { postLogin, PostLoginBody, PostLoginOK } from 'neurone/lib/api/matrix/client/v3/login';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
+import { useSetAtom } from 'jotai';
+import { postLogout } from 'neurone/lib/api/matrix/client/v3/logout';
 import { ClientConfig, clientAllowedServer } from '../../../hooks/useClientConfig';
 import { autoDiscovery, specVersions } from '../../../cs-api';
 import { ErrorCode } from '../../../cs-errorcode';
@@ -10,7 +22,9 @@ import {
   getAfterLoginRedirectPath,
 } from '../../afterLoginRedirectPath';
 import { getHomePath } from '../../pathUtils';
-import { setFallbackSession } from '../../../state/sessions';
+import { getAuthJSONRequest, getJSONRequest } from '../../../../client/request';
+import { sessionsAtom, sessionUserIdAtom } from '../../../state/sessions';
+import { userHasSession } from '../../../../client/sessions';
 
 export enum GetBaseUrlError {
   NotAllow = 'NotAllow',
@@ -55,69 +69,92 @@ export enum LoginError {
 
 export type CustomLoginResponse = {
   baseUrl: string;
-  response: LoginResponse;
+  response: PostLoginOK;
 };
 export const login = async (
   serverBaseUrl: string | (() => Promise<string>),
-  data: LoginRequest
-): Promise<CustomLoginResponse> => {
+  body: PostLoginBody
+): Promise<[LoginError, undefined] | [undefined, CustomLoginResponse]> => {
   const [urlError, url] =
     typeof serverBaseUrl === 'function' ? await to(serverBaseUrl()) : [undefined, serverBaseUrl];
+
   if (urlError) {
-    throw new MatrixError({
-      errcode:
-        urlError.message === GetBaseUrlError.NotAllow
-          ? LoginError.ServerNotAllowed
-          : LoginError.InvalidServer,
-    });
+    return [
+      urlError.message === GetBaseUrlError.NotAllow
+        ? LoginError.ServerNotAllowed
+        : LoginError.InvalidServer,
+      undefined,
+    ];
   }
 
-  const mx = createClient({ baseUrl: url });
-  const [err, res] = await to<LoginResponse, MatrixError>(mx.loginRequest(data));
+  const requestJSON = getJSONRequest(url);
+  const postLoginEndpoint = postLogin({ body });
+  const response = await requestJSON(postLoginEndpoint);
+  const [loginError, loginResult] = await parseMatrixResp<PostLoginOK>(response);
 
-  if (err) {
-    if (err.httpStatus === 400) {
-      throw new MatrixError({
-        errcode: LoginError.InvalidRequest,
-      });
+  if (loginError) {
+    if (loginError.status === 400) {
+      return [LoginError.InvalidRequest, undefined];
     }
-    if (err.httpStatus === 429) {
-      throw new MatrixError({
-        errcode: LoginError.RateLimited,
-      });
+    if (loginError.status === 429) {
+      return [LoginError.RateLimited, undefined];
     }
-    if (err.errcode === ErrorCode.M_USER_DEACTIVATED) {
-      throw new MatrixError({
-        errcode: LoginError.UserDeactivated,
-      });
+    if (loginError.data.errcode === ErrorCode.M_USER_DEACTIVATED) {
+      return [LoginError.UserDeactivated, undefined];
     }
 
-    if (err.httpStatus === 403) {
-      throw new MatrixError({
-        errcode: LoginError.Forbidden,
-      });
+    if (loginError.status === 403) {
+      return [LoginError.Forbidden, undefined];
     }
 
-    throw new MatrixError({
-      errcode: LoginError.Unknown,
-    });
+    return [LoginError.Unknown, undefined];
   }
-  return {
-    baseUrl: url,
-    response: res,
-  };
+  return [
+    undefined,
+    {
+      baseUrl: url,
+      response: loginResult,
+    },
+  ];
 };
 
-export const useLoginComplete = (data?: CustomLoginResponse) => {
+export const useLoginComplete = () => {
   const navigate = useNavigate();
+  const setSession = useSetAtom(sessionsAtom);
+  const setSessionUserId = useSetAtom(sessionUserIdAtom);
 
-  useEffect(() => {
-    if (data) {
+  const handleLoginComplete = useCallback(
+    (data: CustomLoginResponse) => {
       const { response: loginRes, baseUrl: loginBaseUrl } = data;
-      setFallbackSession(loginRes.access_token, loginRes.device_id, loginRes.user_id, loginBaseUrl);
+
+      setSessionUserId(loginRes.user_id);
+
+      if (userHasSession(loginRes.user_id)) {
+        // user login with session that already exists.
+        // this could happen if user login via SSO or OAuth.
+        // open existing session and logout this request.
+        const request = getAuthJSONRequest(loginBaseUrl, loginRes.access_token);
+        request(postLogout({}));
+      } else {
+        setSession({
+          type: 'PUT',
+          session: {
+            accessToken: loginRes.access_token,
+            deviceId: loginRes.device_id,
+            userId: loginRes.user_id,
+            baseUrl: loginBaseUrl,
+            expiresInMs: loginRes.expires_in_ms,
+            refreshToken: loginRes.refresh_token,
+          },
+        });
+      }
+
       const afterLoginRedirectUrl = getAfterLoginRedirectPath();
       deleteAfterLoginRedirectPath();
       navigate(afterLoginRedirectUrl ?? getHomePath(), { replace: true });
-    }
-  }, [data, navigate]);
+    },
+    [navigate, setSession, setSessionUserId]
+  );
+
+  return handleLoginComplete;
 };

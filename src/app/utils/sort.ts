@@ -1,24 +1,39 @@
-import { MatrixClient } from 'matrix-js-sdk';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
+import { ClientContext } from '../../client/context';
 
 export type SortFunc<T> = (a: T, b: T) => number;
 
-export const factoryRoomIdByActivity =
-  (mx: MatrixClient): SortFunc<string> =>
-  (a, b) => {
-    const room1 = mx.getRoom(a);
-    const room2 = mx.getRoom(b);
+export const activityTsScope = (
+  ct: ClientContext,
+  roomToLatestEvent: Map<string, MessageEventWithoutRoomId>
+) => {
+  const getTs = (rId: string) =>
+    roomToLatestEvent.get(rId)?.origin_server_ts ??
+    ct.state.join.create.read.find((ev) => ev.roomId === rId)?.event.origin_server_ts;
 
-    return (
-      (room2?.getLastActiveTimestamp() ?? Number.MIN_SAFE_INTEGER) -
-      (room1?.getLastActiveTimestamp() ?? Number.MIN_SAFE_INTEGER)
-    );
-  };
+  return getTs;
+};
+
+export const factoryRoomIdByActivity =
+  (getLatestEventTs: (roomId: string) => number | undefined): SortFunc<string> =>
+  (a, b) =>
+    (getLatestEventTs(b) ?? Number.MIN_SAFE_INTEGER) -
+    (getLatestEventTs(a) ?? Number.MIN_SAFE_INTEGER);
 
 export const factoryRoomIdByAtoZ =
-  (mx: MatrixClient): SortFunc<string> =>
+  (getRoomName: (roomId: string) => string | undefined): SortFunc<string> =>
   (a, b) => {
-    let aName = mx.getRoom(a)?.name ?? '';
-    let bName = mx.getRoom(b)?.name ?? '';
+    let aName = getRoomName(a) ?? '';
+    let bName = getRoomName(b) ?? '';
 
     // remove "#" from the room name
     // To ignore it in sorting

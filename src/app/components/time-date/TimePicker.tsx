@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { forwardRef } from 'react';
 import { Menu, Box, Text, Chip } from 'folds';
 import dayjs from 'dayjs';
@@ -5,7 +14,6 @@ import * as css from './styles.css';
 import { PickerColumn } from './PickerColumn';
 import { hour12to24, hour24to12, hoursToMs, inSameDay, minutesToMs } from '../../utils/time';
 import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
 
 type TimePickerProps = {
   min: number;
@@ -15,7 +23,7 @@ type TimePickerProps = {
 };
 export const TimePicker = forwardRef<HTMLDivElement, TimePickerProps>(
   ({ min, max, value, onChange }, ref) => {
-    const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
+    const [hour24Clock] = useSetting('hour24Clock');
 
     const hour24 = dayjs(value).hour();
 

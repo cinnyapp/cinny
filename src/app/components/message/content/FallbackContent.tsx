@@ -1,56 +1,34 @@
-import { Box, Icon, Icons, Text, as, color, config } from 'folds';
-import React from 'react';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
 
-const warningStyle = { color: color.Warning.Main, opacity: config.opacity.P300 };
+Please see LICENSE file in root of repository for full details.
+*/
+
+import { Box, ContainerColor, Icon, IconSrc, Icons, Text, as, color, config } from 'folds';
+import React, { ReactNode } from 'react';
+
 const criticalStyle = { color: color.Critical.Main, opacity: config.opacity.P300 };
 
-export const MessageDeletedContent = as<'div', { children?: never; reason?: string }>(
-  ({ reason, ...props }, ref) => (
-    <Box as="span" alignItems="Center" gap="100" style={warningStyle} {...props} ref={ref}>
-      <Icon size="50" src={Icons.Delete} />
-      {reason ? (
-        <i>This message has been deleted. {reason}</i>
-      ) : (
-        <i>This message has been deleted</i>
-      )}
+type FallbackContentProps = {
+  iconSrc: IconSrc;
+  children?: ReactNode;
+  variant?: ContainerColor;
+};
+export function FallbackContent({ variant, iconSrc, children }: FallbackContentProps) {
+  return (
+    <Box
+      style={{ color: variant ? color[variant].OnContainer : undefined }}
+      alignItems="Center"
+      gap="100"
+    >
+      <Icon size="50" src={iconSrc} />
+      {children}
     </Box>
-  )
-);
-
-export const MessageUnsupportedContent = as<'div', { children?: never }>(({ ...props }, ref) => (
-  <Box as="span" alignItems="Center" gap="100" style={criticalStyle} {...props} ref={ref}>
-    <Icon size="50" src={Icons.Warning} />
-    <i>Unsupported message</i>
-  </Box>
-));
-
-export const MessageFailedContent = as<'div', { children?: never }>(({ ...props }, ref) => (
-  <Box as="span" alignItems="Center" gap="100" style={criticalStyle} {...props} ref={ref}>
-    <Icon size="50" src={Icons.Warning} />
-    <i>Failed to load message</i>
-  </Box>
-));
-
-export const MessageBadEncryptedContent = as<'div', { children?: never }>(({ ...props }, ref) => (
-  <Box as="span" alignItems="Center" gap="100" style={warningStyle} {...props} ref={ref}>
-    <Icon size="50" src={Icons.Lock} />
-    <i>Unable to decrypt message</i>
-  </Box>
-));
-
-export const MessageNotDecryptedContent = as<'div', { children?: never }>(({ ...props }, ref) => (
-  <Box as="span" alignItems="Center" gap="100" style={warningStyle} {...props} ref={ref}>
-    <Icon size="50" src={Icons.Lock} />
-    <i>This message is not decrypted yet</i>
-  </Box>
-));
-
-export const MessageBrokenContent = as<'div', { children?: never }>(({ ...props }, ref) => (
-  <Box as="span" alignItems="Center" gap="100" style={criticalStyle} {...props} ref={ref}>
-    <Icon size="50" src={Icons.Warning} />
-    <i>Broken message</i>
-  </Box>
-));
+  );
+}
 
 export const MessageEmptyContent = as<'div', { children?: never }>(({ ...props }, ref) => (
   <Box as="span" alignItems="Center" gap="100" style={criticalStyle} {...props} ref={ref}>

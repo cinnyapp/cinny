@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { keyframes, style } from '@vanilla-extract/css';
 import { color, toRem } from 'folds';
 
@@ -44,4 +53,20 @@ export const GlowAnimation = style({
 export const CallAvatarAnimation = style({
   animation: `${wobble} 2000ms ease-in-out, ${glowPulse} 2000ms ease-out`,
   animationIterationCount: 'infinite',
+});
+
+const flicker = keyframes({
+  '0%, 90%, 100%': {
+    opacity: 1,
+  },
+  '92%, 94%, 96%': {
+    opacity: 0,
+  },
+  '93%, 95%, 97%': {
+    opacity: 1,
+  },
+});
+
+export const FlickerText = style({
+  animation: `${flicker} 2s infinite`,
 });

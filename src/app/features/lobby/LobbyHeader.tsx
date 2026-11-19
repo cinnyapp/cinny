@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { MouseEventHandler, forwardRef, useState } from 'react';
 import {
   Avatar,
@@ -19,10 +28,7 @@ import {
 import FocusTrap from 'focus-trap-react';
 import { PageHeader } from '../../components/page';
 import { useSetSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
-import { useRoomAvatar, useRoomName } from '../../hooks/useRoomMeta';
 import { useSpace } from '../../hooks/useSpace';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { RoomAvatar } from '../../components/room-avatar';
 import { nameInitials } from '../../utils/common';
 import * as css from './LobbyHeader.css';
@@ -32,12 +38,16 @@ import { LeaveSpacePrompt } from '../../components/leave-space-prompt';
 import { stopPropagation } from '../../utils/keyboard';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../components/BackRouteHandler';
-import { mxcUrlToHttp } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useOpenSpaceSettings } from '../../state/hooks/spaceSettings';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
+import { useClient } from '../../hooks/useClient';
+import { useRoomHeroes } from '../../hooks/storage/useRoomHeros';
+import { useGetRoomName } from '../../hooks/storage/useGetRoomName';
+import { useGetRoomAvatar } from '../../hooks/storage/useGetRoomAvatar';
+import { mxcToHttp } from '../../../client/mxcToHttp';
 
 type LobbyMenuProps = {
   powerLevels: IPowerLevels;
@@ -45,12 +55,12 @@ type LobbyMenuProps = {
 };
 const LobbyMenu = forwardRef<HTMLDivElement, LobbyMenuProps>(
   ({ powerLevels, requestClose }, ref) => {
-    const mx = useMatrixClient();
-    const space = useSpace();
-    const creators = useRoomCreators(space);
+    const ct = useClient();
+    const spaceId = useSpace();
+    const creators = useRoomCreators(spaceId);
 
     const permissions = useRoomPermissions(creators, powerLevels);
-    const canInvite = permissions.action('invite', mx.getSafeUserId());
+    const canInvite = permissions.action('invite', ct.session.userId);
     const openSpaceSettings = useOpenSpaceSettings();
 
     const [invitePrompt, setInvitePrompt] = useState(false);
@@ -60,7 +70,7 @@ const LobbyMenu = forwardRef<HTMLDivElement, LobbyMenuProps>(
     };
 
     const handleRoomSettings = () => {
-      openSpaceSettings(space.roomId);
+      openSpaceSettings(spaceId);
       requestClose();
     };
 
@@ -68,7 +78,7 @@ const LobbyMenu = forwardRef<HTMLDivElement, LobbyMenuProps>(
       <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
         {invitePrompt && (
           <InviteUserPrompt
-            room={space}
+            roomId={spaceId}
             requestClose={() => {
               setInvitePrompt(false);
               requestClose();
@@ -121,7 +131,7 @@ const LobbyMenu = forwardRef<HTMLDivElement, LobbyMenuProps>(
                 </MenuItem>
                 {promptLeave && (
                   <LeaveSpacePrompt
-                    roomId={space.roomId}
+                    roomId={spaceId}
                     onDone={requestClose}
                     onCancel={() => setPromptLeave(false)}
                   />
@@ -140,18 +150,27 @@ type LobbyHeaderProps = {
   powerLevels: IPowerLevels;
 };
 export function LobbyHeader({ showProfile, powerLevels }: LobbyHeaderProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
-  const space = useSpace();
-  const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
+  const spaceId = useSpace();
+  const setPeopleDrawer = useSetSetting('isPeopleDrawer');
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
   const screenSize = useScreenSizeContext();
 
-  const name = useRoomName(space);
-  const avatarMxc = useRoomAvatar(space);
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
+
+  const avatarMxc = getRoomAvatar(spaceId);
   const avatarUrl = avatarMxc
-    ? mxcUrlToHttp(mx, avatarMxc, useAuthentication, 96, 96, 'crop') ?? undefined
+    ? mxcToHttp(ct.session.baseUrl, avatarMxc, useAuthentication).thumbnail({
+        width: 96,
+        height: 96,
+        method: 'crop',
+      })
     : undefined;
+
+  const name = getRoomName(spaceId) ?? 'Unknown';
 
   const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {
     setMenuAnchor(evt.currentTarget.getBoundingClientRect());
@@ -187,7 +206,7 @@ export function LobbyHeader({ showProfile, powerLevels }: LobbyHeaderProps) {
                 <>
                   <Avatar size="300">
                     <RoomAvatar
-                      roomId={space.roomId}
+                      roomId={spaceId}
                       src={avatarUrl}
                       alt={name}
                       renderFallback={() => <Text size="H4">{nameInitials(name)}</Text>}

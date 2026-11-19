@@ -1,10 +1,18 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { forwardRef, useCallback } from 'react';
 import { Dialog, Header, config, Box, Text, Button, Spinner, color } from 'folds';
 import { AsyncStatus, useAsyncCallback } from '../hooks/useAsyncCallback';
-import { logoutClient } from '../../client/initMatrix';
-import { useMatrixClient } from '../hooks/useMatrixClient';
-import { useCrossSigningActive } from '../hooks/useCrossSigning';
+import { useClient } from '../hooks/useClient';
 import { InfoCard } from './info-card';
+import { useCrossSigning } from '../hooks/useCrossSigning';
 import {
   useDeviceVerificationStatus,
   VerificationStatus,
@@ -15,19 +23,16 @@ type LogoutDialogProps = {
 };
 export const LogoutDialog = forwardRef<HTMLDivElement, LogoutDialogProps>(
   ({ handleClose }, ref) => {
-    const mx = useMatrixClient();
-    const hasEncryptedRoom = !!mx.getRooms().find((room) => room.hasEncryptionStateEvent());
-    const crossSigningActive = useCrossSigningActive();
-    const verificationStatus = useDeviceVerificationStatus(
-      mx.getCrypto(),
-      mx.getSafeUserId(),
-      mx.getDeviceId() ?? undefined
-    );
+    const ct = useClient();
+    const hasEncryptedRoom = ct.encryptedRooms.read.size > 0;
+    const crossSigning = useCrossSigning();
+
+    const verificationStatus = useDeviceVerificationStatus(ct.session.userId, ct.session.deviceId);
 
     const [logoutState, logout] = useAsyncCallback<void, Error, []>(
       useCallback(async () => {
-        await logoutClient(mx);
-      }, [mx])
+        await ct.logout();
+      }, [ct])
     );
 
     const ongoingLogout = logoutState.status === AsyncStatus.Loading;
@@ -48,7 +53,7 @@ export const LogoutDialog = forwardRef<HTMLDivElement, LogoutDialogProps>(
         </Header>
         <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
           {hasEncryptedRoom &&
-            (crossSigningActive ? (
+            (crossSigning ? (
               verificationStatus === VerificationStatus.Unverified && (
                 <InfoCard
                   variant="Critical"

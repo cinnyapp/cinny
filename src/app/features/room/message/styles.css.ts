@@ -1,5 +1,15 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { style } from '@vanilla-extract/css';
-import { DefaultReset, config, toRem } from 'folds';
+import { recipe } from '@vanilla-extract/recipes';
+import { DefaultReset, color, config, toRem } from 'folds';
 
 export const MessageBase = style({
   position: 'relative',
@@ -26,6 +36,26 @@ export const MessageOptionsBar = style([
 
 export const BubbleAvatarBase = style({
   paddingTop: 0,
+});
+
+export const MemberChangeBadge = recipe({
+  base: {
+    position: 'absolute',
+    padding: toRem(2),
+    top: toRem(4),
+    left: 0,
+    transform: 'translate(-40%, -40%) scale(.8)',
+    transformOrigin: 'center',
+    zIndex: 1,
+    outline: `${config.borderWidth.B500} solid ${color.Surface.Container}`,
+  },
+  variants: {
+    bubbleLayout: {
+      true: {
+        top: 0,
+      },
+    },
+  },
 });
 
 export const MessageAvatar = style({

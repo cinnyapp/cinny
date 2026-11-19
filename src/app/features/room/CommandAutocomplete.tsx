@@ -1,8 +1,16 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useMemo } from 'react';
 import { Editor } from 'slate';
 import { Box, config, MenuItem, Text } from 'folds';
-import { Room } from 'matrix-js-sdk';
-import { Command, useCommands } from '../../hooks/useCommands';
+import { Command, CommandRecord } from '../../hooks/useCommands';
 import {
   AutocompleteMenu,
   AutocompleteQuery,
@@ -11,14 +19,13 @@ import {
   replaceWithElement,
 } from '../../components/editor';
 import { UseAsyncSearchOptions, useAsyncSearch } from '../../hooks/useAsyncSearch';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useKeyDown } from '../../hooks/useKeyDown';
 import { onTabPress } from '../../utils/keyboard';
 
 type CommandAutoCompleteHandler = (commandName: string) => void;
 
 type CommandAutocompleteProps = {
-  room: Room;
+  commands: CommandRecord;
   editor: Editor;
   query: AutocompleteQuery<string>;
   requestClose: () => void;
@@ -31,13 +38,11 @@ const SEARCH_OPTIONS: UseAsyncSearchOptions = {
 };
 
 export function CommandAutocomplete({
-  room,
+  commands,
   editor,
   query,
   requestClose,
 }: CommandAutocompleteProps) {
-  const mx = useMatrixClient();
-  const commands = useCommands(mx, room);
   const commandNames = useMemo(() => Object.keys(commands) as Command[], [commands]);
 
   const [result, search, resetSearch] = useAsyncSearch(

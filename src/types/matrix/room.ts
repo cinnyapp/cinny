@@ -1,3 +1,14 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import { RoomMembership } from 'neurone/lib/api/types';
+import { HistoryVisibility } from 'neurone/lib/crypto/machine';
 import { IImageInfo } from './common';
 
 export enum Membership {
@@ -42,6 +53,30 @@ export enum StateEvent {
   PowerLevelTags = 'in.cinny.room.power_level_tags',
 }
 
+export enum StateEventType {
+  RoomCanonicalAlias = 'm.room.canonical_alias',
+  RoomCreate = 'm.room.create',
+  RoomJoinRules = 'm.room.join_rules',
+  RoomMember = 'm.room.member',
+  RoomThirdPartyInvite = 'm.room.third_party_invite',
+  RoomPowerLevels = 'm.room.power_levels',
+  RoomName = 'm.room.name',
+  RoomTopic = 'm.room.topic',
+  RoomAvatar = 'm.room.avatar',
+  RoomPinnedEvents = 'm.room.pinned_events',
+  RoomEncryption = 'm.room.encryption',
+  RoomHistoryVisibility = 'm.room.history_visibility',
+  RoomGuestAccess = 'm.room.guest_access',
+  RoomServerAcl = 'm.room.server_acl',
+  RoomTombstone = 'm.room.tombstone',
+
+  SpaceChild = 'm.space.child',
+  SpaceParent = 'm.space.parent',
+
+  PoniesRoomEmotes = 'im.ponies.room_emotes',
+  PowerLevelTags = 'in.cinny.room.power_level_tags',
+}
+
 export enum MessageEvent {
   RoomMessage = 'm.room.message',
   RoomMessageEncrypted = 'm.room.encrypted',
@@ -50,15 +85,54 @@ export enum MessageEvent {
   Reaction = 'm.reaction',
 }
 
+export enum CallEventType {
+  CallInvite = 'm.call.invite',
+  CallCandidates = 'm.call.candidates',
+  CallAnswer = 'm.call.answer',
+  CallHangup = 'm.call.hangup',
+  CallReject = 'm.call.reject',
+  CallSelectAnswer = 'm.call.select_answer',
+  CallNegotiate = 'm.call.negotiate',
+  CallSDPStreamMetadataChanged = 'm.call.sdp_stream_metadata_changed',
+  CallSDPStreamMetadataChangedPrefix = 'org.matrix.call.sdp_stream_metadata_changed',
+  CallReplaces = 'm.call.replaces',
+  CallEncryptionKeysPrefix = 'io.element.call.encryption_keys',
+  RTCDecline = 'org.matrix.msc4310.rtc.decline',
+  RTCInvite = 'org.matrix.msc4075.rtc.notification',
+}
+
 export enum RoomType {
   Space = 'm.space',
   Call = 'org.matrix.msc3417.call',
 }
 
-export type MSpaceChildContent = {
-  via: string[];
-  suggested?: boolean;
+export enum ThreadId {
+  Main = 'main',
+}
+
+export type JoinRule =
+  | 'public'
+  | 'knock'
+  | 'invite'
+  | 'private'
+  | 'restricted'
+  | 'knock_restricted';
+
+export type AllowConditionType = 'm.room_membership';
+
+export type AllowCondition = {
+  room_id: string;
+  type: AllowConditionType;
+};
+export type JoinRulesContent = {
+  allow?: AllowCondition[];
+  join_rule: JoinRule;
+};
+
+export type SpaceChildContent = {
   order?: string;
+  suggested?: boolean;
+  via?: string[];
 };
 
 export enum NotificationType {
@@ -108,4 +182,39 @@ export type MemberPowerTag = {
   name: string;
   color?: string;
   icon?: MemberPowerTagIcon;
+};
+
+export type RoomMemberContent = {
+  avatar_url?: string;
+  displayname?: string;
+  is_direct?: boolean;
+  join_authorised_via_users_server?: string;
+  membership: RoomMembership;
+  reason?: string;
+  third_party_invite?: {
+    display_name: string;
+    signed: {
+      mxid: string;
+      token: string;
+      ts: number;
+    };
+  };
+};
+
+export type RoomServerAclContent = {
+  allow?: string[];
+  allow_ip_literals?: boolean;
+  deny?: string[];
+};
+
+export type RoomHistoryVisibilityContent = {
+  history_visibility: HistoryVisibility;
+};
+export type RoomCanonicalAliasContent = {
+  alias?: string;
+  alt_aliases?: string[];
+};
+
+export type RoomPinnedEventsContent = {
+  pinned: string[];
 };

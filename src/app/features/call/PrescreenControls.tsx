@@ -1,9 +1,18 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { useCallback } from 'react';
 import { Box, Button, Icon, Icons, Spinner, Text } from 'folds';
 import { SequenceCard } from '../../components/sequence-card';
 import * as css from './styles.css';
 import { ChatButton, ControlDivider, MicrophoneButton, SoundButton, VideoButton } from './Controls';
-import { useIsDirectRoom, useRoom } from '../../hooks/useRoom';
+import { useRoom } from '../../hooks/useRoom';
 import { useCallEmbed, useCallJoined, useCallStart } from '../../hooks/useCallEmbed';
 import { useCallPreferences } from '../../state/hooks/callPreferences';
 
@@ -11,21 +20,19 @@ type PrescreenControlsProps = {
   canJoin?: boolean;
 };
 export function PrescreenControls({ canJoin }: PrescreenControlsProps) {
-  const room = useRoom();
+  const roomId = useRoom();
   const callEmbed = useCallEmbed();
   const callJoined = useCallJoined(callEmbed);
-  const direct = useIsDirectRoom();
 
-  const inOtherCall = callEmbed && callEmbed.roomId !== room.roomId;
+  const inOtherCall = callEmbed && callEmbed.roomId !== roomId;
 
-  const startCall = useCallStart(direct);
-  const joining = callEmbed?.roomId === room.roomId && !callJoined;
+  const startCall = useCallStart();
+  const joining = callEmbed?.roomId === roomId && !callJoined;
 
   const disabled = inOtherCall || !canJoin;
 
   const { microphone, video, sound, toggleMicrophone, toggleVideo, toggleSound } =
     useCallPreferences();
-
 
   const handleMicrophoneToggle = useCallback(async () => toggleMicrophone(), [toggleMicrophone]);
   const handleVideoToggle = useCallback(async () => toggleVideo(), [toggleVideo]);
@@ -53,7 +60,7 @@ export function PrescreenControls({ canJoin }: PrescreenControlsProps) {
         <Button
           variant={disabled ? 'Secondary' : 'Success'}
           fill={disabled ? 'Soft' : 'Solid'}
-          onClick={() => startCall(room, { microphone, video, sound })}
+          onClick={() => startCall(roomId, { microphone, video, sound })}
           disabled={disabled || joining}
           before={
             joining ? (

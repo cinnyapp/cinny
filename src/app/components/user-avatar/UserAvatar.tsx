@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { AvatarFallback, AvatarImage, color } from 'folds';
 import React, { ReactEventHandler, ReactNode, useState } from 'react';
 import classNames from 'classnames';
@@ -31,7 +40,7 @@ export function UserAvatar({ className, userId, src, alt, renderFallback }: User
 
   return (
     <AvatarImage
-      className={classNames(css.UserAvatar, className)}
+      className={classNames(css.UserAvatar, css.UserAvatarImg, className)}
       src={src}
       alt={alt}
       onError={() => setError(true)}

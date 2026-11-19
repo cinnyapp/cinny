@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { style } from '@vanilla-extract/css';
 import { color, config, toRem } from 'folds';
 import { ContainerColor } from '../../styles/ContainerColor.css';
@@ -36,7 +45,7 @@ const DropTargetLine = style({
 
       borderBottom: `${toRem(LineHeight)} solid currentColor`,
     },
-    '&[data-hover=true]:after': {
+    '&[data-hover=true]::after': {
       content: '',
       display: 'block',
       width: toRem(LineHeight * 3),

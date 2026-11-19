@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon, Icons } from 'folds';
@@ -8,7 +17,6 @@ import {
   SidebarItemBadge,
   SidebarItemTooltip,
 } from '../../../components/sidebar';
-import { allInvitesAtom } from '../../../state/room-list/inviteList';
 import {
   getInboxInvitesPath,
   getInboxNotificationsPath,
@@ -19,13 +27,16 @@ import { useInboxSelected } from '../../../hooks/router/useInbox';
 import { UnreadBadge } from '../../../components/unread-badge';
 import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
+import { useObservableValue } from '../../../hooks/useObservableValue';
+import { useClient } from '../../../hooks/useClient';
 
 export function InboxTab() {
+  const ct = useClient();
   const screenSize = useScreenSizeContext();
   const navigate = useNavigate();
   const navToActivePath = useAtomValue(useNavToActivePathAtom());
   const inboxSelected = useInboxSelected();
-  const allInvites = useAtomValue(allInvitesAtom);
+  const allInvites = useObservableValue(ct.rooms.invite);
   const inviteCount = allInvites.length;
 
   const handleInboxClick = () => {

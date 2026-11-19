@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { as, Box, Text, config, Button, Menu, Spinner } from 'folds';
 import {
@@ -19,7 +28,7 @@ import * as css from './style.css';
 import { useFilePicker } from '../../hooks/useFilePicker';
 import { CompactUploadCardRenderer } from '../upload-card';
 import { UploadSuccess } from '../../state/upload';
-import { getImageInfo, TUploadContent } from '../../utils/matrix';
+import { getImageInfo, UploadContent } from '../../utils/matrix';
 import { getImageFileUrl, loadImageElement, renameFile } from '../../utils/dom';
 import { replaceSpaceWithDash, suffixRename } from '../../utils/common';
 import { getFileNameWithoutExt } from '../../utils/mimeTypes';
@@ -110,7 +119,7 @@ export const ImagePackContent = as<'div', ImagePackContentProps>(
       [imagePack.meta]
     );
 
-    const handleUploadRemove = useCallback((file: TUploadContent) => {
+    const handleUploadRemove = useCallback((file: UploadContent) => {
       setFiles((fs) => fs.filter((f) => f !== file));
     }, []);
 

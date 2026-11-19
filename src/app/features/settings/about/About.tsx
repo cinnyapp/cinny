@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React from 'react';
 import { Box, Text, IconButton, Icon, Icons, Scroll, Button, config, toRem } from 'folds';
 import { Page, PageContent, PageHeader } from '../../../components/page';
@@ -5,14 +14,19 @@ import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
 import CinnySVG from '../../../../../public/res/svg/cinny.svg';
-import { clearCacheAndReload } from '../../../../client/initMatrix';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
+import { clearNavToActivePathStore } from '../../../state/navToActivePath';
+import { useClient } from '../../../hooks/useClient';
 
 type AboutProps = {
   requestClose: () => void;
 };
 export function About({ requestClose }: AboutProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
+
+  const handleClearCache = () => {
+    clearNavToActivePathStore(ct.session.userId);
+    ct.clearCacheAndReload();
+  };
 
   return (
     <Page>
@@ -94,7 +108,7 @@ export function About({ requestClose }: AboutProps) {
                     description="Clear all your locally stored data and reload from server."
                     after={
                       <Button
-                        onClick={() => clearCacheAndReload(mx)}
+                        onClick={handleClearCache}
                         variant="Secondary"
                         fill="Soft"
                         size="300"

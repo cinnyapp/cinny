@@ -1,51 +1,106 @@
-import { useEffect, useState } from 'react';
-import { UserEvent, UserEventHandlerMap } from 'matrix-js-sdk';
-import { useMatrixClient } from './useMatrixClient';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import { useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { getProfile, GetProfileOK } from 'neurone/lib/api/matrix/client/v3/profile';
+import { MatrixRequest, parseMatrixResp } from 'neurone/lib/matrix-request';
+import { ObjectReader } from 'neurone/lib/utils';
+import { useClient } from './useClient';
+
+export type UserPronoun = {
+  grammaticalGender?: string;
+  language?: string;
+  summary?: string;
+};
+
+export type UserBiography = {
+  body: string;
+  formattedBody?: string;
+};
 
 export type UserProfile = {
   avatarUrl?: string;
   displayName?: string;
+  bannerUrl?: string;
+  timezone?: string;
+  pronouns?: UserPronoun[];
+  biography?: UserBiography;
 };
-export const useUserProfile = (userId: string): UserProfile => {
-  const mx = useMatrixClient();
 
-  const [profile, setProfile] = useState<UserProfile>(() => {
-    const user = mx.getUser(userId);
-    return {
-      avatarUrl: user?.avatarUrl,
-      displayName: user?.displayName,
-    };
-  });
-
-  useEffect(() => {
-    const user = mx.getUser(userId);
-    const onAvatarChange: UserEventHandlerMap[UserEvent.AvatarUrl] = (event, myUser) => {
-      setProfile((cp) => ({
-        ...cp,
-        avatarUrl: myUser.avatarUrl,
-      }));
-    };
-    const onDisplayNameChange: UserEventHandlerMap[UserEvent.DisplayName] = (event, myUser) => {
-      setProfile((cp) => ({
-        ...cp,
-        displayName: myUser.displayName,
-      }));
-    };
-
-    mx.getProfileInfo(userId).then((info) =>
-      setProfile({
-        avatarUrl: info.avatar_url,
-        displayName: info.displayname,
+export const useUserProfileRequest = (
+  userId: string,
+  request: MatrixRequest
+): UserProfile | undefined => {
+  const fetchProfile = useCallback(async (): Promise<UserProfile> => {
+    const response = await request(
+      getProfile({
+        pathParams: { userId },
       })
     );
 
-    user?.on(UserEvent.AvatarUrl, onAvatarChange);
-    user?.on(UserEvent.DisplayName, onDisplayNameChange);
-    return () => {
-      user?.removeListener(UserEvent.AvatarUrl, onAvatarChange);
-      user?.removeListener(UserEvent.DisplayName, onDisplayNameChange);
-    };
-  }, [mx, userId]);
+    const [, profile] = await parseMatrixResp<
+      GetProfileOK & {
+        'chat.commet.profile_banner'?: unknown;
+        'm.banner_url'?: unknown;
+        'm.tz'?: unknown;
+        'io.fsky.nyx.pronouns': unknown;
+        'm.pronouns': unknown;
+        'm.biography': unknown;
+        'gay.fomx.biography': unknown;
+      }
+    >(response);
 
-  return profile;
+    const pronouns = profile?.['m.pronouns'] ?? profile?.['io.fsky.nyx.pronouns'];
+    const bio = profile?.['m.biography'] ?? profile?.['gay.fomx.biography'];
+    const bioText = ObjectReader.array(bio, 'm.text');
+
+    const plainBio = bioText?.find((i) => ObjectReader.string(i, 'mimetype') !== 'text/html');
+    const htmlBio = bioText?.find((i) => ObjectReader.string(i, 'mimetype') === 'text/html');
+    const bioBody = ObjectReader.string(plainBio, 'body') ?? ObjectReader.string(htmlBio, 'body');
+
+    return {
+      avatarUrl: profile?.avatar_url || undefined,
+      displayName: profile?.displayname || undefined,
+      bannerUrl:
+        ObjectReader.string(profile, 'm.banner_url') ??
+        ObjectReader.string(profile, 'chat.commet.profile_banner'),
+      timezone: ObjectReader.string(profile, 'm.tz')?.replace(/"/g, ''), // some client add quotes in timezone
+      pronouns: Array.isArray(pronouns)
+        ? pronouns?.map((p) => ({
+            grammaticalGender: ObjectReader.string(p, 'grammatical_gender'),
+            language: ObjectReader.string(p, 'language'),
+            summary: ObjectReader.string(p, 'summary'),
+          }))
+        : undefined,
+      biography: bioBody
+        ? {
+            body: bioBody,
+            formattedBody: ObjectReader.string(htmlBio, 'body'),
+          }
+        : undefined,
+    };
+  }, [request, userId]);
+
+  const { data } = useQuery({
+    queryKey: ['profile', userId],
+    queryFn: fetchProfile,
+    staleTime: 0,
+    gcTime: Infinity,
+    refetchOnMount: 'always',
+  });
+
+  return data;
+};
+
+export const useUserProfile = (userId: string): UserProfile | undefined => {
+  const ct = useClient();
+
+  return useUserProfileRequest(userId, ct.requestAuthJSON);
 };

@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 /* eslint-disable no-param-reassign */
 import React, {
   ClipboardEventHandler,
@@ -5,10 +14,11 @@ import React, {
   ReactNode,
   forwardRef,
   useCallback,
+  useEffect,
   useState,
 } from 'react';
 import { Box, Scroll, Text } from 'folds';
-import { Descendant, Editor, createEditor } from 'slate';
+import { Descendant, Editor, Transforms, createEditor } from 'slate';
 import {
   Slate,
   Editable,
@@ -20,16 +30,8 @@ import {
 import { withHistory } from 'slate-history';
 import { BlockType } from './types';
 import { RenderElement, RenderLeaf } from './Elements';
-import { CustomElement } from './slate';
 import * as css from './Editor.css';
 import { toggleKeyboardShortcut } from './keyboard';
-
-const initialValue: CustomElement[] = [
-  {
-    type: BlockType.Paragraph,
-    children: [{ text: '' }],
-  },
-];
 
 const withInline = (editor: Editor): Editor => {
   const { isInline } = editor;
@@ -59,13 +61,13 @@ export const useEditor = (): Editor => {
 
 export type EditorChangeHandler = (value: Descendant[]) => void;
 type CustomEditorProps = {
-  editableName?: string;
   top?: ReactNode;
   bottom?: ReactNode;
   before?: ReactNode;
   after?: ReactNode;
   maxHeight?: string;
   editor: Editor;
+  initialValue?: Descendant[];
   placeholder?: string;
   onKeyDown?: KeyboardEventHandler;
   onKeyUp?: KeyboardEventHandler;
@@ -75,13 +77,13 @@ type CustomEditorProps = {
 export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
   (
     {
-      editableName,
       top,
       bottom,
       before,
       after,
       maxHeight = '50vh',
       editor,
+      initialValue,
       placeholder,
       onKeyDown,
       onKeyUp,
@@ -90,6 +92,19 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
     },
     ref
   ) => {
+    const [defaultValue] = useState<Descendant[]>(() => [
+      {
+        type: BlockType.Paragraph,
+        children: [{ text: '' }],
+      },
+    ]);
+
+    useEffect(() => {
+      if (!initialValue?.length) return;
+
+      Transforms.select(editor, Editor.end(editor, []));
+    }, [editor, initialValue]);
+
     const renderElement = useCallback(
       (props: RenderElementProps) => <RenderElement {...props} />,
       []
@@ -120,7 +135,7 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
 
     return (
       <div className={css.Editor} ref={ref}>
-        <Slate editor={editor} initialValue={initialValue} onChange={onChange}>
+        <Slate editor={editor} initialValue={initialValue ?? defaultValue} onChange={onChange}>
           {top}
           <Box alignItems="Start">
             {before && (
@@ -137,7 +152,6 @@ export const CustomEditor = forwardRef<HTMLDivElement, CustomEditorProps>(
               hideTrack
             >
               <Editable
-                data-editable-name={editableName}
                 className={css.EditorTextarea}
                 placeholder={placeholder}
                 renderPlaceholder={renderPlaceholder}

@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { createVar, keyframes, style, styleVariants } from '@vanilla-extract/css';
 import { recipe, RecipeVariants } from '@vanilla-extract/recipes';
 import { DefaultReset, color, config, toRem } from 'folds';
@@ -112,8 +121,7 @@ export const CompactHeader = style([
   DefaultReset,
   StickySection,
   {
-    maxWidth: toRem(170),
-    width: '100%',
+    width: toRem(170),
   },
 ]);
 
@@ -122,6 +130,7 @@ export const AvatarBase = style({
   transition: 'transform 200ms cubic-bezier(0, 0.8, 0.67, 0.97)',
   display: 'flex',
   alignSelf: 'start',
+  position: 'relative',
 
   selectors: {
     '&:hover': {
@@ -182,6 +191,7 @@ export const UsernameBold = style({
 export const MessageTextBody = recipe({
   base: {
     wordBreak: 'break-word',
+    position: 'relative',
   },
   variants: {
     preWrap: {

@@ -1,9 +1,18 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { Box, Button, color, config, Dialog, Header, Icon, IconButton, Icons, Text } from 'folds';
 import React, { FormEventHandler } from 'react';
-import { AuthType } from 'matrix-js-sdk';
 import { StageComponentProps } from './types';
 import { ErrorCode } from '../../cs-errorcode';
 import { PasswordInput } from '../password-input';
+import { AuthType } from '../../utils/matrix-uia';
 
 export function PasswordStage({
   stageData,

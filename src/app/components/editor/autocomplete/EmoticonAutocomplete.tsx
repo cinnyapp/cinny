@@ -1,11 +1,17 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo } from 'react';
 import { Editor } from 'slate';
 import { Box, MenuItem, Text, toRem } from 'folds';
-import { Room } from 'matrix-js-sdk';
-
 import { AutocompleteQuery } from './autocompleteQuery';
 import { AutocompleteMenu } from './AutocompleteMenu';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { UseAsyncSearchOptions, useAsyncSearch } from '../../../hooks/useAsyncSearch';
 import { onTabPress } from '../../../utils/keyboard';
 import { createEmoticonElement, moveCursor, replaceWithElement } from '../utils';
@@ -13,17 +19,18 @@ import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
 import { useRelevantImagePacks } from '../../../hooks/useImagePacks';
 import { IEmoji, emojis } from '../../../plugins/emoji';
 import { useKeyDown } from '../../../hooks/useKeyDown';
-import { mxcUrlToHttp } from '../../../utils/matrix';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { ImageUsage, PackImageReader } from '../../../plugins/custom-emoji';
 import { getEmoticonSearchStr } from '../../../plugins/utils';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
+import { useClient } from '../../../hooks/useClient';
 
 type EmoticonCompleteHandler = (key: string, shortcode: string) => void;
 
 type EmoticonSearchItem = PackImageReader | IEmoji;
 
 type EmoticonAutocompleteProps = {
-  imagePackRooms: Room[];
+  imagePackRooms: string[];
   editor: Editor;
   query: AutocompleteQuery<string>;
   requestClose: () => void;
@@ -41,11 +48,11 @@ export function EmoticonAutocomplete({
   query,
   requestClose,
 }: EmoticonAutocompleteProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
 
-  const imagePacks = useRelevantImagePacks(ImageUsage.Emoticon, imagePackRooms);
-  const recentEmoji = useRecentEmoji(mx, 20);
+  const [imagePacks] = useRelevantImagePacks(ImageUsage.Emoticon, imagePackRooms);
+  const recentEmojiResult = useRecentEmoji(20);
 
   const searchList = useMemo(() => {
     const list: Array<EmoticonSearchItem> = [];
@@ -60,7 +67,9 @@ export function EmoticonAutocomplete({
     getEmoticonSearchStr,
     SEARCH_OPTIONS
   );
-  const autoCompleteEmoticon = result ? result.items.slice(0, 20) : recentEmoji;
+  const autoCompleteEmoticon: EmoticonSearchItem[] = result
+    ? result.items.slice(0, 20)
+    : recentEmojiResult.value ?? [];
 
   useEffect(() => {
     if (query.text) search(query.text);
@@ -88,7 +97,6 @@ export function EmoticonAutocomplete({
       {autoCompleteEmoticon.map((emoticon) => {
         const isCustomEmoji = 'url' in emoticon;
         const key = isCustomEmoji ? emoticon.url : emoticon.unicode;
-        const customEmojiUrl = mxcUrlToHttp(mx, key, useAuthentication);
 
         return (
           <MenuItem
@@ -100,11 +108,11 @@ export function EmoticonAutocomplete({
             }
             onClick={() => handleAutocomplete(key, emoticon.shortcode)}
             before={
-              isCustomEmoji && customEmojiUrl ? (
+              isCustomEmoji ? (
                 <Box
                   shrink="No"
                   as="img"
-                  src={customEmojiUrl}
+                  src={mxcToHttp(ct.session.baseUrl, key, useAuthentication).url() || key}
                   alt={emoticon.shortcode}
                   style={{ width: toRem(24), height: toRem(24), objectFit: 'contain' }}
                 />

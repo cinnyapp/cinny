@@ -1,129 +1,72 @@
-import React, { useCallback, useRef } from 'react';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import React, { MutableRefObject, useRef } from 'react';
 import { Box, Text, config } from 'folds';
-import { EventType } from 'matrix-js-sdk';
-import { ReactEditor } from 'slate-react';
-import { isKeyHotkey } from 'is-hotkey';
-import { useStateEvent } from '../../hooks/useStateEvent';
-import { StateEvent, MessageEvent } from '../../../types/matrix/room';
-import { usePowerLevelsContext } from '../../hooks/usePowerLevels';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useEditor } from '../../components/editor';
 import { RoomInputPlaceholder } from './RoomInputPlaceholder';
 import { RoomTimeline } from './RoomTimeline';
-import { RoomViewTyping } from './RoomViewTyping';
 import { RoomTombstone } from './RoomTombstone';
 import { RoomInput } from './RoomInput';
-import { RoomViewFollowing, RoomViewFollowingPlaceholder } from './RoomViewFollowing';
+import { RoomViewFollowing } from './RoomViewFollowing';
 import { Page } from '../../components/page';
-import { useKeyDown } from '../../hooks/useKeyDown';
-import { editableActiveElement } from '../../utils/dom';
-import { settingsAtom } from '../../state/settings';
 import { useSetting } from '../../state/hooks/settings';
-import { useRoomPermissions } from '../../hooks/useRoomPermissions';
-import { useRoomCreators } from '../../hooks/useRoomCreators';
 import { useRoom } from '../../hooks/useRoom';
+import { useObservableValue } from '../../hooks/useObservableValue';
+import { useClient } from '../../hooks/useClient';
+import { Timeline } from '../../../client/room';
+import { useEditorAutoFocus } from './hooks/useEditorAutoFocus';
+import { FollowingMembersPlaceholder } from './components';
+import { useCanMessage } from './hooks/useCanMessage';
 
-const FN_KEYS_REGEX = /^F\d+$/;
-const shouldFocusMessageField = (evt: KeyboardEvent): boolean => {
-  const { code } = evt;
-  if (evt.metaKey || evt.altKey || evt.ctrlKey) {
-    return false;
-  }
-
-  if (FN_KEYS_REGEX.test(code)) return false;
-
-  if (
-    code.startsWith('OS') ||
-    code.startsWith('Meta') ||
-    code.startsWith('Shift') ||
-    code.startsWith('Alt') ||
-    code.startsWith('Control') ||
-    code.startsWith('Arrow') ||
-    code.startsWith('Page') ||
-    code.startsWith('End') ||
-    code.startsWith('Home') ||
-    code === 'Tab' ||
-    code === 'Space' ||
-    code === 'Enter' ||
-    code === 'NumLock' ||
-    code === 'ScrollLock'
-  ) {
-    return false;
-  }
-
-  return true;
+type RoomViewProps = {
+  eventId?: string;
+  threadFocusRef: MutableRefObject<boolean>;
+  timeline: Timeline;
 };
-
-export function RoomView({ eventId }: { eventId?: string }) {
+export function RoomView({ eventId, timeline, threadFocusRef }: RoomViewProps) {
   const roomInputRef = useRef<HTMLDivElement>(null);
   const roomViewRef = useRef<HTMLDivElement>(null);
 
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
+  const [hideActivity] = useSetting('hideActivity');
 
-  const room = useRoom();
-  const { roomId } = room;
+  const roomId = useRoom();
   const editor = useEditor();
+  const ct = useClient();
 
-  const mx = useMatrixClient();
+  const roomToReplacement = useObservableValue(ct.roomToReplacement);
+  const replacementRoom = roomToReplacement.get(roomId);
 
-  const tombstoneEvent = useStateEvent(room, StateEvent.RoomTombstone);
-  const powerLevels = usePowerLevelsContext();
-  const creators = useRoomCreators(room);
-
-  const permissions = useRoomPermissions(creators, powerLevels);
-  const isEncrypted = mx.isRoomEncrypted(roomId);
-  const canMessage = permissions.event(
-    isEncrypted ? MessageEvent.RoomMessageEncrypted : EventType.RoomMessage,
-    mx.getSafeUserId()
-  );
-
-  useKeyDown(
-    window,
-    useCallback(
-      (evt) => {
-        if (editableActiveElement()) return;
-        const portalContainer = document.getElementById('portalContainer');
-        if (portalContainer && portalContainer.children.length > 0) {
-          return;
-        }
-        if (shouldFocusMessageField(evt) || isKeyHotkey('mod+v', evt)) {
-          ReactEditor.focus(editor);
-        }
-      },
-      [editor]
-    )
-  );
+  useEditorAutoFocus(editor, threadFocusRef, false);
+  const canMessage = useCanMessage();
 
   return (
     <Page ref={roomViewRef}>
       <Box grow="Yes" direction="Column">
-        <RoomTimeline
-          key={roomId}
-          room={room}
-          eventId={eventId}
-          roomInputRef={roomInputRef}
-          editor={editor}
-        />
-        <RoomViewTyping room={room} />
+        {timeline && (
+          <RoomTimeline
+            key={roomId}
+            eventId={eventId}
+            roomInputRef={roomInputRef}
+            editor={editor}
+            timeline={timeline}
+          />
+        )}
       </Box>
       <Box shrink="No" direction="Column">
         <div style={{ padding: `0 ${config.space.S400}` }}>
-          {tombstoneEvent ? (
-            <RoomTombstone
-              roomId={roomId}
-              body={tombstoneEvent.getContent().body}
-              replacementRoomId={tombstoneEvent.getContent().replacement_room}
-            />
+          {replacementRoom ? (
+            <RoomTombstone roomId={roomId} replacementRoomId={replacementRoom} />
           ) : (
             <>
               {canMessage && (
-                <RoomInput
-                  room={room}
-                  editor={editor}
-                  roomId={roomId}
-                  fileDropContainerRef={roomViewRef}
-                  ref={roomInputRef}
-                />
+                <RoomInput editor={editor} fileDropContainerRef={roomViewRef} ref={roomInputRef} />
               )}
               {!canMessage && (
                 <RoomInputPlaceholder
@@ -137,7 +80,7 @@ export function RoomView({ eventId }: { eventId?: string }) {
             </>
           )}
         </div>
-        {hideActivity ? <RoomViewFollowingPlaceholder /> : <RoomViewFollowing room={room} />}
+        {hideActivity ? <FollowingMembersPlaceholder /> : <RoomViewFollowing />}
       </Box>
     </Page>
   );

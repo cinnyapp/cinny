@@ -1,12 +1,26 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { ChangeEventHandler, FormEventHandler, useCallback, useMemo, useState } from 'react';
-import { IPushRule, IPushRules, PushRuleKind } from 'matrix-js-sdk';
 import { Box, Text, Badge, Button, Input, config, IconButton, Icons, Icon, Spinner } from 'folds';
-import { useAccountData } from '../../../hooks/useAccountData';
-import { AccountDataEvent } from '../../../../types/matrix/accountData';
+import {
+  deletePushRule,
+  putPushRule,
+  putPushRuleActions,
+} from 'neurone/lib/api/matrix/client/v3/pushrules';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
+import { PushRule, PushRules } from 'neurone/lib/api/types';
+import { useAccountData } from '../../../hooks/storage/useAccountData';
+import { AccountDataType } from '../../../../types/matrix/accountData';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import {
   getNotificationModeActions,
   NotificationMode,
@@ -15,25 +29,34 @@ import {
 } from '../../../hooks/useNotificationMode';
 import { NotificationModeSwitcher } from './NotificationModeSwitcher';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
+import { useClient } from '../../../hooks/useClient';
 
 const NOTIFY_MODE_OPS: NotificationModeOptions = {
   highlight: true,
 };
 
 function KeywordInput() {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const [keyword, setKeyword] = useState<string>('');
 
   const [keywordState, addKeyword] = useAsyncCallback(
     useCallback(
       async (k: string) => {
-        mx.addPushRule('global', PushRuleKind.ContentSpecific, k, {
-          actions: getNotificationModeActions(NotificationMode.Notify, NOTIFY_MODE_OPS),
-          pattern: k,
-        });
+        const resp = await ct.requestAuthJSON(
+          putPushRule({
+            pathParams: { scope: 'global', kind: 'content', ruleId: k },
+            body: {
+              actions: getNotificationModeActions(NotificationMode.Notify, NOTIFY_MODE_OPS),
+              pattern: k,
+            },
+          })
+        );
+
+        const [err] = await parseMatrixResp(resp);
+        if (err) throw new Error(err.data.error ?? err.data.errcode);
         setKeyword('');
       },
-      [mx]
+      [ct]
     )
   );
   const addingKeyword = keywordState.status === AsyncStatus.Loading;
@@ -104,15 +127,20 @@ function KeywordInput() {
 }
 
 type PushRulesProps = {
-  pushRule: IPushRule;
+  pushRule: PushRule;
 };
 
 function KeywordCross({ pushRule }: PushRulesProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const [removeState, remove] = useAsyncCallback(
     useCallback(
-      () => mx.deletePushRule('global', PushRuleKind.ContentSpecific, pushRule.rule_id),
-      [mx, pushRule]
+      () =>
+        ct.requestAuthJSON(
+          deletePushRule({
+            pathParams: { scope: 'global', kind: 'content', ruleId: pushRule.rule_id },
+          })
+        ),
+      [ct, pushRule]
     )
   );
 
@@ -125,35 +153,41 @@ function KeywordCross({ pushRule }: PushRulesProps) {
 }
 
 function KeywordModeSwitcher({ pushRule }: PushRulesProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
 
   const getModeActions = useNotificationModeActions(NOTIFY_MODE_OPS);
 
   const handleChange = useCallback(
     async (mode: NotificationMode) => {
       const actions = getModeActions(mode);
-      await mx.setPushRuleActions(
-        'global',
-        PushRuleKind.ContentSpecific,
-        pushRule.rule_id,
-        actions
+      const resp = await ct.requestAuthJSON(
+        putPushRuleActions({
+          pathParams: { scope: 'global', kind: 'content', ruleId: pushRule.rule_id },
+          body: {
+            actions,
+          },
+        })
       );
+
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
     },
-    [mx, getModeActions, pushRule]
+    [ct, getModeActions, pushRule]
   );
 
   return <NotificationModeSwitcher pushRule={pushRule} onChange={handleChange} />;
 }
 
 export function KeywordMessagesNotifications() {
-  const pushRulesEvt = useAccountData(AccountDataEvent.PushRules);
-  const pushRules = useMemo(
-    () => pushRulesEvt?.getContent<IPushRules>() ?? { global: {} },
-    [pushRulesEvt]
-  );
+  const pushRuleEventResult = useAccountData(AccountDataType.PushRules);
+  const pushRules: PushRules | undefined = useMemo(() => {
+    if (pushRuleEventResult.pending) return undefined;
+    const content = pushRuleEventResult.value?.content as PushRules;
+    return content ?? { global: {} };
+  }, [pushRuleEventResult]);
 
   const keywordPushRules = useMemo(() => {
-    const content = pushRules.global.content ?? [];
+    const content = pushRules?.global.content ?? [];
     return content.filter(
       (pushRule) => pushRule.default === false && typeof pushRule.pattern === 'string'
     );

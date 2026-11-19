@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 /* eslint-disable import/first */
 import React from 'react';
 import { createRoot } from 'react-dom/client';
@@ -15,10 +24,13 @@ import App from './app/pages/App';
 
 // import i18n (needs to be bundled ;))
 import './app/i18n';
-import { pushSessionToSW } from './sw-session';
-import { getFallbackSession } from './app/state/sessions';
+import { ContainerColor } from './app/styles/ContainerColor.css';
 
-document.body.classList.add(configClass, varsClass);
+document.documentElement.classList.add(
+  configClass,
+  varsClass,
+  ...ContainerColor({ variant: 'Background' }).split(' ')
+);
 
 // Register Service Worker
 if ('serviceWorker' in navigator) {
@@ -27,21 +39,7 @@ if ('serviceWorker' in navigator) {
       ? `${trimTrailingSlash(import.meta.env.BASE_URL)}/sw.js`
       : `/dev-sw.js?dev-sw`;
 
-  const sendSessionToSW = () => {
-    const session = getFallbackSession();
-    pushSessionToSW(session?.baseUrl, session?.accessToken);
-  };
-
-  navigator.serviceWorker.register(swUrl).then(sendSessionToSW);
-  navigator.serviceWorker.ready.then(sendSessionToSW);
-
-  navigator.serviceWorker.addEventListener('message', (ev) => {
-    const { type } = ev.data ?? {};
-
-    if (type === 'requestSession') {
-      sendSessionToSW();
-    }
-  });
+  navigator.serviceWorker.register(swUrl);
 }
 
 const mountApp = () => {

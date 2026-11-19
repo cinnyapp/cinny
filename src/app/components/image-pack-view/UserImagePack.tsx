@@ -1,22 +1,41 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { useCallback, useMemo } from 'react';
+import { putAccountData } from 'neurone/lib/api/matrix/client/v3/user';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { ImagePackContent } from './ImagePackContent';
 import { ImagePack, PackContent } from '../../plugins/custom-emoji';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { AccountDataEvent } from '../../../types/matrix/accountData';
+import { AccountDataType } from '../../../types/matrix/accountData';
 import { useUserImagePack } from '../../hooks/useImagePacks';
+import { useClient } from '../../hooks/useClient';
 
 export function UserImagePack() {
-  const mx = useMatrixClient();
+  const ct = useClient();
 
-  const defaultPack = useMemo(() => new ImagePack(mx.getUserId() ?? '', {}, undefined), [mx]);
-  const imagePack = useUserImagePack();
+  const defaultPack = useMemo(() => new ImagePack(ct.session.userId ?? '', {}, undefined), [ct]);
+  const imagePackResult = useUserImagePack();
+  const imagePack = imagePackResult.value ?? defaultPack;
 
   const handleUpdate = useCallback(
     async (packContent: PackContent) => {
-      await mx.setAccountData(AccountDataEvent.PoniesUserEmotes, packContent);
+      const resp = await ct.requestAuthJSON(
+        putAccountData({
+          pathParams: { type: AccountDataType.PoniesUserEmotes, userId: ct.session.userId },
+          body: packContent,
+        })
+      );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
     },
-    [mx]
+    [ct]
   );
 
-  return <ImagePackContent imagePack={imagePack ?? defaultPack} canEdit onUpdate={handleUpdate} />;
+  return <ImagePackContent imagePack={imagePack} canEdit onUpdate={handleUpdate} />;
 }

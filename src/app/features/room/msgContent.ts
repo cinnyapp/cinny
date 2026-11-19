@@ -1,9 +1,23 @@
-import { IContent, MatrixClient, MsgType } from 'matrix-js-sdk';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import to from 'await-to-js';
+import { postUpload, PostUploadOK } from 'neurone/lib/api/matrix/media/v3/upload';
 import {
+  IAudioContent,
+  IFileContent,
+  IImageContent,
   IThumbnailContent,
+  IVideoContent,
   MATRIX_BLUR_HASH_PROPERTY_NAME,
   MATRIX_SPOILER_PROPERTY_NAME,
+  MsgType,
 } from '../../../types/matrix/common';
 import {
   getImageFileUrl,
@@ -14,12 +28,14 @@ import {
   loadVideoElement,
 } from '../../utils/dom';
 import { encryptFile, getImageInfo, getThumbnailContent, getVideoInfo } from '../../utils/matrix';
-import { TUploadItem } from '../../state/room/roomInputDrafts';
+import { UploadItem } from '../../state/room/roomInputDrafts';
 import { encodeBlurHash } from '../../utils/blurHash';
 import { scaleYDimension } from '../../utils/common';
+import { ClientContext } from '../../../client/context';
+import { getAuthUploadRequest } from '../../../client/request';
 
 const generateThumbnailContent = async (
-  mx: MatrixClient,
+  ct: ClientContext,
   img: HTMLImageElement | HTMLVideoElement,
   dimensions: [number, number],
   encrypt: boolean
@@ -30,7 +46,8 @@ const generateThumbnailContent = async (
   const thumbnailFile = encThumbData?.file ?? thumbnail;
   if (!thumbnailFile) throw new Error('Can not create thumbnail!');
 
-  const data = await mx.uploadContent(thumbnailFile);
+  const request = getAuthUploadRequest<PostUploadOK>(ct.session.baseUrl, ct.session.accessToken);
+  const [, data] = await request(postUpload({ body: thumbnailFile }));
   const thumbMxc = data?.content_uri;
   if (!thumbMxc) throw new Error('Failed when uploading thumbnail!');
   const thumbnailContent = getThumbnailContent({
@@ -44,15 +61,15 @@ const generateThumbnailContent = async (
 };
 
 export const getImageMsgContent = async (
-  mx: MatrixClient,
-  item: TUploadItem,
+  ct: ClientContext,
+  item: UploadItem,
   mxc: string
-): Promise<IContent> => {
+): Promise<IImageContent> => {
   const { file, originalFile, encInfo, metadata } = item;
   const [imgError, imgEl] = await to(loadImageElement(getImageFileUrl(originalFile)));
   if (imgError) console.warn(imgError);
 
-  const content: IContent = {
+  const content: IImageContent = {
     msgtype: MsgType.Image,
     filename: file.name,
     body: file.name,
@@ -78,16 +95,16 @@ export const getImageMsgContent = async (
 };
 
 export const getVideoMsgContent = async (
-  mx: MatrixClient,
-  item: TUploadItem,
+  ct: ClientContext,
+  item: UploadItem,
   mxc: string
-): Promise<IContent> => {
+): Promise<IVideoContent> => {
   const { file, originalFile, encInfo, metadata } = item;
 
   const [videoError, videoEl] = await to(loadVideoElement(getVideoFileUrl(originalFile)));
   if (videoError) console.warn(videoError);
 
-  const content: IContent = {
+  const content: IVideoContent = {
     msgtype: MsgType.Video,
     filename: file.name,
     body: file.name,
@@ -96,7 +113,7 @@ export const getVideoMsgContent = async (
   if (videoEl) {
     const [thumbError, thumbContent] = await to(
       generateThumbnailContent(
-        mx,
+        ct,
         videoEl,
         getThumbnailDimensions(videoEl.videoWidth, videoEl.videoHeight),
         !!encInfo
@@ -126,9 +143,9 @@ export const getVideoMsgContent = async (
   return content;
 };
 
-export const getAudioMsgContent = (item: TUploadItem, mxc: string): IContent => {
+export const getAudioMsgContent = (item: UploadItem, mxc: string): IAudioContent => {
   const { file, encInfo } = item;
-  const content: IContent = {
+  const content: IAudioContent = {
     msgtype: MsgType.Audio,
     filename: file.name,
     body: file.name,
@@ -148,9 +165,9 @@ export const getAudioMsgContent = (item: TUploadItem, mxc: string): IContent => 
   return content;
 };
 
-export const getFileMsgContent = (item: TUploadItem, mxc: string): IContent => {
+export const getFileMsgContent = (item: UploadItem, mxc: string): IFileContent => {
   const { file, encInfo } = item;
-  const content: IContent = {
+  const content: IFileContent = {
     msgtype: MsgType.File,
     body: file.name,
     filename: file.name,

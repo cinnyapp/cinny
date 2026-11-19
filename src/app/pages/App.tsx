@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React from 'react';
 import { Provider as JotaiProvider } from 'jotai';
 import { OverlayContainerProvider, PopOutContainerProvider, TooltipContainerProvider } from 'folds';
@@ -7,7 +16,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
 import { ClientConfigLoader } from '../components/ClientConfigLoader';
 import { ClientConfigProvider } from '../hooks/useClientConfig';
-import { ConfigConfigError, ConfigConfigLoading } from './ConfigConfig';
+import { ClientConfigError, ClientConfigLoading } from './ClientConfig';
 import { FeatureCheck } from './FeatureCheck';
 import { createRouter } from './Router';
 import { ScreenSizeProvider, useScreenSize } from '../hooks/useScreenSize';
@@ -28,9 +37,9 @@ function App() {
           <ScreenSizeProvider value={screenSize}>
             <FeatureCheck>
               <ClientConfigLoader
-                fallback={() => <ConfigConfigLoading />}
+                fallback={() => <ClientConfigLoading />}
                 error={(err, retry, ignore) => (
-                  <ConfigConfigError error={err} retry={retry} ignore={ignore} />
+                  <ClientConfigError error={err} retry={retry} ignore={ignore} />
                 )}
               >
                 {(clientConfig) => (

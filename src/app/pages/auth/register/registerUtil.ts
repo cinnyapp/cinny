@@ -1,13 +1,21 @@
-import to from 'await-to-js';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import {
-  IAuthData,
-  MatrixClient,
-  MatrixError,
-  RegisterRequest,
-  RegisterResponse,
-} from 'matrix-js-sdk';
-import { useEffect } from 'react';
+  postRegister,
+  PostRegisterBody,
+  PostRegisterOK,
+} from 'neurone/lib/api/matrix/client/v3/register';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
+import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSetAtom } from 'jotai';
 import { LoginPathSearchParams } from '../../paths';
 import { ErrorCode } from '../../../cs-errorcode';
 import {
@@ -16,7 +24,9 @@ import {
 } from '../../afterLoginRedirectPath';
 import { getHomePath, getLoginPath, withSearchParam } from '../../pathUtils';
 import { getMxIdLocalPart, getMxIdServer } from '../../../utils/matrix';
-import { setFallbackSession } from '../../../state/sessions';
+import { AuthResponse } from '../../../utils/matrix-uia';
+import { getJSONRequest } from '../../../../client/request';
+import { sessionsAtom, sessionUserIdAtom } from '../../../state/sessions';
 
 export enum RegisterError {
   UserTaken = 'UserTaken',
@@ -32,86 +42,117 @@ export enum RegisterError {
 
 export type CustomRegisterResponse = {
   baseUrl: string;
-  response: RegisterResponse;
+  response: PostRegisterOK;
 };
-export type RegisterResult = [IAuthData, undefined] | [undefined, CustomRegisterResponse];
+
+export type RegisterErrorData = {
+  error: RegisterError;
+  message?: string;
+};
+
+export type RegisterResult =
+  | [AuthResponse, undefined, undefined]
+  | [undefined, RegisterErrorData, undefined]
+  | [undefined, undefined, CustomRegisterResponse];
+
 export const register = async (
-  mx: MatrixClient,
-  requestData: RegisterRequest
+  baseUrl: string,
+  requestData: PostRegisterBody
 ): Promise<RegisterResult> => {
-  const [err, res] = await to<RegisterResponse, MatrixError>(mx.registerRequest(requestData));
+  const requestJSON = getJSONRequest(baseUrl);
+  const response = await requestJSON(postRegister({ body: requestData }));
+  const [registerError, registerResult] = await parseMatrixResp<PostRegisterOK>(response);
 
-  if (err) {
-    if (err.httpStatus === 401) {
-      const authData = err.data as IAuthData;
-      return [authData, undefined];
-    }
-
-    if (err.errcode === ErrorCode.M_USER_IN_USE) {
-      throw new MatrixError({
-        errcode: RegisterError.UserTaken,
-      });
-    }
-    if (err.errcode === ErrorCode.M_INVALID_USERNAME) {
-      throw new MatrixError({
-        errcode: RegisterError.UserInvalid,
-      });
-    }
-    if (err.errcode === ErrorCode.M_EXCLUSIVE) {
-      throw new MatrixError({
-        errcode: RegisterError.UserExclusive,
-      });
-    }
-    if (err.errcode === ErrorCode.M_WEAK_PASSWORD) {
-      throw new MatrixError({
-        errcode: RegisterError.PasswordWeak,
-        error: err.data.error,
-      });
-    }
-    if (err.errcode === ErrorCode.M_PASSWORD_TOO_SHORT) {
-      throw new MatrixError({
-        errcode: RegisterError.PasswordShort,
-        error: err.data.error,
-      });
+  if (registerError) {
+    if (registerError.status === 401) {
+      const authData = registerError.data as AuthResponse;
+      return [authData, undefined, undefined];
     }
 
-    if (err.httpStatus === 429) {
-      throw new MatrixError({
-        errcode: RegisterError.RateLimited,
-      });
+    if (registerError.data.errcode === ErrorCode.M_USER_IN_USE) {
+      return [
+        undefined,
+        { error: RegisterError.UserTaken, message: registerError.data.error },
+        undefined,
+      ];
+    }
+    if (registerError.data.errcode === ErrorCode.M_INVALID_USERNAME) {
+      return [
+        undefined,
+        { error: RegisterError.UserInvalid, message: registerError.data.error },
+        undefined,
+      ];
+    }
+    if (registerError.data.errcode === ErrorCode.M_EXCLUSIVE) {
+      return [
+        undefined,
+        { error: RegisterError.UserExclusive, message: registerError.data.error },
+        undefined,
+      ];
+    }
+    if (registerError.data.errcode === ErrorCode.M_WEAK_PASSWORD) {
+      return [
+        undefined,
+        { error: RegisterError.PasswordWeak, message: registerError.data.error },
+        undefined,
+      ];
+    }
+    if (registerError.data.errcode === ErrorCode.M_PASSWORD_TOO_SHORT) {
+      return [
+        undefined,
+        { error: RegisterError.PasswordShort, message: registerError.data.error },
+        undefined,
+      ];
     }
 
-    if (err.httpStatus === 400) {
-      throw new MatrixError({
-        errcode: RegisterError.InvalidRequest,
-      });
+    if (registerError.status === 429) {
+      return [
+        undefined,
+        { error: RegisterError.RateLimited, message: registerError.data.error },
+        undefined,
+      ];
     }
 
-    if (err.httpStatus === 403) {
-      throw new MatrixError({
-        errcode: RegisterError.Forbidden,
-      });
+    if (registerError.status === 400) {
+      return [
+        undefined,
+        { error: RegisterError.InvalidRequest, message: registerError.data.error },
+        undefined,
+      ];
     }
 
-    throw new MatrixError({
-      errcode: RegisterError.Unknown,
-      error: err.data.error,
-    });
+    if (registerError.status === 403) {
+      return [
+        undefined,
+        { error: RegisterError.Forbidden, message: registerError.data.error },
+        undefined,
+      ];
+    }
+
+    return [
+      undefined,
+      { error: RegisterError.Unknown, message: registerError.data.error },
+      undefined,
+    ];
   }
+
   return [
     undefined,
+    undefined,
     {
-      baseUrl: mx.baseUrl,
-      response: res,
+      baseUrl,
+      response: registerResult,
     },
   ];
 };
 
-export const useRegisterComplete = (data?: CustomRegisterResponse) => {
+export const useRegisterComplete = () => {
   const navigate = useNavigate();
+  const setSession = useSetAtom(sessionsAtom);
+  const setSessionUserId = useSetAtom(sessionUserIdAtom);
 
-  useEffect(() => {
-    if (data) {
+  const handleRegisterComplete = useCallback(
+    (data: CustomRegisterResponse) => {
       const { response, baseUrl } = data;
 
       const userId = response.user_id;
@@ -119,7 +160,19 @@ export const useRegisterComplete = (data?: CustomRegisterResponse) => {
       const deviceId = response.device_id;
 
       if (accessToken && deviceId) {
-        setFallbackSession(accessToken, deviceId, userId, baseUrl);
+        setSessionUserId(userId);
+        setSession({
+          type: 'PUT',
+          session: {
+            accessToken,
+            deviceId,
+            userId,
+            baseUrl,
+            expiresInMs: response.expires_in_ms,
+            refreshToken: response.refresh_token,
+          },
+        });
+
         const afterLoginRedirectPath = getAfterLoginRedirectPath();
         deleteAfterLoginRedirectPath();
         navigate(afterLoginRedirectPath ?? getHomePath(), { replace: true });
@@ -133,6 +186,9 @@ export const useRegisterComplete = (data?: CustomRegisterResponse) => {
           { replace: true }
         );
       }
-    }
-  }, [data, navigate]);
+    },
+    [navigate, setSession, setSessionUserId]
+  );
+
+  return handleRegisterComplete;
 };

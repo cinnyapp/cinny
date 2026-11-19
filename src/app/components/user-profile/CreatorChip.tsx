@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { Chip, config, Icon, Icons, Menu, MenuItem, PopOut, RectCords, Text } from 'folds';
 import React, { MouseEventHandler, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
@@ -5,7 +14,6 @@ import { isKeyHotkey } from 'is-hotkey';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { PowerColorBadge, PowerIcon } from '../power';
 import { getPowerTagIconSrc } from '../../hooks/useMemberPowerTag';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { stopPropagation } from '../../utils/keyboard';
 import { useRoom } from '../../hooks/useRoom';
@@ -14,18 +22,19 @@ import { useOpenRoomSettings } from '../../state/hooks/roomSettings';
 import { useOpenSpaceSettings } from '../../state/hooks/spaceSettings';
 import { SpaceSettingsPage } from '../../state/spaceSettings';
 import { RoomSettingsPage } from '../../state/roomSettings';
+import { useClient } from '../../hooks/useClient';
 
 export function CreatorChip() {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
-  const room = useRoom();
-  const space = useSpaceOptionally();
+  const roomId = useRoom();
+  const spaceId = useSpaceOptionally();
   const openRoomSettings = useOpenRoomSettings();
   const openSpaceSettings = useOpenSpaceSettings();
 
   const [cords, setCords] = useState<RectCords>();
   const tag = useRoomCreatorsTag();
-  const tagIconSrc = tag.icon && getPowerTagIconSrc(mx, useAuthentication, tag.icon);
+  const tagIconSrc = tag.icon && getPowerTagIconSrc(ct, useAuthentication, tag.icon);
 
   const open: MouseEventHandler<HTMLButtonElement> = (evt) => {
     setCords(evt.currentTarget.getBoundingClientRect());
@@ -58,14 +67,10 @@ export function CreatorChip() {
                 size="300"
                 radii="300"
                 onClick={() => {
-                  if (room.isSpaceRoom()) {
-                    openSpaceSettings(
-                      room.roomId,
-                      space?.roomId,
-                      SpaceSettingsPage.PermissionsPage
-                    );
+                  if (ct.spaceRooms.read.has(roomId)) {
+                    openSpaceSettings(roomId, spaceId, SpaceSettingsPage.PermissionsPage);
                   } else {
-                    openRoomSettings(room.roomId, space?.roomId, RoomSettingsPage.PermissionsPage);
+                    openRoomSettings(roomId, spaceId, RoomSettingsPage.PermissionsPage);
                   }
                   close();
                 }}

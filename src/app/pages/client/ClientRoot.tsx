@@ -1,194 +1,60 @@
-import {
-  Box,
-  Button,
-  config,
-  Dialog,
-  Icon,
-  IconButton,
-  Icons,
-  Menu,
-  MenuItem,
-  PopOut,
-  RectCords,
-  Spinner,
-  Text,
-} from 'folds';
-import { HttpApiEvent, HttpApiEventHandlerMap, MatrixClient } from 'matrix-js-sdk';
-import FocusTrap from 'focus-trap-react';
-import React, { MouseEventHandler, ReactNode, useCallback, useEffect, useState } from 'react';
-import {
-  clearCacheAndReload,
-  clearLoginData,
-  initClient,
-  logoutClient,
-  startClient,
-} from '../../../client/initMatrix';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import { Box, Button, config, Dialog, ProgressBar, Text, toRem } from 'folds';
+import React, { ReactNode, useCallback, useEffect } from 'react';
 import { SplashScreen } from '../../components/splash-screen';
 import { ServerConfigsLoader } from '../../components/ServerConfigsLoader';
 import { CapabilitiesProvider } from '../../hooks/useCapabilities';
 import { MediaConfigProvider } from '../../hooks/useMediaConfig';
-import { MatrixClientProvider } from '../../hooks/useMatrixClient';
 import { SpecVersions } from './SpecVersions';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
-import { useSyncState } from '../../hooks/useSyncState';
-import { stopPropagation } from '../../utils/keyboard';
 import { SyncStatus } from './SyncStatus';
 import { AuthMetadataProvider } from '../../hooks/useAuthMetadata';
-import { getFallbackSession } from '../../state/sessions';
+import { initializeClient, InitializeClientResult } from '../../../client/initialize';
+import { ClientContextProvider } from '../../hooks/useClient';
+import { InitialSyncSplashScreen } from './InitialSyncSplashScreen';
 import { AutoDiscovery } from './AutoDiscovery';
-
-function ClientRootLoading() {
-  return (
-    <SplashScreen>
-      <Box direction="Column" grow="Yes" alignItems="Center" justifyContent="Center" gap="400">
-        <Spinner variant="Secondary" size="600" />
-        <Text>Heating up</Text>
-      </Box>
-    </SplashScreen>
-  );
-}
-
-function ClientRootOptions({ mx }: { mx?: MatrixClient }) {
-  const [menuAnchor, setMenuAnchor] = useState<RectCords>();
-
-  const handleToggle: MouseEventHandler<HTMLButtonElement> = (evt) => {
-    const cords = evt.currentTarget.getBoundingClientRect();
-    setMenuAnchor((currentState) => {
-      if (currentState) return undefined;
-      return cords;
-    });
-  };
-
-  return (
-    <IconButton
-      style={{
-        position: 'absolute',
-        top: config.space.S100,
-        right: config.space.S100,
-      }}
-      variant="Background"
-      fill="None"
-      onClick={handleToggle}
-    >
-      <Icon size="200" src={Icons.VerticalDots} />
-      <PopOut
-        anchor={menuAnchor}
-        position="Bottom"
-        align="End"
-        offset={6}
-        content={
-          <FocusTrap
-            focusTrapOptions={{
-              initialFocus: false,
-              returnFocusOnDeactivate: false,
-              onDeactivate: () => setMenuAnchor(undefined),
-              clickOutsideDeactivates: true,
-              isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
-              isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
-              escapeDeactivates: stopPropagation,
-            }}
-          >
-            <Menu>
-              <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
-                {mx && (
-                  <MenuItem onClick={() => clearCacheAndReload(mx)} size="300" radii="300">
-                    <Text as="span" size="T300" truncate>
-                      Clear Cache and Reload
-                    </Text>
-                  </MenuItem>
-                )}
-                <MenuItem
-                  onClick={() => {
-                    if (mx) {
-                      logoutClient(mx);
-                      return;
-                    }
-                    clearLoginData();
-                  }}
-                  size="300"
-                  radii="300"
-                  variant="Critical"
-                  fill="None"
-                >
-                  <Text as="span" size="T300" truncate>
-                    Logout
-                  </Text>
-                </MenuItem>
-              </Box>
-            </Menu>
-          </FocusTrap>
-        }
-      />
-    </IconButton>
-  );
-}
-
-const useLogoutListener = (mx?: MatrixClient) => {
-  useEffect(() => {
-    const handleLogout: HttpApiEventHandlerMap[HttpApiEvent.SessionLoggedOut] = async () => {
-      mx?.stopClient();
-      await mx?.clearStores();
-      window.localStorage.clear();
-      window.location.reload();
-    };
-
-    mx?.on(HttpApiEvent.SessionLoggedOut, handleLogout);
-    return () => {
-      mx?.removeListener(HttpApiEvent.SessionLoggedOut, handleLogout);
-    };
-  }, [mx]);
-};
+import { ClientRootOptions } from './ClientRootOptions';
+import { FlickerText } from '../../styles/Animations.css';
+import { useSession } from '../../hooks/useSessions';
 
 type ClientRootProps = {
   children: ReactNode;
 };
 export function ClientRoot({ children }: ClientRootProps) {
-  const [loading, setLoading] = useState(true);
-  const { baseUrl, userId } = getFallbackSession() ?? {};
+  const session = useSession();
 
-  const [loadState, loadMatrix] = useAsyncCallback<MatrixClient, Error, []>(
-    useCallback(() => {
-      const session = getFallbackSession();
-      if (!session) {
-        throw new Error('No session Found!');
-      }
-      return initClient(session);
-    }, [])
+  const [initState, initialize] = useAsyncCallback<InitializeClientResult, Error, []>(
+    useCallback(() => initializeClient(session), [session])
   );
-  const mx = loadState.status === AsyncStatus.Success ? loadState.data : undefined;
-  const [startState, startMatrix] = useAsyncCallback<void, Error, [MatrixClient]>(
-    useCallback((m) => startClient(m), [])
-  );
-
-  useLogoutListener(mx);
 
   useEffect(() => {
-    if (loadState.status === AsyncStatus.Idle) {
-      loadMatrix();
+    if (initState.status === AsyncStatus.Idle) {
+      initialize();
     }
-  }, [loadState, loadMatrix]);
+  }, [initState, initialize]);
 
   useEffect(() => {
-    if (mx && !mx.clientRunning) {
-      startMatrix(mx);
-    }
-  }, [mx, startMatrix]);
+    const { ct, dispose } = initState.status === AsyncStatus.Success ? initState.data : {};
+    ct?.sync.controller.start();
 
-  useSyncState(
-    mx,
-    useCallback((state) => {
-      if (state === 'PREPARED') {
-        setLoading(false);
-      }
-    }, [])
-  );
+    return () => {
+      dispose?.();
+    };
+  }, [initState]);
 
   return (
-    <AutoDiscovery userId={userId!} baseUrl={baseUrl!}>
-      <SpecVersions baseUrl={baseUrl!}>
-        {mx && <SyncStatus mx={mx} />}
-        {loading && <ClientRootOptions mx={mx} />}
-        {(loadState.status === AsyncStatus.Error || startState.status === AsyncStatus.Error) && (
+    <AutoDiscovery userId={session.userId} baseUrl={session.baseUrl}>
+      {initState.status !== AsyncStatus.Success && <ClientRootOptions />}
+      <SpecVersions baseUrl={session.baseUrl}>
+        {initState.status === AsyncStatus.Error && (
           <SplashScreen>
             <Box
               direction="Column"
@@ -199,13 +65,8 @@ export function ClientRoot({ children }: ClientRootProps) {
             >
               <Dialog>
                 <Box direction="Column" gap="400" style={{ padding: config.space.S400 }}>
-                  {loadState.status === AsyncStatus.Error && (
-                    <Text>{`Failed to load. ${loadState.error.message}`}</Text>
-                  )}
-                  {startState.status === AsyncStatus.Error && (
-                    <Text>{`Failed to start. ${startState.error.message}`}</Text>
-                  )}
-                  <Button variant="Critical" onClick={mx ? () => startMatrix(mx) : loadMatrix}>
+                  <Text>{`Failed to load. ${initState.error.message}`}</Text>
+                  <Button variant="Critical" onClick={initialize}>
                     <Text as="span" size="B400">
                       Retry
                     </Text>
@@ -215,22 +76,48 @@ export function ClientRoot({ children }: ClientRootProps) {
             </Box>
           </SplashScreen>
         )}
-        {loading || !mx ? (
-          <ClientRootLoading />
-        ) : (
-          <MatrixClientProvider value={mx}>
-            <ServerConfigsLoader>
-              {(serverConfigs) => (
-                <CapabilitiesProvider value={serverConfigs.capabilities ?? {}}>
-                  <MediaConfigProvider value={serverConfigs.mediaConfig ?? {}}>
-                    <AuthMetadataProvider value={serverConfigs.authMetadata}>
-                      {children}
-                    </AuthMetadataProvider>
-                  </MediaConfigProvider>
-                </CapabilitiesProvider>
-              )}
-            </ServerConfigsLoader>
-          </MatrixClientProvider>
+        {(initState.status === AsyncStatus.Idle || initState.status === AsyncStatus.Loading) && (
+          <SplashScreen
+            footer={
+              <Box
+                style={{ maxWidth: toRem(280) }}
+                direction="Column"
+                grow="Yes"
+                alignItems="Center"
+                gap="200"
+              >
+                <Text className={FlickerText} size="T200" align="Center">
+                  Sparking...
+                </Text>
+                <ProgressBar
+                  style={{ width: '100%' }}
+                  variant="Secondary"
+                  size="300"
+                  radii="Pill"
+                  value={0}
+                  outlined
+                />
+              </Box>
+            }
+          />
+        )}
+        {initState.status === AsyncStatus.Success && (
+          <ClientContextProvider value={initState.data.ct}>
+            <InitialSyncSplashScreen>
+              <SyncStatus />
+              <ServerConfigsLoader>
+                {(serverConfigs) => (
+                  <CapabilitiesProvider value={serverConfigs.capabilities ?? {}}>
+                    <MediaConfigProvider value={serverConfigs.mediaConfig ?? {}}>
+                      <AuthMetadataProvider value={serverConfigs.authMetadata}>
+                        {children}
+                      </AuthMetadataProvider>
+                    </MediaConfigProvider>
+                  </CapabilitiesProvider>
+                )}
+              </ServerConfigsLoader>
+            </InitialSyncSplashScreen>
+          </ClientContextProvider>
         )}
       </SpecVersions>
     </AutoDiscovery>

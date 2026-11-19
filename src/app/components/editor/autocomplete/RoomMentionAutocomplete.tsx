@@ -1,30 +1,43 @@
-import React, { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect } from 'react';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import React, { KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useMemo } from 'react';
 import { Editor } from 'slate';
 import { Avatar, Icon, Icons, MenuItem, Text } from 'folds';
-import { JoinRule, MatrixClient } from 'matrix-js-sdk';
 import { useAtomValue } from 'jotai';
 
 import { createMentionElement, moveCursor, replaceWithElement } from '../utils';
-import { getDirectRoomAvatarUrl } from '../../../utils/room';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { AutocompleteQuery } from './autocompleteQuery';
 import { AutocompleteMenu } from './AutocompleteMenu';
-import { getMxIdServer, isRoomAlias } from '../../../utils/matrix';
+import { getMxIdServer, isRoomAlias, isRoomId } from '../../../utils/matrix';
 import { UseAsyncSearchOptions, useAsyncSearch } from '../../../hooks/useAsyncSearch';
 import { onTabPress } from '../../../utils/keyboard';
 import { useKeyDown } from '../../../hooks/useKeyDown';
 import { mDirectAtom } from '../../../state/mDirectList';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { factoryRoomIdByActivity } from '../../../utils/sort';
+import { factoryRoomIdByAtoZ } from '../../../utils/sort';
 import { RoomAvatar, RoomIcon } from '../../room-avatar';
 import { getViaServers } from '../../../plugins/via-servers';
+import { useClient } from '../../../hooks/useClient';
+import { useRoomHeroes } from '../../../hooks/storage/useRoomHeros';
+import { useGetRoomName } from '../../../hooks/storage/useGetRoomName';
+import { useGetRoomAvatar } from '../../../hooks/storage/useGetRoomAvatar';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
+import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+import { useSetting } from '../../../state/hooks/settings';
 
 type MentionAutoCompleteHandler = (roomAliasOrId: string, name: string) => void;
 
-const roomAliasFromQueryText = (mx: MatrixClient, text: string) =>
+const roomAliasFromQueryText = (myUserId: string, text: string) =>
   isRoomAlias(`#${text}`)
     ? `#${text}`
-    : `#${text}${text.endsWith(':') ? '' : ':'}${getMxIdServer(mx.getUserId() ?? '')}`;
+    : `#${text}${text.endsWith(':') ? '' : ':'}${getMxIdServer(myUserId)}`;
 
 function UnknownRoomMentionItem({
   query,
@@ -33,8 +46,8 @@ function UnknownRoomMentionItem({
   query: AutocompleteQuery<string>;
   handleAutocomplete: MentionAutoCompleteHandler;
 }) {
-  const mx = useMatrixClient();
-  const roomAlias: string = roomAliasFromQueryText(mx, query.text);
+  const ct = useClient();
+  const roomAlias: string = roomAliasFromQueryText(ct.session.userId, query.text);
 
   const handleSelect = () => handleAutocomplete(roomAlias, roomAlias);
 
@@ -76,22 +89,31 @@ export function RoomMentionAutocomplete({
   query,
   requestClose,
 }: RoomMentionAutocompleteProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
+  const useAuthentication = useMediaAuthentication();
   const mDirects = useAtomValue(mDirectAtom);
+  const rooms = useAtomValue(allRoomsAtom);
+  const [showAvatar] = useSetting('roomListShowAvatar');
 
-  const allRooms = useAtomValue(allRoomsAtom).sort(factoryRoomIdByActivity(mx));
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
 
+  const allRooms = useMemo(
+    () => Array.from(rooms).sort(factoryRoomIdByAtoZ(getRoomName)),
+    [rooms, getRoomName]
+  );
   const [result, search, resetSearch] = useAsyncSearch(
     allRooms,
     useCallback(
       (rId) => {
-        const r = mx.getRoom(rId);
-        if (!r) return 'Unknown Room';
-        const alias = r.getCanonicalAlias();
-        if (alias) return [r.name, alias];
-        return r.name;
+        const name = getRoomName(rId);
+        if (!name) return 'Unknown Room';
+        const alias = ct.roomToAlias.read.get(rId);
+        if (alias) return [name, alias];
+        return name;
       },
-      [mx]
+      [ct, getRoomName]
     ),
     SEARCH_OPTIONS
   );
@@ -104,12 +126,14 @@ export function RoomMentionAutocomplete({
   }, [query.text, search, resetSearch]);
 
   const handleAutocomplete: MentionAutoCompleteHandler = (roomAliasOrId, name) => {
-    const mentionRoom = mx.getRoom(roomAliasOrId);
-    const viaServers = mentionRoom ? getViaServers(mentionRoom) : undefined;
+    const creators = isRoomId(roomAliasOrId)
+      ? ct.roomToCreators.read.get(roomAliasOrId)
+      : undefined;
+    const viaServers = creators ? getViaServers(creators) : undefined;
     const mentionEl = createMentionElement(
       roomAliasOrId,
       name.startsWith('#') ? name : `#${name}`,
-      roomId === roomAliasOrId || mx.getRoom(roomId)?.getCanonicalAlias() === roomAliasOrId,
+      roomId === roomAliasOrId || ct.roomToAlias.read.get(roomId) === roomAliasOrId,
       undefined,
       viaServers
     );
@@ -121,14 +145,13 @@ export function RoomMentionAutocomplete({
   useKeyDown(window, (evt: KeyboardEvent) => {
     onTabPress(evt, () => {
       if (autoCompleteRoomIds.length === 0) {
-        const alias = roomAliasFromQueryText(mx, query.text);
+        const alias = roomAliasFromQueryText(ct.session.userId, query.text);
         handleAutocomplete(alias, alias);
         return;
       }
       const rId = autoCompleteRoomIds[0];
-      const r = mx.getRoom(rId);
-      const name = r?.name ?? rId;
-      handleAutocomplete(r?.getCanonicalAlias() ?? rId, name);
+      const name = getRoomName(rId) ?? 'Unknown';
+      handleAutocomplete(ct.roomToAlias.read.get(rId) ?? rId, name);
     });
   });
 
@@ -138,11 +161,20 @@ export function RoomMentionAutocomplete({
         <UnknownRoomMentionItem query={query} handleAutocomplete={handleAutocomplete} />
       ) : (
         autoCompleteRoomIds.map((rId) => {
-          const room = mx.getRoom(rId);
-          if (!room) return null;
-          const dm = mDirects.has(room.roomId);
+          const dm = mDirects.has(rId);
+          const isSpace = ct.spaceRooms.read.has(rId);
+          const name = getRoomName(rId) ?? 'Unknown';
+          const alias = ct.roomToAlias.read.get(rId);
+          const avatarMxc = getRoomAvatar(rId);
+          const avatar = avatarMxc
+            ? mxcToHttp(ct.session.baseUrl, avatarMxc, useAuthentication).thumbnail({
+                width: 32,
+                height: 32,
+                method: 'crop',
+              })
+            : undefined;
 
-          const handleSelect = () => handleAutocomplete(room.getCanonicalAlias() ?? rId, room.name);
+          const handleSelect = () => handleAutocomplete(alias ?? rId, name);
 
           return (
             <MenuItem
@@ -155,33 +187,37 @@ export function RoomMentionAutocomplete({
               onClick={handleSelect}
               after={
                 <Text size="T200" priority="300" truncate>
-                  {room.getCanonicalAlias() ?? ''}
+                  {alias}
                 </Text>
               }
               before={
-                <Avatar size="200">
-                  {dm ? (
+                <Avatar size="200" radii={isSpace ? '300' : '400'}>
+                  {showAvatar || dm || isSpace ? (
                     <RoomAvatar
-                      roomId={room.roomId}
-                      src={getDirectRoomAvatarUrl(mx, room)}
-                      alt={room.name}
+                      roomId={rId}
+                      src={avatar}
+                      alt={name}
                       renderFallback={() => (
                         <RoomIcon
                           size="50"
-                          joinRule={room.getJoinRule() ?? JoinRule.Restricted}
-                          roomType={room.getType()}
+                          joinRule={ct.roomToJoinRule.read.get(rId)}
+                          roomType={ct.roomToType.read.get(rId)}
                           filled
                         />
                       )}
                     />
                   ) : (
-                    <RoomIcon size="100" joinRule={room.getJoinRule()} roomType={room.getType()} />
+                    <RoomIcon
+                      size="100"
+                      joinRule={ct.roomToJoinRule.read.get(rId)}
+                      roomType={ct.roomToType.read.get(rId)}
+                    />
                   )}
                 </Avatar>
               }
             >
               <Text style={{ flexGrow: 1 }} size="B400" truncate>
-                {room.name}
+                {name}
               </Text>
             </MenuItem>
           );

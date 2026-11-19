@@ -1,14 +1,27 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import {
   Avatar,
+  Badge,
   Box,
   Button,
+  Chip,
   Dialog,
   Header,
   Icon,
   IconButton,
+  IconSrc,
   Icons,
   Input,
   Line,
+  MainColor,
   Menu,
   MenuItem,
   Modal,
@@ -19,6 +32,8 @@ import {
   RectCords,
   Spinner,
   Text,
+  Tooltip,
+  TooltipProvider,
   as,
   color,
   config,
@@ -28,38 +43,33 @@ import React, {
   MouseEventHandler,
   ReactNode,
   useCallback,
+  useEffect,
+  useId,
   useState,
 } from 'react';
 import FocusTrap from 'focus-trap-react';
 import { useHover, useFocusWithin } from 'react-aria';
-import { MatrixEvent, Room } from 'matrix-js-sdk';
-import { Relations } from 'matrix-js-sdk/lib/models/relations';
+import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
+import {
+  postReportEventId,
+  putRedact,
+  putStateEvent,
+} from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
 import classNames from 'classnames';
-import { RoomPinnedEventsEventContent } from 'matrix-js-sdk/lib/types';
 import {
   AvatarBase,
   BubbleLayout,
   CompactLayout,
+  EventContent,
   MessageBase,
   ModernLayout,
   Time,
   Username,
   UsernameBold,
 } from '../../../components/message';
-import {
-  canEditEvent,
-  getEventEdits,
-  getMemberAvatarMxc,
-  getMemberDisplayName,
-} from '../../../utils/room';
-import {
-  getCanonicalAliasOrRoomId,
-  getMxIdLocalPart,
-  isRoomAlias,
-  mxcUrlToHttp,
-} from '../../../utils/matrix';
+import { canEditEvent, getReactionGroups } from '../../../utils/room';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
 import * as css from './styles.css';
 import { EventReaders } from '../../../components/event-readers';
@@ -67,7 +77,6 @@ import { TextViewer } from '../../../components/text-viewer';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { EmojiBoard } from '../../../components/emoji-board';
 import { ReactionViewer } from '../reaction-viewer';
-import { MessageEditor } from './MessageEditor';
 import { UserAvatar } from '../../../components/user-avatar';
 import { copyToClipboard } from '../../../utils/dom';
 import { stopPropagation } from '../../../utils/keyboard';
@@ -75,10 +84,18 @@ import { getMatrixToRoomEvent } from '../../../plugins/matrix-to';
 import { getViaServers } from '../../../plugins/via-servers';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { useRoomPinnedEvents } from '../../../hooks/useRoomPinnedEvents';
-import { MemberPowerTag, StateEvent } from '../../../../types/matrix/room';
+import { MemberPowerTag, MessageEvent, StateEventType } from '../../../../types/matrix/room';
 import { PowerIcon } from '../../../components/power';
 import colorMXID from '../../../../util/colorMXID';
 import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
+import { useClient } from '../../../hooks/useClient';
+import { useRoom } from '../../../hooks/useRoom';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
+import { ReactionContent } from '../../../../types/matrix/common';
+import { MemberChangeType, RoomMembersAPI } from '../../../hooks/useRoomMembers';
+import { useRoomCreators } from '../../../hooks/useRoomCreators';
+import { usePowerLevelsContext } from '../../../hooks/usePowerLevels';
+import { useCanMessage } from '../hooks/useCanMessage';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -87,10 +104,10 @@ type MessageQuickReactionsProps = {
 };
 export const MessageQuickReactions = as<'div', MessageQuickReactionsProps>(
   ({ onReaction, ...props }, ref) => {
-    const mx = useMatrixClient();
-    const recentEmojis = useRecentEmoji(mx, 4);
+    const recentEmojisResult = useRecentEmoji(4);
+    const recentEmojis = recentEmojisResult.value;
 
-    if (recentEmojis.length === 0) return <span />;
+    if (!recentEmojis || recentEmojis.length === 0) return <span />;
     return (
       <>
         <Box
@@ -101,7 +118,7 @@ export const MessageQuickReactions = as<'div', MessageQuickReactionsProps>(
           {...props}
           ref={ref}
         >
-          {recentEmojis.map((emoji) => (
+          {recentEmojis?.map((emoji) => (
             <IconButton
               key={emoji.unicode}
               className={css.MessageQuickReaction}
@@ -125,11 +142,10 @@ export const MessageQuickReactions = as<'div', MessageQuickReactionsProps>(
 export const MessageAllReactionItem = as<
   'button',
   {
-    room: Room;
-    relations: Relations;
+    reactionEvents: MessageEventWithoutRoomId<ReactionContent>[];
     onClose?: () => void;
   }
->(({ room, relations, onClose, ...props }, ref) => {
+>(({ reactionEvents, onClose, ...props }, ref) => {
   const [open, setOpen] = useState(false);
 
   const handleClose = () => {
@@ -158,8 +174,7 @@ export const MessageAllReactionItem = as<
           >
             <Modal variant="Surface" size="300">
               <ReactionViewer
-                room={room}
-                relations={relations}
+                reactions={getReactionGroups(reactionEvents)}
                 requestClose={() => setOpen(false)}
               />
             </Modal>
@@ -186,11 +201,11 @@ export const MessageAllReactionItem = as<
 export const MessageReadReceiptItem = as<
   'button',
   {
-    room: Room;
     eventId: string;
+    threadId?: string;
     onClose?: () => void;
   }
->(({ room, eventId, onClose, ...props }, ref) => {
+>(({ eventId, threadId, onClose, ...props }, ref) => {
   const [open, setOpen] = useState(false);
 
   const handleClose = () => {
@@ -211,7 +226,7 @@ export const MessageReadReceiptItem = as<
             }}
           >
             <Modal variant="Surface" size="300">
-              <EventReaders room={room} eventId={eventId} requestClose={handleClose} />
+              <EventReaders eventId={eventId} threadId={threadId} requestClose={handleClose} />
             </Modal>
           </FocusTrap>
         </OverlayCenter>
@@ -236,77 +251,82 @@ export const MessageReadReceiptItem = as<
 export const MessageSourceCodeItem = as<
   'button',
   {
-    room: Room;
-    mEvent: MatrixEvent;
+    event: MessageEventWithoutRoomId;
     onClose?: () => void;
   }
->(({ room, mEvent, onClose, ...props }, ref) => {
-  const [open, setOpen] = useState(false);
+>(({ event, onClose, ...props }, ref) => {
+  const ct = useClient();
+  const roomId = useRoom();
+  const [sourceText, setSourceText] = useState<string>();
 
-  const getContent = (evt: MatrixEvent) =>
-    evt.isEncrypted()
-      ? {
-          [`<== DECRYPTED_EVENT ==>`]: evt.getEffectiveEvent(),
-          [`<== ORIGINAL_EVENT ==>`]: evt.event,
-        }
-      : evt.event;
+  const handleOpen = async () => {
+    const timeline = ct.roomToTimeline.read.get(roomId);
+    const editEvents = timeline?.relations.edits.eventToRelations.read.get(event.event_id);
 
-  const getText = (): string => {
-    const evtId = mEvent.getId()!;
-    const evtTimeline = room.getTimelineForEvent(evtId);
-    const edits =
-      evtTimeline &&
-      getEventEdits(evtTimeline.getTimelineSet(), evtId, mEvent.getType())?.getRelations();
+    const getEventFormat = async (evt: MessageEventWithoutRoomId) =>
+      evt.type === MessageEvent.RoomMessageEncrypted
+        ? {
+            [`<== DECRYPTED_EVENT ==>`]: await ct.decryption.tryDecryptEvent(roomId, event),
+            [`<== ORIGINAL_EVENT ==>`]: evt,
+          }
+        : evt;
 
-    if (!edits) return JSON.stringify(getContent(mEvent), null, 2);
+    if (!editEvents) {
+      setSourceText(JSON.stringify(await getEventFormat(event), null, 2));
+      return;
+    }
 
     const content: Record<string, unknown> = {
-      '<== MAIN_EVENT ==>': getContent(mEvent),
+      '<== MAIN_EVENT ==>': await getEventFormat(event),
     };
 
-    edits.forEach((editEvt, index) => {
-      content[`<== REPLACEMENT_EVENT_${index + 1} ==>`] = getContent(editEvt);
-    });
+    for (let idx = 0; idx < editEvents.length; idx += 1) {
+      const editedEvent = editEvents[idx];
+      // eslint-disable-next-line no-await-in-loop
+      content[`<== REPLACEMENT_EVENT_${idx + 1} ==>`] = await getEventFormat(editedEvent);
+    }
 
-    return JSON.stringify(content, null, 2);
+    setSourceText(JSON.stringify(content, null, 2));
   };
 
   const handleClose = () => {
-    setOpen(false);
+    setSourceText(undefined);
     onClose?.();
   };
 
   return (
     <>
-      <Overlay open={open} backdrop={<OverlayBackdrop />}>
-        <OverlayCenter>
-          <FocusTrap
-            focusTrapOptions={{
-              initialFocus: false,
-              onDeactivate: handleClose,
-              clickOutsideDeactivates: true,
-              escapeDeactivates: stopPropagation,
-            }}
-          >
-            <Modal variant="Surface" size="500">
-              <TextViewer
-                name="Source Code"
-                langName="json"
-                text={getText()}
-                requestClose={handleClose}
-              />
-            </Modal>
-          </FocusTrap>
-        </OverlayCenter>
-      </Overlay>
+      {typeof sourceText === 'string' && (
+        <Overlay open backdrop={<OverlayBackdrop />}>
+          <OverlayCenter>
+            <FocusTrap
+              focusTrapOptions={{
+                initialFocus: false,
+                onDeactivate: handleClose,
+                clickOutsideDeactivates: true,
+                escapeDeactivates: stopPropagation,
+              }}
+            >
+              <Modal variant="Surface" size="500">
+                <TextViewer
+                  name="Source Code"
+                  langName="json"
+                  text={sourceText}
+                  requestClose={handleClose}
+                />
+              </Modal>
+            </FocusTrap>
+          </OverlayCenter>
+        </Overlay>
+      )}
       <MenuItem
         size="300"
         after={<Icon size="100" src={Icons.BlockCode} />}
         radii="300"
-        onClick={() => setOpen(true)}
+        onClick={handleOpen}
         {...props}
         ref={ref}
-        aria-pressed={open}
+        aria-pressed={!!sourceText}
       >
         <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
           View Source
@@ -319,17 +339,20 @@ export const MessageSourceCodeItem = as<
 export const MessageCopyLinkItem = as<
   'button',
   {
-    room: Room;
-    mEvent: MatrixEvent;
+    eventId: string;
     onClose?: () => void;
   }
->(({ room, mEvent, onClose, ...props }, ref) => {
-  const mx = useMatrixClient();
+>(({ eventId, onClose, ...props }, ref) => {
+  const ct = useClient();
+  const roomId = useRoom();
+  const creators = useRoomCreators(roomId);
+  const powerLevels = usePowerLevelsContext();
 
   const handleCopy = () => {
-    const eventId = mEvent.getId();
+    const alias = ct.roomToAlias.read.get(roomId);
+    const viaServers = alias ? undefined : getViaServers(creators, powerLevels);
     if (!eventId) return;
-    copyToClipboard(getMatrixToRoomEvent(room.roomId, eventId, getViaServers(room)));
+    copyToClipboard(getMatrixToRoomEvent(alias ?? roomId, eventId, viaServers));
     onClose?.();
   };
 
@@ -352,24 +375,28 @@ export const MessageCopyLinkItem = as<
 export const MessagePinItem = as<
   'button',
   {
-    room: Room;
-    mEvent: MatrixEvent;
+    eventId: string;
     onClose?: () => void;
   }
->(({ room, mEvent, onClose, ...props }, ref) => {
-  const mx = useMatrixClient();
-  const pinnedEvents = useRoomPinnedEvents(room);
-  const isPinned = pinnedEvents.includes(mEvent.getId() ?? '');
+>(({ eventId, onClose, ...props }, ref) => {
+  const ct = useClient();
+  const roomId = useRoom();
+  const pinnedEvents = useRoomPinnedEvents(roomId);
+  const isPinned = pinnedEvents.includes(eventId);
 
   const handlePin = () => {
-    const eventId = mEvent.getId();
-    const pinContent: RoomPinnedEventsEventContent = {
+    const pinContent = {
       pinned: Array.from(pinnedEvents).filter((id) => id !== eventId),
     };
     if (!isPinned && eventId) {
       pinContent.pinned.push(eventId);
     }
-    mx.sendStateEvent(room.roomId, StateEvent.RoomPinnedEvents as any, pinContent);
+    ct.requestAuthJSON(
+      putStateEvent({
+        pathParams: { roomId, eventType: StateEventType.RoomPinnedEvents, stateKey: '' },
+        body: pinContent,
+      })
+    );
     onClose?.();
   };
 
@@ -392,25 +419,37 @@ export const MessagePinItem = as<
 export const MessageDeleteItem = as<
   'button',
   {
-    room: Room;
-    mEvent: MatrixEvent;
+    eventId: string;
     onClose?: () => void;
   }
->(({ room, mEvent, onClose, ...props }, ref) => {
-  const mx = useMatrixClient();
+>(({ eventId, onClose, ...props }, ref) => {
+  const ct = useClient();
+  const roomId = useRoom();
   const [open, setOpen] = useState(false);
 
   const [deleteState, deleteMessage] = useAsyncCallback(
     useCallback(
-      (eventId: string, reason?: string) =>
-        mx.redactEvent(room.roomId, eventId, undefined, reason ? { reason } : undefined),
-      [mx, room]
+      async (reason?: string) => {
+        const resp = await ct.requestAuthJSON(
+          putRedact({
+            pathParams: { roomId, eventId, txnId: ct.getTxnId() },
+            body: {
+              reason,
+            },
+          })
+        );
+
+        const [err] = await parseMatrixResp(resp);
+        if (err) {
+          throw new Error(printMatrixError(err));
+        }
+      },
+      [ct, roomId, eventId]
     )
   );
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();
-    const eventId = mEvent.getId();
     if (
       !eventId ||
       deleteState.status === AsyncStatus.Loading ||
@@ -420,7 +459,7 @@ export const MessageDeleteItem = as<
     const target = evt.target as HTMLFormElement | undefined;
     const reasonInput = target?.reasonInput as HTMLInputElement | undefined;
     const reason = reasonInput && reasonInput.value.trim();
-    deleteMessage(eventId, reason);
+    deleteMessage(reason);
   };
 
   const handleClose = () => {
@@ -521,25 +560,37 @@ export const MessageDeleteItem = as<
 export const MessageReportItem = as<
   'button',
   {
-    room: Room;
-    mEvent: MatrixEvent;
+    eventId: string;
     onClose?: () => void;
   }
->(({ room, mEvent, onClose, ...props }, ref) => {
-  const mx = useMatrixClient();
+>(({ eventId, onClose, ...props }, ref) => {
+  const ct = useClient();
+  const roomId = useRoom();
   const [open, setOpen] = useState(false);
 
   const [reportState, reportMessage] = useAsyncCallback(
     useCallback(
-      (eventId: string, score: number, reason: string) =>
-        mx.reportEvent(room.roomId, eventId, score, reason),
-      [mx, room]
+      async (score: number, reason: string) => {
+        const resp = await ct.requestAuthJSON(
+          postReportEventId({
+            pathParams: { roomId, eventId },
+            body: {
+              reason,
+              score,
+            },
+          })
+        );
+        const [err] = await parseMatrixResp(resp);
+        if (err) {
+          throw new Error(printMatrixError(err));
+        }
+      },
+      [ct, roomId, eventId]
     )
   );
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();
-    const eventId = mEvent.getId();
     if (
       !eventId ||
       reportState.status === AsyncStatus.Loading ||
@@ -550,7 +601,7 @@ export const MessageReportItem = as<
     const reasonInput = target?.reasonInput as HTMLInputElement | undefined;
     const reason = reasonInput && reasonInput.value.trim();
     if (reasonInput) reasonInput.value = '';
-    reportMessage(eventId, reason ? -100 : -50, reason || 'No reason provided');
+    reportMessage(reason ? -100 : -50, reason || 'No reason provided');
   };
 
   const handleClose = () => {
@@ -652,29 +703,376 @@ export const MessageReportItem = as<
   );
 });
 
+type MemberChangeBadgeProps = {
+  memberChange: MemberChangeType;
+  isNewChange: boolean;
+  bubbleLayout?: boolean;
+};
+
+export function MemberChangeBadge({
+  memberChange,
+  isNewChange,
+  bubbleLayout = false,
+}: MemberChangeBadgeProps) {
+  let text: string | undefined;
+  let iconSrc: IconSrc | undefined;
+  let variant: MainColor = 'Success';
+
+  switch (memberChange) {
+    case 'kick':
+      text = 'Kicked';
+      iconSrc = Icons.ArrowLeft;
+      variant = 'Warning';
+      break;
+
+    case 'leave':
+      text = 'Left';
+      iconSrc = Icons.ArrowLeft;
+      variant = 'Secondary';
+      break;
+
+    case 'ban':
+      text = 'Banned';
+      iconSrc = Icons.NoEntry;
+      variant = 'Critical';
+      break;
+
+    case 'invite':
+      text = 'Invited';
+      iconSrc = Icons.Mail;
+      variant = 'Success';
+      break;
+
+    case 'knock':
+      text = 'Knocks';
+      iconSrc = Icons.MailPlus;
+      variant = 'Success';
+      break;
+
+    case 'join':
+      if (isNewChange) {
+        text = 'Newly Joined';
+        iconSrc = Icons.ArrowRight;
+        variant = 'Success';
+      }
+      break;
+    case 'nameChange':
+      if (isNewChange) {
+        text = 'Name Changed';
+        iconSrc = Icons.Mention;
+        variant = 'Primary';
+      }
+      break;
+    case 'avatarChange':
+      if (isNewChange) {
+        text = 'Avatar Changed';
+        iconSrc = Icons.Photo;
+        variant = 'Primary';
+      }
+      break;
+    case 'profileChange':
+      if (isNewChange) {
+        text = 'Profile Changed';
+        iconSrc = Icons.User;
+        variant = 'Primary';
+      }
+      break;
+
+    default:
+      break;
+  }
+
+  if (!text || !iconSrc) return null;
+
+  return (
+    <TooltipProvider
+      position="Top"
+      offset={4}
+      tooltip={
+        <Tooltip variant={variant}>
+          <Text size="L400">{text}</Text>
+        </Tooltip>
+      }
+    >
+      {(triggerRef) => (
+        <Badge
+          ref={triggerRef}
+          className={css.MemberChangeBadge({ bubbleLayout })}
+          size="500"
+          variant={variant}
+          fill="Soft"
+          radii="300"
+        >
+          <Icon size="50" src={iconSrc} />
+        </Badge>
+      )}
+    </TooltipProvider>
+  );
+}
+
+export function MessageAvatar({
+  userId,
+  displayName,
+  avatarUrl,
+  onUserClick,
+  bubbleLayout,
+  memberChange,
+  isNewChange,
+}: {
+  userId: string;
+  displayName: string;
+  avatarUrl?: string;
+  onUserClick?: MouseEventHandler<HTMLButtonElement>;
+  bubbleLayout?: boolean;
+  memberChange?: MemberChangeType;
+  isNewChange: boolean;
+}) {
+  const ct = useClient();
+  const useAuthentication = useMediaAuthentication();
+
+  return (
+    <AvatarBase className={bubbleLayout ? css.BubbleAvatarBase : undefined}>
+      {memberChange && (
+        <MemberChangeBadge
+          memberChange={memberChange}
+          isNewChange={isNewChange}
+          bubbleLayout={bubbleLayout}
+        />
+      )}
+      <Avatar
+        className={css.MessageAvatar}
+        as="button"
+        size="300"
+        data-user-id={userId}
+        onClick={onUserClick}
+      >
+        <UserAvatar
+          userId={userId}
+          src={
+            avatarUrl
+              ? mxcToHttp(ct.session.baseUrl, avatarUrl, useAuthentication).thumbnail({
+                  width: 48,
+                  height: 48,
+                  method: 'crop',
+                })
+              : undefined
+          }
+          alt={displayName}
+          renderFallback={() => <Icon size="200" src={Icons.User} filled />}
+        />
+      </Avatar>
+    </AvatarBase>
+  );
+}
+
+export function MessageUsername({
+  userId,
+  displayName,
+  onUserClick,
+  onUsernameClick,
+  messageLayout,
+  memberPowerTag,
+  accessibleTagColors,
+  legacyUsernameColor,
+}: {
+  userId: string;
+  displayName: string;
+  onUserClick?: MouseEventHandler<HTMLButtonElement>;
+  onUsernameClick?: MouseEventHandler<HTMLButtonElement>;
+  messageLayout: MessageLayout;
+  memberPowerTag?: MemberPowerTag;
+  accessibleTagColors?: Map<string, string>;
+  legacyUsernameColor?: boolean;
+}) {
+  const ct = useClient();
+  const useAuthentication = useMediaAuthentication();
+
+  const tagColor = memberPowerTag?.color
+    ? accessibleTagColors?.get(memberPowerTag.color)
+    : undefined;
+
+  const tagIconSrc = memberPowerTag?.icon
+    ? getPowerTagIconSrc(ct, useAuthentication, memberPowerTag.icon)
+    : undefined;
+
+  const usernameColor = legacyUsernameColor ? colorMXID(userId) : tagColor;
+
+  return (
+    <Box alignItems="Center" gap="200">
+      <Username
+        as="button"
+        style={{ color: usernameColor }}
+        data-user-id={userId}
+        onContextMenu={onUserClick}
+        onClick={onUsernameClick}
+      >
+        <Text as="span" size={messageLayout === MessageLayout.Bubble ? 'T300' : 'T400'} truncate>
+          <UsernameBold>{displayName}</UsernameBold>
+        </Text>
+      </Username>
+      {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
+    </Box>
+  );
+}
+
+type MessageLayoutProps = {
+  avatar?: ReactNode;
+  username?: ReactNode;
+  time?: ReactNode;
+  collapse: boolean;
+  messageLayout: MessageLayout;
+  onContextMenu?: MouseEventHandler<HTMLDivElement>;
+  children: ReactNode;
+};
+export function RenderMessageLayout({
+  collapse,
+  messageLayout,
+  avatar,
+  username,
+  time,
+  onContextMenu,
+  children,
+}: MessageLayoutProps) {
+  const headerJSX = !collapse && (
+    <Box
+      gap="300"
+      direction={messageLayout === MessageLayout.Compact ? 'RowReverse' : 'Row'}
+      justifyContent="SpaceBetween"
+      alignItems="Baseline"
+      grow="Yes"
+    >
+      {username}
+      <Box shrink="No" gap="100">
+        {time}
+      </Box>
+    </Box>
+  );
+
+  return (
+    <>
+      {messageLayout === MessageLayout.Compact && (
+        <CompactLayout before={headerJSX} onContextMenu={onContextMenu}>
+          {children}
+        </CompactLayout>
+      )}
+      {messageLayout === MessageLayout.Bubble && (
+        <BubbleLayout before={avatar} header={headerJSX} onContextMenu={onContextMenu}>
+          {children}
+        </BubbleLayout>
+      )}
+      {messageLayout !== MessageLayout.Compact && messageLayout !== MessageLayout.Bubble && (
+        <ModernLayout before={avatar} onContextMenu={onContextMenu}>
+          {headerJSX}
+          {children}
+        </ModernLayout>
+      )}
+    </>
+  );
+}
+
+function OptionButton({
+  tooltip,
+  iconSrc,
+  onClick,
+  eventId,
+  senderId,
+  pressed,
+}: {
+  tooltip: string;
+  iconSrc: IconSrc;
+  onClick?: MouseEventHandler<HTMLButtonElement>;
+  eventId: string;
+  senderId: string;
+  pressed?: boolean;
+}) {
+  const tooltipId = useId();
+
+  return (
+    <TooltipProvider
+      position="Top"
+      delay={0}
+      tooltip={
+        <Tooltip variant="Surface">
+          <Text size="L400" id={tooltipId}>
+            {tooltip}
+          </Text>
+        </Tooltip>
+      }
+    >
+      {(anchorRef) => (
+        <IconButton
+          ref={anchorRef}
+          onClick={onClick}
+          data-event-id={eventId}
+          data-sender-id={senderId}
+          aria-label={tooltip}
+          aria-describedby={tooltipId}
+          aria-pressed={pressed}
+          variant="Surface"
+          size="300"
+          radii="300"
+        >
+          <Icon src={iconSrc} size="100" />
+        </IconButton>
+      )}
+    </TooltipProvider>
+  );
+}
+
+function EditButtonHost({
+  event,
+  children,
+}: {
+  event: MessageEventWithoutRoomId;
+  children: ReactNode;
+}) {
+  const ct = useClient();
+  const roomId = useRoom();
+  const [allow, setAllow] = useState(
+    event.type === MessageEvent.RoomMessageEncrypted ? false : canEditEvent(ct, event)
+  );
+
+  useEffect(() => {
+    let mounted = true;
+    ct.decryption.tryDecryptEvent(roomId, event).then((decryptedEvent) => {
+      if (!mounted) return;
+      setAllow(canEditEvent(ct, decryptedEvent));
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [roomId, event, ct]);
+
+  if (!allow) return null;
+
+  return children;
+}
+
 export type MessageProps = {
-  room: Room;
-  mEvent: MatrixEvent;
+  event: MessageEventWithoutRoomId;
+  threadId?: string;
   collapse: boolean;
   highlight: boolean;
+  selected?: boolean;
   edit?: boolean;
   canDelete?: boolean;
   canSendReaction?: boolean;
   canPinEvent?: boolean;
-  imagePackRooms?: Room[];
-  relations?: Relations;
+  canThread?: boolean;
+  imagePackRooms?: string[];
+  reactionEvents?: MessageEventWithoutRoomId<ReactionContent>[];
   messageLayout: MessageLayout;
   messageSpacing: MessageSpacing;
+  membersAPI: RoomMembersAPI;
   onUserClick: MouseEventHandler<HTMLButtonElement>;
   onUsernameClick: MouseEventHandler<HTMLButtonElement>;
-  onReplyClick: (
-    ev: Parameters<MouseEventHandler<HTMLButtonElement>>[0],
-    startThread?: boolean
-  ) => void;
+  onReplyClick: MouseEventHandler<HTMLButtonElement>;
+  onThreadClick?: MouseEventHandler<HTMLButtonElement>;
   onEditId?: (eventId?: string) => void;
   onReactionToggle: (targetEventId: string, key: string, shortcode?: string) => void;
   reply?: ReactNode;
-  reactions?: ReactNode;
+  redacted?: boolean;
   hideReadReceipts?: boolean;
   showDeveloperTools?: boolean;
   memberPowerTag?: MemberPowerTag;
@@ -687,25 +1085,29 @@ export const Message = as<'div', MessageProps>(
   (
     {
       className,
-      room,
-      mEvent,
+      event,
+      threadId,
       collapse,
       highlight,
+      selected,
       edit,
       canDelete,
       canSendReaction,
       canPinEvent,
+      canThread,
       imagePackRooms,
-      relations,
+      reactionEvents,
       messageLayout,
       messageSpacing,
+      membersAPI,
       onUserClick,
       onUsernameClick,
       onReplyClick,
+      onThreadClick,
       onReactionToggle,
       onEditId,
       reply,
-      reactions,
+      redacted,
       hideReadReceipts,
       showDeveloperTools,
       memberPowerTag,
@@ -718,9 +1120,10 @@ export const Message = as<'div', MessageProps>(
     },
     ref
   ) => {
-    const mx = useMatrixClient();
-    const useAuthentication = useMediaAuthentication();
-    const senderId = mEvent.getSender() ?? '';
+    const ct = useClient();
+    const senderId = event.sender;
+    const canMessage = useCanMessage();
+    const roomId = useRoom();
 
     const [hover, setHover] = useState(false);
     const { hoverProps } = useHover({ onHoverChange: setHover });
@@ -728,112 +1131,10 @@ export const Message = as<'div', MessageProps>(
     const [menuAnchor, setMenuAnchor] = useState<RectCords>();
     const [emojiBoardAnchor, setEmojiBoardAnchor] = useState<RectCords>();
 
-    const senderDisplayName =
-      getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
-    const senderAvatarMxc = getMemberAvatarMxc(room, senderId);
-
-    const tagColor = memberPowerTag?.color
-      ? accessibleTagColors?.get(memberPowerTag.color)
-      : undefined;
-    const tagIconSrc = memberPowerTag?.icon
-      ? getPowerTagIconSrc(mx, useAuthentication, memberPowerTag.icon)
-      : undefined;
-
-    const usernameColor = legacyUsernameColor ? colorMXID(senderId) : tagColor;
-
-    const headerJSX = !collapse && (
-      <Box
-        gap="300"
-        direction={messageLayout === MessageLayout.Compact ? 'RowReverse' : 'Row'}
-        justifyContent="SpaceBetween"
-        alignItems="Baseline"
-        grow="Yes"
-      >
-        <Box alignItems="Center" gap="200">
-          <Username
-            as="button"
-            style={{ color: usernameColor }}
-            data-user-id={senderId}
-            onContextMenu={onUserClick}
-            onClick={onUsernameClick}
-          >
-            <Text
-              as="span"
-              size={messageLayout === MessageLayout.Bubble ? 'T300' : 'T400'}
-              truncate
-            >
-              <UsernameBold>{senderDisplayName}</UsernameBold>
-            </Text>
-          </Username>
-          {tagIconSrc && <PowerIcon size="100" iconSrc={tagIconSrc} />}
-        </Box>
-        <Box shrink="No" gap="100">
-          {messageLayout === MessageLayout.Modern && hover && (
-            <>
-              <Text as="span" size="T200" priority="300">
-                {senderId}
-              </Text>
-              <Text as="span" size="T200" priority="300">
-                |
-              </Text>
-            </>
-          )}
-          <Time
-            ts={mEvent.getTs()}
-            compact={messageLayout === MessageLayout.Compact}
-            hour24Clock={hour24Clock}
-            dateFormatString={dateFormatString}
-          />
-        </Box>
-      </Box>
-    );
-
-    const avatarJSX = !collapse && messageLayout !== MessageLayout.Compact && (
-      <AvatarBase
-        className={messageLayout === MessageLayout.Bubble ? css.BubbleAvatarBase : undefined}
-      >
-        <Avatar
-          className={css.MessageAvatar}
-          as="button"
-          size="300"
-          data-user-id={senderId}
-          onClick={onUserClick}
-        >
-          <UserAvatar
-            userId={senderId}
-            src={
-              senderAvatarMxc
-                ? mxcUrlToHttp(mx, senderAvatarMxc, useAuthentication, 48, 48, 'crop') ?? undefined
-                : undefined
-            }
-            alt={senderDisplayName}
-            renderFallback={() => <Icon size="200" src={Icons.User} filled />}
-          />
-        </Avatar>
-      </AvatarBase>
-    );
-
-    const msgContentJSX = (
-      <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
-        {reply}
-        {edit && onEditId ? (
-          <MessageEditor
-            style={{
-              maxWidth: '100%',
-              width: '100vw',
-            }}
-            roomId={room.roomId}
-            room={room}
-            mEvent={mEvent}
-            imagePackRooms={imagePackRooms}
-            onCancel={() => onEditId()}
-          />
-        ) : (
-          children
-        )}
-        {reactions}
-      </Box>
-    );
+    const senderDisplayName = membersAPI.getName(senderId);
+    const senderAvatarMxc = membersAPI.getAvatar(senderId);
+    const memberChange = membersAPI.getMemberChangeType(senderId);
+    const isNewChange = ct.directRooms.read.has(roomId) ? false : membersAPI.isNewChange(senderId);
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
       if (evt.altKey || !window.getSelection()?.isCollapsed || edit) return;
@@ -872,8 +1173,6 @@ export const Message = as<'div', MessageProps>(
       }, 100);
     };
 
-    const isThreadedMessage = mEvent.threadRootId !== undefined;
-
     return (
       <MessageBase
         className={classNames(css.MessageBase, className, {
@@ -883,7 +1182,7 @@ export const Message = as<'div', MessageProps>(
         space={messageSpacing}
         collapse={collapse}
         highlight={highlight}
-        selected={!!menuAnchor || !!emojiBoardAnchor}
+        selected={!!selected || !!menuAnchor || !!emojiBoardAnchor}
         {...props}
         {...hoverProps}
         {...focusWithinProps}
@@ -891,7 +1190,7 @@ export const Message = as<'div', MessageProps>(
       >
         {!edit && (hover || !!menuAnchor || !!emojiBoardAnchor) && (
           <div className={css.MessageOptionsBase}>
-            <Menu className={css.MessageOptionsBar} variant="SurfaceVariant">
+            <Menu className={css.MessageOptionsBar} variant="Surface">
               <Box gap="100">
                 {canSendReaction && (
                   <PopOut
@@ -905,11 +1204,11 @@ export const Message = as<'div', MessageProps>(
                         returnFocusOnDeactivate={false}
                         allowTextCustomEmoji
                         onEmojiSelect={(key) => {
-                          onReactionToggle(mEvent.getId()!, key);
+                          onReactionToggle(event.event_id, key);
                           setEmojiBoardAnchor(undefined);
                         }}
                         onCustomEmojiSelect={(mxc, shortcode) => {
-                          onReactionToggle(mEvent.getId()!, mxc, shortcode);
+                          onReactionToggle(event.event_id, mxc, shortcode);
                           setEmojiBoardAnchor(undefined);
                         }}
                         requestClose={() => {
@@ -918,104 +1217,127 @@ export const Message = as<'div', MessageProps>(
                       />
                     }
                   >
-                    <IconButton
+                    <OptionButton
                       onClick={handleOpenEmojiBoard}
-                      variant="SurfaceVariant"
-                      size="300"
-                      radii="300"
-                      aria-pressed={!!emojiBoardAnchor}
-                    >
-                      <Icon src={Icons.SmilePlus} size="100" />
-                    </IconButton>
+                      pressed={!!emojiBoardAnchor}
+                      iconSrc={Icons.SmilePlus}
+                      tooltip="Add Reaction"
+                      senderId={event.sender}
+                      eventId={event.event_id}
+                    />
                   </PopOut>
                 )}
-                <IconButton
-                  onClick={onReplyClick}
-                  data-event-id={mEvent.getId()}
-                  variant="SurfaceVariant"
-                  size="300"
-                  radii="300"
-                >
-                  <Icon src={Icons.ReplyArrow} size="100" />
-                </IconButton>
-                {!isThreadedMessage && (
-                  <IconButton
-                    onClick={(ev) => onReplyClick(ev, true)}
-                    data-event-id={mEvent.getId()}
-                    variant="SurfaceVariant"
-                    size="300"
-                    radii="300"
-                  >
-                    <Icon src={Icons.ThreadPlus} size="100" />
-                  </IconButton>
+                {canMessage && (
+                  <>
+                    <OptionButton
+                      onClick={onReplyClick}
+                      iconSrc={Icons.ReplyArrow}
+                      tooltip="Reply"
+                      senderId={event.sender}
+                      eventId={event.event_id}
+                    />
+                    {canThread && (
+                      <OptionButton
+                        onClick={onThreadClick}
+                        iconSrc={Icons.Thread}
+                        tooltip="Reply in Thread"
+                        senderId={event.sender}
+                        eventId={event.event_id}
+                      />
+                    )}
+                    {onEditId && (
+                      <EditButtonHost event={event}>
+                        <OptionButton
+                          onClick={() => onEditId(event.event_id)}
+                          iconSrc={Icons.Pencil}
+                          tooltip="Edit"
+                          senderId={event.sender}
+                          eventId={event.event_id}
+                        />
+                      </EditButtonHost>
+                    )}
+                  </>
                 )}
-                {canEditEvent(mx, mEvent) && onEditId && (
-                  <IconButton
-                    onClick={() => onEditId(mEvent.getId())}
-                    variant="SurfaceVariant"
-                    size="300"
-                    radii="300"
-                  >
-                    <Icon src={Icons.Pencil} size="100" />
-                  </IconButton>
-                )}
-                <PopOut
-                  anchor={menuAnchor}
-                  position="Bottom"
-                  align={menuAnchor?.width === 0 ? 'Start' : 'End'}
-                  offset={menuAnchor?.width === 0 ? 0 : undefined}
-                  content={
-                    <FocusTrap
-                      focusTrapOptions={{
-                        initialFocus: false,
-                        onDeactivate: () => setMenuAnchor(undefined),
-                        clickOutsideDeactivates: true,
-                        isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
-                        isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
-                        escapeDeactivates: stopPropagation,
+                <OptionButton
+                  onClick={handleOpenMenu}
+                  iconSrc={Icons.VerticalDots}
+                  tooltip="Options"
+                  senderId={event.sender}
+                  eventId={event.event_id}
+                  pressed={!!menuAnchor}
+                />
+              </Box>
+            </Menu>
+          </div>
+        )}
+
+        {menuAnchor && (
+          <PopOut
+            anchor={menuAnchor}
+            position="Bottom"
+            align={menuAnchor?.width === 0 ? 'Start' : 'End'}
+            offset={menuAnchor?.width === 0 ? 0 : undefined}
+            content={
+              <FocusTrap
+                focusTrapOptions={{
+                  initialFocus: false,
+                  onDeactivate: () => setMenuAnchor(undefined),
+                  clickOutsideDeactivates: true,
+                  isKeyForward: (evt: KeyboardEvent) => evt.key === 'ArrowDown',
+                  isKeyBackward: (evt: KeyboardEvent) => evt.key === 'ArrowUp',
+                  escapeDeactivates: stopPropagation,
+                }}
+              >
+                <Menu>
+                  {canSendReaction && (
+                    <MessageQuickReactions
+                      onReaction={(key, shortcode) => {
+                        onReactionToggle(event.event_id, key, shortcode);
+                        closeMenu();
                       }}
-                    >
-                      <Menu>
-                        {canSendReaction && (
-                          <MessageQuickReactions
-                            onReaction={(key, shortcode) => {
-                              onReactionToggle(mEvent.getId()!, key, shortcode);
-                              closeMenu();
-                            }}
-                          />
-                        )}
-                        <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                          {canSendReaction && (
-                            <MenuItem
-                              size="300"
-                              after={<Icon size="100" src={Icons.SmilePlus} />}
-                              radii="300"
-                              onClick={handleAddReactions}
-                            >
-                              <Text
-                                className={css.MessageMenuItemText}
-                                as="span"
-                                size="T300"
-                                truncate
-                              >
-                                Add Reaction
-                              </Text>
-                            </MenuItem>
-                          )}
-                          {relations && (
-                            <MessageAllReactionItem
-                              room={room}
-                              relations={relations}
-                              onClose={closeMenu}
-                            />
-                          )}
+                    />
+                  )}
+                  <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                    {canSendReaction && (
+                      <MenuItem
+                        size="300"
+                        after={<Icon size="100" src={Icons.SmilePlus} />}
+                        radii="300"
+                        onClick={handleAddReactions}
+                      >
+                        <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
+                          Add Reaction
+                        </Text>
+                      </MenuItem>
+                    )}
+                    {reactionEvents && (
+                      <MessageAllReactionItem reactionEvents={reactionEvents} onClose={closeMenu} />
+                    )}
+                    {canMessage && (
+                      <>
+                        <MenuItem
+                          size="300"
+                          after={<Icon size="100" src={Icons.ReplyArrow} />}
+                          radii="300"
+                          data-event-id={event.event_id}
+                          data-sender-id={event.sender}
+                          onClick={(evt: any) => {
+                            onReplyClick(evt);
+                            closeMenu();
+                          }}
+                        >
+                          <Text className={css.MessageMenuItemText} as="span" size="T300" truncate>
+                            Reply
+                          </Text>
+                        </MenuItem>
+                        {canThread && (
                           <MenuItem
                             size="300"
-                            after={<Icon size="100" src={Icons.ReplyArrow} />}
+                            after={<Icon src={Icons.Thread} size="100" />}
                             radii="300"
-                            data-event-id={mEvent.getId()}
+                            data-event-id={event.event_id}
                             onClick={(evt: any) => {
-                              onReplyClick(evt);
+                              onThreadClick?.(evt);
                               closeMenu();
                             }}
                           >
@@ -1025,38 +1347,19 @@ export const Message = as<'div', MessageProps>(
                               size="T300"
                               truncate
                             >
-                              Reply
+                              Reply in Thread
                             </Text>
                           </MenuItem>
-                          {!isThreadedMessage && (
-                            <MenuItem
-                              size="300"
-                              after={<Icon src={Icons.ThreadPlus} size="100" />}
-                              radii="300"
-                              data-event-id={mEvent.getId()}
-                              onClick={(evt: any) => {
-                                onReplyClick(evt, true);
-                                closeMenu();
-                              }}
-                            >
-                              <Text
-                                className={css.MessageMenuItemText}
-                                as="span"
-                                size="T300"
-                                truncate
-                              >
-                                Reply in Thread
-                              </Text>
-                            </MenuItem>
-                          )}
-                          {canEditEvent(mx, mEvent) && onEditId && (
+                        )}
+                        {onEditId && (
+                          <EditButtonHost event={event}>
                             <MenuItem
                               size="300"
                               after={<Icon size="100" src={Icons.Pencil} />}
                               radii="300"
-                              data-event-id={mEvent.getId()}
+                              data-event-id={event.event_id}
                               onClick={() => {
-                                onEditId(mEvent.getId());
+                                onEditId(event.event_id);
                                 closeMenu();
                               }}
                             >
@@ -1069,92 +1372,99 @@ export const Message = as<'div', MessageProps>(
                                 Edit Message
                               </Text>
                             </MenuItem>
-                          )}
-                          {!hideReadReceipts && (
-                            <MessageReadReceiptItem
-                              room={room}
-                              eventId={mEvent.getId() ?? ''}
-                              onClose={closeMenu}
-                            />
-                          )}
-                          {showDeveloperTools && (
-                            <MessageSourceCodeItem
-                              room={room}
-                              mEvent={mEvent}
-                              onClose={closeMenu}
-                            />
-                          )}
-                          <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
-                          {canPinEvent && (
-                            <MessagePinItem room={room} mEvent={mEvent} onClose={closeMenu} />
-                          )}
-                        </Box>
-                        {((!mEvent.isRedacted() && canDelete) ||
-                          mEvent.getSender() !== mx.getUserId()) && (
-                          <>
-                            <Line size="300" />
-                            <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                              {!mEvent.isRedacted() && canDelete && (
-                                <MessageDeleteItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
-                                />
-                              )}
-                              {mEvent.getSender() !== mx.getUserId() && (
-                                <MessageReportItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
-                                />
-                              )}
-                            </Box>
-                          </>
+                          </EditButtonHost>
                         )}
-                      </Menu>
-                    </FocusTrap>
-                  }
-                >
-                  <IconButton
-                    variant="SurfaceVariant"
-                    size="300"
-                    radii="300"
-                    onClick={handleOpenMenu}
-                    aria-pressed={!!menuAnchor}
-                  >
-                    <Icon src={Icons.VerticalDots} size="100" />
-                  </IconButton>
-                </PopOut>
-              </Box>
-            </Menu>
-          </div>
+                      </>
+                    )}
+                    {!hideReadReceipts && (
+                      <MessageReadReceiptItem
+                        eventId={event.event_id}
+                        threadId={threadId}
+                        onClose={closeMenu}
+                      />
+                    )}
+                    {showDeveloperTools && (
+                      <MessageSourceCodeItem event={event} onClose={closeMenu} />
+                    )}
+                    <MessageCopyLinkItem eventId={event.event_id} onClose={closeMenu} />
+                    {canPinEvent && <MessagePinItem eventId={event.event_id} onClose={closeMenu} />}
+                  </Box>
+                  {((!redacted && canDelete) || event.sender !== ct.session.userId) && (
+                    <>
+                      <Line size="300" />
+                      <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
+                        {!redacted && canDelete && (
+                          <MessageDeleteItem eventId={event.event_id} onClose={closeMenu} />
+                        )}
+                        {event.sender !== ct.session.userId && (
+                          <MessageReportItem eventId={event.event_id} onClose={closeMenu} />
+                        )}
+                      </Box>
+                    </>
+                  )}
+                </Menu>
+              </FocusTrap>
+            }
+          />
         )}
-        {messageLayout === MessageLayout.Compact && (
-          <CompactLayout before={headerJSX} onContextMenu={handleContextMenu}>
-            {msgContentJSX}
-          </CompactLayout>
-        )}
-        {messageLayout === MessageLayout.Bubble && (
-          <BubbleLayout before={avatarJSX} header={headerJSX} onContextMenu={handleContextMenu}>
-            {msgContentJSX}
-          </BubbleLayout>
-        )}
-        {messageLayout !== MessageLayout.Compact && messageLayout !== MessageLayout.Bubble && (
-          <ModernLayout before={avatarJSX} onContextMenu={handleContextMenu}>
-            {headerJSX}
-            {msgContentJSX}
-          </ModernLayout>
-        )}
+
+        {reply}
+
+        <RenderMessageLayout
+          avatar={
+            !collapse &&
+            messageLayout !== MessageLayout.Compact && (
+              <MessageAvatar
+                userId={senderId}
+                displayName={senderDisplayName}
+                avatarUrl={senderAvatarMxc}
+                onUserClick={onUserClick}
+                bubbleLayout={messageLayout === MessageLayout.Bubble}
+                memberChange={memberChange}
+                isNewChange={isNewChange}
+              />
+            )
+          }
+          username={
+            !collapse && (
+              <MessageUsername
+                userId={senderId}
+                displayName={senderDisplayName}
+                onUserClick={onUserClick}
+                onUsernameClick={onUsernameClick}
+                messageLayout={messageLayout}
+                memberPowerTag={memberPowerTag}
+                accessibleTagColors={accessibleTagColors}
+                legacyUsernameColor={legacyUsernameColor}
+              />
+            )
+          }
+          time={
+            <Time
+              ts={event.origin_server_ts}
+              compact={messageLayout === MessageLayout.Compact}
+              hour24Clock={hour24Clock}
+              dateFormatString={dateFormatString}
+            />
+          }
+          collapse={collapse}
+          messageLayout={messageLayout}
+          onContextMenu={handleContextMenu}
+        >
+          <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
+            {children}
+          </Box>
+        </RenderMessageLayout>
       </MessageBase>
     );
   }
 );
 
 export type EventProps = {
-  room: Room;
-  mEvent: MatrixEvent;
+  event: MessageEventWithoutRoomId;
   highlight: boolean;
   canDelete?: boolean;
+  redacted?: boolean;
   messageSpacing: MessageSpacing;
   hideReadReceipts?: boolean;
   showDeveloperTools?: boolean;
@@ -1163,10 +1473,10 @@ export const Event = as<'div', EventProps>(
   (
     {
       className,
-      room,
-      mEvent,
+      event,
       highlight,
       canDelete,
+      redacted,
       messageSpacing,
       hideReadReceipts,
       showDeveloperTools,
@@ -1175,12 +1485,11 @@ export const Event = as<'div', EventProps>(
     },
     ref
   ) => {
-    const mx = useMatrixClient();
+    const ct = useClient();
     const [hover, setHover] = useState(false);
     const { hoverProps } = useHover({ onHoverChange: setHover });
     const { focusWithinProps } = useFocusWithin({ onFocusWithinChange: setHover });
     const [menuAnchor, setMenuAnchor] = useState<RectCords>();
-    const stateEvent = typeof mEvent.getStateKey() === 'string';
 
     const handleContextMenu: MouseEventHandler<HTMLDivElement> = (evt) => {
       if (evt.altKey || !window.getSelection()?.isCollapsed) return;
@@ -1240,39 +1549,22 @@ export const Event = as<'div', EventProps>(
                       <Menu {...props} ref={ref}>
                         <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
                           {!hideReadReceipts && (
-                            <MessageReadReceiptItem
-                              room={room}
-                              eventId={mEvent.getId() ?? ''}
-                              onClose={closeMenu}
-                            />
+                            <MessageReadReceiptItem eventId={event.event_id} onClose={closeMenu} />
                           )}
                           {showDeveloperTools && (
-                            <MessageSourceCodeItem
-                              room={room}
-                              mEvent={mEvent}
-                              onClose={closeMenu}
-                            />
+                            <MessageSourceCodeItem event={event} onClose={closeMenu} />
                           )}
-                          <MessageCopyLinkItem room={room} mEvent={mEvent} onClose={closeMenu} />
+                          <MessageCopyLinkItem eventId={event.event_id} onClose={closeMenu} />
                         </Box>
-                        {((!mEvent.isRedacted() && canDelete && !stateEvent) ||
-                          (mEvent.getSender() !== mx.getUserId() && !stateEvent)) && (
+                        {((!redacted && canDelete) || event.sender !== ct.session.userId) && (
                           <>
                             <Line size="300" />
                             <Box direction="Column" gap="100" className={css.MessageMenuGroup}>
-                              {!mEvent.isRedacted() && canDelete && (
-                                <MessageDeleteItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
-                                />
+                              {!redacted && canDelete && (
+                                <MessageDeleteItem eventId={event.event_id} onClose={closeMenu} />
                               )}
-                              {mEvent.getSender() !== mx.getUserId() && (
-                                <MessageReportItem
-                                  room={room}
-                                  mEvent={mEvent}
-                                  onClose={closeMenu}
-                                />
+                              {event.sender !== ct.session.userId && (
+                                <MessageReportItem eventId={event.event_id} onClose={closeMenu} />
                               )}
                             </Box>
                           </>
@@ -1300,3 +1592,67 @@ export const Event = as<'div', EventProps>(
     );
   }
 );
+
+export function ThreadEvents({
+  users,
+  ts,
+  messageLayout,
+  hour24Clock,
+  dateFormatString,
+  messageSpacing,
+  count,
+  onClick,
+}: {
+  users: string[];
+  ts: number;
+  messageLayout: MessageLayout;
+  hour24Clock: boolean;
+  dateFormatString: string;
+  messageSpacing: MessageSpacing;
+  count: number;
+  onClick?: () => void;
+}) {
+  return (
+    <MessageBase className={css.MessageBase} space={messageSpacing} autoCollapse>
+      <EventContent
+        messageLayout={messageLayout}
+        time={
+          <Time
+            ts={ts}
+            compact={messageLayout === MessageLayout.Compact}
+            hour24Clock={hour24Clock}
+            dateFormatString={dateFormatString}
+          />
+        }
+        iconSrc={Icons.Thread}
+        content={
+          <Text size="T300" priority="400">
+            {users.length === 1 && <b>{users[0]}</b>}
+            {users.length === 2 && (
+              <>
+                <b>{users[0]}</b>, <b>{users[1]}</b>
+              </>
+            )}
+            {users.length > 2 && (
+              <>
+                <b>{users[0]}</b>, <b>{users[1]}</b>, <b>+{users.length - 2} others</b>
+              </>
+            )}{' '}
+            replied in thread.{' '}
+            <Chip
+              onClick={() => onClick?.()}
+              style={{ flexShrink: 0 }}
+              radii="Pill"
+              variant="Secondary"
+              fill="None"
+            >
+              <Text as="span" size="L400">
+                {count} {count === 1 ? 'Reply' : 'Replies'}
+              </Text>
+            </Chip>
+          </Text>
+        }
+      />
+    </MessageBase>
+  );
+}

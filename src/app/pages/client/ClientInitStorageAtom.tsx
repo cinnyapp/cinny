@@ -1,5 +1,13 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { ReactNode, useMemo } from 'react';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { makeClosedNavCategoriesAtom } from '../../state/closedNavCategories';
 import { ClosedNavCategoriesProvider } from '../../state/hooks/closedNavCategories';
 import { makeClosedLobbyCategoriesAtom } from '../../state/closedLobbyCategories';
@@ -10,13 +18,15 @@ import { makeOpenedSidebarFolderAtom } from '../../state/openedSidebarFolder';
 import { OpenedSidebarFolderProvider } from '../../state/hooks/openedSidebarFolder';
 import { makeCallPreferencesAtom } from '../../state/callPreferences';
 import { CallPreferencesProvider } from '../../state/hooks/callPreferences';
+import { makeSettingsAtom } from '../../state/settings';
+import { SettingsAtomProvider } from '../../state/hooks/settings';
+import { useSession } from '../../hooks/useSessions';
 
 type ClientInitStorageAtomProps = {
   children: ReactNode;
 };
 export function ClientInitStorageAtom({ children }: ClientInitStorageAtomProps) {
-  const mx = useMatrixClient();
-  const userId = mx.getUserId()!;
+  const { userId } = useSession();
 
   const closedNavCategoriesAtom = useMemo(() => makeClosedNavCategoriesAtom(userId), [userId]);
 
@@ -28,13 +38,15 @@ export function ClientInitStorageAtom({ children }: ClientInitStorageAtomProps) 
 
   const callPreferencesAtom = useMemo(() => makeCallPreferencesAtom(userId), [userId]);
 
+  const settingsAtom = useMemo(() => makeSettingsAtom(userId), [userId]);
+
   return (
     <ClosedNavCategoriesProvider value={closedNavCategoriesAtom}>
       <ClosedLobbyCategoriesProvider value={closedLobbyCategoriesAtom}>
         <NavToActivePathProvider value={navToActivePathAtom}>
           <OpenedSidebarFolderProvider value={openedSidebarFolderAtom}>
             <CallPreferencesProvider value={callPreferencesAtom}>
-              {children}
+              <SettingsAtomProvider value={settingsAtom}>{children}</SettingsAtomProvider>
             </CallPreferencesProvider>
           </OpenedSidebarFolderProvider>
         </NavToActivePathProvider>

@@ -1,24 +1,26 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React from 'react';
 import { Menu, PopOut, toRem } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { useCloseUserRoomProfile, useUserRoomProfileState } from '../state/hooks/userRoomProfile';
 import { UserRoomProfile } from './user-profile';
 import { UserRoomProfileState } from '../state/userRoomProfile';
-import { useAllJoinedRoomsSet, useGetRoom } from '../hooks/useGetRoom';
 import { stopPropagation } from '../utils/keyboard';
 import { SpaceProvider } from '../hooks/useSpace';
 import { RoomProvider } from '../hooks/useRoom';
 
 function UserRoomProfileContextMenu({ state }: { state: UserRoomProfileState }) {
   const { roomId, spaceId, userId, cords, position } = state;
-  const allJoinedRooms = useAllJoinedRoomsSet();
-  const getRoom = useGetRoom(allJoinedRooms);
-  const room = getRoom(roomId);
-  const space = spaceId ? getRoom(spaceId) : undefined;
 
   const close = useCloseUserRoomProfile();
-
-  if (!room) return null;
 
   return (
     <PopOut
@@ -35,8 +37,8 @@ function UserRoomProfileContextMenu({ state }: { state: UserRoomProfileState }) 
           }}
         >
           <Menu style={{ width: toRem(340) }}>
-            <SpaceProvider value={space ?? null}>
-              <RoomProvider value={room}>
+            <SpaceProvider value={spaceId ?? null}>
+              <RoomProvider value={roomId}>
                 <UserRoomProfile userId={userId} />
               </RoomProvider>
             </SpaceProvider>

@@ -1,17 +1,21 @@
 {
   "compilerOptions": {
-    "sourceMap": true,
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    "target": "ES2022",
+    "module": "ES2022",
+    "lib": ["ES2022", "DOM"],
+
     "jsx": "react",
-    "target": "ES2016",
-    "module": "ES2020",
+    "moduleResolution": "bundler",
+
+    "sourceMap": true,
     "allowJs": true,
     "strict": true,
     "esModuleInterop": true,
-    "moduleResolution": "Node",
     "resolveJsonModule": true,
-    "outDir": "dist",
-    "skipLibCheck": true,
-    "lib": ["ES2016", "DOM"]
+    "skipLibCheck": true
   },
   "exclude": ["node_modules", "dist"],
   "include": ["src"]

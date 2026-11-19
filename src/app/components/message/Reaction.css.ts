@@ -1,4 +1,13 @@
-import { createVar, style } from '@vanilla-extract/css';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import { createVar, keyframes, style } from '@vanilla-extract/css';
 import { DefaultReset, FocusOutline, color, config, toRem } from 'folds';
 
 const Container = createVar();
@@ -48,6 +57,7 @@ export const Reaction = style([
       },
       '&[aria-disabled=true], &:disabled': {
         cursor: 'not-allowed',
+        backgroundColor: `${Container} !important`,
       },
     },
   },
@@ -63,6 +73,36 @@ export const ReactionText = style([
     lineHeight: toRem(20),
   },
 ]);
+
+const scaleAnimation = keyframes({
+  '0%': {
+    transform: 'scale(1)',
+  },
+  '50%': {
+    transform: 'scale(1.2)',
+  },
+  '100%': {
+    transform: 'scale(1)',
+  },
+});
+export const ReactionChangeAnimation = style({
+  animation: `${scaleAnimation} 700ms ease-in-out infinite`,
+});
+
+const dropAnimation = keyframes({
+  '0%': {
+    transform: 'translateY(0)',
+  },
+  '50%': {
+    transform: 'translateY(0.1em)',
+  },
+  '100%': {
+    transform: 'translateY(0)',
+  },
+});
+export const ReactionDropAnimation = style({
+  animation: `${dropAnimation} 700ms ease-in-out infinite`,
+});
 
 export const ReactionImg = style([
   DefaultReset,

@@ -1,10 +1,23 @@
-import { MatrixClient } from 'matrix-js-sdk';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { useMemo, useRef } from 'react';
-import { TYPING_TIMEOUT_MS } from '../state/typingMembers';
+import { putTyping } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { useClient } from './useClient';
+
+const TYPING_TIMEOUT_MS = 5000; // 5 seconds
 
 type TypingStatusUpdater = (typing: boolean) => void;
 
-export const useTypingStatusUpdater = (mx: MatrixClient, roomId: string): TypingStatusUpdater => {
+export const useTypingStatusUpdater = (roomId: string): TypingStatusUpdater => {
+  const ct = useClient();
+  const { userId } = ct.session;
   const statusSentTsRef = useRef<number>(0);
 
   const sendTypingStatus: TypingStatusUpdater = useMemo(() => {
@@ -15,7 +28,16 @@ export const useTypingStatusUpdater = (mx: MatrixClient, roomId: string): Typing
           return;
         }
 
-        mx.sendTyping(roomId, true, TYPING_TIMEOUT_MS);
+        ct.requestAuthJSON(
+          putTyping({
+            pathParams: { roomId, userId },
+            body: {
+              typing: true,
+              timeout: TYPING_TIMEOUT_MS,
+            },
+          })
+        );
+
         const sentTs = Date.now();
         statusSentTsRef.current = sentTs;
 
@@ -23,7 +45,12 @@ export const useTypingStatusUpdater = (mx: MatrixClient, roomId: string): Typing
         // Clear typing status after timeout if already not;
         setTimeout(() => {
           if (statusSentTsRef.current === sentTs) {
-            mx.sendTyping(roomId, false, TYPING_TIMEOUT_MS);
+            ct.requestAuthJSON(
+              putTyping({
+                pathParams: { roomId, userId },
+                body: { typing: false },
+              })
+            );
             statusSentTsRef.current = 0;
           }
         }, TYPING_TIMEOUT_MS);
@@ -31,11 +58,16 @@ export const useTypingStatusUpdater = (mx: MatrixClient, roomId: string): Typing
       }
 
       if (Date.now() - statusSentTsRef.current < TYPING_TIMEOUT_MS) {
-        mx.sendTyping(roomId, false, TYPING_TIMEOUT_MS);
+        ct.requestAuthJSON(
+          putTyping({
+            pathParams: { roomId, userId },
+            body: { typing: false },
+          })
+        );
       }
       statusSentTsRef.current = 0;
     };
-  }, [mx, roomId]);
+  }, [ct, roomId, userId]);
 
   return sendTypingStatus;
 };

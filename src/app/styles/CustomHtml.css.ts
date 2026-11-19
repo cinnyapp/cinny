@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { style } from '@vanilla-extract/css';
 import { recipe } from '@vanilla-extract/recipes';
 import { color, config, DefaultReset, toRem } from 'folds';
@@ -47,7 +56,7 @@ const BaseCode = style({
   border: `${config.borderWidth.B300} solid ${color.SurfaceVariant.ContainerLine}`,
   borderRadius: config.radii.R300,
 });
-const CodeFont = style({
+export const CodeFont = style({
   fontFamily: 'monospace',
 });
 
@@ -96,7 +105,7 @@ export const CodeBlock = style([
 export const CodeBlockHeader = style([
   ContainerColor({ variant: 'Surface' }),
   {
-    padding: `0 ${config.space.S200} 0 ${config.space.S300}`,
+    padding: `0 ${config.space.S200} 0 ${config.space.S200}`,
     borderBottomWidth: config.borderWidth.B300,
     gap: config.space.S200,
   },
@@ -158,9 +167,8 @@ export const Mention = recipe({
   base: [
     DefaultReset,
     {
-      backgroundColor: color.SurfaceVariant.Container,
-      color: color.SurfaceVariant.OnContainer,
-      boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.SurfaceVariant.ContainerLine}`,
+      backgroundColor: color.Primary.Container,
+      color: color.Primary.OnContainer,
       padding: `0 ${toRem(2)}`,
       borderRadius: config.radii.R300,
       fontWeight: config.fontWeight.W500,
@@ -169,9 +177,8 @@ export const Mention = recipe({
   variants: {
     highlight: {
       true: {
-        backgroundColor: color.Success.Container,
-        color: color.Success.OnContainer,
-        boxShadow: `0 0 0 ${config.borderWidth.B300} ${color.Success.ContainerLine}`,
+        backgroundColor: color.Primary.Main,
+        color: color.Primary.OnMain,
       },
     },
     focus: {

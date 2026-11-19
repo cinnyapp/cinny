@@ -1,19 +1,13 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { atom } from 'jotai';
-
-export const getLocalStorageItem = <T>(key: string, defaultValue: T): T => {
-  const item = localStorage.getItem(key);
-  if (item === null) return defaultValue;
-  if (item === 'undefined') return undefined as T;
-  try {
-    return JSON.parse(item) as T;
-  } catch {
-    return defaultValue;
-  }
-};
-
-export const setLocalStorageItem = <T>(key: string, value: T) => {
-  localStorage.setItem(key, JSON.stringify(value));
-};
 
 export type GetLocalStorageItem<T> = (key: string) => T;
 export type SetLocalStorageItem<T> = (key: string, value: T) => void;
@@ -39,7 +33,7 @@ export const atomWithLocalStorage = <T>(
     };
   };
 
-  const localStorageAtom = atom<T, [T], undefined>(
+  const localStorageAtom = atom<T, [T], void>(
     (get) => get(baseAtom),
     (get, set, newValue) => {
       set(baseAtom, newValue);

@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { MouseEventHandler, useCallback, useEffect, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
 import {
@@ -15,9 +24,9 @@ import {
   Spinner,
   toRem,
 } from 'folds';
+import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
 import { HierarchyItem } from '../../hooks/useSpaceHierarchy';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { MSpaceChildContent, StateEvent } from '../../../types/matrix/room';
+import { SpaceChildContent, StateEvent } from '../../../types/matrix/room';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { LeaveSpacePrompt } from '../../components/leave-space-prompt';
@@ -27,9 +36,9 @@ import { useOpenRoomSettings } from '../../state/hooks/roomSettings';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import { useOpenSpaceSettings } from '../../state/hooks/spaceSettings';
 import { IPowerLevels } from '../../hooks/usePowerLevels';
-import { getRoomCreatorsForRoomId } from '../../hooks/useRoomCreators';
 import { getRoomPermissionsAPI } from '../../hooks/useRoomPermissions';
 import { InviteUserPrompt } from '../../components/invite-user-prompt';
+import { useClient } from '../../hooks/useClient';
 
 type HierarchyItemWithParent = HierarchyItem & {
   parentId: string;
@@ -42,14 +51,19 @@ function SuggestMenuItem({
   item: HierarchyItemWithParent;
   requestClose: () => void;
 }) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const { roomId, parentId, content } = item;
 
   const [toggleState, handleToggleSuggested] = useAsyncCallback(
     useCallback(() => {
-      const newContent: MSpaceChildContent = { ...content, suggested: !content.suggested };
-      return mx.sendStateEvent(parentId, StateEvent.SpaceChild as any, newContent, roomId);
-    }, [mx, parentId, roomId, content])
+      const newContent: SpaceChildContent = { ...content, suggested: !content.suggested };
+      return ct.requestAuthJSON(
+        putStateEvent({
+          pathParams: { roomId: parentId, eventType: StateEvent.SpaceChild, stateKey: roomId },
+          body: newContent,
+        })
+      );
+    }, [ct, parentId, roomId, content])
   );
 
   useEffect(() => {
@@ -80,13 +94,19 @@ function RemoveMenuItem({
   item: HierarchyItemWithParent;
   requestClose: () => void;
 }) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const { roomId, parentId } = item;
 
   const [removeState, handleRemove] = useAsyncCallback(
     useCallback(
-      () => mx.sendStateEvent(parentId, StateEvent.SpaceChild as any, {}, roomId),
-      [mx, parentId, roomId]
+      () =>
+        ct.requestAuthJSON(
+          putStateEvent({
+            pathParams: { roomId: parentId, eventType: StateEvent.SpaceChild, stateKey: roomId },
+            body: {},
+          })
+        ),
+      [ct, parentId, roomId]
     )
   );
 
@@ -126,8 +146,6 @@ function InviteMenuItem({
   requestClose: () => void;
   disabled?: boolean;
 }) {
-  const mx = useMatrixClient();
-  const room = mx.getRoom(item.roomId);
   const [invitePrompt, setInvitePrompt] = useState(false);
 
   const handleInvite = () => {
@@ -143,15 +161,15 @@ function InviteMenuItem({
         variant="Primary"
         fill="None"
         aria-pressed={invitePrompt}
-        disabled={disabled || !room}
+        disabled={disabled}
       >
         <Text as="span" size="T300" truncate>
           Invite
         </Text>
       </MenuItem>
-      {invitePrompt && room && (
+      {invitePrompt && (
         <InviteUserPrompt
-          room={room}
+          roomId={item.roomId}
           requestClose={() => {
             setInvitePrompt(false);
             requestClose();
@@ -173,13 +191,13 @@ function SettingsMenuItem({
 }) {
   const openRoomSettings = useOpenRoomSettings();
   const openSpaceSettings = useOpenSpaceSettings();
-  const space = useSpaceOptionally();
+  const spaceId = useSpaceOptionally();
 
   const handleSettings = () => {
     if ('space' in item) {
       openSpaceSettings(item.roomId, item.parentId);
     } else {
-      openRoomSettings(item.roomId, space?.roomId);
+      openRoomSettings(item.roomId, spaceId);
     }
     requestClose();
   };
@@ -211,15 +229,15 @@ export function HierarchyItemMenu({
   pinned,
   onTogglePin,
 }: HierarchyItemMenuProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const [menuAnchor, setMenuAnchor] = useState<RectCords>();
 
   const canInvite = (): boolean => {
     if (!powerLevels) return false;
-    const creators = getRoomCreatorsForRoomId(mx, item.roomId);
+    const creators = ct.roomToCreators.read.get(item.roomId);
     const permissions = getRoomPermissionsAPI(creators, powerLevels);
 
-    return permissions.action('invite', mx.getSafeUserId());
+    return permissions.action('invite', ct.session.userId);
   };
 
   const handleOpenMenu: MouseEventHandler<HTMLButtonElement> = (evt) => {

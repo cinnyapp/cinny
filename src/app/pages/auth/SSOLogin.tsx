@@ -1,10 +1,43 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { Avatar, AvatarImage, Box, Button, Text } from 'folds';
-import { IIdentityProvider, SSOAction, createClient } from 'matrix-js-sdk';
-import React, { useMemo } from 'react';
+import { IdentityProvider } from 'neurone/lib/api/types';
+import React from 'react';
 import { useAutoDiscoveryInfo } from '../../hooks/useAutoDiscoveryInfo';
+import { mxcToHttp } from '../../../client/mxcToHttp';
+
+const UNSTABLE_ACTION_PARAM = 'org.matrix.msc3824.action';
+type SSOAction = 'login' | 'register';
+
+function getSsoLoginUrl(
+  baseUrl: string,
+  redirectUrl: string,
+  idpId?: string,
+  action?: SSOAction
+): string {
+  let path = '_matrix/client/v3/login/sso/redirect';
+  if (idpId) {
+    path += `/${idpId}`;
+  }
+  const url = new URL(path, baseUrl);
+
+  url.searchParams.append('redirectUrl', redirectUrl);
+  if (action) {
+    url.searchParams.append(UNSTABLE_ACTION_PARAM, action);
+  }
+
+  return url.href;
+}
 
 type SSOLoginProps = {
-  providers?: IIdentityProvider[];
+  providers?: IdentityProvider[];
   redirectUrl: string;
   action?: SSOAction;
   saveScreenSpace?: boolean;
@@ -12,14 +45,15 @@ type SSOLoginProps = {
 export function SSOLogin({ providers, redirectUrl, action, saveScreenSpace }: SSOLoginProps) {
   const discovery = useAutoDiscoveryInfo();
   const baseUrl = discovery['m.homeserver'].base_url;
-  const mx = useMemo(() => createClient({ baseUrl }), [baseUrl]);
 
   const getSSOIdUrl = (ssoId?: string): string =>
-    mx.getSsoLoginUrl(redirectUrl, 'sso', ssoId, action);
+    getSsoLoginUrl(baseUrl, redirectUrl, ssoId, action);
 
   const withoutIcon = providers
     ? providers.find(
-        (provider) => !provider.icon || !mx.mxcUrlToHttp(provider.icon, 96, 96, 'crop', false)
+        ({ icon }) =>
+          !icon ||
+          !mxcToHttp(baseUrl, icon, false).thumbnail({ width: 96, height: 96, method: 'crop' })
       )
     : true;
 
@@ -30,7 +64,13 @@ export function SSOLogin({ providers, redirectUrl, action, saveScreenSpace }: SS
       {providers ? (
         providers.map((provider) => {
           const { id, name, icon } = provider;
-          const iconUrl = icon && mx.mxcUrlToHttp(icon, 96, 96, 'crop', false);
+          const iconUrl =
+            icon &&
+            mxcToHttp(baseUrl, icon, false).thumbnail({
+              width: 96,
+              height: 96,
+              method: 'crop',
+            });
 
           const buttonTitle = `Continue with ${name}`;
 
@@ -45,7 +85,7 @@ export function SSOLogin({ providers, redirectUrl, action, saveScreenSpace }: SS
                 size="300"
                 radii="300"
               >
-                <AvatarImage src={iconUrl!} alt={name} title={buttonTitle} />
+                <AvatarImage src={iconUrl} alt={name} title={buttonTitle} />
               </Avatar>
             );
           }

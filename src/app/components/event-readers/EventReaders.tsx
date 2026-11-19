@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React from 'react';
 import classNames from 'classnames';
 import {
@@ -13,33 +22,37 @@ import {
   as,
   config,
 } from 'folds';
-import { Room } from 'matrix-js-sdk';
-import { useRoomEventReaders } from '../../hooks/useRoomEventReaders';
-import { getMemberDisplayName } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
 import * as css from './EventReaders.css';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { UserAvatar } from '../user-avatar';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { useOpenUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import { getMouseEventCords } from '../../utils/dom';
+import { useClient } from '../../hooks/useClient';
+import { useRoomMembersAPI } from '../../hooks/useRoomMembers';
+import { mxcToHttp } from '../../../client/mxcToHttp';
+import { useRoom } from '../../hooks/useRoom';
+import { Time } from '../message';
+import { useSettings } from '../../state/hooks/settings';
+import { useEventReciepts } from '../../hooks/useEventReceipts';
 
 export type EventReadersProps = {
-  room: Room;
   eventId: string;
+  threadId?: string;
   requestClose: () => void;
 };
 export const EventReaders = as<'div', EventReadersProps>(
-  ({ className, room, eventId, requestClose, ...props }, ref) => {
-    const mx = useMatrixClient();
-    const useAuthentication = useMediaAuthentication();
-    const latestEventReaders = useRoomEventReaders(room, eventId);
-    const openProfile = useOpenUserRoomProfile();
-    const space = useSpaceOptionally();
+  ({ className, eventId, threadId, requestClose, ...props }, ref) => {
+    const ct = useClient();
+    const roomId = useRoom();
+    const membersAPI = useRoomMembersAPI();
+    const { hour24Clock, dateFormatString } = useSettings();
 
-    const getName = (userId: string) =>
-      getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId;
+    const eventReceipt = useEventReciepts(eventId, threadId);
+
+    const useAuthentication = useMediaAuthentication();
+    const openProfile = useOpenUserRoomProfile();
+    const spaceId = useSpaceOptionally();
 
     return (
       <Box
@@ -59,52 +72,58 @@ export const EventReaders = as<'div', EventReadersProps>(
         <Box grow="Yes">
           <Scroll visibility="Hover" hideTrack size="300">
             <Box className={css.Content} direction="Column">
-              {latestEventReaders.map((readerId) => {
-                const name = getName(readerId);
-                const avatarMxcUrl = room.getMember(readerId)?.getMxcAvatarUrl();
-                const avatarUrl = avatarMxcUrl
-                  ? mx.mxcUrlToHttp(
-                      avatarMxcUrl,
-                      100,
-                      100,
-                      'crop',
-                      undefined,
-                      false,
-                      useAuthentication
-                    )
-                  : undefined;
+              {Array.from(eventReceipt)
+                .sort((a, b) => a.ts - b.ts)
+                ?.map((receipt) => {
+                  const { userId, ts } = receipt;
+                  const name = membersAPI.getName(userId);
+                  const avatarMxcUrl = membersAPI.getAvatar(userId);
+                  const avatarUrl = avatarMxcUrl
+                    ? mxcToHttp(ct.session.baseUrl, avatarMxcUrl, useAuthentication).thumbnail({
+                        width: 96,
+                        height: 96,
+                        method: 'crop',
+                      })
+                    : undefined;
 
-                return (
-                  <MenuItem
-                    key={readerId}
-                    style={{ padding: `0 ${config.space.S200}` }}
-                    radii="400"
-                    onClick={(event) => {
-                      openProfile(
-                        room.roomId,
-                        space?.roomId,
-                        readerId,
-                        getMouseEventCords(event.nativeEvent),
-                        'Bottom'
-                      );
-                    }}
-                    before={
-                      <Avatar size="200">
-                        <UserAvatar
-                          userId={readerId}
-                          src={avatarUrl ?? undefined}
-                          alt={name}
-                          renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+                  return (
+                    <MenuItem
+                      key={`${userId}${ts}`}
+                      style={{ padding: `0 ${config.space.S200}` }}
+                      radii="400"
+                      onClick={(event) => {
+                        openProfile(
+                          roomId,
+                          spaceId,
+                          userId,
+                          getMouseEventCords(event.nativeEvent),
+                          'Bottom'
+                        );
+                      }}
+                      before={
+                        <Avatar size="200">
+                          <UserAvatar
+                            userId={userId}
+                            src={avatarUrl ?? undefined}
+                            alt={name}
+                            renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+                          />
+                        </Avatar>
+                      }
+                      after={
+                        <Time
+                          hour24Clock={hour24Clock}
+                          dateFormatString={dateFormatString}
+                          ts={ts}
                         />
-                      </Avatar>
-                    }
-                  >
-                    <Text size="T400" truncate>
-                      {name}
-                    </Text>
-                  </MenuItem>
-                );
-              })}
+                      }
+                    >
+                      <Text style={{ flexGrow: 1 }} size="T400" truncate>
+                        {name}
+                      </Text>
+                    </MenuItem>
+                  );
+                })}
             </Box>
           </Scroll>
         </Box>

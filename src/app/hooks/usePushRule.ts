@@ -1,21 +1,30 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import {
-  IPushRule,
-  IPushRules,
+  PushRule,
   PushRuleAction,
   PushRuleCondition,
   PushRuleKind,
-  RuleId,
-} from 'matrix-js-sdk';
+  PushRules,
+} from 'neurone/lib/api/types';
 import { useMemo } from 'react';
+import { PushRuleId } from '../../types/matrix/accountData';
 
 export type PushRuleData = {
   kind: PushRuleKind;
-  pushRule: IPushRule;
+  pushRule: PushRule;
 };
 
 export const makePushRuleData = (
   kind: PushRuleKind,
-  ruleId: RuleId,
+  ruleId: PushRuleId,
   actions: PushRuleAction[],
   conditions?: PushRuleCondition[],
   pattern?: string,
@@ -34,16 +43,16 @@ export const makePushRuleData = (
 });
 
 export const orderedPushRuleKinds: PushRuleKind[] = [
-  PushRuleKind.Override,
-  PushRuleKind.ContentSpecific,
-  PushRuleKind.RoomSpecific,
-  PushRuleKind.SenderSpecific,
-  PushRuleKind.Underride,
+  'override',
+  'content',
+  'room',
+  'sender',
+  'underride',
 ];
 
 export const getPushRule = (
-  pushRules: IPushRules,
-  ruleId: RuleId | string
+  pushRules: PushRules,
+  ruleId: PushRuleId | string
 ): PushRuleData | undefined => {
   const { global } = pushRules;
 
@@ -66,6 +75,6 @@ export const getPushRule = (
 };
 
 export const usePushRule = (
-  pushRules: IPushRules,
-  ruleId: RuleId | string
+  pushRules: PushRules,
+  ruleId: PushRuleId | string
 ): PushRuleData | undefined => useMemo(() => getPushRule(pushRules, ruleId), [pushRules, ruleId]);

@@ -1,5 +1,13 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { Descendant, Editor, Text } from 'slate';
-import { MatrixClient } from 'matrix-js-sdk';
 import { sanitizeText } from '../../utils/sanitize';
 import { BlockType } from './types';
 import { CustomElement } from './slate';
@@ -12,6 +20,7 @@ import {
 import { findAndReplace } from '../../utils/findAndReplace';
 import { sanitizeForRegex } from '../../utils/regex';
 import { isUserId } from '../../utils/matrix';
+import { ClientContext } from '../../../client/context';
 
 export type OutputOptions = {
   allowTextFormatting?: boolean;
@@ -201,7 +210,7 @@ export type MentionsData = {
   room: boolean;
   users: Set<string>;
 };
-export const getMentions = (mx: MatrixClient, roomId: string, editor: Editor): MentionsData => {
+export const getMentions = (ct: ClientContext, editor: Editor): MentionsData => {
   const mentionData: MentionsData = {
     room: false,
     users: new Set(),
@@ -215,8 +224,7 @@ export const getMentions = (mx: MatrixClient, roomId: string, editor: Editor): M
       if (node.name === '@room') {
         mentionData.room = true;
       }
-
-      if (isUserId(node.id) && node.id !== mx.getUserId()) {
+      if (isUserId(node.id) && node.id !== ct.session.userId) {
         mentionData.users.add(node.id);
       }
 

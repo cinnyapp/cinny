@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 /* eslint-disable jsx-a11y/alt-text */
 import React, {
   ComponentPropsWithoutRef,
@@ -14,21 +23,27 @@ import {
   attributesToProps,
   domToReact,
 } from 'html-react-parser';
-import { MatrixClient } from 'matrix-js-sdk';
 import classNames from 'classnames';
-import { Box, Chip, config, Header, Icon, IconButton, Icons, Scroll, Text, toRem } from 'folds';
+import {
+  Box,
+  Chip,
+  config,
+  Header,
+  Icon,
+  IconButton,
+  Icons,
+  Scroll,
+  Text,
+  Tooltip,
+  TooltipProvider,
+  toRem,
+} from 'folds';
 import { IntermediateRepresentation, Opts as LinkifyOpts, OptFn } from 'linkifyjs';
 import Linkify from 'linkify-react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ChildNode } from 'domhandler';
 import * as css from '../styles/CustomHtml.css';
-import {
-  getMxIdLocalPart,
-  getCanonicalAliasRoomId,
-  isRoomAlias,
-  mxcUrlToHttp,
-} from '../utils/matrix';
-import { getMemberDisplayName } from '../utils/room';
+import { isRoomAlias } from '../utils/matrix';
 import { EMOJI_PATTERN, sanitizeForRegex, URL_NEG_LB } from '../utils/regex';
 import { getHexcodeForEmoji, getShortcodeFor } from './emoji';
 import { findAndReplace } from '../utils/findAndReplace';
@@ -41,6 +56,10 @@ import {
 import { onEnterOrSpace } from '../utils/keyboard';
 import { copyToClipboard, tryDecodeURIComponent } from '../utils/dom';
 import { useTimeoutToggle } from '../hooks/useTimeoutToggle';
+import { ClientContext } from '../../client/context';
+import { GetRoomMemberNameCallback } from '../hooks/useRoomMembers';
+import { GetRoomNameCallback } from '../hooks/storage/useGetRoomName';
+import { mxcToHttp } from '../../client/mxcToHttp';
 
 const ReactPrism = lazy(() => import('./react-prism/ReactPrism'));
 
@@ -72,25 +91,30 @@ export const makeMentionCustomProps = (
 });
 
 export const renderMatrixMention = (
-  mx: MatrixClient,
+  ct: ClientContext,
   currentRoomId: string | undefined,
   href: string,
-  customProps: ComponentPropsWithoutRef<'a'>
+  customProps: ComponentPropsWithoutRef<'a'>,
+  getMemberName: GetRoomMemberNameCallback,
+  getRoomName: GetRoomNameCallback,
+  noLink?: boolean
 ) => {
   const userId = parseMatrixToUser(href);
   if (userId) {
-    const currentRoom = mx.getRoom(currentRoomId);
+    const highlight = ct.session.userId === userId;
+    const name = getMemberName(userId);
+    const children = name.startsWith('@') ? name : `@${name}`;
+
+    if (noLink) return <span className={css.Mention({ highlight })}>{children}</span>;
 
     return (
       <a
         href={href}
         {...customProps}
-        className={css.Mention({ highlight: mx.getUserId() === userId })}
+        className={css.Mention({ highlight })}
         data-mention-id={userId}
       >
-        {`@${
-          (currentRoom && getMemberDisplayName(currentRoom, userId)) ?? getMxIdLocalPart(userId)
-        }`}
+        {children}
       </a>
     );
   }
@@ -98,23 +122,29 @@ export const renderMatrixMention = (
   const matrixToRoom = parseMatrixToRoom(href);
   if (matrixToRoom) {
     const { roomIdOrAlias, viaServers } = matrixToRoom;
-    const mentionRoom = mx.getRoom(
-      isRoomAlias(roomIdOrAlias) ? getCanonicalAliasRoomId(mx, roomIdOrAlias) : roomIdOrAlias
-    );
 
-    const fallbackContent = mentionRoom ? `#${mentionRoom.name}` : roomIdOrAlias;
+    const mentionRoomId = isRoomAlias(roomIdOrAlias)
+      ? ct.rooms.join.read.find((roomId) => ct.roomToAlias.read.get(roomId) === roomIdOrAlias)
+      : undefined;
+
+    const fallbackContent = mentionRoomId ? `#${getRoomName(mentionRoomId)}` : roomIdOrAlias;
+
+    const highlight = currentRoomId === (mentionRoomId ?? roomIdOrAlias);
+    const children = customProps.children ? customProps.children : fallbackContent;
+
+    if (noLink) return <span className={css.Mention({ highlight })}>{children}</span>;
 
     return (
       <a
         href={href}
         {...customProps}
         className={css.Mention({
-          highlight: currentRoomId === (mentionRoom?.roomId ?? roomIdOrAlias),
+          highlight,
         })}
-        data-mention-id={mentionRoom?.roomId ?? roomIdOrAlias}
+        data-mention-id={mentionRoomId ?? roomIdOrAlias}
         data-mention-via={viaServers?.join(',')}
       >
-        {customProps.children ? customProps.children : fallbackContent}
+        {children}
       </a>
     );
   }
@@ -122,24 +152,29 @@ export const renderMatrixMention = (
   const matrixToRoomEvent = parseMatrixToRoomEvent(href);
   if (matrixToRoomEvent) {
     const { roomIdOrAlias, eventId, viaServers } = matrixToRoomEvent;
-    const mentionRoom = mx.getRoom(
-      isRoomAlias(roomIdOrAlias) ? getCanonicalAliasRoomId(mx, roomIdOrAlias) : roomIdOrAlias
-    );
+    const mentionRoomId = isRoomAlias(roomIdOrAlias)
+      ? ct.rooms.join.read.find((roomId) => ct.roomToAlias.read.get(roomId) === roomIdOrAlias)
+      : undefined;
+
+    const highlight = currentRoomId === (mentionRoomId ?? roomIdOrAlias);
+    const children = customProps.children
+      ? customProps.children
+      : `Message: ${mentionRoomId ? `#${getRoomName(mentionRoomId)}` : roomIdOrAlias}`;
+
+    if (noLink) {
+      return <span className={css.Mention({ highlight })}>{children}</span>;
+    }
 
     return (
       <a
         href={href}
         {...customProps}
-        className={css.Mention({
-          highlight: currentRoomId === (mentionRoom?.roomId ?? roomIdOrAlias),
-        })}
-        data-mention-id={mentionRoom?.roomId ?? roomIdOrAlias}
+        className={css.Mention({ highlight })}
+        data-mention-id={mentionRoomId ?? roomIdOrAlias}
         data-mention-event-id={eventId}
         data-mention-via={viaServers?.join(',')}
       >
-        {customProps.children
-          ? customProps.children
-          : `Message: ${mentionRoom ? `#${mentionRoom.name}` : roomIdOrAlias}`}
+        {children}
       </a>
     );
   }
@@ -148,7 +183,8 @@ export const renderMatrixMention = (
 };
 
 export const factoryRenderLinkifyWithMention = (
-  mentionRender: (href: string) => JSX.Element | undefined
+  mentionRender: (href: string) => JSX.Element | undefined,
+  noLink?: boolean
 ): OptFn<(ir: IntermediateRepresentation) => any> => {
   const render: OptFn<(ir: IntermediateRepresentation) => any> = ({
     tagName,
@@ -159,6 +195,8 @@ export const factoryRenderLinkifyWithMention = (
       const mention = mentionRender(tryDecodeURIComponent(attributes.href));
       if (mention) return mention;
     }
+
+    if (noLink) return <span>{content}</span>;
 
     return <a {...attributes}>{content}</a>;
   };
@@ -180,7 +218,7 @@ export const scaleSystemEmoji = (text: string): (string | JSX.Element)[] =>
   );
 
 export const makeHighlightRegex = (highlights: string[]): RegExp | undefined => {
-  const pattern = highlights.map(sanitizeForRegex).join('|');
+  const pattern = highlights.filter(Boolean).map(sanitizeForRegex).join('|');
   if (!pattern) return undefined;
   return new RegExp(pattern, 'gi');
 };
@@ -247,6 +285,7 @@ export function CodeBlock({
   );
 
   const [expanded, setExpand] = useState(false);
+  const [wrap, setWrap] = useState(!language);
   const [copied, setCopied] = useTimeoutToggle();
 
   const handleCopy = () => {
@@ -261,7 +300,21 @@ export function CodeBlock({
   return (
     <Text size="T300" as="pre" className={css.CodeBlock}>
       <Header variant="Surface" size="400" className={css.CodeBlockHeader}>
-        <Box grow="Yes">
+        {largeCodeBlock && (
+          <Box shrink="No" gap="200">
+            <IconButton
+              size="300"
+              variant="SurfaceVariant"
+              outlined
+              radii="300"
+              onClick={toggleExpand}
+              aria-label={expanded ? 'Collapse' : 'Expand'}
+            >
+              <Icon size="50" src={expanded ? Icons.ChevronTop : Icons.ChevronBottom} />
+            </IconButton>
+          </Box>
+        )}
+        <Box style={{ paddingLeft: largeCodeBlock ? undefined : config.space.S100 }} grow="Yes">
           <Text size="L400" truncate>
             {customLabel ?? language ?? 'Code'}
           </Text>
@@ -276,18 +329,29 @@ export function CodeBlock({
           >
             <Text size="B300">{copied ? 'Copied' : 'Copy'}</Text>
           </Chip>
-          {largeCodeBlock && (
-            <IconButton
-              size="300"
-              variant="SurfaceVariant"
-              outlined
-              radii="300"
-              onClick={toggleExpand}
-              aria-label={expanded ? 'Collapse' : 'Expand'}
-            >
-              <Icon size="50" src={expanded ? Icons.ChevronTop : Icons.ChevronBottom} />
-            </IconButton>
-          )}
+          <TooltipProvider
+            position="Bottom"
+            delay={0}
+            tooltip={
+              <Tooltip>
+                <Text size="L400">Toggle Wrap</Text>
+              </Tooltip>
+            }
+          >
+            {(triggerRef) => (
+              <IconButton
+                ref={triggerRef}
+                size="300"
+                variant={wrap ? 'Success' : 'Surface'}
+                fill="None"
+                aria-pressed={wrap}
+                radii="300"
+                onClick={() => setWrap(!wrap)}
+              >
+                <Icon size="50" src={Icons.Sort} />
+              </IconButton>
+            )}
+          </TooltipProvider>
         </Box>
       </Header>
       <Scroll
@@ -301,7 +365,7 @@ export function CodeBlock({
         visibility="Hover"
         hideTrack
       >
-        <div id="code-block-content" className={css.CodeBlockInternal}>
+        <div style={{ textWrap: wrap ? 'initial' : undefined }} className={css.CodeBlockInternal}>
           {domToReact(children, opts)}
         </div>
       </Scroll>
@@ -311,7 +375,7 @@ export function CodeBlock({
 }
 
 export const getReactCustomHtmlParser = (
-  mx: MatrixClient,
+  ct: ClientContext,
   roomId: string | undefined,
   params: {
     linkifyOpts: LinkifyOpts;
@@ -319,6 +383,8 @@ export const getReactCustomHtmlParser = (
     handleSpoilerClick?: ReactEventHandler<HTMLElement>;
     handleMentionClick?: ReactEventHandler<HTMLElement>;
     useAuthentication?: boolean;
+    getMemberName: GetRoomMemberNameCallback;
+    getRoomName: GetRoomNameCallback;
   }
 ): HTMLReactParserOptions => {
   const opts: HTMLReactParserOptions = {
@@ -447,10 +513,12 @@ export const getReactCustomHtmlParser = (
             : children.map((c) => (c instanceof DOMText ? c.data : '')).join();
 
           const mention = renderMatrixMention(
-            mx,
+            ct,
             roomId,
             tryDecodeURIComponent(props.href),
-            makeMentionCustomProps(params.handleMentionClick, content)
+            makeMentionCustomProps(params.handleMentionClick, content),
+            params.getMemberName,
+            params.getRoomName
           );
 
           if (mention) return mention;
@@ -474,14 +542,15 @@ export const getReactCustomHtmlParser = (
         }
 
         if (name === 'img') {
-          const htmlSrc = mxcUrlToHttp(mx, props.src, params.useAuthentication);
-          if (htmlSrc && props.src.startsWith('mxc://') === false) {
+          if (props.src && props.src.startsWith('mxc://') === false) {
             return (
-              <a href={htmlSrc} target="_blank" rel="noreferrer noopener">
-                {props.alt || props.title || htmlSrc}
+              <a href={props.src} target="_blank" rel="noreferrer noopener">
+                {props.alt || props.title || props.src}
               </a>
             );
           }
+
+          const htmlSrc = mxcToHttp(ct.session.baseUrl, props.src, params.useAuthentication).url();
           if (htmlSrc && 'data-mx-emoticon' in props) {
             return (
               <span className={css.EmoticonBase}>
@@ -511,6 +580,159 @@ export const getReactCustomHtmlParser = (
         }
         return jsx;
       }
+      return undefined;
+    },
+  };
+  return opts;
+};
+
+export const getReactCustomHtmlInlineParser = (
+  ct: ClientContext,
+  roomId: string | undefined,
+  params: {
+    linkifyOpts: LinkifyOpts;
+    highlightRegex?: RegExp;
+    useAuthentication?: boolean;
+    handleMentionClick?: ReactEventHandler<HTMLElement>;
+    getMemberName: GetRoomMemberNameCallback;
+    getRoomName: GetRoomNameCallback;
+    noLink?: boolean;
+  }
+): HTMLReactParserOptions => {
+  const opts: HTMLReactParserOptions = {
+    replace: (domNode) => {
+      if (domNode instanceof Element && 'name' in domNode) {
+        const { name, attribs, children, parent } = domNode;
+        const props = attributesToProps(attribs);
+
+        if (
+          name === 'h1' ||
+          name === 'h2' ||
+          name === 'h3' ||
+          name === 'h4' ||
+          name === 'h5' ||
+          name === 'h6'
+        ) {
+          return <strong>{domToReact(children, opts)} </strong>;
+        }
+
+        if (name === 'br') {
+          return <span> </span>;
+        }
+
+        if (name === 'p') {
+          return <span>{domToReact(children, opts)} </span>;
+        }
+
+        if (name === 'pre') {
+          return <span>{domToReact(children, opts)} </span>;
+        }
+
+        if (name === 'blockquote') {
+          return <em>{domToReact(children, opts)} </em>;
+        }
+
+        if (name === 'ul') {
+          return <span>{domToReact(children, opts)} </span>;
+        }
+        if (name === 'ol') {
+          return <span>{domToReact(children, opts)} </span>;
+        }
+
+        if (name === 'code') {
+          if (parent && 'name' in parent && parent.name === 'pre') {
+            const codeReact = domToReact(children, opts);
+            if (typeof codeReact === 'string') {
+              return <code className={css.CodeFont}>{codeReact}</code>;
+            }
+          } else {
+            return (
+              <Text as="code" size="T300" className={css.Code} {...props}>
+                {domToReact(children, opts)}
+              </Text>
+            );
+          }
+        }
+
+        if (name === 'a') {
+          if (testMatrixTo(tryDecodeURIComponent(props.href))) {
+            const content = children.find((child) => !(child instanceof DOMText))
+              ? undefined
+              : children.map((c) => (c instanceof DOMText ? c.data : '')).join();
+
+            const mention = renderMatrixMention(
+              ct,
+              roomId,
+              tryDecodeURIComponent(props.href),
+              makeMentionCustomProps(params.handleMentionClick, content),
+              params.getMemberName,
+              params.getRoomName,
+              params.noLink
+            );
+
+            if (mention) return mention;
+          }
+
+          if (params.noLink) {
+            return <span>{domToReact(children, opts)}</span>;
+          }
+
+          return undefined;
+        }
+
+        if (name === 'span' && 'data-mx-spoiler' in props) {
+          return (
+            <span {...props} className={css.Spoiler()} aria-pressed style={{ cursor: 'pointer' }}>
+              {domToReact(children, opts)}
+            </span>
+          );
+        }
+
+        if (name === 'img') {
+          if (props.src && props.src.startsWith('mxc://') === false) {
+            if (params.noLink) {
+              return <span>{props.alt || props.title || props.src}</span>;
+            }
+            return (
+              <a href={props.src} target="_blank" rel="noreferrer noopener">
+                {props.alt || props.title || props.src}
+              </a>
+            );
+          }
+
+          const htmlSrc = mxcToHttp(ct.session.baseUrl, props.src, params.useAuthentication).url();
+          if (htmlSrc && 'data-mx-emoticon' in props) {
+            return (
+              <span className={css.EmoticonBase}>
+                <span className={css.Emoticon()}>
+                  <img {...props} className={css.EmoticonImg} src={htmlSrc} />
+                </span>
+              </span>
+            );
+          }
+          if (htmlSrc) return <em>Click to see image</em>;
+        }
+
+        return <span>{domToReact(children, opts)} </span>;
+      }
+
+      if (domNode instanceof DOMText) {
+        const linkify =
+          !(domNode.parent && 'name' in domNode.parent && domNode.parent.name === 'code') &&
+          !(domNode.parent && 'name' in domNode.parent && domNode.parent.name === 'a');
+
+        let jsx = scaleSystemEmoji(domNode.data);
+
+        if (params.highlightRegex) {
+          jsx = highlightText(params.highlightRegex, jsx);
+        }
+
+        if (linkify) {
+          return <Linkify options={params.linkifyOpts}>{jsx}</Linkify>;
+        }
+        return jsx;
+      }
+
       return undefined;
     },
   };

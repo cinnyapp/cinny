@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 /* eslint-disable jsx-a11y/media-has-caption */
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
@@ -17,15 +26,10 @@ import {
   Text,
   toRem,
 } from 'folds';
-import {
-  EventTimelineSetHandlerMap,
-  EventType,
-  RelationType,
-  Room,
-  RoomEvent,
-} from 'matrix-js-sdk';
-import { IRTCNotificationContent, RTCNotificationType } from 'matrix-js-sdk/lib/matrixrtc/types';
-import { CryptoBackend } from 'matrix-js-sdk/lib/common-crypto/CryptoBackend';
+import { putSend } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { roomTimeline } from 'neurone/lib/utils/sync/v3/join';
+import { ClientEventWithoutRoomId } from 'neurone/lib/api/types';
+import { ObjectReader } from 'neurone/lib/utils';
 import {
   CallEmbedContextProvider,
   CallEmbedRefContextProvider,
@@ -39,57 +43,73 @@ import { callChatAtom, callEmbedAtom } from '../state/callEmbed';
 import { CallEmbed } from '../plugins/call';
 import { useSelectedRoom } from '../hooks/router/useSelectedRoom';
 import { ScreenSize, useScreenSizeContext } from '../hooks/useScreenSize';
-import { useMatrixClient } from '../hooks/useMatrixClient';
 import CallSound from '../../../public/sound/call.ogg';
 import { useCallMembersChange, useCallSession } from '../hooks/useCall';
-import { useRoomAvatar, useRoomName } from '../hooks/useRoomMeta';
 import { mDirectAtom } from '../state/mDirectList';
 import { useMediaAuthentication } from '../hooks/useMediaAuthentication';
-import { mxcUrlToHttp } from '../utils/matrix';
 import { RoomAvatar, RoomIcon } from './room-avatar';
 import { useRoomNavigate } from '../hooks/useRoomNavigate';
-import { getStateEvent } from '../utils/room';
-import { StateEvent } from '../../types/matrix/room';
-import { getPowersLevelFromMatrixEvent } from '../hooks/usePowerLevels';
-import { getRoomCreatorsForRoomId } from '../hooks/useRoomCreators';
-import { getRoomPermissionsAPI } from '../hooks/useRoomPermissions';
+import { CallEventType, MessageEvent, StateEvent, StateEventType } from '../../types/matrix/room';
 import { useLivekitSupport } from '../hooks/useLivekitSupport';
 import { CallAvatarAnimation } from '../styles/Animations.css';
 import { webRTCSupported } from '../utils/rtc';
+import { useClient } from '../hooks/useClient';
+import { useGetRoomName } from '../hooks/storage/useGetRoomName';
+import { useRoomHeroes } from '../hooks/storage/useRoomHeros';
+import { useGetRoomAvatar } from '../hooks/storage/useGetRoomAvatar';
+import { mxcToHttp } from '../../client/mxcToHttp';
+import { RelationType } from '../../types/matrix/common';
+import { ensureEncryptionSession } from '../hooks/useEnsureRoomEncryptionSession';
+import { SyncValue } from '../../client/sync';
+import { isCallRoom } from '../utils/room';
+import { reference } from '../../client/room/relations';
+import { rContent, rMentions, rRelatesTo } from '../../client/reader';
+import { getJoinRoomStateId } from '../../client/storage/collections';
+import { getPowerLevels } from '../hooks/usePowerLevels';
+import { getRoomPermissionsAPI } from '../hooks/useRoomPermissions';
 
 type IncomingCallInfo = {
-  room: Room;
+  roomId: string;
   sender: string;
   senderTs: number;
   lifetime: number;
   intent?: string;
-  notificationType: RTCNotificationType;
+  silent?: boolean;
   refEventId: string;
 };
 type IncomingCallProps = {
   dm: boolean;
   info: IncomingCallInfo;
   onIgnore: () => void;
-  onAnswer: (room: Room, video: boolean) => void;
-  onReject: (room: Room, eventId: string) => void;
+  onAnswer: (roomId: string, video: boolean) => void;
+  onReject: (roomId: string, eventId: string) => void;
 };
 function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
   const livekitSupported = useLivekitSupport();
   const rtcSupported = webRTCSupported();
   const canAnswer = livekitSupported && rtcSupported;
-  const { room } = info;
+  const { roomId } = info;
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const roomName = useRoomName(room);
-  const roomAvatar = useRoomAvatar(room, dm);
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
+
+  const roomName = getRoomName(roomId);
+  const roomAvatar = getRoomAvatar(roomId);
+
   const avatarUrl = roomAvatar
-    ? mxcUrlToHttp(mx, roomAvatar, useAuthentication, 96, 96, 'crop') ?? undefined
+    ? mxcToHttp(ct.session.baseUrl, roomAvatar, useAuthentication).thumbnail({
+        width: 96,
+        height: 96,
+        method: 'crop',
+      })
     : undefined;
 
-  const session = useCallSession(room);
+  const session = useCallSession(roomId);
   useCallMembersChange(
     session,
     useCallback(
@@ -108,10 +128,10 @@ function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallPr
   }, []);
 
   useEffect(() => {
-    if (info.notificationType === 'ring') {
+    if (!info.silent) {
       playSound();
     }
-  }, [playSound, info.notificationType]);
+  }, [playSound, info.silent]);
 
   return (
     <>
@@ -134,14 +154,14 @@ function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallPr
                   <Box shrink="No">
                     <Avatar size="500" className={CallAvatarAnimation}>
                       <RoomAvatar
-                        roomId={room.roomId}
+                        roomId={roomId}
                         src={avatarUrl}
                         alt={roomName}
                         renderFallback={() => (
                           <RoomIcon
-                            roomType={room.getType()}
+                            roomType={ct.roomToType.read.get(roomId)}
                             size="400"
-                            joinRule={room.getJoinRule()}
+                            joinRule={ct.roomToJoinRule.read.get(roomId)}
                             filled
                           />
                         )}
@@ -181,7 +201,7 @@ function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallPr
                     variant="Success"
                     size="400"
                     radii="400"
-                    onClick={() => onAnswer(room, info.intent === 'video')}
+                    onClick={() => onAnswer(roomId, info.intent === 'video')}
                     before={
                       <Icon
                         size="200"
@@ -201,7 +221,7 @@ function IncomingCall({ dm, info, onIgnore, onAnswer, onReject }: IncomingCallPr
                     fill="Soft"
                     size="400"
                     radii="400"
-                    onClick={() => (dm ? onReject(room, info.refEventId) : onIgnore())}
+                    onClick={() => (dm ? onReject(roomId, info.refEventId) : onIgnore())}
                     before={<Icon size="200" src={Icons.Cross} filled />}
                   >
                     <Text as="span" size="B400">
@@ -226,117 +246,150 @@ type IncomingCallListenerProps = {
   joined?: boolean;
 };
 function IncomingCallListener({ callEmbed, joined }: IncomingCallListenerProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const directs = useAtomValue(mDirectAtom);
   const { navigateRoom } = useRoomNavigate();
 
   const [callInfo, setCallInfo] = useState<IncomingCallInfo>();
-  const dm = callInfo ? directs.has(callInfo.room.roomId) : false;
-  const startCall = useCallStart(dm);
+  const dm = callInfo ? directs.has(callInfo.roomId) : false;
+  const startCall = useCallStart();
 
-  const handleTimelineEvent: EventTimelineSetHandlerMap[RoomEvent.Timeline] = useCallback(
-    async (event, room, toStartOfTimeline, removed, data) => {
-      // only process rtc notification reference events.
-      // we do not want to wait to decrypt all events.
-      if (event.getRelation()?.rel_type !== RelationType.Reference) return;
-      if (room?.isCallRoom()) return;
+  const handleReferenceEvent = useCallback(
+    async (roomId: string, event: ClientEventWithoutRoomId) => {
+      let targetEvent = event;
 
-      if (event.isEncrypted()) {
-        if (!event.isBeingDecrypted()) {
-          await event.attemptDecryption(mx.getCrypto() as CryptoBackend);
-        }
-        await event.getDecryptionPromise();
+      if (ct.encryptedRooms.read.has(roomId) && event.type === MessageEvent.RoomMessageEncrypted) {
+        targetEvent = await ct.decryption.tryDecryptEvent(roomId, event);
       }
 
       if (
-        !room ||
-        event.getType() !== EventType.RTCNotification ||
-        event.getSender() === mx.getSafeUserId() ||
-        !data.liveEvent
+        targetEvent.type !== CallEventType.RTCInvite ||
+        targetEvent.sender === ct.session.userId
       ) {
         return;
       }
 
-      const sender = event.getSender();
-      const content = event.getContent<IRTCNotificationContent>();
-      const senderTs =
-        content.sender_ts - event.getTs() > 20000 ? event.getTs() : content.sender_ts;
-      const lifetime = Math.min(content.lifetime, 120000);
-      const notificationType = content.notification_type;
-      const relation =
-        event.getRelation()?.rel_type === RelationType.Reference ? event.getRelation() : undefined;
-      const refEventId = relation?.event_id;
+      const { sender, content } = targetEvent;
+
+      const senderTs = ObjectReader.number(content, 'sender_ts') ?? targetEvent.origin_server_ts;
+      const lifetime = Math.min(ObjectReader.number(content, 'lifetime') ?? 120000, 120000);
+
+      const refEventId = rRelatesTo.eventId(rContent.relatesTo(content));
 
       const mention =
-        content['m.mentions']?.room ||
-        content['m.mentions']?.user_ids?.includes(mx.getSafeUserId());
-      if (!sender || !refEventId || !mention || Date.now() >= senderTs + lifetime) {
+        rMentions.room(rContent.mentions(content)) ||
+        rMentions.userIds(rContent.mentions(content))?.includes(ct.session.userId);
+
+      if (!refEventId || !mention || Date.now() >= senderTs + lifetime) {
         return;
       }
 
-      const powerLevelsEvent = getStateEvent(room, StateEvent.RoomPowerLevels);
-      const powerLevels = getPowersLevelFromMatrixEvent(powerLevelsEvent);
-      const creators = getRoomCreatorsForRoomId(mx, room.roomId);
+      const powerLevelsObj = await ct.storage.joinRoomState.read.get(
+        getJoinRoomStateId(roomId, StateEventType.RoomPowerLevels, '')
+      );
+      if (!powerLevelsObj) return;
+      const powerLevels = getPowerLevels(powerLevelsObj);
+      const creators = ct.roomToCreators.read.get(roomId);
       const permissions = getRoomPermissionsAPI(creators, powerLevels);
 
       const hasCallPermission = permissions.stateEvent(
         StateEvent.GroupCallMemberPrefix,
-        mx.getSafeUserId()
+        ct.session.userId
       );
       if (!hasCallPermission) return;
 
       const info: IncomingCallInfo = {
-        room,
+        roomId,
         sender,
         senderTs,
         lifetime,
-        intent:
-          'm.call.intent' in content && typeof content['m.call.intent'] === 'string'
-            ? content['m.call.intent']
-            : undefined,
-        notificationType,
+        intent: ObjectReader.string(content, 'm.call.intent'),
+        silent: !ct.directRooms.read.has(roomId),
         refEventId,
       };
 
-      setCallInfo(info);
+      setCallInfo((currentInfo) => {
+        if (currentInfo) return currentInfo;
+        return info;
+      });
     },
-    [mx]
+    [ct]
   );
 
   useEffect(() => {
-    mx.on(RoomEvent.Timeline, handleTimelineEvent);
+    const unsub = ct.sync.observable.subscribe(async (syncValue: SyncValue) => {
+      const [, data] = syncValue ?? [];
+      if (!data) return;
+
+      Object.keys(data.rooms?.join ?? {}).forEach(async (roomId) => {
+        if (isCallRoom(ct.roomToType.read.get(roomId))) return;
+
+        const joinedRoom = data.rooms?.join?.[roomId];
+        if (!joinedRoom) return;
+
+        const timelineEvents = roomTimeline(joinedRoom);
+        Array.from(timelineEvents)
+          .reverse()
+          .forEach((event) => {
+            if (reference(event)) handleReferenceEvent(roomId, event);
+          });
+      });
+    });
     return () => {
-      mx.removeListener(RoomEvent.Timeline, handleTimelineEvent);
+      unsub();
     };
-  }, [mx, handleTimelineEvent]);
+  }, [ct, handleReferenceEvent]);
 
   const handleIgnore = useCallback(() => {
     setCallInfo(undefined);
   }, []);
 
   const handleReject = useCallback(
-    (room: Room, eventId: string) => {
-      mx.sendEvent(room.roomId, EventType.RTCDecline, {
+    async (roomId: string, eventId: string) => {
+      setCallInfo(undefined);
+      const content = {
         'm.relates_to': {
           rel_type: RelationType.Reference,
           event_id: eventId,
         },
-      });
-      setCallInfo(undefined);
+      };
+
+      let encContent: object | undefined;
+      if (ct.encryptedRooms.read.has(roomId)) {
+        await ensureEncryptionSession(ct, roomId);
+
+        const encStr = await ct.machine.roomEncryption.encryptMessageEvent(
+          roomId,
+          CallEventType.RTCDecline,
+          content
+        );
+        encContent = JSON.parse(encStr);
+      }
+
+      ct.requestAuthJSON(
+        putSend({
+          pathParams: {
+            roomId,
+            eventType: encContent ? MessageEvent.RoomMessageEncrypted : CallEventType.RTCDecline,
+            txnId: ct.getTxnId(),
+          },
+          body: encContent ?? content,
+        })
+      );
     },
-    [mx]
+    [ct]
   );
 
   const handleAnswer = useCallback(
-    (room: Room, video: boolean) => {
-      startCall(room, { microphone: true, video, sound: true });
+    (roomId: string, video: boolean) => {
+      startCall(roomId, { microphone: true, video, sound: true });
       setCallInfo(undefined);
-      navigateRoom(room.roomId);
+      navigateRoom(roomId);
     },
     [startCall, navigateRoom]
   );
 
-  if (callInfo && callEmbed?.roomId === callInfo.room.roomId) {
+  if (callInfo && callEmbed?.roomId === callInfo.roomId) {
     return null;
   }
   return !joined && callInfo ? (

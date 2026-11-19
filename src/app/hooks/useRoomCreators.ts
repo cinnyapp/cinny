@@ -1,49 +1,23 @@
-import { MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
-import { useMemo } from 'react';
-import { useStateEvent } from './useStateEvent';
-import { IRoomCreateContent, StateEvent } from '../../types/matrix/room';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { creatorsSupported } from '../utils/matrix';
-import { getStateEvent } from '../utils/room';
+import { useObservableValue } from './useObservableValue';
+import { useClient } from './useClient';
 
-export const getRoomCreators = (createEvent: MatrixEvent): Set<string> => {
-  const createContent = createEvent.getContent<IRoomCreateContent>();
+export const useRoomCreators = (roomId: string): Set<string> | undefined => {
+  const ct = useClient();
+  const roomToCreators = useObservableValue(ct.roomToCreators);
 
-  const creators: Set<string> = new Set();
-
-  if (!creatorsSupported(createContent.room_version)) return creators;
-
-  if (createEvent.event.sender) {
-    creators.add(createEvent.event.sender);
+  if (!creatorsSupported(ct.roomToVersion.read.get(roomId) ?? '1')) {
+    return undefined;
   }
 
-  if ('additional_creators' in createContent && Array.isArray(createContent.additional_creators)) {
-    createContent.additional_creators.forEach((creator) => {
-      if (typeof creator === 'string') {
-        creators.add(creator);
-      }
-    });
-  }
-
-  return creators;
-};
-
-export const useRoomCreators = (room: Room): Set<string> => {
-  const createEvent = useStateEvent(room, StateEvent.RoomCreate);
-
-  const creators = useMemo(
-    () => (createEvent ? getRoomCreators(createEvent) : new Set<string>()),
-    [createEvent]
-  );
-
-  return creators;
-};
-
-export const getRoomCreatorsForRoomId = (mx: MatrixClient, roomId: string): Set<string> => {
-  const room = mx.getRoom(roomId);
-  if (!room) return new Set();
-
-  const createEvent = getStateEvent(room, StateEvent.RoomCreate);
-  if (!createEvent) return new Set();
-
-  return getRoomCreators(createEvent);
+  return roomToCreators.get(roomId);
 };

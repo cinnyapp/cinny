@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { MouseEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box,
@@ -23,14 +32,13 @@ import {
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 import { useAtomValue } from 'jotai';
-import { Room } from 'matrix-js-sdk';
+import { putAccountData } from 'neurone/lib/api/matrix/client/v3/user';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { useGlobalImagePacks, useRoomsImagePacks } from '../../../hooks/useImagePacks';
 import { SequenceCardStyle } from '../styles.css';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SettingTile } from '../../../components/setting-tile';
-import { mxcUrlToHttp } from '../../../utils/matrix';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import {
   EmoteRoomsContent,
   ImagePack,
@@ -40,9 +48,13 @@ import {
 } from '../../../plugins/custom-emoji';
 import { LineClamp2 } from '../../../styles/Text.css';
 import { allRoomsAtom } from '../../../state/room-list/roomList';
-import { AccountDataEvent } from '../../../../types/matrix/accountData';
+import { AccountDataType } from '../../../../types/matrix/accountData';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { stopPropagation } from '../../../utils/keyboard';
+import { useClient } from '../../../hooks/useClient';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
+import { useGetRoomName } from '../../../hooks/storage/useGetRoomName';
+import { useRoomHeroes } from '../../../hooks/storage/useRoomHeros';
 
 function GlobalPackSelector({
   packs,
@@ -53,7 +65,11 @@ function GlobalPackSelector({
   useAuthentication: boolean;
   onSelect: (addresses: PackAddress[]) => void;
 }) {
-  const mx = useMatrixClient();
+  const ct = useClient();
+
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+
   const roomToPacks = useMemo(() => {
     const rToP = new Map<string, ImagePack[]>();
     packs
@@ -135,11 +151,12 @@ function GlobalPackSelector({
             }}
           >
             {Array.from(roomToPacks.entries()).map(([roomId, roomPacks]) => {
-              const room = mx.getRoom(roomId);
-              if (!room) return null;
+              if (!ct.rooms.join.read.includes(roomId)) return null;
+
               const roomPackAddresses = roomPacks
                 .map((pack) => pack.address)
                 .filter((addr) => addr !== undefined);
+
               const allSelected = roomPackAddresses.every((addr) =>
                 selected.find((address) => packAddressEqual(addr, address))
               );
@@ -148,7 +165,7 @@ function GlobalPackSelector({
                 <Box key={roomId} direction="Column" gap="100">
                   <Box alignItems="Center">
                     <Box grow="Yes">
-                      <Text size="L400">{room.name}</Text>
+                      <Text size="L400">{getRoomName(roomId) ?? 'Unknown'}</Text>
                     </Box>
                     <Box shrink="No">
                       <Chip
@@ -169,7 +186,7 @@ function GlobalPackSelector({
                   {roomPacks.map((pack) => {
                     const avatarMxc = pack.getAvatarUrl(ImageUsage.Emoticon);
                     const avatarUrl = avatarMxc
-                      ? mxcUrlToHttp(mx, avatarMxc, useAuthentication)
+                      ? mxcToHttp(ct.session.baseUrl, avatarMxc, useAuthentication).url()
                       : undefined;
                     const { address } = pack;
                     if (!address) return null;
@@ -251,26 +268,21 @@ type GlobalPacksProps = {
   onViewPack: (imagePack: ImagePack) => void;
 };
 export function GlobalPacks({ onViewPack }: GlobalPacksProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
-  const globalPacks = useGlobalImagePacks();
+  const globalPacksResult = useGlobalImagePacks();
+  const globalPacks = globalPacksResult.value;
   const [menuCords, setMenuCords] = useState<RectCords>();
 
-  const roomIds = useAtomValue(allRoomsAtom);
-  const rooms = useMemo(() => {
-    const rs: Room[] = [];
-    roomIds.forEach((rId) => {
-      const r = mx.getRoom(rId);
-      if (r) rs.push(r);
-    });
-    return rs;
-  }, [mx, roomIds]);
-  const roomsImagePack = useRoomsImagePacks(rooms);
+  const allRooms = useAtomValue(allRoomsAtom);
+  const roomsImagePackResult = useRoomsImagePacks(allRooms);
+  const roomsImagePack = roomsImagePackResult.value;
+
   const nonGlobalPacks = useMemo(
     () =>
-      roomsImagePack.filter(
-        (pack) => !globalPacks.find((p) => packAddressEqual(pack.address, p.address))
-      ),
+      roomsImagePack?.filter(
+        (pack) => !globalPacks?.find((p) => packAddressEqual(pack.address, p.address))
+      ) ?? [],
     [roomsImagePack, globalPacks]
   );
 
@@ -281,7 +293,7 @@ export function GlobalPacks({ onViewPack }: GlobalPacksProps) {
     () =>
       nonGlobalPacks.filter(
         (pack) => !selectedPacks.find((addr) => packAddressEqual(pack.address, addr))
-      ),
+      ) ?? [],
     [selectedPacks, nonGlobalPacks]
   );
 
@@ -302,9 +314,8 @@ export function GlobalPacks({ onViewPack }: GlobalPacksProps) {
 
   const [applyState, applyChanges] = useAsyncCallback(
     useCallback(async () => {
-      const content =
-        mx.getAccountData(AccountDataEvent.PoniesEmoteRooms)?.getContent<EmoteRoomsContent>() ?? {};
-      const updatedContent: EmoteRoomsContent = JSON.parse(JSON.stringify(content));
+      const emoteRoomsObj = await ct.storage.accountData.read.get(AccountDataType.PoniesEmoteRooms);
+      const updatedContent: EmoteRoomsContent = emoteRoomsObj?.event.content ?? {};
 
       selectedPacks.forEach((addr) => {
         const roomsToState = updatedContent.rooms ?? {};
@@ -320,8 +331,16 @@ export function GlobalPacks({ onViewPack }: GlobalPacksProps) {
         }
       });
 
-      await mx.setAccountData(AccountDataEvent.PoniesEmoteRooms, updatedContent);
-    }, [mx, selectedPacks, removedPacks])
+      const resp = await ct.requestAuthJSON(
+        putAccountData({
+          pathParams: { type: AccountDataType.PoniesEmoteRooms, userId: ct.session.userId },
+          body: updatedContent,
+        })
+      );
+
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
+    }, [ct, selectedPacks, removedPacks])
   );
 
   const resetChanges = useCallback(() => {
@@ -344,7 +363,9 @@ export function GlobalPacks({ onViewPack }: GlobalPacksProps) {
 
   const renderPack = (pack: ImagePack) => {
     const avatarMxc = pack.getAvatarUrl(ImageUsage.Emoticon);
-    const avatarUrl = avatarMxc ? mxcUrlToHttp(mx, avatarMxc, useAuthentication) : undefined;
+    const avatarUrl = avatarMxc
+      ? mxcToHttp(ct.session.baseUrl, avatarMxc, useAuthentication).url()
+      : undefined;
     const { address } = pack;
     if (!address) return null;
     const removed = !!removedPacks.find((addr) => packAddressEqual(addr, address));
@@ -480,7 +501,7 @@ export function GlobalPacks({ onViewPack }: GlobalPacksProps) {
             }
           />
         </SequenceCard>
-        {globalPacks.map(renderPack)}
+        {globalPacks?.map(renderPack)}
         {nonGlobalPacks
           .filter((pack) => !!selectedPacks.find((addr) => packAddressEqual(pack.address, addr)))
           .map(renderPack)}

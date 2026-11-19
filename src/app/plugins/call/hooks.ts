@@ -1,11 +1,21 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import {
   ClientWidgetApi,
   IWidgetApiAcknowledgeResponseData,
   IWidgetApiRequestData,
 } from 'matrix-widget-api';
-import { useCallback, useEffect, useState } from 'react';
-import { CallControl, CallControlEvent } from './CallControl';
+import { useCallback, useEffect } from 'react';
+import { CallControl } from './CallControl';
 import { CallControlState } from './CallControlState';
+import { useObservableValue } from '../../hooks/useObservableValue';
 
 export const useClientWidgetApiEvent = <T>(
   api: ClientWidgetApi | undefined,
@@ -33,17 +43,7 @@ export const useSendClientWidgetApiAction = (api: ClientWidgetApi) => {
 };
 
 export const useCallControlState = (control: CallControl): CallControlState => {
-  const [state, setState] = useState(control.getState());
-
-  useEffect(() => {
-    const handleUpdate = () => {
-      setState(control.getState());
-    };
-    control.on(CallControlEvent.StateUpdate, handleUpdate);
-    return () => {
-      control.off(CallControlEvent.StateUpdate, handleUpdate);
-    };
-  }, [control]);
+  const state = useObservableValue(control.state);
 
   return state;
 };

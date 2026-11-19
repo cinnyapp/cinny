@@ -1,103 +1,178 @@
-import React, { CSSProperties, ReactNode } from 'react';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import React, { CSSProperties } from 'react';
 import { Box, Chip, Icon, Icons, Text, toRem } from 'folds';
-import { IContent } from 'matrix-js-sdk';
-import { JUMBO_EMOJI_REG, URL_REG } from '../../utils/regex';
+import { HTMLReactParserOptions } from 'html-react-parser';
+import { Opts } from 'linkifyjs';
+import { isJumboEmoji, URL_REG } from '../../utils/regex';
 import { trimReplyFromBody } from '../../utils/room';
 import { MessageTextBody } from './layout';
 import {
-  MessageBadEncryptedContent,
-  MessageBrokenContent,
-  MessageDeletedContent,
+  AudioContent,
+  FileContent,
+  ImageContent,
   MessageEditedContent,
-  MessageUnsupportedContent,
+  VideoContent,
+  FallbackContent,
 } from './content';
-import {
-  IAudioContent,
-  IAudioInfo,
-  IEncryptedFile,
-  IFileContent,
-  IFileInfo,
-  IImageContent,
-  IImageInfo,
-  IThumbnailContent,
-  IVideoContent,
-  IVideoInfo,
-  MATRIX_SPOILER_PROPERTY_NAME,
-  MATRIX_SPOILER_REASON_PROPERTY_NAME,
-} from '../../../types/matrix/common';
 import { FALLBACK_MIMETYPE, getBlobSafeMimeType } from '../../utils/mimeTypes';
 import { parseGeoUri, scaleYDimension } from '../../utils/common';
 import { Attachment, AttachmentBox, AttachmentContent, AttachmentHeader } from './attachment';
 import { FileHeader, FileDownloadButton } from './FileHeader';
+import { RenderBody } from './RenderBody';
+import { rContent, rEncryptedFile, rInfo } from '../../../client/reader';
+import { UrlPreviewCard, UrlPreviewHolder } from '../url-preview';
+import { testMatrixTo } from '../../plugins/matrix-to';
+import { Code } from '../../styles/CustomHtml.css';
 
-export function MBadEncrypted() {
-  return (
-    <Text>
-      <MessageBadEncryptedContent />
-    </Text>
-  );
-}
+type TextProps = {
+  size?: 'T400' | 'T300' | 'T200';
+  truncate?: boolean;
+};
 
-type RedactedContentProps = {
+type RedactedContentProps = TextProps & {
   reason?: string;
 };
-export function RedactedContent({ reason }: RedactedContentProps) {
+
+export function RedactedContent({ size, reason, truncate }: RedactedContentProps) {
   return (
-    <Text>
-      <MessageDeletedContent reason={reason} />
-    </Text>
+    <FallbackContent variant="Warning" iconSrc={Icons.Delete}>
+      <Text size={size} truncate={truncate}>
+        {reason ? (
+          <i>This message has been deleted. {reason}</i>
+        ) : (
+          <i>This message has been deleted</i>
+        )}
+      </Text>
+    </FallbackContent>
   );
 }
 
-export function UnsupportedContent() {
+export function UnsupportedContent({
+  size,
+  truncate,
+  eventType,
+}: TextProps & { eventType?: string }) {
   return (
-    <Text>
-      <MessageUnsupportedContent />
-    </Text>
+    <FallbackContent
+      variant={eventType ? undefined : 'Critical'}
+      iconSrc={eventType ? Icons.Code : Icons.Warning}
+    >
+      <Text size={size} truncate={truncate}>
+        {eventType ? (
+          <>
+            Sent <code className={Code}>{eventType}</code> event
+          </>
+        ) : (
+          <i>Unsupported message</i>
+        )}
+      </Text>
+    </FallbackContent>
   );
 }
 
-export function BrokenContent() {
+export function FailedToLoadContent({ size, truncate }: TextProps) {
   return (
-    <Text>
-      <MessageBrokenContent />
-    </Text>
+    <FallbackContent variant="Critical" iconSrc={Icons.Warning}>
+      <Text size={size} truncate={truncate}>
+        <i>Failed to load message</i>
+      </Text>
+    </FallbackContent>
   );
 }
 
-type RenderBodyProps = {
+export function BrokenContent({ size, truncate }: TextProps) {
+  return (
+    <FallbackContent variant="Critical" iconSrc={Icons.Warning}>
+      <Text size={size} truncate={truncate}>
+        <i>Broken message</i>
+      </Text>
+    </FallbackContent>
+  );
+}
+
+export function EmptyContent({ size, truncate }: TextProps) {
+  return (
+    <FallbackContent variant="Critical" iconSrc={Icons.Warning}>
+      <Text size={size} truncate={truncate}>
+        <i>Empty message</i>
+      </Text>
+    </FallbackContent>
+  );
+}
+
+type UrlPreviewProps = {
   body: string;
-  customBody?: string;
+  ts: number;
 };
+function UrlPreview({ body, ts }: UrlPreviewProps) {
+  const urlsMatch = body.match(URL_REG);
+  const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
+
+  if (!urls) return null;
+
+  const filteredUrls = urls.filter((url) => !testMatrixTo(url));
+  if (filteredUrls.length === 0) return null;
+
+  return (
+    <UrlPreviewHolder>
+      {filteredUrls.map((url) => (
+        <UrlPreviewCard key={url} url={url} ts={ts} />
+      ))}
+    </UrlPreviewHolder>
+  );
+}
+
 type MTextProps = {
   edited?: boolean;
-  content: Record<string, unknown>;
-  renderBody: (props: RenderBodyProps) => ReactNode;
-  renderUrlsPreview?: (urls: string[]) => ReactNode;
+  content: object;
+  urlPreview?: boolean;
+  ts: number;
   style?: CSSProperties;
+  highlightRegex?: RegExp;
+  htmlReactParserOptions: HTMLReactParserOptions;
+  linkifyOpts: Opts;
 };
-export function MText({ edited, content, renderBody, renderUrlsPreview, style }: MTextProps) {
-  const { body, formatted_body: customBody } = content;
+export function MText({
+  edited,
+  content,
+  urlPreview,
+  ts,
+  style,
+  highlightRegex,
+  linkifyOpts,
+  htmlReactParserOptions,
+}: MTextProps) {
+  const body = rContent.body(content);
+  const customBody = rContent.formattedBody(content);
+  const trimmedBody = trimReplyFromBody(body ?? '');
 
   if (typeof body !== 'string') return <BrokenContent />;
-  const trimmedBody = trimReplyFromBody(body);
-  const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
-  const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
   return (
     <>
       <MessageTextBody
         preWrap={typeof customBody !== 'string'}
-        jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
+        jumboEmoji={isJumboEmoji(trimmedBody)}
         style={style}
       >
-        {renderBody({
-          body: trimmedBody,
-          customBody: typeof customBody === 'string' ? customBody : undefined,
-        })}
+        <RenderBody
+          body={trimmedBody}
+          customBody={customBody}
+          highlightRegex={highlightRegex}
+          htmlReactParserOptions={htmlReactParserOptions}
+          linkifyOpts={linkifyOpts}
+        />
         {edited && <MessageEditedContent />}
       </MessageTextBody>
-      {renderUrlsPreview && urls && urls.length > 0 && renderUrlsPreview(urls)}
+      {urlPreview && <UrlPreview body={trimmedBody} ts={ts} />}
     </>
   );
 }
@@ -105,97 +180,110 @@ export function MText({ edited, content, renderBody, renderUrlsPreview, style }:
 type MEmoteProps = {
   displayName: string;
   edited?: boolean;
-  content: Record<string, unknown>;
-  renderBody: (props: RenderBodyProps) => ReactNode;
-  renderUrlsPreview?: (urls: string[]) => ReactNode;
+  content: object;
+  urlPreview?: boolean;
+  ts: number;
+  highlightRegex?: RegExp;
+  htmlReactParserOptions: HTMLReactParserOptions;
+  linkifyOpts: Opts;
 };
 export function MEmote({
   displayName,
   edited,
   content,
-  renderBody,
-  renderUrlsPreview,
+  urlPreview,
+  ts,
+  highlightRegex,
+  linkifyOpts,
+  htmlReactParserOptions,
 }: MEmoteProps) {
-  const { body, formatted_body: customBody } = content;
+  const body = rContent.body(content);
+  const customBody = rContent.formattedBody(content);
 
   if (typeof body !== 'string') return <BrokenContent />;
   const trimmedBody = trimReplyFromBody(body);
-  const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
-  const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
   return (
     <>
       <MessageTextBody
         emote
         preWrap={typeof customBody !== 'string'}
-        jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
+        jumboEmoji={isJumboEmoji(trimmedBody)}
       >
         <b>{`${displayName} `}</b>
-        {renderBody({
-          body: trimmedBody,
-          customBody: typeof customBody === 'string' ? customBody : undefined,
-        })}
+        <RenderBody
+          body={trimmedBody}
+          customBody={customBody}
+          highlightRegex={highlightRegex}
+          htmlReactParserOptions={htmlReactParserOptions}
+          linkifyOpts={linkifyOpts}
+        />
         {edited && <MessageEditedContent />}
       </MessageTextBody>
-      {renderUrlsPreview && urls && urls.length > 0 && renderUrlsPreview(urls)}
+      {urlPreview && <UrlPreview body={trimmedBody} ts={ts} />}
     </>
   );
 }
 
 type MNoticeProps = {
   edited?: boolean;
-  content: Record<string, unknown>;
-  renderBody: (props: RenderBodyProps) => ReactNode;
-  renderUrlsPreview?: (urls: string[]) => ReactNode;
+  content: object;
+  urlPreview?: boolean;
+  ts: number;
+  highlightRegex?: RegExp;
+  htmlReactParserOptions: HTMLReactParserOptions;
+  linkifyOpts: Opts;
 };
-export function MNotice({ edited, content, renderBody, renderUrlsPreview }: MNoticeProps) {
-  const { body, formatted_body: customBody } = content;
+export function MNotice({
+  edited,
+  content,
+  urlPreview,
+  ts,
+  highlightRegex,
+  linkifyOpts,
+  htmlReactParserOptions,
+}: MNoticeProps) {
+  const body = rContent.body(content);
+  const customBody = rContent.formattedBody(content);
 
   if (typeof body !== 'string') return <BrokenContent />;
   const trimmedBody = trimReplyFromBody(body);
-  const urlsMatch = renderUrlsPreview && trimmedBody.match(URL_REG);
-  const urls = urlsMatch ? [...new Set(urlsMatch)] : undefined;
 
   return (
     <>
       <MessageTextBody
         notice
         preWrap={typeof customBody !== 'string'}
-        jumboEmoji={JUMBO_EMOJI_REG.test(trimmedBody)}
+        jumboEmoji={isJumboEmoji(trimmedBody)}
       >
-        {renderBody({
-          body: trimmedBody,
-          customBody: typeof customBody === 'string' ? customBody : undefined,
-        })}
+        <RenderBody
+          body={trimmedBody}
+          customBody={customBody}
+          highlightRegex={highlightRegex}
+          htmlReactParserOptions={htmlReactParserOptions}
+          linkifyOpts={linkifyOpts}
+        />
         {edited && <MessageEditedContent />}
       </MessageTextBody>
-      {renderUrlsPreview && urls && urls.length > 0 && renderUrlsPreview(urls)}
+      {urlPreview && <UrlPreview body={trimmedBody} ts={ts} />}
     </>
   );
 }
 
-type RenderImageContentProps = {
-  body: string;
-  filename?: string;
-  info?: IImageInfo & IThumbnailContent;
-  mimeType?: string;
-  url: string;
-  encInfo?: IEncryptedFile;
-  markedAsSpoiler?: boolean;
-  spoilerReason?: string;
-};
 type MImageProps = {
-  content: IImageContent;
-  renderImageContent: (props: RenderImageContentProps) => ReactNode;
+  content: object;
+  mediaAutoLoad?: boolean;
   outlined?: boolean;
 };
-export function MImage({ content, renderImageContent, outlined }: MImageProps) {
-  const imgInfo = content?.info;
-  const mxcUrl = content.file?.url ?? content.url;
+export function MImage({ content, mediaAutoLoad, outlined }: MImageProps) {
+  const info = rContent.info(content);
+  const mxcUrl = rEncryptedFile.url(rContent.file(content)) ?? rContent.url(content);
+
   if (typeof mxcUrl !== 'string') {
     return <BrokenContent />;
   }
-  const height = scaleYDimension(imgInfo?.w || 400, 400, imgInfo?.h || 400);
+
+  const height = scaleYDimension(rInfo.w(info) || 400, 400, rInfo.h(info) || 400);
 
   return (
     <Attachment outlined={outlined}>
@@ -204,178 +292,154 @@ export function MImage({ content, renderImageContent, outlined }: MImageProps) {
           height: toRem(height < 48 ? 48 : height),
         }}
       >
-        {renderImageContent({
-          body: content.body || 'Image',
-          info: imgInfo,
-          mimeType: imgInfo?.mimetype,
-          url: mxcUrl,
-          encInfo: content.file,
-          markedAsSpoiler: content[MATRIX_SPOILER_PROPERTY_NAME],
-          spoilerReason: content[MATRIX_SPOILER_REASON_PROPERTY_NAME],
-        })}
+        <ImageContent
+          body={rContent.body(content) ?? 'Image'}
+          info={info}
+          mimeType={rInfo.mimetype(info)}
+          url={mxcUrl}
+          encInfo={rContent.file(content)}
+          autoPlay={mediaAutoLoad}
+          markedAsSpoiler={rContent.spoiler(content)}
+          spoilerReason={rContent.spoilerReason(content)}
+        />
       </AttachmentBox>
     </Attachment>
   );
 }
 
-type RenderVideoContentProps = {
-  body: string;
-  info: IVideoInfo & IThumbnailContent;
-  mimeType: string;
-  url: string;
-  encInfo?: IEncryptedFile;
-  markedAsSpoiler?: boolean;
-  spoilerReason?: string;
-};
-type MVideoProps = {
-  content: IVideoContent;
-  renderAsFile: () => ReactNode;
-  renderVideoContent: (props: RenderVideoContentProps) => ReactNode;
+type MFileProps = {
+  content: object;
   outlined?: boolean;
 };
-export function MVideo({ content, renderAsFile, renderVideoContent, outlined }: MVideoProps) {
-  const videoInfo = content?.info;
-  const mxcUrl = content.file?.url ?? content.url;
-  const safeMimeType = getBlobSafeMimeType(videoInfo?.mimetype ?? '');
+export function MFile({ content, outlined }: MFileProps) {
+  const fileInfo = rContent.info(content);
+  const mxcUrl = rEncryptedFile.url(rContent.file(content)) ?? rContent.url(content);
 
-  if (!videoInfo || !safeMimeType.startsWith('video') || typeof mxcUrl !== 'string') {
-    if (mxcUrl) {
-      return renderAsFile();
-    }
+  if (typeof mxcUrl !== 'string') {
     return <BrokenContent />;
   }
 
-  const height = scaleYDimension(videoInfo.w || 400, 400, videoInfo.h || 400);
-
-  const filename = content.filename ?? content.body ?? 'Video';
+  const body = rContent.filename(content) ?? rContent.body(content) ?? 'Unnamed File';
+  const mimeType = rInfo.mimetype(fileInfo) ?? FALLBACK_MIMETYPE;
 
   return (
     <Attachment outlined={outlined}>
       <AttachmentHeader>
-        <FileHeader
-          body={filename}
-          mimeType={safeMimeType}
-          after={
-            <FileDownloadButton
-              filename={filename}
-              url={mxcUrl}
-              mimeType={safeMimeType}
-              encInfo={content.file}
-            />
-          }
-        />
-      </AttachmentHeader>
-      <AttachmentBox
-        style={{
-          height: toRem(height < 48 ? 48 : height),
-        }}
-      >
-        {renderVideoContent({
-          body: content.body || 'Video',
-          info: videoInfo,
-          mimeType: safeMimeType,
-          url: mxcUrl,
-          encInfo: content.file,
-          markedAsSpoiler: content[MATRIX_SPOILER_PROPERTY_NAME],
-          spoilerReason: content[MATRIX_SPOILER_REASON_PROPERTY_NAME],
-        })}
-      </AttachmentBox>
-    </Attachment>
-  );
-}
-
-type RenderAudioContentProps = {
-  info: IAudioInfo;
-  mimeType: string;
-  url: string;
-  encInfo?: IEncryptedFile;
-};
-type MAudioProps = {
-  content: IAudioContent;
-  renderAsFile: () => ReactNode;
-  renderAudioContent: (props: RenderAudioContentProps) => ReactNode;
-  outlined?: boolean;
-};
-export function MAudio({ content, renderAsFile, renderAudioContent, outlined }: MAudioProps) {
-  const audioInfo = content?.info;
-  const mxcUrl = content.file?.url ?? content.url;
-  const safeMimeType = getBlobSafeMimeType(audioInfo?.mimetype ?? '');
-
-  if (!audioInfo || !safeMimeType.startsWith('audio') || typeof mxcUrl !== 'string') {
-    if (mxcUrl) {
-      return renderAsFile();
-    }
-    return <BrokenContent />;
-  }
-
-  const filename = content.filename ?? content.body ?? 'Audio';
-  return (
-    <Attachment outlined={outlined}>
-      <AttachmentHeader>
-        <FileHeader
-          body={filename}
-          mimeType={safeMimeType}
-          after={
-            <FileDownloadButton
-              filename={filename}
-              url={mxcUrl}
-              mimeType={safeMimeType}
-              encInfo={content.file}
-            />
-          }
-        />
+        <FileHeader body={body} mimeType={mimeType} />
       </AttachmentHeader>
       <AttachmentBox>
         <AttachmentContent>
-          {renderAudioContent({
-            info: audioInfo,
-            mimeType: safeMimeType,
-            url: mxcUrl,
-            encInfo: content.file,
-          })}
+          <FileContent
+            body={body}
+            mimeType={mimeType}
+            info={fileInfo ?? {}}
+            url={mxcUrl}
+            encInfo={rContent.file(content)}
+          />
         </AttachmentContent>
       </AttachmentBox>
     </Attachment>
   );
 }
 
-type RenderFileContentProps = {
-  body: string;
-  info: IFileInfo & IThumbnailContent;
-  mimeType: string;
-  url: string;
-  encInfo?: IEncryptedFile;
-};
-type MFileProps = {
-  content: IFileContent;
-  renderFileContent: (props: RenderFileContentProps) => ReactNode;
+type MVideoProps = {
+  content: object;
+  mediaAutoLoad?: boolean;
   outlined?: boolean;
 };
-export function MFile({ content, renderFileContent, outlined }: MFileProps) {
-  const fileInfo = content?.info;
-  const mxcUrl = content.file?.url ?? content.url;
+export function MVideo({ content, mediaAutoLoad, outlined }: MVideoProps) {
+  const videoInfo = rContent.info(content);
+  const mxcUrl = rEncryptedFile.url(rContent.file(content)) ?? rContent.url(content);
+  const safeMimeType = getBlobSafeMimeType(rInfo.mimetype(videoInfo) ?? '');
 
-  if (typeof mxcUrl !== 'string') {
+  if (!videoInfo || !safeMimeType.startsWith('video') || typeof mxcUrl !== 'string') {
+    if (mxcUrl) {
+      return <MFile content={content} outlined={outlined} />;
+    }
     return <BrokenContent />;
   }
+
+  const height = scaleYDimension(rInfo.w(videoInfo) || 400, 400, rInfo.h(videoInfo) || 400);
+
+  const filename = rContent.filename(content) ?? rContent.body(content) ?? 'Video';
 
   return (
     <Attachment outlined={outlined}>
       <AttachmentHeader>
         <FileHeader
-          body={content.filename ?? content.body ?? 'Unnamed File'}
-          mimeType={fileInfo?.mimetype ?? FALLBACK_MIMETYPE}
+          body={filename}
+          mimeType={safeMimeType}
+          after={
+            <FileDownloadButton
+              filename={filename}
+              url={mxcUrl}
+              mimeType={safeMimeType}
+              encInfo={rContent.file(content)}
+            />
+          }
+        />
+      </AttachmentHeader>
+      <AttachmentBox
+        style={{
+          height: toRem(height < 48 ? 48 : height),
+        }}
+      >
+        <VideoContent
+          body={rContent.body(content) || 'Video'}
+          info={videoInfo}
+          mimeType={safeMimeType}
+          url={mxcUrl}
+          encInfo={rContent.file(content)}
+          mediaAutoLoad={mediaAutoLoad}
+          markedAsSpoiler={rContent.spoiler(content)}
+          spoilerReason={rContent.spoilerReason(content)}
+        />
+      </AttachmentBox>
+    </Attachment>
+  );
+}
+
+type MAudioProps = {
+  content: object;
+  outlined?: boolean;
+};
+export function MAudio({ content, outlined }: MAudioProps) {
+  const audioInfo = rContent.info(content);
+  const mxcUrl = rEncryptedFile.url(rContent.file(content)) ?? rContent.url(content);
+  const safeMimeType = getBlobSafeMimeType(rInfo.mimetype(audioInfo) ?? '');
+
+  if (!audioInfo || !safeMimeType.startsWith('audio') || typeof mxcUrl !== 'string') {
+    if (mxcUrl) {
+      return <MFile content={content} outlined={outlined} />;
+    }
+    return <BrokenContent />;
+  }
+
+  const filename = rContent.filename(content) ?? rContent.body(content) ?? 'Audio';
+  return (
+    <Attachment outlined={outlined}>
+      <AttachmentHeader>
+        <FileHeader
+          body={filename}
+          mimeType={safeMimeType}
+          after={
+            <FileDownloadButton
+              filename={filename}
+              url={mxcUrl}
+              mimeType={safeMimeType}
+              encInfo={rContent.file(content)}
+            />
+          }
         />
       </AttachmentHeader>
       <AttachmentBox>
         <AttachmentContent>
-          {renderFileContent({
-            body: content.filename ?? content.body ?? 'File',
-            info: fileInfo ?? {},
-            mimeType: fileInfo?.mimetype ?? FALLBACK_MIMETYPE,
-            url: mxcUrl,
-            encInfo: content.file,
-          })}
+          <AudioContent
+            info={audioInfo}
+            mimeType={safeMimeType}
+            url={mxcUrl}
+            encInfo={rContent.file(content)}
+          />
         </AttachmentContent>
       </AttachmentBox>
     </Attachment>
@@ -383,11 +447,11 @@ export function MFile({ content, renderFileContent, outlined }: MFileProps) {
 }
 
 type MLocationProps = {
-  content: IContent;
+  content: object;
 };
 export function MLocation({ content }: MLocationProps) {
-  const geoUri = content.geo_uri;
-  if (typeof geoUri !== 'string') return <BrokenContent />;
+  const geoUri = rContent.geoUri(content);
+  if (!geoUri) return <BrokenContent />;
   const location = parseGeoUri(geoUri);
   if (!location) return <BrokenContent />;
 
@@ -411,16 +475,18 @@ export function MLocation({ content }: MLocationProps) {
 }
 
 type MStickerProps = {
-  content: IImageContent;
-  renderImageContent: (props: RenderImageContentProps) => ReactNode;
+  content: object;
+  mediaAutoLoad?: boolean;
+  outlineAttachment?: boolean;
 };
-export function MSticker({ content, renderImageContent }: MStickerProps) {
-  const imgInfo = content?.info;
-  const mxcUrl = content.file?.url ?? content.url;
+export function MSticker({ content, mediaAutoLoad, outlineAttachment }: MStickerProps) {
+  const imgInfo = rContent.info(content);
+  const mxcUrl = rEncryptedFile.url(rContent.file(content)) ?? rContent.url(content);
+
   if (typeof mxcUrl !== 'string') {
-    return <MessageBrokenContent />;
+    return <BrokenContent />;
   }
-  const height = scaleYDimension(imgInfo?.w || 152, 152, imgInfo?.h || 152);
+  const height = scaleYDimension(rInfo.w(imgInfo) || 152, 152, rInfo.h(imgInfo) || 152);
 
   return (
     <AttachmentBox
@@ -429,13 +495,7 @@ export function MSticker({ content, renderImageContent }: MStickerProps) {
         width: toRem(152),
       }}
     >
-      {renderImageContent({
-        body: content.body || 'Sticker',
-        info: imgInfo,
-        mimeType: imgInfo?.mimetype,
-        url: mxcUrl,
-        encInfo: content.file,
-      })}
+      <MImage content={content} mediaAutoLoad={mediaAutoLoad} outlined={outlineAttachment} />
     </AttachmentBox>
   );
 }

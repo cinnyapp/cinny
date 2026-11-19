@@ -1,4 +1,13 @@
-import { style } from '@vanilla-extract/css';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import { keyframes, style } from '@vanilla-extract/css';
 import { color, config, toRem } from 'folds';
 
 export const UserHeader = style({
@@ -15,13 +24,16 @@ export const UserHero = style({
 });
 
 export const UserHeroCoverContainer = style({
-  height: toRem(96),
+  height: toRem(113),
   overflow: 'hidden',
 });
 export const UserHeroCover = style({
   height: '100%',
   width: '100%',
   objectFit: 'cover',
+  fontSize: 1,
+});
+export const UserHeroCoverBlurred = style({
   filter: 'blur(16px)',
   transform: 'scale(2)',
 });
@@ -35,7 +47,9 @@ export const UserAvatarContainer = style({
   left: config.space.S400,
   top: 0,
   transform: 'translateY(-50%)',
+  // backgroundcolor for transparent image
   backgroundColor: color.Surface.Container,
+  borderRadius: config.radii.R400,
 });
 export const UserHeroAvatar = style({
   outline: `${config.borderWidth.B600} solid ${color.Surface.Container}`,
@@ -51,4 +65,54 @@ export const UserHeroAvatarImg = style({
       filter: 'brightness(0.5)',
     },
   },
+});
+
+const StatusAnime = keyframes({
+  '0%': {
+    transform: 'translateY(2px)',
+  },
+  '100%': {
+    transform: 'translateY(0)',
+  },
+});
+
+export const UserHeroStatus = style({
+  position: 'absolute',
+  left: toRem(78),
+  bottom: toRem(58),
+  marginRight: config.space.S400,
+
+  animation: `${StatusAnime} 100ms`,
+
+  selectors: {
+    '&::before, &::after': {
+      content: '',
+      position: 'absolute',
+      left: toRem(5),
+      bottom: toRem(-4),
+
+      width: toRem(10),
+      height: toRem(10),
+
+      background: color.Surface.Container,
+      borderRadius: 999,
+      transform: 'rotate(45deg)',
+    },
+    '&::after': {
+      left: toRem(5),
+      bottom: toRem(-10),
+
+      width: toRem(5),
+      height: toRem(5),
+    },
+  },
+});
+
+export const UserHeroStatusContent = style({
+  position: 'relative',
+  zIndex: 1,
+  padding: `${config.space.S100} ${config.space.S200}`,
+  backgroundColor: color.Surface.Container,
+  color: color.Surface.OnContainer,
+  borderRadius: config.radii.R500,
 });

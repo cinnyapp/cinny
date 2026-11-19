@@ -1,46 +1,45 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { useCallback } from 'react';
 import { useAtomValue } from 'jotai';
 import { selectAtom } from 'jotai/utils';
-import { RoomToUnread, Unread } from '../../../types/matrix/room';
-import { roomToUnreadAtom, unreadEqual } from '../room/roomToUnread';
+import { unreadRoomsAtom } from '../room/roomToUnread';
+import { useClient } from '../../hooks/useClient';
 
-const compareUnreadEqual = (u1?: Unread, u2?: Unread): boolean => {
-  if (!u1 || !u2) return false;
-  return unreadEqual(u1, u2);
-};
+const compareUnread = (u1: Set<string>, u2: Set<string>): boolean => {
+  if (u1.size !== u2.size) {
+    return false;
+  }
 
-const getRoomsUnread = (rooms: string[], roomToUnread: RoomToUnread): Unread | undefined => {
-  const unread = rooms.reduce<Unread | undefined>((u, roomId) => {
-    const roomUnread = roomToUnread.get(roomId);
-    if (!roomUnread) return u;
-    const newUnread: Unread = u ?? {
-      total: 0,
-      highlight: 0,
-      from: new Set(),
-    };
-    newUnread.total += roomUnread.total;
-    newUnread.highlight += roomUnread.highlight;
-    newUnread.from?.add(roomId);
-    return newUnread;
-  }, undefined);
-  return unread;
+  return [...u1].every((value) => u2.has(value));
 };
 
 export const useRoomsUnread = (
   rooms: string[],
-  roomToUnreadAtm: typeof roomToUnreadAtom
-): Unread | undefined => {
+  unreadRooms: typeof unreadRoomsAtom
+): Set<string> => {
+  const ct = useClient();
+
   const selector = useCallback(
-    (roomToUnread: RoomToUnread) => getRoomsUnread(rooms, roomToUnread),
-    [rooms]
+    (unread: Set<string>) =>
+      new Set<string>(
+        rooms.filter((roomId) => unread.has(roomId) && !ct.spaceRooms.read.has(roomId))
+      ),
+    [rooms, ct]
   );
-  return useAtomValue(selectAtom(roomToUnreadAtm, selector, compareUnreadEqual));
+
+  return useAtomValue(selectAtom(unreadRooms, selector, compareUnread));
 };
 
-export const useRoomUnread = (
-  roomId: string,
-  roomToUnreadAtm: typeof roomToUnreadAtom
-): Unread | undefined => {
-  const selector = useCallback((roomToUnread: RoomToUnread) => roomToUnread.get(roomId), [roomId]);
-  return useAtomValue(selectAtom(roomToUnreadAtm, selector, compareUnreadEqual));
+export const useRoomUnread = (roomId: string, unreadRooms: typeof unreadRoomsAtom): boolean => {
+  const selector = useCallback((unread: Set<string>) => unread.has(roomId), [roomId]);
+
+  return useAtomValue(selectAtom(unreadRooms, selector));
 };

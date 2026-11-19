@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import {
   as,
   Badge,
@@ -11,21 +20,21 @@ import {
   toRem,
 } from 'folds';
 import React, { ReactNode, useId } from 'react';
+import { Presence } from 'neurone/lib/api/types';
 import * as css from './styles.css';
-import { Presence, usePresenceLabel } from '../../hooks/useUserPresence';
+import { usePresenceLabel } from '../../hooks/useUserPresence';
 
 const PresenceToColor: Record<Presence, MainColor> = {
-  [Presence.Online]: 'Success',
-  [Presence.Unavailable]: 'Warning',
-  [Presence.Offline]: 'Secondary',
+  online: 'Success',
+  unavailable: 'Critical',
+  offline: 'Secondary',
 };
 
 type PresenceBadgeProps = {
   presence: Presence;
-  status?: string;
   size?: '200' | '300' | '400' | '500';
 };
-export function PresenceBadge({ presence, status, size }: PresenceBadgeProps) {
+export function PresenceBadge({ presence, size }: PresenceBadgeProps) {
   const label = usePresenceLabel();
   const badgeLabelId = useId();
 
@@ -39,8 +48,6 @@ export function PresenceBadge({ presence, status, size }: PresenceBadgeProps) {
         <Tooltip id={badgeLabelId}>
           <Box style={{ maxWidth: toRem(250) }} alignItems="Baseline" gap="100">
             <Text size="L400">{label[presence]}</Text>
-            {status && <Text size="T200">•</Text>}
-            {status && <Text size="T200">{status}</Text>}
           </Box>
         </Tooltip>
       }
@@ -51,7 +58,7 @@ export function PresenceBadge({ presence, status, size }: PresenceBadgeProps) {
           ref={triggerRef}
           size={size}
           variant={PresenceToColor[presence]}
-          fill={presence === Presence.Offline ? 'Soft' : 'Solid'}
+          fill={presence === 'offline' ? 'Soft' : 'Solid'}
           radii="Pill"
         />
       )}

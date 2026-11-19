@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, {
   ChangeEventHandler,
   MouseEventHandler,
@@ -26,24 +35,15 @@ import {
   TooltipProvider,
   config,
 } from 'folds';
-import { MatrixClient, Room, RoomMember } from 'matrix-js-sdk';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import classNames from 'classnames';
-
 import * as css from './MembersDrawer.css';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { UseStateProvider } from '../../components/UseStateProvider';
-import {
-  SearchItemStrGetter,
-  UseAsyncSearchOptions,
-  useAsyncSearch,
-} from '../../hooks/useAsyncSearch';
+import { UseAsyncSearchOptions, useAsyncSearch } from '../../hooks/useAsyncSearch';
 import { useDebounce } from '../../hooks/useDebounce';
 import { TypingIndicator } from '../../components/typing-indicator';
-import { getMemberDisplayName, getMemberSearchStr } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { getMemberSearchStr } from '../../utils/room';
 import { useSetSetting, useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
 import { millify } from '../../plugins/millify';
 import { ScrollTopContainer } from '../../components/scroll-top-container';
 import { UserAvatar } from '../../components/user-avatar';
@@ -59,19 +59,32 @@ import { useSpaceOptionally } from '../../hooks/useSpace';
 import { ContainerColor } from '../../styles/ContainerColor.css';
 import { useFlattenPowerTagMembers, useGetMemberPowerTag } from '../../hooks/useMemberPowerTag';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
+import { useRoom } from '../../hooks/useRoom';
+import { useClient } from '../../hooks/useClient';
+import {
+  GetRoomMemberAvatarCallback,
+  GetRoomMemberNameCallback,
+  useRoomMembersAPI,
+} from '../../hooks/useRoomMembers';
+import { JoinRoomMemberObject } from '../../../client/storage/collections';
+import { ClientContext } from '../../../client/context';
+import { mxcToHttp } from '../../../client/mxcToHttp';
+import { usePendingMembers } from '../../hooks/usePendingMembers';
+import { useUserPresence } from '../../hooks/useUserPresence';
+import { AvatarPresence, PresenceBadge } from '../../components/presence';
 
 type MemberDrawerHeaderProps = {
-  room: Room;
+  memberCount: number;
 };
-function MemberDrawerHeader({ room }: MemberDrawerHeaderProps) {
-  const setPeopleDrawer = useSetSetting(settingsAtom, 'isPeopleDrawer');
+function MemberDrawerHeader({ memberCount }: MemberDrawerHeaderProps) {
+  const setPeopleDrawer = useSetSetting('isPeopleDrawer');
 
   return (
     <Header className={css.MembersDrawerHeader} variant="Background" size="600">
       <Box grow="Yes" alignItems="Center" gap="200">
         <Box grow="Yes" alignItems="Center" gap="200">
-          <Text title={`${room.getJoinedMemberCount()} Members`} size="H5" truncate>
-            {`${millify(room.getJoinedMemberCount())} Members`}
+          <Text title={`${memberCount} Members`} size="H5" truncate>
+            {memberCount > 0 ? `${millify(memberCount)} Members` : 'Members'}
           </Text>
         </Box>
         <Box shrink="No" alignItems="Center">
@@ -102,28 +115,35 @@ function MemberDrawerHeader({ room }: MemberDrawerHeaderProps) {
 }
 
 type MemberItemProps = {
-  mx: MatrixClient;
+  ct: ClientContext;
   useAuthentication: boolean;
-  room: Room;
-  member: RoomMember;
+  member: JoinRoomMemberObject;
+  getName: GetRoomMemberNameCallback;
+  getAvatar: GetRoomMemberAvatarCallback;
   onClick: MouseEventHandler<HTMLButtonElement>;
   pressed?: boolean;
   typing?: boolean;
 };
 function MemberItem({
-  mx,
+  ct,
   useAuthentication,
-  room,
   member,
+  getName,
+  getAvatar,
   onClick,
   pressed,
   typing,
 }: MemberItemProps) {
-  const name =
-    getMemberDisplayName(room, member.userId) ?? getMxIdLocalPart(member.userId) ?? member.userId;
-  const avatarMxcUrl = member.getMxcAvatarUrl();
+  const presence = useUserPresence(member.userId);
+
+  const name = getName(member.userId);
+  const avatarMxcUrl = getAvatar(member.userId);
   const avatarUrl = avatarMxcUrl
-    ? mx.mxcUrlToHttp(avatarMxcUrl, 100, 100, 'crop', undefined, false, useAuthentication)
+    ? mxcToHttp(ct.session.baseUrl, avatarMxcUrl, useAuthentication).thumbnail({
+        width: 96,
+        height: 96,
+        method: 'crop',
+      })
     : undefined;
 
   return (
@@ -135,14 +155,19 @@ function MemberItem({
       radii="400"
       onClick={onClick}
       before={
-        <Avatar size="200">
-          <UserAvatar
-            userId={member.userId}
-            src={avatarUrl ?? undefined}
-            alt={name}
-            renderFallback={() => <Icon size="50" src={Icons.User} filled />}
-          />
-        </Avatar>
+        <AvatarPresence
+          variant="Background"
+          badge={presence && <PresenceBadge size="200" presence={presence.presence} />}
+        >
+          <Avatar size="200">
+            <UserAvatar
+              userId={member.userId}
+              src={avatarUrl ?? undefined}
+              alt={name}
+              renderFallback={() => <Icon size="50" src={Icons.User} filled />}
+            />
+          </Avatar>
+        </AvatarPresence>
       }
       after={
         typing && (
@@ -152,10 +177,15 @@ function MemberItem({
         )
       }
     >
-      <Box grow="Yes">
-        <Text size="T400" truncate>
+      <Box grow="Yes" direction="Column">
+        <Text size="T300" truncate>
           {name}
         </Text>
+        {presence?.status && (
+          <Text size="T200" priority="300" truncate>
+            {presence.status}
+          </Text>
+        )}
       </Box>
     </MenuItem>
   );
@@ -168,49 +198,53 @@ const SEARCH_OPTIONS: UseAsyncSearchOptions = {
   },
 };
 
-const mxIdToName = (mxId: string) => getMxIdLocalPart(mxId) ?? mxId;
-const getRoomMemberStr: SearchItemStrGetter<RoomMember> = (m, query) =>
-  getMemberSearchStr(m, query, mxIdToName);
-
-type MembersDrawerProps = {
-  room: Room;
-  members: RoomMember[];
-};
-export function MembersDrawer({ room, members }: MembersDrawerProps) {
-  const mx = useMatrixClient();
+const EMPTY_MEMBER_LIST: JoinRoomMemberObject[] = [];
+export function MembersDrawer() {
+  const ct = useClient();
+  const roomId = useRoom();
   const useAuthentication = useMediaAuthentication();
   const scrollRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const scrollTopAnchorRef = useRef<HTMLDivElement>(null);
+
   const powerLevels = usePowerLevelsContext();
-  const creators = useRoomCreators(room);
-  const getPowerTag = useGetMemberPowerTag(room, creators, powerLevels);
+  const creators = useRoomCreators(roomId);
+  const getPowerTag = useGetMemberPowerTag(creators, powerLevels);
   const getPowerLevel = useGetMemberPowerLevel(powerLevels);
 
-  const fetchingMembers = members.length < room.getJoinedMemberCount();
+  const membersAPI = useRoomMembersAPI();
+  const members = membersAPI.memberEventsResult.value ?? EMPTY_MEMBER_LIST;
+  const loadingFromMemory = membersAPI.memberEventsResult.pending;
+
+  const fetchingMembers = usePendingMembers(roomId);
+
   const openUserRoomProfile = useOpenUserRoomProfile();
-  const space = useSpaceOptionally();
+  const spaceId = useSpaceOptionally();
   const openProfileUserId = useUserRoomProfileState()?.userId;
 
-  const membershipFilterMenu = useMembershipFilterMenu();
-  const sortFilterMenu = useMemberSortMenu();
-  const [sortFilterIndex, setSortFilterIndex] = useSetting(settingsAtom, 'memberSortFilterIndex');
+  const membershipFilterMenu = useMembershipFilterMenu(membersAPI.getMembership);
+  const sortFilterMenu = useMemberSortMenu(membersAPI.getName);
+  const [sortFilterIndex, setSortFilterIndex] = useSetting('memberSortFilterIndex');
   const [membershipFilterIndex, setMembershipFilterIndex] = useState(0);
 
   const membershipFilter = useMembershipFilter(membershipFilterIndex, membershipFilterMenu);
   const memberSort = useMemberSort(sortFilterIndex, sortFilterMenu);
   const memberPowerSort = useMemberPowerSort(creators, getPowerLevel);
 
-  const typingMembers = useRoomTypingMember(room.roomId);
+  const typingMembers = useRoomTypingMember(roomId);
 
   const filteredMembers = useMemo(
     () => members.filter(membershipFilter.filterFn).sort(memberSort.sortFn).sort(memberPowerSort),
     [members, membershipFilter, memberSort, memberPowerSort]
   );
+  const memberCount = filteredMembers.length ?? 0;
 
   const [result, search, resetSearch] = useAsyncSearch(
     filteredMembers,
-    getRoomMemberStr,
+    useCallback(
+      (m, query) => getMemberSearchStr(m, query, membersAPI.getName),
+      [membersAPI.getName]
+    ),
     SEARCH_OPTIONS
   );
   if (!result && searchInputRef.current?.value) search(searchInputRef.current.value);
@@ -241,7 +275,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
     const btn = evt.currentTarget as HTMLButtonElement;
     const userId = btn.getAttribute('data-user-id');
     if (!userId) return;
-    openUserRoomProfile(room.roomId, space?.roomId, userId, btn.getBoundingClientRect(), 'Left');
+    openUserRoomProfile(roomId, spaceId, userId, btn.getBoundingClientRect(), 'Left');
   };
 
   return (
@@ -250,7 +284,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
       shrink="No"
       direction="Column"
     >
-      <MemberDrawerHeader room={room} />
+      <MemberDrawerHeader memberCount={memberCount} />
       <Box className={css.MemberDrawerContentBase} grow="Yes">
         <Scroll ref={scrollRef} variant="Background" size="300" visibility="Hover" hideTrack>
           <Box className={css.MemberDrawerContent} direction="Column" gap="200">
@@ -370,7 +404,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
               </IconButton>
             </ScrollTopContainer>
 
-            {!fetchingMembers && !result && processMembers.length === 0 && (
+            {!loadingFromMemory && !fetchingMembers && !result && processMembers.length === 0 && (
               <Text style={{ padding: config.space.S300 }} align="Center">
                 {`No "${membershipFilter.name}" Members`}
               </Text>
@@ -393,7 +427,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
                         }}
                         data-index={vItem.index}
                         ref={virtualizer.measureElement}
-                        key={`${room.roomId}-${vItem.index}`}
+                        key={`${roomId}-${vItem.index}`}
                         className={classNames(css.MembersGroupLabel, css.DrawerVirtualItem)}
                         size="L400"
                       >
@@ -409,19 +443,18 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
                       }}
                       className={css.DrawerVirtualItem}
                       data-index={vItem.index}
-                      key={`${room.roomId}-${tagOrMember.userId}`}
+                      key={`${roomId}-${tagOrMember.userId}`}
                       ref={virtualizer.measureElement}
                     >
                       <MemberItem
-                        mx={mx}
+                        ct={ct}
                         useAuthentication={useAuthentication}
-                        room={room}
                         member={tagOrMember}
+                        getName={membersAPI.getName}
+                        getAvatar={membersAPI.getAvatar}
                         onClick={handleMemberClick}
                         pressed={openProfileUserId === tagOrMember.userId}
-                        typing={typingMembers.some(
-                          (receipt) => receipt.userId === tagOrMember.userId
-                        )}
+                        typing={typingMembers.some((userId) => userId === tagOrMember.userId)}
                       />
                     </div>
                   );
@@ -429,7 +462,7 @@ export function MembersDrawer({ room, members }: MembersDrawerProps) {
               </div>
             </Box>
 
-            {fetchingMembers && (
+            {(fetchingMembers || loadingFromMemory) && (
               <Box justifyContent="Center">
                 <Spinner />
               </Box>

@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import {
   Box,
   Button,
@@ -11,9 +20,9 @@ import {
   Spinner,
   Text,
 } from 'folds';
-import { IPushRule } from 'matrix-js-sdk';
 import React, { MouseEventHandler, useMemo, useState } from 'react';
 import FocusTrap from 'focus-trap-react';
+import { PushRule } from 'neurone/lib/api/types';
 import { NotificationMode, useNotificationActionsMode } from '../../../hooks/useNotificationMode';
 import { stopPropagation } from '../../../utils/keyboard';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
@@ -32,7 +41,7 @@ const useNotificationModeStr = (): Record<NotificationMode, string> =>
   );
 
 type NotificationModeSwitcherProps = {
-  pushRule: IPushRule;
+  pushRule: PushRule;
   onChange: (mode: NotificationMode) => Promise<void>;
 };
 export function NotificationModeSwitcher({ pushRule, onChange }: NotificationModeSwitcherProps) {

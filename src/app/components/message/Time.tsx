@@ -1,6 +1,21 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { ComponentProps } from 'react';
 import { Text, as } from 'folds';
-import { timeDayMonYear, timeHourMinute, today, yesterday } from '../../utils/time';
+import {
+  timeDayMonthYear,
+  timeDayMonYear,
+  timeHourMinute,
+  today,
+  yesterday,
+} from '../../utils/time';
 
 export type TimeProps = {
   compact?: boolean;
@@ -43,3 +58,9 @@ export const Time = as<'span', TimeProps & ComponentProps<typeof Text>>(
     );
   }
 );
+
+export function DividerTime({ ts }: { ts: number }) {
+  if (today(ts)) return 'Today';
+  if (yesterday(ts)) return 'Yesterday';
+  return timeDayMonthYear(ts);
+}

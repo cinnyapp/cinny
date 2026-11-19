@@ -1,29 +1,43 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { useState } from 'react';
 import { Box, Icon, IconButton, Icons, Scroll, Text } from 'folds';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { useRoom } from '../../../hooks/useRoom';
-import { usePowerLevels } from '../../../hooks/usePowerLevels';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { StateEvent } from '../../../../types/matrix/room';
+import { usePowerLevelsContext } from '../../../hooks/usePowerLevels';
+import { StateEventType } from '../../../../types/matrix/room';
 import { usePermissionGroups } from './usePermissionItems';
 import { PermissionGroups, Powers, PowersEditor } from '../../common-settings/permissions';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
+import { useClient } from '../../../hooks/useClient';
+import { useObservableValue } from '../../../hooks/useObservableValue';
 
 type PermissionsProps = {
   requestClose: () => void;
 };
 export function Permissions({ requestClose }: PermissionsProps) {
-  const mx = useMatrixClient();
-  const room = useRoom();
-  const powerLevels = usePowerLevels(room);
-  const creators = useRoomCreators(room);
+  const ct = useClient();
+  const roomId = useRoom();
+  const powerLevels = usePowerLevelsContext();
+  const creators = useRoomCreators(roomId);
+  const encryptedRooms = useObservableValue(ct.encryptedRooms);
 
   const permissions = useRoomPermissions(creators, powerLevels);
 
-  const canEditPowers = permissions.stateEvent(StateEvent.PowerLevelTags, mx.getSafeUserId());
-  const canEditPermissions = permissions.stateEvent(StateEvent.RoomPowerLevels, mx.getSafeUserId());
-  const permissionGroups = usePermissionGroups();
+  const canEditPowers = permissions.stateEvent(StateEventType.PowerLevelTags, ct.session.userId);
+  const canEditPermissions = permissions.stateEvent(
+    StateEventType.RoomPowerLevels,
+    ct.session.userId
+  );
+  const permissionGroups = usePermissionGroups(encryptedRooms.has(roomId));
 
   const [powerEditor, setPowerEditor] = useState(false);
 
@@ -32,7 +46,7 @@ export function Permissions({ requestClose }: PermissionsProps) {
   };
 
   if (canEditPowers && powerEditor) {
-    return <PowersEditor powerLevels={powerLevels} requestClose={() => setPowerEditor(false)} />;
+    return <PowersEditor requestClose={() => setPowerEditor(false)} />;
   }
 
   return (
@@ -56,15 +70,10 @@ export function Permissions({ requestClose }: PermissionsProps) {
           <PageContent>
             <Box direction="Column" gap="700">
               <Powers
-                powerLevels={powerLevels}
                 onEdit={canEditPowers ? handleEditPowers : undefined}
                 permissionGroups={permissionGroups}
               />
-              <PermissionGroups
-                canEdit={canEditPermissions}
-                powerLevels={powerLevels}
-                permissionGroups={permissionGroups}
-              />
+              <PermissionGroups canEdit={canEditPermissions} permissionGroups={permissionGroups} />
             </Box>
           </PageContent>
         </Scroll>

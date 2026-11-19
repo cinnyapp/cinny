@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 /// <reference lib="WebWorker" />
 
 export type {};
@@ -8,69 +17,30 @@ type SessionInfo = {
   baseUrl: string;
 };
 
-/**
- * Store session per client (tab)
- */
-const sessions = new Map<string, SessionInfo>();
+let _requestId = 0;
+const getRequestId = () => {
+  _requestId += 1;
+  return _requestId;
+};
 
-const clientToResolve = new Map<string, (value: SessionInfo | undefined) => void>();
-const clientToSessionPromise = new Map<string, Promise<SessionInfo | undefined>>();
+const pendingSessionRequests = new Map<number, (sessionInfo: SessionInfo | undefined) => void>();
 
-async function cleanupDeadClients() {
-  const activeClients = await self.clients.matchAll();
-  const activeIds = new Set(activeClients.map((c) => c.id));
-
-  Array.from(sessions.keys()).forEach((id) => {
-    if (!activeIds.has(id)) {
-      sessions.delete(id);
-      clientToResolve.delete(id);
-      clientToSessionPromise.delete(id);
-    }
-  });
-}
-
-function setSession(clientId: string, accessToken: any, baseUrl: any) {
-  if (typeof accessToken === 'string' && typeof baseUrl === 'string') {
-    sessions.set(clientId, { accessToken, baseUrl });
-  } else {
-    // Logout or invalid session
-    sessions.delete(clientId);
-  }
-
-  const resolveSession = clientToResolve.get(clientId);
-  if (resolveSession) {
-    resolveSession(sessions.get(clientId));
-    clientToResolve.delete(clientId);
-    clientToSessionPromise.delete(clientId);
-  }
-}
-
-function requestSession(client: Client): Promise<SessionInfo | undefined> {
-  const promise =
-    clientToSessionPromise.get(client.id) ??
-    new Promise((resolve) => {
-      clientToResolve.set(client.id, resolve);
-      client.postMessage({ type: 'requestSession' });
-    });
-
-  if (!clientToSessionPromise.has(client.id)) {
-    clientToSessionPromise.set(client.id, promise);
-  }
-
-  return promise;
-}
-
-async function requestSessionWithTimeout(
-  clientId: string,
-  timeoutMs = 3000
-): Promise<SessionInfo | undefined> {
+async function requestSession(clientId: string, origin: string): Promise<SessionInfo | undefined> {
   const client = await self.clients.get(clientId);
   if (!client) return undefined;
 
-  const sessionPromise = requestSession(client);
+  const id = getRequestId();
+
+  const sessionPromise = new Promise<SessionInfo | undefined>((resolve) => {
+    pendingSessionRequests.set(id, resolve);
+    client.postMessage({ type: 'session-request', id, origin });
+  });
 
   const timeout = new Promise<undefined>((resolve) => {
-    setTimeout(() => resolve(undefined), timeoutMs);
+    setTimeout(() => {
+      resolve(undefined);
+      pendingSessionRequests.delete(id);
+    }, 3000);
   });
 
   return Promise.race([sessionPromise, timeout]);
@@ -84,7 +54,6 @@ self.addEventListener('activate', (event: ExtendableEvent) => {
   event.waitUntil(
     (async () => {
       await self.clients.claim();
-      await cleanupDeadClients();
     })()
   );
 });
@@ -96,11 +65,12 @@ self.addEventListener('message', (event: ExtendableMessageEvent) => {
   const client = event.source as Client | null;
   if (!client) return;
 
-  const { type, accessToken, baseUrl } = event.data || {};
+  const { type, id, accessToken, baseUrl } = event.data || {};
 
-  if (type === 'setSession') {
-    setSession(client.id, accessToken, baseUrl);
-    cleanupDeadClients();
+  if (type === 'session-request') {
+    const requestResolver = pendingSessionRequests.get(id);
+    pendingSessionRequests.delete(id);
+    requestResolver?.({ accessToken, baseUrl });
   }
 });
 
@@ -139,16 +109,8 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   const { clientId } = event;
   if (!clientId) return;
 
-  const session = sessions.get(clientId);
-  if (session) {
-    if (validMediaRequest(url, session.baseUrl)) {
-      event.respondWith(fetch(url, fetchConfig(session.accessToken)));
-    }
-    return;
-  }
-
   event.respondWith(
-    requestSessionWithTimeout(clientId).then((s) => {
+    requestSession(clientId, new URL(url).origin).then((s) => {
       if (s && validMediaRequest(url, s.baseUrl)) {
         return fetch(url, fetchConfig(s.accessToken));
       }

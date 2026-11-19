@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 /* eslint-disable react/no-array-index-key */
 import React, { useState, MouseEventHandler, ReactNode } from 'react';
 import FocusTrap from 'focus-trap-react';
@@ -16,18 +25,22 @@ import {
 } from 'folds';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
-import { getPowers, usePowerLevelTags } from '../../../hooks/usePowerLevelTags';
+import { getPowers, usePowerLevelTagsContext } from '../../../hooks/usePowerLevelTags';
 import { SettingTile } from '../../../components/setting-tile';
-import { getPermissionPower, IPowerLevels } from '../../../hooks/usePowerLevels';
+import {
+  getPermissionPower,
+  IPowerLevels,
+  usePowerLevelsContext,
+} from '../../../hooks/usePowerLevels';
 import { useRoom } from '../../../hooks/useRoom';
 import { PowerColorBadge, PowerIcon } from '../../../components/power';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { stopPropagation } from '../../../utils/keyboard';
 import { PermissionGroup } from './types';
 import { getPowerTagIconSrc } from '../../../hooks/useMemberPowerTag';
 import { useRoomCreatorsTag } from '../../../hooks/useRoomCreatorsTag';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
+import { useClient } from '../../../hooks/useClient';
 
 type PeekPermissionsProps = {
   powerLevels: IPowerLevels;
@@ -103,23 +116,24 @@ function PeekPermissions({ powerLevels, power, permissionGroups, children }: Pee
 }
 
 type PowersProps = {
-  powerLevels: IPowerLevels;
   permissionGroups: PermissionGroup[];
   onEdit?: () => void;
 };
-export function Powers({ powerLevels, permissionGroups, onEdit }: PowersProps) {
-  const mx = useMatrixClient();
+export function Powers({ permissionGroups, onEdit }: PowersProps) {
+  const ct = useClient();
   const useAuthentication = useMediaAuthentication();
   const room = useRoom();
-  const powerLevelTags = usePowerLevelTags(room, powerLevels);
+
+  const powerLevels = usePowerLevelsContext();
+  const powerLevelTags = usePowerLevelTagsContext();
   const creators = useRoomCreators(room);
   const creatorsTag = useRoomCreatorsTag();
   const creatorTagIconSrc =
-    creatorsTag.icon && getPowerTagIconSrc(mx, useAuthentication, creatorsTag.icon);
+    creatorsTag.icon && getPowerTagIconSrc(ct, useAuthentication, creatorsTag.icon);
 
   return (
     <Box direction="Column" gap="100">
-      {creators.size > 0 && (
+      {creators && creators.size > 0 && (
         <SequenceCard
           variant="SurfaceVariant"
           className={SequenceCardStyle}
@@ -178,7 +192,7 @@ export function Powers({ powerLevels, permissionGroups, onEdit }: PowersProps) {
           <Box gap="200" wrap="Wrap">
             {getPowers(powerLevelTags).map((power) => {
               const tag = powerLevelTags[power];
-              const tagIconSrc = tag.icon && getPowerTagIconSrc(mx, useAuthentication, tag.icon);
+              const tagIconSrc = tag.icon && getPowerTagIconSrc(ct, useAuthentication, tag.icon);
 
               return (
                 <PeekPermissions

@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { OnIntersectionCallback, useIntersectionObserver } from './useIntersectionObserver';
 import {
@@ -177,21 +186,13 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     opts?: ScrollToOptions;
   }>();
 
-  const propRef = useRef({
-    range,
-    limit,
-    count,
-  });
+  const propRef = useRef({ range, limit, count });
   if (propRef.current.count !== count) {
     // Clear restoreScrollRef on count change
     // As restoreScrollRef.current.anchorItem might changes
     restoreScrollRef.current = undefined;
   }
-  propRef.current = {
-    range,
-    count,
-    limit,
-  };
+  propRef.current = { range, count, limit };
 
   const getItems = useMemo(() => {
     const items = generateItems(range);
@@ -209,13 +210,10 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
       let scrollTo = element.offsetTop;
       if (opts?.align === 'center' && canFitInScrollView(scrollElement, element)) {
         const scrollInfo = getScrollInfo(scrollElement);
-        scrollTo =
-          element.offsetTop -
-          Math.round(scrollInfo.viewHeight / 2) +
-          Math.round(element.clientHeight / 2);
+        scrollTo = element.offsetTop - scrollInfo.viewHeight / 2 + element.clientHeight / 2;
       } else if (opts?.align === 'end' && canFitInScrollView(scrollElement, element)) {
         const scrollInfo = getScrollInfo(scrollElement);
-        scrollTo = element.offsetTop - Math.round(scrollInfo.viewHeight) + element.clientHeight;
+        scrollTo = element.offsetTop - scrollInfo.viewHeight + element.clientHeight;
       }
 
       scrollElement.scrollTo({
@@ -366,7 +364,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
 
     scrollEl.scrollTo({
       top: restoreTop,
-      behavior: 'instant',
+      behavior: 'auto',
     });
     restoreScrollRef.current = undefined;
   }, [range, getScrollElement, getItemElement]);
@@ -378,7 +376,7 @@ export const useVirtualPaginator = <TScrollElement extends HTMLElement>(
     const { index, opts } = scrollToItemRef.current;
     scrollToItem(index, {
       ...opts,
-      behavior: 'instant',
+      behavior: 'auto',
     });
     scrollToItemRef.current = undefined;
   }, [range, scrollToItem]);

@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { useState } from 'react';
 import { Badge, color, Icon, Icons, Text } from 'folds';
 import {
@@ -7,38 +16,29 @@ import {
   SidebarItemTooltip,
 } from '../../../components/sidebar';
 import { useDeviceIds, useDeviceList, useSplitCurrentDevice } from '../../../hooks/useDeviceList';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import * as css from './UnverifiedTab.css';
 import {
   useDeviceVerificationStatus,
   useUnverifiedDeviceCount,
   VerificationStatus,
 } from '../../../hooks/useDeviceVerificationStatus';
-import { useCrossSigningActive } from '../../../hooks/useCrossSigning';
+import { useCrossSigning } from '../../../hooks/useCrossSigning';
 import { Modal500 } from '../../../components/Modal500';
 import { Settings, SettingsPages } from '../../../features/settings';
+import { useClient } from '../../../hooks/useClient';
 
 function UnverifiedIndicator() {
-  const mx = useMatrixClient();
+  const ct = useClient();
 
-  const crypto = mx.getCrypto();
   const [devices] = useDeviceList();
 
-  const [currentDevice, otherDevices] = useSplitCurrentDevice(devices);
+  const [, otherDevices] = useSplitCurrentDevice(devices);
 
-  const verificationStatus = useDeviceVerificationStatus(
-    crypto,
-    mx.getSafeUserId(),
-    currentDevice?.device_id
-  );
+  const verificationStatus = useDeviceVerificationStatus(ct.session.userId, ct.session.deviceId);
   const unverified = verificationStatus === VerificationStatus.Unverified;
 
   const otherDevicesId = useDeviceIds(otherDevices);
-  const unverifiedDeviceCount = useUnverifiedDeviceCount(
-    crypto,
-    mx.getSafeUserId(),
-    otherDevicesId
-  );
+  const unverifiedDeviceCount = useUnverifiedDeviceCount(ct.session.userId, otherDevicesId);
 
   const [settings, setSettings] = useState(false);
   const closeSettings = () => setSettings(false);
@@ -86,9 +86,9 @@ function UnverifiedIndicator() {
 }
 
 export function UnverifiedTab() {
-  const crossSigningActive = useCrossSigningActive();
+  const crossSigning = useCrossSigning();
 
-  if (!crossSigningActive) return null;
+  if (!crossSigning) return null;
 
   return <UnverifiedIndicator />;
 }

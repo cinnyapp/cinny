@@ -1,14 +1,23 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { FormEventHandler, ReactNode, useMemo, useState } from 'react';
 import { Badge, Box, Button, Chip, Icon, Icons, Input, Text } from 'folds';
 import { UsageSwitcher, useUsageStr } from './UsageSwitcher';
-import { mxcUrlToHttp } from '../../utils/matrix';
 import * as css from './style.css';
 import { ImageUsage, imageUsageEqual, PackImageReader } from '../../plugins/custom-emoji';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { SettingTile } from '../setting-tile';
 import { useObjectURL } from '../../hooks/useObjectURL';
-import { createUploadAtom, TUploadAtom } from '../../state/upload';
+import { createUploadAtom, UploadAtom } from '../../state/upload';
 import { replaceSpaceWithDash } from '../../utils/common';
+import { useClient } from '../../hooks/useClient';
+import { mxcToHttp } from '../../../client/mxcToHttp';
 
 type ImageTileProps = {
   defaultShortcode: string;
@@ -30,7 +39,7 @@ export function ImageTile({
   onDeleteToggle,
   deleted,
 }: ImageTileProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const getUsageStr = useUsageStr();
 
   return (
@@ -38,7 +47,7 @@ export function ImageTile({
       before={
         <img
           className={css.ImagePackImage}
-          src={mxcUrlToHttp(mx, image.url, useAuthentication) ?? ''}
+          src={mxcToHttp(ct.session.baseUrl, image.url, useAuthentication).url() ?? ''}
           alt={image.shortcode}
           loading="lazy"
         />
@@ -91,7 +100,7 @@ export function ImageTile({
 
 type ImageTileUploadProps = {
   file: File;
-  children: (uploadAtom: TUploadAtom) => ReactNode;
+  children: (uploadAtom: UploadAtom) => ReactNode;
 };
 export function ImageTileUpload({ file, children }: ImageTileUploadProps) {
   const url = useObjectURL(file);
@@ -120,7 +129,7 @@ export function ImageTileEdit({
   onCancel,
   onSave,
 }: ImageTileEditProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const defaultUsage = image.usage ?? packUsage;
 
   const [unsavedUsage, setUnsavedUsages] = useState(defaultUsage);
@@ -162,7 +171,7 @@ export function ImageTileEdit({
       before={
         <img
           className={css.ImagePackImage}
-          src={mxcUrlToHttp(mx, image.url, useAuthentication) ?? ''}
+          src={mxcToHttp(ct.session.baseUrl, image.url, useAuthentication).url() ?? ''}
           alt={image.shortcode}
           loading="lazy"
         />

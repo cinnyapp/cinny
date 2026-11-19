@@ -1,7 +1,16 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React from 'react';
 import { Box, Icon, IconButton, Icons, Scroll, Text } from 'folds';
 import { Page, PageContent, PageHeader } from '../../../components/page';
-import { usePowerLevels } from '../../../hooks/usePowerLevels';
+import { usePowerLevelsContext } from '../../../hooks/usePowerLevels';
 import { useRoom } from '../../../hooks/useRoom';
 import {
   RoomProfile,
@@ -21,8 +30,8 @@ type GeneralProps = {
 };
 export function General({ requestClose }: GeneralProps) {
   const room = useRoom();
-  const powerLevels = usePowerLevels(room);
   const creators = useRoomCreators(room);
+  const powerLevels = usePowerLevelsContext();
   const permissions = useRoomPermissions(creators, powerLevels);
 
   return (

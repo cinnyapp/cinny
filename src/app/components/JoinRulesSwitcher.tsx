@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { MouseEventHandler, useCallback, useMemo, useState } from 'react';
 import {
   config,
@@ -13,44 +22,43 @@ import {
   Button,
   Spinner,
 } from 'folds';
-import { JoinRule } from 'matrix-js-sdk';
 import FocusTrap from 'focus-trap-react';
 import { stopPropagation } from '../utils/keyboard';
 import { getRoomIconSrc } from '../utils/room';
+import { JoinRule } from '../../types/matrix/room';
 
 export type ExtraJoinRules = 'knock_restricted';
-export type ExtendedJoinRules = JoinRule | ExtraJoinRules;
 
-type JoinRuleIcons = Record<ExtendedJoinRules, IconSrc>;
+type JoinRuleIcons = Record<JoinRule, IconSrc>;
 
 export const useJoinRuleIcons = (roomType?: string): JoinRuleIcons =>
   useMemo(
     () => ({
-      [JoinRule.Invite]: getRoomIconSrc(Icons, roomType, JoinRule.Invite),
-      [JoinRule.Knock]: getRoomIconSrc(Icons, roomType, JoinRule.Knock),
-      knock_restricted: getRoomIconSrc(Icons, roomType, JoinRule.Restricted),
-      [JoinRule.Restricted]: getRoomIconSrc(Icons, roomType, JoinRule.Restricted),
-      [JoinRule.Public]: getRoomIconSrc(Icons, roomType, JoinRule.Public),
-      [JoinRule.Private]: getRoomIconSrc(Icons, roomType, JoinRule.Private),
+      invite: getRoomIconSrc(Icons, roomType, 'invite'),
+      knock: getRoomIconSrc(Icons, roomType, 'knock'),
+      restricted: getRoomIconSrc(Icons, roomType, 'restricted'),
+      knock_restricted: getRoomIconSrc(Icons, roomType, 'knock_restricted'),
+      public: getRoomIconSrc(Icons, roomType, 'public'),
+      private: getRoomIconSrc(Icons, roomType, 'private'),
     }),
     [roomType]
   );
 
-type JoinRuleLabels = Record<ExtendedJoinRules, string>;
+type JoinRuleLabels = Record<JoinRule, string>;
 export const useRoomJoinRuleLabel = (): JoinRuleLabels =>
   useMemo(
     () => ({
-      [JoinRule.Invite]: 'Invite Only',
-      [JoinRule.Knock]: 'Knock & Invite',
+      invite: 'Invite Only',
+      knock: 'Knock & Invite',
       knock_restricted: 'Space Members or Knock',
-      [JoinRule.Restricted]: 'Space Members',
-      [JoinRule.Public]: 'Public',
-      [JoinRule.Private]: 'Invite Only',
+      restricted: 'Space Members',
+      public: 'Public',
+      private: 'Invite Only',
     }),
     []
   );
 
-type JoinRulesSwitcherProps<T extends ExtendedJoinRules[]> = {
+type JoinRulesSwitcherProps<T extends JoinRule[]> = {
   icons: JoinRuleIcons;
   labels: JoinRuleLabels;
   rules: T;
@@ -59,7 +67,7 @@ type JoinRulesSwitcherProps<T extends ExtendedJoinRules[]> = {
   disabled?: boolean;
   changing?: boolean;
 };
-export function JoinRulesSwitcher<T extends ExtendedJoinRules[]>({
+export function JoinRulesSwitcher<T extends JoinRule[]>({
   icons,
   labels,
   rules,
@@ -75,7 +83,7 @@ export function JoinRulesSwitcher<T extends ExtendedJoinRules[]>({
   };
 
   const handleChange = useCallback(
-    (selectedRule: ExtendedJoinRules) => {
+    (selectedRule: JoinRule) => {
       setCords(undefined);
       onChange(selectedRule);
     },
@@ -127,7 +135,7 @@ export function JoinRulesSwitcher<T extends ExtendedJoinRules[]>({
         fill="Soft"
         radii="300"
         outlined
-        before={<Icon size="100" src={icons[value] ?? icons[JoinRule.Restricted]} />}
+        before={<Icon size="100" src={icons[value] ?? 'restricted'} />}
         after={
           changing ? (
             <Spinner size="100" variant="Secondary" fill="Soft" />

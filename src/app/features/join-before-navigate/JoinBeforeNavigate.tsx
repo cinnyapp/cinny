@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React from 'react';
 import { Box, Icon, IconButton, Icons, Scroll, Text, toRem } from 'folds';
 import { useAtomValue } from 'jotai';
@@ -6,10 +15,10 @@ import { RoomTopicViewer } from '../../components/room-topic-viewer';
 import { Page, PageHeader } from '../../components/page';
 import { RoomSummaryLoader } from '../../components/RoomSummaryLoader';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { allRoomsAtom } from '../../state/room-list/roomList';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { BackRouteHandler } from '../../components/BackRouteHandler';
+import { useClient } from '../../hooks/useClient';
 
 type JoinBeforeNavigateProps = { roomIdOrAlias: string; eventId?: string; viaServers?: string[] };
 export function JoinBeforeNavigate({
@@ -17,13 +26,13 @@ export function JoinBeforeNavigate({
   eventId,
   viaServers,
 }: JoinBeforeNavigateProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const allRooms = useAtomValue(allRoomsAtom);
   const { navigateRoom, navigateSpace } = useRoomNavigate();
   const screenSize = useScreenSizeContext();
 
   const handleView = (roomId: string) => {
-    if (mx.getRoom(roomId)?.isSpaceRoom()) {
+    if (ct.spaceRooms.read.has(roomId)) {
       navigateSpace(roomId);
       return;
     }

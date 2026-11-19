@@ -1,4 +1,13 @@
-import React, { useCallback } from 'react';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import React, { useCallback, useRef } from 'react';
 import { Box, Line } from 'folds';
 import { useParams } from 'react-router-dom';
 import { isKeyHotkey } from 'is-hotkey';
@@ -7,85 +16,153 @@ import { RoomView } from './RoomView';
 import { MembersDrawer } from './MembersDrawer';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
-import { PowerLevelsContextProvider, usePowerLevels } from '../../hooks/usePowerLevels';
+import {
+  PowerLevelsContextProvider,
+  usePowerLevels,
+  usePowerLevelsState,
+} from '../../hooks/usePowerLevels';
 import { useRoom } from '../../hooks/useRoom';
 import { useKeyDown } from '../../hooks/useKeyDown';
-import { markAsRead } from '../../utils/notifications';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { useRoomMembers } from '../../hooks/useRoomMembers';
-import { CallView } from '../call/CallView';
+import { RoomMembersAPIProvider, useCreateRoomMembersAPI } from '../../hooks/useRoomMembers';
+import {
+  PowerLevelTagsContextProvider,
+  usePowerLevelTags,
+  usePowerLevelTagsState,
+} from '../../hooks/usePowerLevelTags';
+import { usePendingMemberLoader, usePendingMembers } from '../../hooks/usePendingMembers';
+import { useObservableValue, useObservableValueOptionally } from '../../hooks/useObservableValue';
+import { useClient } from '../../hooks/useClient';
+import { ThreadView } from './thread-view';
+import { TimelineViewProvider } from './hooks/useTimeline';
 import { RoomViewHeader } from './RoomViewHeader';
-import { callChatAtom } from '../../state/callEmbed';
-import { CallChatView } from './CallChatView';
-import { useCallEmbed } from '../../hooks/useCallEmbed';
 import { useCallMembers, useCallSession } from '../../hooks/useCall';
+import { useCallEmbed } from '../../hooks/useCallEmbed';
+import { callChatAtom } from '../../state/callEmbed';
+import { isCallRoom } from '../../utils/room';
+import { CallChatView } from './CallChatView';
+import { CallView } from '../call/CallView';
+import { CanMessageProvider } from './hooks/useCanMessage';
+import { editableActiveElement } from '../../utils/dom';
 
 export function Room() {
   const { eventId } = useParams();
-  const room = useRoom();
-  const mx = useMatrixClient();
+  const ct = useClient();
+  const roomId = useRoom();
+  const roomToTimeline = useObservableValue(ct.roomToTimeline);
 
-  const callSession = useCallSession(room);
+  const timeline = roomToTimeline.get(roomId);
+  const activeThreadId = useObservableValueOptionally(timeline?.activeThread);
+  const threads = useObservableValueOptionally(timeline?.threads);
+  const threadTimeline = activeThreadId ? threads?.get(activeThreadId) : undefined;
+  const threadFocusRef = useRef<boolean>(false);
+
+  const callSession = useCallSession(roomId);
   const callMembers = useCallMembers(callSession);
   const callEmbed = useCallEmbed();
-
-  const [isDrawer] = useSetting(settingsAtom, 'isPeopleDrawer');
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
-  const screenSize = useScreenSizeContext();
-  const powerLevels = usePowerLevels(room);
-  const members = useRoomMembers(mx, room.roomId);
   const chat = useAtomValue(callChatAtom);
+
+  const [isDrawer] = useSetting('isPeopleDrawer');
+  const [hideActivity] = useSetting('hideActivity');
+  const screenSize = useScreenSizeContext();
+  const powerLevelStateResult = usePowerLevelsState(roomId);
+  const powerLevels = usePowerLevels(powerLevelStateResult.value);
+  const powerLevelTagsStateResult = usePowerLevelTagsState(roomId);
+  const powerLevelTags = usePowerLevelTags(powerLevels, powerLevelTagsStateResult.value);
+  const membersAPI = useCreateRoomMembersAPI(roomId);
+  const membersPending = usePendingMembers(roomId);
+  usePendingMemberLoader(roomId, membersPending);
 
   useKeyDown(
     window,
     useCallback(
       (evt) => {
         if (isKeyHotkey('escape', evt)) {
-          markAsRead(mx, room.roomId, hideActivity);
+          // TODO: check overlay's
+          if (activeThreadId && threadFocusRef.current && !editableActiveElement()) {
+            timeline?.closeThread();
+          }
+          // markAsRead(mx, roomId, hideActivity);
         }
       },
-      [mx, room.roomId, hideActivity]
+      [activeThreadId, timeline]
     )
   );
 
-  const callView = callEmbed?.roomId === room.roomId || room.isCallRoom() || callMembers.length > 0;
+  const callView =
+    callEmbed?.roomId === roomId ||
+    isCallRoom(ct.roomToType.read.get(roomId)) ||
+    callMembers.length > 0;
 
   return (
-    <PowerLevelsContextProvider value={powerLevels}>
-      <Box grow="Yes">
-        {callView && (screenSize === ScreenSize.Desktop || !chat) && (
-          <Box grow="Yes" direction="Column">
-            <RoomViewHeader callView />
-            <Box grow="Yes">
-              <CallView />
-            </Box>
-          </Box>
-        )}
-        {!callView && (
-          <Box grow="Yes" direction="Column">
-            <RoomViewHeader />
-            <Box grow="Yes">
-              <RoomView eventId={eventId} />
-            </Box>
-          </Box>
-        )}
+    <RoomMembersAPIProvider value={membersAPI}>
+      <PowerLevelsContextProvider value={powerLevels}>
+        <PowerLevelTagsContextProvider value={powerLevelTags}>
+          <CanMessageProvider>
+            {timeline && (
+              <Box grow="Yes">
+                <TimelineViewProvider value={timeline}>
+                  {callView && (screenSize === ScreenSize.Desktop || !chat) && (
+                    <Box grow="Yes" direction="Column">
+                      <RoomViewHeader callView />
+                      <Box grow="Yes">
+                        <CallView />
+                      </Box>
+                    </Box>
+                  )}
+                  {!callView && !(threadTimeline && screenSize !== ScreenSize.Desktop) && (
+                    <Box grow="Yes" direction="Column">
+                      <RoomViewHeader />
+                      <Box grow="Yes">
+                        <RoomView
+                          key={roomId}
+                          threadFocusRef={threadFocusRef}
+                          timeline={timeline}
+                          eventId={eventId}
+                        />
+                      </Box>
+                    </Box>
+                  )}
+                </TimelineViewProvider>
 
-        {callView && chat && (
-          <>
-            {screenSize === ScreenSize.Desktop && (
-              <Line variant="Background" direction="Vertical" size="300" />
+                {callView && chat && !threadTimeline && (
+                  <TimelineViewProvider value={timeline}>
+                    {screenSize === ScreenSize.Desktop && (
+                      <Line variant="Background" direction="Vertical" size="300" />
+                    )}
+                    <CallChatView>
+                      <RoomView
+                        key={roomId}
+                        threadFocusRef={threadFocusRef}
+                        timeline={timeline}
+                        eventId={eventId}
+                      />
+                    </CallChatView>
+                  </TimelineViewProvider>
+                )}
+
+                {threadTimeline && (
+                  <TimelineViewProvider key={threadTimeline.threadId} value={threadTimeline}>
+                    {screenSize === ScreenSize.Desktop && (
+                      <Line variant="Background" direction="Vertical" size="300" />
+                    )}
+                    <ThreadView
+                      threadTimeline={threadTimeline}
+                      threadFocusRef={threadFocusRef}
+                      requestClose={() => timeline.closeThread()}
+                    />
+                  </TimelineViewProvider>
+                )}
+                {!threadTimeline && !callView && screenSize === ScreenSize.Desktop && isDrawer && (
+                  <>
+                    <Line variant="Background" direction="Vertical" size="300" />
+                    <MembersDrawer key={roomId} />
+                  </>
+                )}
+              </Box>
             )}
-            <CallChatView />
-          </>
-        )}
-        {!callView && screenSize === ScreenSize.Desktop && isDrawer && (
-          <>
-            <Line variant="Background" direction="Vertical" size="300" />
-            <MembersDrawer key={room.roomId} room={room} members={members} />
-          </>
-        )}
-      </Box>
-    </PowerLevelsContextProvider>
+          </CanMessageProvider>
+        </PowerLevelTagsContextProvider>
+      </PowerLevelsContextProvider>
+    </RoomMembersAPIProvider>
   );
 }

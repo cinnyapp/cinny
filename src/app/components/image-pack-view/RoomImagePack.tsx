@@ -1,28 +1,39 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { useCallback, useMemo } from 'react';
-import { Room } from 'matrix-js-sdk';
-import { usePowerLevels } from '../../hooks/usePowerLevels';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
+import { putStateEvent } from 'neurone/lib/api/matrix/client/v3/rooms';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
+import { usePowerLevels, usePowerLevelsState } from '../../hooks/usePowerLevels';
 import { ImagePackContent } from './ImagePackContent';
 import { ImagePack, PackContent } from '../../plugins/custom-emoji';
-import { StateEvent } from '../../../types/matrix/room';
+import { StateEventType } from '../../../types/matrix/room';
 import { useRoomImagePack } from '../../hooks/useImagePacks';
 import { randomStr } from '../../utils/common';
 import { useRoomPermissions } from '../../hooks/useRoomPermissions';
 import { useRoomCreators } from '../../hooks/useRoomCreators';
+import { useClient } from '../../hooks/useClient';
 
 type RoomImagePackProps = {
-  room: Room;
+  roomId: string;
   stateKey: string;
 };
 
-export function RoomImagePack({ room, stateKey }: RoomImagePackProps) {
-  const mx = useMatrixClient();
-  const userId = mx.getUserId()!;
-  const powerLevels = usePowerLevels(room);
-  const creators = useRoomCreators(room);
+export function RoomImagePack({ roomId, stateKey }: RoomImagePackProps) {
+  const ct = useClient();
+  const { userId } = ct.session;
+  const powerLevelsStateResult = usePowerLevelsState(roomId);
+  const powerLevels = usePowerLevels(powerLevelsStateResult.value);
+  const creators = useRoomCreators(roomId);
 
   const permissions = useRoomPermissions(creators, powerLevels);
-  const canEditImagePack = permissions.stateEvent(StateEvent.PoniesRoomEmotes, userId);
+  const canEditImagePack = permissions.stateEvent(StateEventType.PoniesRoomEmotes, userId);
 
   const fallbackPack = useMemo(() => {
     const fakePackId = randomStr(4);
@@ -30,26 +41,33 @@ export function RoomImagePack({ room, stateKey }: RoomImagePackProps) {
       fakePackId,
       {},
       {
-        roomId: room.roomId,
+        roomId,
         stateKey,
       }
     );
-  }, [room.roomId, stateKey]);
-  const imagePack = useRoomImagePack(room, stateKey) ?? fallbackPack;
+  }, [roomId, stateKey]);
+  const imagePackResult = useRoomImagePack(roomId, stateKey);
+  const imagePack = imagePackResult.value ?? fallbackPack;
 
   const handleUpdate = useCallback(
     async (packContent: PackContent) => {
       const { address } = imagePack;
       if (!address) return;
 
-      await mx.sendStateEvent(
-        address.roomId,
-        StateEvent.PoniesRoomEmotes,
-        packContent,
-        address.stateKey
+      const resp = await ct.requestAuthJSON(
+        putStateEvent({
+          pathParams: {
+            roomId: address.roomId,
+            eventType: StateEventType.PoniesRoomEmotes,
+            stateKey: address.stateKey,
+          },
+          body: packContent,
+        })
       );
+      const [err] = await parseMatrixResp(resp);
+      if (err) throw new Error(err.data.error ?? err.data.errcode);
     },
-    [mx, imagePack]
+    [ct, imagePack]
   );
 
   return (

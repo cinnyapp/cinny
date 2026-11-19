@@ -1,0 +1,64 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import { keyframes, style } from '@vanilla-extract/css';
+import { ContainerColor } from '../../../styles/ContainerColor.css';
+
+export const ZigZagLine = style([
+  ContainerColor({ variant: 'Background' }),
+  {
+    minHeight: '20px',
+    overflow: 'hidden',
+
+    mask: `50% / 20px repeat-x conic-gradient(
+      from -45deg at bottom,
+      #0000,
+      #000 1deg 89deg,
+      #0000 90deg
+    )`,
+  },
+]);
+
+export const rainbowUpAnime = keyframes({
+  '0%': {
+    height: 0,
+  },
+  '100%': {
+    height: '100%',
+  },
+});
+
+export const ZigZagRainbow = style({
+  '::before': {
+    content: '""',
+    position: 'absolute',
+    height: '100%',
+    bottom: 0,
+    left: 0,
+    right: 0,
+
+    background: `
+      linear-gradient(
+        to top,
+        rgba(255, 100, 120, 0.18),
+        rgba(255, 190, 120, 0.18),
+        rgba(255, 255, 140, 0.18),
+        rgba(120, 255, 170, 0.18),
+        rgba(120, 240, 240, 0.18),
+        rgba(120, 180, 255, 0.18),
+        rgba(180, 140, 255, 0.18),
+        rgba(255, 140, 210, 0.18),
+        rgba(255, 120, 140, 0.18),
+        transparent
+      )
+      `,
+
+    animation: `${rainbowUpAnime} 1000ms ease-out`,
+  },
+});

@@ -1,17 +1,23 @@
-import { Room } from 'matrix-js-sdk';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React from 'react';
 import { Box, Icon, Icons, Text } from 'folds';
-import { getMemberDisplayName } from '../../utils/room';
-import { getMxIdLocalPart } from '../../utils/matrix';
+import { RoomMembersAPI } from '../../hooks/useRoomMembers';
 
 type MemberSpeakingProps = {
-  room: Room;
+  membersAPI: RoomMembersAPI;
   speakers: Set<string>;
 };
-export function MemberSpeaking({ room, speakers }: MemberSpeakingProps) {
-  const speakingNames = Array.from(speakers).map(
-    (userId) => getMemberDisplayName(room, userId) ?? getMxIdLocalPart(userId) ?? userId
-  );
+export function MemberSpeaking({ membersAPI, speakers }: MemberSpeakingProps) {
+  const speakingNames = Array.from(speakers).map((userId) => membersAPI.getName(userId));
+
   return (
     <Box alignItems="Center" gap="100">
       <Icon size="100" src={Icons.Mic} filled />

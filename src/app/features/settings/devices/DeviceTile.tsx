@@ -1,4 +1,13 @@
-import React, { FormEventHandler, ReactNode, useCallback, useEffect, useState } from 'react';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import React, { FormEventHandler, ReactNode, useCallback, useState } from 'react';
 import {
   Box,
   Text,
@@ -15,11 +24,11 @@ import {
   OverlayBackdrop,
   OverlayCenter,
 } from 'folds';
-import { CryptoApi } from 'matrix-js-sdk/lib/crypto-api';
 import FocusTrap from 'focus-trap-react';
-import { IMyDevice, MatrixError } from 'matrix-js-sdk';
+import { Device } from 'neurone/lib/api/types';
+import { putDevice } from 'neurone/lib/api/matrix/client/v3/devices';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
 import { SettingTile } from '../../../components/setting-tile';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { timeDayMonYear, timeHourMinute, today, yesterday } from '../../../utils/time';
 import { BreakWord } from '../../../styles/Text.css';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
@@ -28,7 +37,8 @@ import { SequenceCardStyle } from '../styles.css';
 import { LogoutDialog } from '../../../components/LogoutDialog';
 import { stopPropagation } from '../../../utils/keyboard';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
+import { useClient } from '../../../hooks/useClient';
+import { useAlive } from '../../../hooks/useAlive';
 
 export function DeviceTilePlaceholder() {
   return (
@@ -43,8 +53,8 @@ export function DeviceTilePlaceholder() {
 }
 
 function DeviceActiveTime({ ts }: { ts: number }) {
-  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
-  const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
+  const [hour24Clock] = useSetting('hour24Clock');
+  const [dateFormatString] = useSetting('dateFormatString');
 
   return (
     <Text className={BreakWord} size="T200">
@@ -61,7 +71,7 @@ function DeviceActiveTime({ ts }: { ts: number }) {
   );
 }
 
-function DeviceDetails({ device }: { device: IMyDevice }) {
+function DeviceDetails({ device }: { device: Device }) {
   return (
     <>
       {typeof device.device_id === 'string' && (
@@ -78,57 +88,51 @@ function DeviceDetails({ device }: { device: IMyDevice }) {
   );
 }
 
-type DeviceKeyDetailsProps = {
-  crypto: CryptoApi;
-};
-export function DeviceKeyDetails({ crypto }: DeviceKeyDetailsProps) {
-  const [keysState, loadKeys] = useAsyncCallback(
-    useCallback(() => {
-      const keys = crypto.getOwnDeviceKeys();
-      return keys;
-    }, [crypto])
-  );
-
-  useEffect(() => {
-    loadKeys();
-  }, [loadKeys]);
-
-  if (keysState.status === AsyncStatus.Error) return null;
+export function DeviceKeyDetails() {
+  const ct = useClient();
 
   return (
-    <Text className={BreakWord} size="T200" priority="300">
-      Device Key:{' '}
-      <i>{keysState.status === AsyncStatus.Success ? keysState.data.ed25519 : 'loading...'}</i>
-    </Text>
+    <>
+      <Text className={BreakWord} size="T200" priority="300">
+        Encryption Key: <i>{ct.machine.getEncryptionKey()}</i>
+      </Text>
+      <Text className={BreakWord} size="T200" priority="300">
+        Singing Key: <i>{ct.machine.getSigningKey()}</i>
+      </Text>
+    </>
   );
 }
 
 type DeviceRenameProps = {
-  device: IMyDevice;
+  device: Device;
   onCancel: () => void;
   onRename: () => void;
   refreshDeviceList: () => Promise<void>;
 };
 function DeviceRename({ device, onCancel, onRename, refreshDeviceList }: DeviceRenameProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
+  const alive = useAlive();
 
-  const [renameState, rename] = useAsyncCallback<void, MatrixError, [string]>(
+  const [renameState, rename] = useAsyncCallback<void, unknown, [string]>(
     useCallback(
       async (name: string) => {
-        await mx.setDeviceDetails(device.device_id, { display_name: name });
+        const resp = await ct.requestAuthJSON(
+          putDevice({
+            pathParams: { deviceId: device.device_id },
+            body: {
+              display_name: name,
+            },
+          })
+        );
+        const [err] = await parseMatrixResp(resp);
+        if (err) throw new Error(err.data.error ?? err.data.errcode);
         await refreshDeviceList();
       },
-      [mx, device.device_id, refreshDeviceList]
+      [ct, device.device_id, refreshDeviceList]
     )
   );
 
   const renaming = renameState.status === AsyncStatus.Loading;
-
-  useEffect(() => {
-    if (renameState.status === AsyncStatus.Success) {
-      onRename();
-    }
-  }, [renameState, onRename]);
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (evt) => {
     evt.preventDefault();
@@ -140,12 +144,15 @@ function DeviceRename({ device, onCancel, onRename, refreshDeviceList }: DeviceR
     const deviceName = nameInput.value.trim();
     if (!deviceName || deviceName === device.display_name) return;
 
-    rename(deviceName);
+    rename(deviceName).then(() => {
+      if (alive()) {
+        onRename();
+      }
+    });
   };
 
   return (
     <Box as="form" onSubmit={handleSubmit} direction="Column" gap="100">
-      <Text size="L400">Device Name</Text>
       <Box gap="200">
         <Box grow="Yes" direction="Column">
           <Input
@@ -171,7 +178,7 @@ function DeviceRename({ device, onCancel, onRename, refreshDeviceList }: DeviceR
           >
             <Text size="B300">Save</Text>
           </Button>
-          <Button
+          <IconButton
             type="button"
             size="300"
             variant="Secondary"
@@ -179,17 +186,16 @@ function DeviceRename({ device, onCancel, onRename, refreshDeviceList }: DeviceR
             fill="Soft"
             onClick={onCancel}
             disabled={renaming}
+            aria-label="Cancel"
           >
-            <Text size="B300">Cancel</Text>
-          </Button>
+            <Icon size="400" src={Icons.Cross} />
+          </IconButton>
         </Box>
       </Box>
-      {renameState.status === AsyncStatus.Error ? (
+      {renameState.status === AsyncStatus.Error && (
         <Text size="T200" style={{ color: color.Critical.Main }}>
-          {renameState.error.message}
+          {renameState.error instanceof Error ? renameState.error.message : 'Unknown Error'}
         </Text>
-      ) : (
-        <Text size="T200">Device names are visible to public.</Text>
       )}
     </Box>
   );
@@ -260,7 +266,7 @@ export function DeviceDeleteBtn({
 }
 
 type DeviceTileProps = {
-  device: IMyDevice;
+  device: Device;
   deleted?: boolean;
   refreshDeviceList: () => Promise<void>;
   disabled?: boolean;
@@ -284,55 +290,54 @@ export function DeviceTile({
   }, []);
 
   return (
-    <>
-      <SettingTile
-        before={
-          <IconButton
-            variant={deleted ? 'Critical' : 'Secondary'}
-            outlined={deleted}
-            radii="300"
-            onClick={() => setDetails(!details)}
-          >
-            <Icon size="50" src={details ? Icons.ChevronBottom : Icons.ChevronRight} />
-          </IconButton>
-        }
-        after={
-          !edit && (
-            <Box shrink="No" alignItems="Center" gap="200">
-              {options}
-              {!deleted && (
-                <Chip
-                  variant="Secondary"
-                  radii="Pill"
-                  onClick={() => setEdit(true)}
-                  disabled={disabled}
-                >
-                  <Text size="B300">Edit</Text>
-                </Chip>
-              )}
-            </Box>
-          )
-        }
-      >
-        <Text size="T300">{device.display_name ?? device.device_id}</Text>
-        <Box direction="Column">
-          {typeof activeTs === 'number' && <DeviceActiveTime ts={activeTs} />}
-          {details && (
-            <>
-              <DeviceDetails device={device} />
-              {children}
-            </>
-          )}
-        </Box>
-      </SettingTile>
-      {edit && (
+    <SettingTile
+      before={
+        <IconButton
+          variant={deleted ? 'Critical' : 'Secondary'}
+          outlined={deleted}
+          radii="300"
+          onClick={() => setDetails(!details)}
+        >
+          <Icon size="50" src={details ? Icons.ChevronBottom : Icons.ChevronRight} />
+        </IconButton>
+      }
+      after={
+        !edit && (
+          <Box shrink="No" alignItems="Center" gap="200">
+            {options}
+            {!deleted && (
+              <Chip
+                variant="Secondary"
+                radii="Pill"
+                onClick={() => setEdit(true)}
+                disabled={disabled}
+              >
+                <Text size="B300">Edit</Text>
+              </Chip>
+            )}
+          </Box>
+        )
+      }
+    >
+      {edit ? (
         <DeviceRename
           device={device}
           onCancel={() => setEdit(false)}
           onRename={handleRename}
           refreshDeviceList={refreshDeviceList}
         />
+      ) : (
+        <Text size="T300">{device.display_name?.trim() || device.device_id}</Text>
       )}
-    </>
+      <Box direction="Column">
+        {typeof activeTs === 'number' && <DeviceActiveTime ts={activeTs} />}
+        {details && (
+          <>
+            <DeviceDetails device={device} />
+            {children}
+          </>
+        )}
+      </Box>
+    </SettingTile>
   );
 }

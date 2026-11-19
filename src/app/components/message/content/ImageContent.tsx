@@ -1,4 +1,13 @@
-import React, { ReactNode, useCallback, useEffect, useState } from 'react';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Badge,
   Box,
@@ -22,41 +31,28 @@ import FocusTrap from 'focus-trap-react';
 import { EncryptedAttachmentInfo } from 'browser-encrypt-attachment';
 import { IImageInfo, MATRIX_BLUR_HASH_PROPERTY_NAME } from '../../../../types/matrix/common';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import * as css from './style.css';
 import { bytesToSize } from '../../../utils/common';
 import { FALLBACK_MIMETYPE } from '../../../utils/mimeTypes';
 import { stopPropagation } from '../../../utils/keyboard';
-import { decryptFile, downloadEncryptedMedia, mxcUrlToHttp } from '../../../utils/matrix';
+import { decryptFile, downloadEncryptedMedia } from '../../../utils/matrix';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
 import { ModalWide } from '../../../styles/Modal.css';
 import { validBlurHash } from '../../../utils/blurHash';
+import { useClient } from '../../../hooks/useClient';
+import { mxcToHttp } from '../../../../client/mxcToHttp';
+import { Image } from '../../media';
+import { ImageViewer } from '../../image-viewer';
 
-type RenderViewerProps = {
-  src: string;
-  alt: string;
-  requestClose: () => void;
-};
-type RenderImageProps = {
-  alt: string;
-  title: string;
-  src: string;
-  onLoad: () => void;
-  onError: () => void;
-  onClick: () => void;
-  tabIndex: number;
-};
 export type ImageContentProps = {
   body: string;
   mimeType?: string;
   url: string;
   info?: IImageInfo;
-  encInfo?: EncryptedAttachmentInfo;
+  encInfo?: object;
   autoPlay?: boolean;
   markedAsSpoiler?: boolean;
   spoilerReason?: string;
-  renderViewer: (props: RenderViewerProps) => ReactNode;
-  renderImage: (props: RenderImageProps) => ReactNode;
 };
 export const ImageContent = as<'div', ImageContentProps>(
   (
@@ -70,13 +66,11 @@ export const ImageContent = as<'div', ImageContentProps>(
       autoPlay,
       markedAsSpoiler,
       spoilerReason,
-      renderViewer,
-      renderImage,
       ...props
     },
     ref
   ) => {
-    const mx = useMatrixClient();
+    const ct = useClient();
     const useAuthentication = useMediaAuthentication();
     const blurHash = validBlurHash(info?.[MATRIX_BLUR_HASH_PROPERTY_NAME]);
 
@@ -87,16 +81,15 @@ export const ImageContent = as<'div', ImageContentProps>(
 
     const [srcState, loadSrc] = useAsyncCallback(
       useCallback(async () => {
-        const mediaUrl = mxcUrlToHttp(mx, url, useAuthentication);
-        if (!mediaUrl) throw new Error('Invalid media URL');
+        const mediaUrl = mxcToHttp(ct.session.baseUrl, url, useAuthentication).url();
         if (encInfo) {
           const fileContent = await downloadEncryptedMedia(mediaUrl, (encBuf) =>
-            decryptFile(encBuf, mimeType ?? FALLBACK_MIMETYPE, encInfo)
+            decryptFile(encBuf, mimeType ?? FALLBACK_MIMETYPE, encInfo as EncryptedAttachmentInfo)
           );
           return URL.createObjectURL(fileContent);
         }
         return mediaUrl;
-      }, [mx, url, useAuthentication, mimeType, encInfo])
+      }, [ct, url, useAuthentication, mimeType, encInfo])
     );
 
     const handleLoad = () => {
@@ -134,11 +127,11 @@ export const ImageContent = as<'div', ImageContentProps>(
                   size="500"
                   onContextMenu={(evt: any) => evt.stopPropagation()}
                 >
-                  {renderViewer({
-                    src: srcState.data,
-                    alt: body,
-                    requestClose: () => setViewer(false),
-                  })}
+                  <ImageViewer
+                    src={srcState.data}
+                    alt={body}
+                    requestClose={() => setViewer(false)}
+                  />
                 </Modal>
               </FocusTrap>
             </OverlayCenter>
@@ -169,15 +162,16 @@ export const ImageContent = as<'div', ImageContentProps>(
         )}
         {srcState.status === AsyncStatus.Success && (
           <Box className={classNames(css.AbsoluteContainer, blurred && css.Blur)}>
-            {renderImage({
-              alt: body,
-              title: body,
-              src: srcState.data,
-              onLoad: handleLoad,
-              onError: handleError,
-              onClick: () => setViewer(true),
-              tabIndex: 0,
-            })}
+            <Image
+              alt={body}
+              title={body}
+              src={srcState.data}
+              onLoad={handleLoad}
+              onError={handleError}
+              onClick={() => setViewer(true)}
+              tabIndex={0}
+              loading="lazy"
+            />
           </Box>
         )}
         {blurred && !error && srcState.status !== AsyncStatus.Error && (

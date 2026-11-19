@@ -1,6 +1,14 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React from 'react';
 import { Avatar, Box, Icon, Icons, Text } from 'folds';
-import { useAtomValue } from 'jotai';
 import { NavCategory, NavItem, NavItemContent, NavLink } from '../../../components/nav';
 import { getInboxInvitesPath, getInboxNotificationsPath } from '../../pathUtils';
 import {
@@ -8,13 +16,15 @@ import {
   useInboxNotificationsSelected,
 } from '../../../hooks/router/useInbox';
 import { UnreadBadge } from '../../../components/unread-badge';
-import { allInvitesAtom } from '../../../state/room-list/inviteList';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
+import { useClient } from '../../../hooks/useClient';
+import { useObservableValue } from '../../../hooks/useObservableValue';
 
 function InvitesNavItem() {
+  const ct = useClient();
   const invitesSelected = useInboxInvitesSelected();
-  const allInvites = useAtomValue(allInvitesAtom);
+  const allInvites = useObservableValue(ct.rooms.invite);
   const inviteCount = allInvites.length;
 
   return (

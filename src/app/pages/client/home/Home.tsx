@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { MouseEventHandler, forwardRef, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -16,9 +25,9 @@ import {
   toRem,
 } from 'folds';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useAtom, useAtomValue } from 'jotai';
+import { useAtom } from 'jotai';
 import FocusTrap from 'focus-trap-react';
-import { factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
+import { activityTsScope, factoryRoomIdByActivity, factoryRoomIdByAtoZ } from '../../../utils/sort';
 import {
   NavButton,
   NavCategory,
@@ -37,27 +46,21 @@ import {
   getHomeSearchPath,
   withSearchParam,
 } from '../../pathUtils';
-import { getCanonicalAliasOrRoomId } from '../../../utils/matrix';
 import { useSelectedRoom } from '../../../hooks/router/useSelectedRoom';
 import {
   useHomeCreateSelected,
   useHomeSearchSelected,
 } from '../../../hooks/router/useHomeSelected';
 import { useHomeRooms } from './useHomeRooms';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { VirtualTile } from '../../../components/virtualizer';
-import { RoomNavCategoryButton, RoomNavItem } from '../../../features/room-nav';
+import { RoomNavCategoryButton, RoomNavItem, ThreadNavItems } from '../../../features/room-nav';
 import { makeNavCategoryId } from '../../../state/closedNavCategories';
-import { roomToUnreadAtom } from '../../../state/room/roomToUnread';
 import { useCategoryHandler } from '../../../hooks/useCategoryHandler';
 import { useNavToActivePathMapper } from '../../../hooks/useNavToActivePathMapper';
 import { PageNav, PageNavHeader, PageNavContent } from '../../../components/page';
-import { useRoomsUnread } from '../../../state/hooks/unread';
-import { markAsRead } from '../../../utils/notifications';
 import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCategories';
 import { stopPropagation } from '../../../utils/keyboard';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import {
   getRoomNotificationMode,
   useRoomsNotificationPreferencesContext,
@@ -65,19 +68,33 @@ import {
 import { UseStateProvider } from '../../../components/UseStateProvider';
 import { JoinAddressPrompt } from '../../../components/join-address-prompt';
 import { _RoomSearchParams } from '../../paths';
+import { useClient } from '../../../hooks/useClient';
+import { useGetRoomName } from '../../../hooks/storage/useGetRoomName';
+import { useRoomHeroes } from '../../../hooks/storage/useRoomHeros';
+import { useObservableValue } from '../../../hooks/useObservableValue';
+import {
+  getRoomTotalNotifications,
+  useRoomsNotifications,
+  useRoomsTotalNotifications,
+} from '../../../state/hooks/roomNotifications';
+import { roomToNotificationsAtom } from '../../../state/room/roomToNotifications';
+import { useGetRoomAvatar } from '../../../hooks/storage/useGetRoomAvatar';
+import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
+import { useRoomsUnread } from '../../../state/hooks/unread';
+import { useRoomsLatestEvent } from '../../../hooks/useRoomsLatestEvent';
 
 type HomeMenuProps = {
   requestClose: () => void;
 };
 const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(({ requestClose }, ref) => {
   const orphanRooms = useHomeRooms();
-  const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
-  const unread = useRoomsUnread(orphanRooms, roomToUnreadAtom);
-  const mx = useMatrixClient();
+  const [hideActivity] = useSetting('hideActivity');
+  const roomsNotifications = useRoomsNotifications(orphanRooms, roomToNotificationsAtom);
+  const notifications = useRoomsTotalNotifications(roomsNotifications);
 
   const handleMarkAsRead = () => {
-    if (!unread) return;
-    orphanRooms.forEach((rId) => markAsRead(mx, rId, hideActivity));
+    // if (!unread) return;
+    // orphanRooms.forEach((rId) => markAsRead(mx, rId, hideActivity));
     requestClose();
   };
 
@@ -89,7 +106,7 @@ const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(({ requestClose }, re
           size="300"
           after={<Icon size="100" src={Icons.CheckTwice} />}
           radii="300"
-          aria-disabled={!unread}
+          aria-disabled={!notifications || notifications.count === 0}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
             Mark as Read
@@ -195,12 +212,24 @@ function HomeEmpty() {
 
 const DEFAULT_CATEGORY_ID = makeNavCategoryId('home', 'room');
 export function Home() {
-  const mx = useMatrixClient();
+  const ct = useClient();
   useNavToActivePathMapper('home');
   const scrollRef = useRef<HTMLDivElement>(null);
   const rooms = useHomeRooms();
+  const [sortByActivity] = useSetting('roomListByActivity');
+  const [showAvatar] = useSetting('roomListShowAvatar');
+
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
+
+  const roomToJoinRule = useObservableValue(ct.roomToJoinRule);
+  const roomToNotifications = useRoomsNotifications(rooms, roomToNotificationsAtom);
+  const unreadRooms = useRoomsUnread(rooms, unreadRoomsAtom);
+  const roomToLatestEvent = useRoomsLatestEvent(rooms);
+  const roomToTimeline = useObservableValue(ct.roomToTimeline);
+
   const notificationPreferences = useRoomsNotificationPreferencesContext();
-  const roomToUnread = useAtomValue(roomToUnreadAtom);
   const navigate = useNavigate();
 
   const selectedRoomId = useSelectedRoom();
@@ -210,16 +239,33 @@ export function Home() {
   const [closedCategories, setClosedCategories] = useAtom(useClosedNavCategoriesAtom());
 
   const sortedRooms = useMemo(() => {
-    const items = Array.from(rooms).sort(
-      closedCategories.has(DEFAULT_CATEGORY_ID)
-        ? factoryRoomIdByActivity(mx)
-        : factoryRoomIdByAtoZ(mx)
-    );
     if (closedCategories.has(DEFAULT_CATEGORY_ID)) {
-      return items.filter((rId) => roomToUnread.has(rId) || rId === selectedRoomId);
+      return Array.from(rooms)
+        .filter((roomId) => {
+          if (roomId === selectedRoomId) return true;
+          const notification = roomToNotifications.get(roomId);
+          const total = getRoomTotalNotifications(notification);
+          return total.count > 0 || unreadRooms.has(roomId);
+        })
+        .sort(factoryRoomIdByActivity(activityTsScope(ct, roomToLatestEvent)));
     }
-    return items;
-  }, [mx, rooms, closedCategories, roomToUnread, selectedRoomId]);
+    if (sortByActivity) {
+      return Array.from(rooms).sort(
+        factoryRoomIdByActivity(activityTsScope(ct, roomToLatestEvent))
+      );
+    }
+    return Array.from(rooms).sort(factoryRoomIdByAtoZ(getRoomName));
+  }, [
+    ct,
+    getRoomName,
+    rooms,
+    closedCategories,
+    roomToNotifications,
+    unreadRooms,
+    roomToLatestEvent,
+    selectedRoomId,
+    sortByActivity,
+  ]);
 
   const virtualizer = useVirtualizer({
     count: sortedRooms.length,
@@ -330,9 +376,11 @@ export function Home() {
               >
                 {virtualizer.getVirtualItems().map((vItem) => {
                   const roomId = sortedRooms[vItem.index];
-                  const room = mx.getRoom(roomId);
-                  if (!room) return null;
                   const selected = selectedRoomId === roomId;
+                  const n = roomToNotifications.get(roomId);
+                  const notifications = n && getRoomTotalNotifications(n, true);
+                  const threadNotifications = n?.threads;
+                  const timeline = roomToTimeline.get(roomId);
 
                   return (
                     <VirtualTile
@@ -341,14 +389,26 @@ export function Home() {
                       ref={virtualizer.measureElement}
                     >
                       <RoomNavItem
-                        room={room}
+                        key={roomId}
+                        roomId={roomId}
+                        roomName={getRoomName(roomId) ?? 'Unknown'}
+                        avatarUrl={getRoomAvatar(roomId)}
+                        showAvatar={showAvatar}
                         selected={selected}
-                        linkPath={getHomeRoomPath(getCanonicalAliasOrRoomId(mx, roomId))}
-                        notificationMode={getRoomNotificationMode(
-                          notificationPreferences,
-                          room.roomId
-                        )}
+                        joinRule={roomToJoinRule.get(roomId)}
+                        linkPath={getHomeRoomPath(ct.roomToAlias.read.get(roomId) ?? roomId)}
+                        notificationMode={getRoomNotificationMode(notificationPreferences, roomId)}
+                        notifications={notifications}
+                        unread={unreadRooms.has(roomId)}
                       />
+                      {timeline && threadNotifications && threadNotifications.size > 0 && (
+                        <ThreadNavItems
+                          linkPath={getHomeRoomPath(ct.roomToAlias.read.get(roomId) ?? roomId)}
+                          roomSelected={selectedRoomId === roomId}
+                          timeline={timeline}
+                          threadNotifications={threadNotifications}
+                        />
+                      )}
                     </VirtualTile>
                   );
                 })}

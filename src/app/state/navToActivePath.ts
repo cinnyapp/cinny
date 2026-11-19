@@ -1,11 +1,17 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { WritableAtom, atom } from 'jotai';
 import produce from 'immer';
 import { Path } from 'react-router-dom';
-import {
-  atomWithLocalStorage,
-  getLocalStorageItem,
-  setLocalStorageItem,
-} from './utils/atomWithLocalStorage';
+import { atomWithLocalStorage } from './utils/atomWithLocalStorage';
+import { getLocalStorageItem, setLocalStorageItem } from '../../client/localStorage';
 
 const NAV_TO_ACTIVE_PATH = 'navToActivePath';
 
@@ -24,7 +30,7 @@ type NavToActivePathAction =
       navId: string;
     };
 
-export type NavToActivePathAtom = WritableAtom<NavToActivePath, [NavToActivePathAction], undefined>;
+export type NavToActivePathAtom = WritableAtom<NavToActivePath, [NavToActivePathAction], void>;
 
 export const makeNavToActivePathAtom = (userId: string): NavToActivePathAtom => {
   const storeKey = getStoreKey(userId);
@@ -41,7 +47,7 @@ export const makeNavToActivePathAtom = (userId: string): NavToActivePathAtom => 
     }
   );
 
-  const navToActivePathAtom = atom<NavToActivePath, [NavToActivePathAction], undefined>(
+  const navToActivePathAtom = atom<NavToActivePath, [NavToActivePathAction], void>(
     (get) => get(baseNavToActivePathAtom),
     (get, set, action) => {
       if (action.type === 'DELETE') {

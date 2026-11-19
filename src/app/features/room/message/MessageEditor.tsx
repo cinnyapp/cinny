@@ -1,8 +1,18 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, {
   KeyboardEventHandler,
   MouseEventHandler,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 import {
@@ -17,11 +27,11 @@ import {
   Spinner,
   Text,
   as,
+  color,
   config,
 } from 'folds';
-import { Editor, Transforms } from 'slate';
 import { ReactEditor } from 'slate-react';
-import { IContent, IMentions, MatrixEvent, RelationType, Room } from 'matrix-js-sdk';
+import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { isKeyHotkey } from 'is-hotkey';
 import {
   AUTOCOMPLETE_PREFIXES,
@@ -33,135 +43,57 @@ import {
   Toolbar,
   UserMentionAutocomplete,
   createEmoticonElement,
-  customHtmlEqualsPlainText,
   getAutocompleteQuery,
   getPrevWordRange,
   htmlToEditorInput,
   moveCursor,
   plainToEditorInput,
-  toMatrixCustomHTML,
-  toPlainText,
-  trimCustomHtml,
   useEditor,
-  getMentions,
 } from '../../../components/editor';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
 import { UseStateProvider } from '../../../components/UseStateProvider';
 import { EmojiBoard } from '../../../components/emoji-board';
-import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { getEditedEvent, getMentionContent, trimReplyFromFormattedBody } from '../../../utils/room';
+import { AsyncStatus } from '../../../hooks/useAsyncCallback';
 import { mobileOrTablet } from '../../../utils/user-agent';
 import { useComposingCheck } from '../../../hooks/useComposingCheck';
+import { useSendEditedMessage } from '../hooks/useSendEditedMessage';
+import { useObservableValueOptionally } from '../../../hooks/useObservableValue';
+import { rContent } from '../../../../client/reader';
+import {
+  EventSenderError,
+  EventSenderPending,
+  EventSenderSuccess,
+} from '../../../../client/room/local-event';
 
 type MessageEditorProps = {
   roomId: string;
-  room: Room;
-  mEvent: MatrixEvent;
-  imagePackRooms?: Room[];
+  event: MessageEventWithoutRoomId;
+  imagePackRooms?: string[];
   onCancel: () => void;
 };
 export const MessageEditor = as<'div', MessageEditorProps>(
-  ({ room, roomId, mEvent, imagePackRooms, onCancel, ...props }, ref) => {
-    const mx = useMatrixClient();
+  ({ roomId, event, imagePackRooms, onCancel, ...props }, ref) => {
     const editor = useEditor();
-    const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
-    const [globalToolbar] = useSetting(settingsAtom, 'editorToolbar');
-    const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
+    const [enterForNewline] = useSetting('enterForNewline');
+    const [globalToolbar] = useSetting('editorToolbar');
+    const [isMarkdown] = useSetting('isMarkdown');
     const [toolbar, setToolbar] = useState(globalToolbar);
     const isComposing = useComposingCheck();
 
     const [autocompleteQuery, setAutocompleteQuery] =
       useState<AutocompleteQuery<AutocompletePrefix>>();
 
-    const getPrevBodyAndFormattedBody = useCallback((): [
-      string | undefined,
-      string | undefined,
-      IMentions | undefined
-    ] => {
-      const evtId = mEvent.getId()!;
-      const evtTimeline = room.getTimelineForEvent(evtId);
-      const editedEvent =
-        evtTimeline && getEditedEvent(evtId, mEvent, evtTimeline.getTimelineSet());
+    const { saveState, localEventSender, save } = useSendEditedMessage(editor, event);
 
-      const content: IContent = editedEvent?.getContent()['m.new_content'] ?? mEvent.getContent();
-      const { body, formatted_body: customHtml }: Record<string, unknown> = content;
-
-      const mMentions: IMentions | undefined = content['m.mentions'];
-
-      return [
-        typeof body === 'string' ? body : undefined,
-        typeof customHtml === 'string' ? customHtml : undefined,
-        mMentions,
-      ];
-    }, [room, mEvent]);
-
-    const [saveState, save] = useAsyncCallback(
-      useCallback(async () => {
-        const plainText = toPlainText(editor.children, isMarkdown).trim();
-        const customHtml = trimCustomHtml(
-          toMatrixCustomHTML(editor.children, {
-            allowTextFormatting: true,
-            allowBlockMarkdown: isMarkdown,
-            allowInlineMarkdown: isMarkdown,
-          })
-        );
-
-        const [prevBody, prevCustomHtml, prevMentions] = getPrevBodyAndFormattedBody();
-
-        if (plainText === '') return undefined;
-        if (prevBody) {
-          if (prevCustomHtml && trimReplyFromFormattedBody(prevCustomHtml) === customHtml) {
-            return undefined;
-          }
-          if (
-            !prevCustomHtml &&
-            prevBody === plainText &&
-            customHtmlEqualsPlainText(customHtml, plainText)
-          ) {
-            return undefined;
-          }
-        }
-
-        const newContent: IContent = {
-          msgtype: mEvent.getContent().msgtype,
-          body: plainText,
-        };
-
-        const mentionData = getMentions(mx, roomId, editor);
-
-        prevMentions?.user_ids?.forEach((prevMentionId) => {
-          mentionData.users.add(prevMentionId);
-        });
-
-        const mMentions = getMentionContent(Array.from(mentionData.users), mentionData.room);
-        newContent['m.mentions'] = mMentions;
-
-        if (!customHtmlEqualsPlainText(customHtml, plainText)) {
-          newContent.format = 'org.matrix.custom.html';
-          newContent.formatted_body = customHtml;
-        }
-
-        const content: IContent = {
-          ...newContent,
-          body: `* ${plainText}`,
-          'm.new_content': newContent,
-          'm.relates_to': {
-            event_id: mEvent.getId(),
-            rel_type: RelationType.Replace,
-          },
-        };
-
-        return mx.sendMessage(roomId, content);
-      }, [mx, editor, roomId, mEvent, isMarkdown, getPrevBodyAndFormattedBody])
-    );
+    const senderState = useObservableValueOptionally(localEventSender?.state);
+    const saving =
+      saveState.status === AsyncStatus.Loading || senderState instanceof EventSenderPending;
 
     const handleSave = useCallback(() => {
       if (saveState.status !== AsyncStatus.Loading) {
-        save();
+        save(onCancel);
       }
-    }, [saveState, save]);
+    }, [saveState, save, onCancel]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
@@ -207,27 +139,27 @@ export const MessageEditor = as<'div', MessageEditorProps>(
     };
 
     useEffect(() => {
-      const [body, customHtml] = getPrevBodyAndFormattedBody();
+      if (!mobileOrTablet()) ReactEditor.focus(editor);
+    }, [editor]);
+
+    const initialEditorValue = useMemo(() => {
+      const prevContent = rContent.newContent(event.content) ?? event.content;
+      const customHtml = rContent.formattedBody(prevContent);
+      const body = rContent.body(prevContent);
 
       const initialValue =
         typeof customHtml === 'string'
           ? htmlToEditorInput(customHtml, isMarkdown)
           : plainToEditorInput(typeof body === 'string' ? body : '', isMarkdown);
 
-      Transforms.select(editor, {
-        anchor: Editor.start(editor, []),
-        focus: Editor.end(editor, []),
-      });
-
-      editor.insertFragment(initialValue);
-      if (!mobileOrTablet()) ReactEditor.focus(editor);
-    }, [editor, getPrevBodyAndFormattedBody, isMarkdown]);
+      return initialValue;
+    }, [event, isMarkdown]);
 
     useEffect(() => {
-      if (saveState.status === AsyncStatus.Success) {
+      if (senderState instanceof EventSenderSuccess) {
         onCancel();
       }
-    }, [saveState, onCancel]);
+    }, [senderState, onCancel]);
 
     return (
       <div {...props} ref={ref}>
@@ -241,7 +173,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
         )}
         {autocompleteQuery?.prefix === AutocompletePrefix.UserMention && (
           <UserMentionAutocomplete
-            room={room}
+            roomId={roomId}
             editor={editor}
             query={autocompleteQuery}
             requestClose={handleCloseAutocomplete}
@@ -257,6 +189,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
         )}
         <CustomEditor
           editor={editor}
+          initialValue={initialEditorValue}
           placeholder="Edit message..."
           onKeyDown={handleKeyDown}
           onKeyUp={handleKeyUp}
@@ -268,24 +201,37 @@ export const MessageEditor = as<'div', MessageEditorProps>(
                 justifyContent="SpaceBetween"
                 gap="100"
               >
-                <Box gap="Inherit">
-                  <Chip
-                    onClick={handleSave}
-                    variant="Primary"
-                    radii="Pill"
-                    disabled={saveState.status === AsyncStatus.Loading}
-                    outlined
-                    before={
-                      saveState.status === AsyncStatus.Loading ? (
-                        <Spinner variant="Primary" fill="Soft" size="100" />
-                      ) : undefined
-                    }
-                  >
-                    <Text size="B300">Save</Text>
-                  </Chip>
-                  <Chip onClick={onCancel} variant="SurfaceVariant" radii="Pill">
-                    <Text size="B300">Cancel</Text>
-                  </Chip>
+                <Box direction="Column" gap="200">
+                  {senderState instanceof EventSenderError && (
+                    <Text size="T200" style={{ color: color.Critical.Main }}>
+                      {senderState.error?.data.error ??
+                        (senderState.cause instanceof Error
+                          ? senderState.cause.message
+                          : 'Unknown Error')}
+                    </Text>
+                  )}
+                  {saveState.status === AsyncStatus.Error && (
+                    <Text size="T200" style={{ color: color.Critical.Main }}>
+                      {saveState.error instanceof Error ? saveState.error.message : 'Unknown Error'}
+                    </Text>
+                  )}
+                  <Box>
+                    <Chip
+                      onClick={handleSave}
+                      variant="Primary"
+                      radii="Pill"
+                      disabled={saving}
+                      outlined
+                      before={
+                        saving ? <Spinner variant="Primary" fill="Soft" size="100" /> : undefined
+                      }
+                    >
+                      <Text size="B300">Save</Text>
+                    </Chip>
+                    <Chip onClick={onCancel} variant="SurfaceVariant" radii="Pill">
+                      <Text size="B300">Cancel</Text>
+                    </Chip>
+                  </Box>
                 </Box>
                 <Box gap="Inherit">
                   <IconButton

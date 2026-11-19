@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import FocusTrap from 'focus-trap-react';
 import {
   Badge,
@@ -34,7 +43,6 @@ import { HeadingLevel } from './slate';
 import { isMacOS } from '../../utils/user-agent';
 import { KeySymbol } from '../../utils/key-symbol';
 import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
 import { stopPropagation } from '../../utils/keyboard';
 
 function BtnTooltip({ text, shortCode }: { text: string; shortCode?: string }) {
@@ -260,7 +268,7 @@ export function Toolbar() {
   const canEscape = isBlockActive(editor, BlockType.Paragraph)
     ? isAnyMarkActive(editor)
     : ReactEditor.isFocused(editor);
-  const [isMarkdown, setIsMarkdown] = useSetting(settingsAtom, 'isMarkdown');
+  const [isMarkdown, setIsMarkdown] = useSetting('isMarkdown');
 
   return (
     <Box className={css.EditorToolbarBase}>

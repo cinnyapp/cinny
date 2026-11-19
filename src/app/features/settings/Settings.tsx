@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { useMemo, useState } from 'react';
 import {
   Avatar,
@@ -20,8 +29,7 @@ import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '../../componen
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { Account } from './account';
 import { useUserProfile } from '../../hooks/useUserProfile';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
-import { getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
+import { getMxIdLocalPart } from '../../utils/matrix';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { UserAvatar } from '../../components/user-avatar';
 import { nameInitials } from '../../utils/common';
@@ -33,6 +41,8 @@ import { About } from './about';
 import { UseStateProvider } from '../../components/UseStateProvider';
 import { stopPropagation } from '../../utils/keyboard';
 import { LogoutDialog } from '../../components/LogoutDialog';
+import { useClient } from '../../hooks/useClient';
+import { mxcToHttp } from '../../../client/mxcToHttp';
 
 export enum SettingsPages {
   GeneralPage,
@@ -92,18 +102,92 @@ const useSettingsMenuItems = (): SettingsMenuItem[] =>
     []
   );
 
+type NavigationListProps = {
+  activePage?: SettingsPages;
+  setActivePage: (page: SettingsPages) => void;
+};
+function NavigationList({ activePage, setActivePage }: NavigationListProps) {
+  const menuItems = useSettingsMenuItems();
+
+  return (
+    <div style={{ flexGrow: 1 }}>
+      {menuItems.map((item) => (
+        <MenuItem
+          key={item.name}
+          variant="Background"
+          radii="400"
+          aria-pressed={activePage === item.page}
+          before={<Icon src={item.icon} size="100" filled={activePage === item.page} />}
+          onClick={() => setActivePage(item.page)}
+        >
+          <Text
+            style={{
+              fontWeight: activePage === item.page ? config.fontWeight.W600 : undefined,
+            }}
+            size="T300"
+            truncate
+          >
+            {item.name}
+          </Text>
+        </MenuItem>
+      ))}
+    </div>
+  );
+}
+
+function LogoutButton() {
+  return (
+    <UseStateProvider initial={false}>
+      {(logout, setLogout) => (
+        <>
+          <Button
+            size="300"
+            variant="Critical"
+            fill="None"
+            radii="Pill"
+            before={<Icon src={Icons.Power} size="100" />}
+            onClick={() => setLogout(true)}
+          >
+            <Text size="B400">Logout</Text>
+          </Button>
+          {logout && (
+            <Overlay open backdrop={<OverlayBackdrop />}>
+              <OverlayCenter>
+                <FocusTrap
+                  focusTrapOptions={{
+                    onDeactivate: () => setLogout(false),
+                    clickOutsideDeactivates: true,
+                    escapeDeactivates: stopPropagation,
+                  }}
+                >
+                  <LogoutDialog handleClose={() => setLogout(false)} />
+                </FocusTrap>
+              </OverlayCenter>
+            </Overlay>
+          )}
+        </>
+      )}
+    </UseStateProvider>
+  );
+}
+
 type SettingsProps = {
   initialPage?: SettingsPages;
   requestClose: () => void;
 };
 export function Settings({ initialPage, requestClose }: SettingsProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
+
   const useAuthentication = useMediaAuthentication();
-  const userId = mx.getUserId()!;
+  const { userId } = ct.session;
   const profile = useUserProfile(userId);
-  const displayName = profile.displayName ?? getMxIdLocalPart(userId) ?? userId;
-  const avatarUrl = profile.avatarUrl
-    ? mxcUrlToHttp(mx, profile.avatarUrl, useAuthentication, 96, 96, 'crop') ?? undefined
+  const displayName = profile?.displayName ?? getMxIdLocalPart(userId) ?? userId;
+  const avatarUrl = profile?.avatarUrl
+    ? mxcToHttp(ct.session.baseUrl, profile.avatarUrl, useAuthentication).thumbnail({
+        width: 96,
+        height: 96,
+        method: 'crop',
+      })
     : undefined;
 
   const screenSize = useScreenSizeContext();
@@ -111,7 +195,6 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
     if (initialPage) return initialPage;
     return screenSize === ScreenSize.Mobile ? undefined : SettingsPages.GeneralPage;
   });
-  const menuItems = useSettingsMenuItems();
 
   const handlePageRequestClose = () => {
     if (screenSize === ScreenSize.Mobile) {
@@ -121,10 +204,12 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
     requestClose();
   };
 
+  const hideSidebar = screenSize === ScreenSize.Mobile && activePage !== undefined;
+
   return (
     <PageRoot
       nav={
-        screenSize === ScreenSize.Mobile && activePage !== undefined ? undefined : (
+        hideSidebar ? undefined : (
           <PageNav size="300">
             <PageNavHeader outlined={false}>
               <Box grow="Yes" gap="200">
@@ -149,61 +234,10 @@ export function Settings({ initialPage, requestClose }: SettingsProps) {
             </PageNavHeader>
             <Box grow="Yes" direction="Column">
               <PageNavContent>
-                <div style={{ flexGrow: 1 }}>
-                  {menuItems.map((item) => (
-                    <MenuItem
-                      key={item.name}
-                      variant="Background"
-                      radii="400"
-                      aria-pressed={activePage === item.page}
-                      before={<Icon src={item.icon} size="100" filled={activePage === item.page} />}
-                      onClick={() => setActivePage(item.page)}
-                    >
-                      <Text
-                        style={{
-                          fontWeight: activePage === item.page ? config.fontWeight.W600 : undefined,
-                        }}
-                        size="T300"
-                        truncate
-                      >
-                        {item.name}
-                      </Text>
-                    </MenuItem>
-                  ))}
-                </div>
+                <NavigationList activePage={activePage} setActivePage={setActivePage} />
               </PageNavContent>
-              <Box style={{ padding: config.space.S200 }} shrink="No" direction="Column">
-                <UseStateProvider initial={false}>
-                  {(logout, setLogout) => (
-                    <>
-                      <Button
-                        size="300"
-                        variant="Critical"
-                        fill="None"
-                        radii="Pill"
-                        before={<Icon src={Icons.Power} size="100" />}
-                        onClick={() => setLogout(true)}
-                      >
-                        <Text size="B400">Logout</Text>
-                      </Button>
-                      {logout && (
-                        <Overlay open backdrop={<OverlayBackdrop />}>
-                          <OverlayCenter>
-                            <FocusTrap
-                              focusTrapOptions={{
-                                onDeactivate: () => setLogout(false),
-                                clickOutsideDeactivates: true,
-                                escapeDeactivates: stopPropagation,
-                              }}
-                            >
-                              <LogoutDialog handleClose={() => setLogout(false)} />
-                            </FocusTrap>
-                          </OverlayCenter>
-                        </Overlay>
-                      )}
-                    </>
-                  )}
-                </UseStateProvider>
+              <Box style={{ padding: config.space.S200 }} shrink="No" direction="Column" gap="100">
+                <LogoutButton />
               </Box>
             </Box>
           </PageNav>

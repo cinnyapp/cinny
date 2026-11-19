@@ -1,12 +1,22 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { useCallback, useState } from 'react';
 import { Box, Button, config, Menu, Spinner, Text } from 'folds';
-import { AuthDict, IMyDevice, MatrixError } from 'matrix-js-sdk';
+import { MatrixResponseResult, parseMatrixResp } from 'neurone/lib/matrix-request';
+import { Device } from 'neurone/lib/api/types';
+import { postDeleteDevices } from 'neurone/lib/api/matrix/client/v3/deleteDevices';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { ActionUIA, ActionUIAFlowsLoader } from '../../../components/ActionUIA';
 import { DeviceDeleteBtn, DeviceTile } from './DeviceTile';
 import { AsyncState, AsyncStatus, useAsync } from '../../../hooks/useAsyncCallback';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useUIAMatrixError } from '../../../hooks/useUIAFlows';
 import { DeviceVerificationStatus } from '../../../components/DeviceVerificationStatus';
 import { VerifyOtherDeviceTile } from './Verification';
@@ -15,15 +25,15 @@ import { useAuthMetadata } from '../../../hooks/useAuthMetadata';
 import { withSearchParam } from '../../../pages/pathUtils';
 import { useAccountManagementActions } from '../../../hooks/useAccountManagement';
 import { SettingTile } from '../../../components/setting-tile';
+import { useClient } from '../../../hooks/useClient';
 
 type OtherDevicesProps = {
-  devices: IMyDevice[];
+  devices: Device[];
   refreshDeviceList: () => Promise<void>;
   showVerification?: boolean;
 };
 export function OtherDevices({ devices, refreshDeviceList, showVerification }: OtherDevicesProps) {
-  const mx = useMatrixClient();
-  const crypto = mx.getCrypto();
+  const ct = useClient();
   const authMetadata = useAuthMetadata();
   const accountManagementActions = useAccountManagementActions();
 
@@ -69,31 +79,40 @@ export function OtherDevices({ devices, refreshDeviceList, showVerification }: O
     });
   }, []);
 
-  const [deleteState, setDeleteState] = useState<AsyncState<void, MatrixError>>({
+  const [deleteState, setDeleteState] = useState<
+    AsyncState<MatrixResponseResult<unknown>, unknown>
+  >({
     status: AsyncStatus.Idle,
   });
 
   const deleteDevices = useAsync(
     useCallback(
-      async (authDict?: AuthDict) => {
-        await mx.deleteMultipleDevices(Array.from(deleted), authDict);
+      async (authDict?: object) => {
+        const resp = await ct.requestAuthJSON(
+          postDeleteDevices({ body: { auth: authDict, devices: Array.from(deleted) } })
+        );
+        return parseMatrixResp(resp);
       },
-      [mx, deleted]
+      [ct, deleted]
     ),
     useCallback(
       (state: typeof deleteState) => {
         if (state.status === AsyncStatus.Success) {
-          setDeleted(new Set());
-          refreshDeviceList();
+          const [err] = state.data;
+          if (!err) {
+            setDeleted(new Set());
+            refreshDeviceList();
+          }
         }
         setDeleteState(state);
       },
       [refreshDeviceList]
     )
   );
-  const [authData, deleteError] = useUIAMatrixError(
-    deleteState.status === AsyncStatus.Error ? deleteState.error : undefined
-  );
+
+  const deleteError = deleteState.status === AsyncStatus.Error ? deleteState.error : undefined;
+  const [deleteRespError] = deleteState.status === AsyncStatus.Success ? deleteState.data : [];
+  const [authData, deleteMatrixError] = useUIAMatrixError(deleteRespError);
   const deleting = deleteState.status === AsyncStatus.Loading || authData !== undefined;
 
   const handleCancelDelete = () => setDeleted(new Set());
@@ -166,14 +185,10 @@ export function OtherDevices({ devices, refreshDeviceList, showVerification }: O
                 }
               />
               {showVerification && crypto && (
-                <DeviceVerificationStatus
-                  crypto={crypto}
-                  userId={mx.getSafeUserId()}
-                  deviceId={device.device_id}
-                >
+                <DeviceVerificationStatus userId={ct.session.userId} deviceId={device.device_id}>
                   {(status) =>
                     status === VerificationStatus.Unverified && (
-                      <VerifyOtherDeviceTile crypto={crypto} deviceId={device.device_id} />
+                      <VerifyOtherDeviceTile deviceId={device.device_id} />
                     )
                   }
                 </DeviceVerificationStatus>
@@ -196,9 +211,14 @@ export function OtherDevices({ devices, refreshDeviceList, showVerification }: O
         >
           <Box alignItems="Center" gap="400">
             <Box grow="Yes" direction="Column">
-              {deleteError ? (
+              {deleteError || deleteMatrixError ? (
                 <Text size="T200">
-                  <b>Failed to logout devices! Please try again. {deleteError.message}</b>
+                  <b>
+                    Failed to logout devices! Please try again.{' '}
+                    {deleteError instanceof Error
+                      ? deleteError.message
+                      : deleteMatrixError?.data.error ?? 'Unkonwn Error'}
+                  </b>
                 </Text>
               ) : (
                 <Text size="T200">
@@ -208,6 +228,7 @@ export function OtherDevices({ devices, refreshDeviceList, showVerification }: O
               {authData && (
                 <ActionUIAFlowsLoader
                   authData={authData}
+                  onCancel={handleCancelAuth}
                   unsupported={() => (
                     <Text size="T200">
                       Authentication steps to perform this action are not supported by client.

@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { FormEventHandler, MouseEventHandler, useCallback, useState } from 'react';
 import {
   Box,
@@ -18,25 +27,22 @@ import {
   config,
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
-import { Link } from 'react-router-dom';
-import { MatrixError } from 'matrix-js-sdk';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSetAtom } from 'jotai';
 import { getMxIdLocalPart, getMxIdServer, isUserId } from '../../../utils/matrix';
 import { EMAIL_REGEX } from '../../../utils/regex';
 import { useAutoDiscoveryInfo } from '../../../hooks/useAutoDiscoveryInfo';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { useAuthServer } from '../../../hooks/useAuthServer';
 import { useClientConfig } from '../../../hooks/useClientConfig';
-import {
-  CustomLoginResponse,
-  LoginError,
-  factoryGetBaseUrl,
-  login,
-  useLoginComplete,
-} from './loginUtil';
+import { LoginError, factoryGetBaseUrl, login, useLoginComplete } from './loginUtil';
 import { PasswordInput } from '../../../components/password-input';
 import { FieldError } from '../FiledError';
-import { getResetPasswordPath } from '../../pathUtils';
+import { getHomePath, getResetPasswordPath } from '../../pathUtils';
 import { stopPropagation } from '../../../utils/keyboard';
+import { getInitialDeviceDisplayName } from '../../../utils/user-agent';
+import { sessionUserIdAtom } from '../../../state/sessions';
+import { userHasSession } from '../../../../client/sessions';
 
 function UsernameHint({ server }: { server: string }) {
   const [anchor, setAnchor] = useState<RectCords>();
@@ -114,18 +120,30 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
   const server = useAuthServer();
   const clientConfig = useClientConfig();
 
+  const navigate = useNavigate();
+  const setSessionUserId = useSetAtom(sessionUserIdAtom);
+
   const serverDiscovery = useAutoDiscoveryInfo();
   const baseUrl = serverDiscovery['m.homeserver'].base_url;
 
-  const [loginState, startLogin] = useAsyncCallback<
-    CustomLoginResponse,
-    MatrixError,
-    Parameters<typeof login>
-  >(useCallback(login, []));
+  const [loginState, startLogin] = useAsyncCallback(useCallback(login, []));
+  const [loginError, customLoginResponse] =
+    loginState.status === AsyncStatus.Success ? loginState.data : [];
 
-  useLoginComplete(loginState.status === AsyncStatus.Success ? loginState.data : undefined);
+  const handleLoginComplete = useLoginComplete();
+
+  const openExisting = (userId: string) => {
+    setSessionUserId(userId);
+    navigate(getHomePath(), { replace: true });
+  };
 
   const handleUsernameLogin = (username: string, password: string) => {
+    const userId = `@${username}:${server}`;
+    if (userHasSession(userId)) {
+      openExisting(userId);
+      return;
+    }
+
     startLogin(baseUrl, {
       type: 'm.login.password',
       identifier: {
@@ -133,11 +151,18 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
         user: username,
       },
       password,
-      initial_device_display_name: 'Cinny Web',
+      initial_device_display_name: getInitialDeviceDisplayName(),
+    }).then(([, data]) => {
+      if (data) handleLoginComplete(data);
     });
   };
 
   const handleMxIdLogin = async (mxId: string, password: string) => {
+    if (userHasSession(mxId)) {
+      openExisting(mxId);
+      return;
+    }
+
     const mxIdServer = getMxIdServer(mxId);
     const mxIdUsername = getMxIdLocalPart(mxId);
     if (!mxIdServer || !mxIdUsername) return;
@@ -151,7 +176,9 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
         user: mxIdUsername,
       },
       password,
-      initial_device_display_name: 'Cinny Web',
+      initial_device_display_name: getInitialDeviceDisplayName(),
+    }).then(([, data]) => {
+      if (data) handleLoginComplete(data);
     });
   };
   const handleEmailLogin = (email: string, password: string) => {
@@ -163,7 +190,9 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
         address: email,
       },
       password,
-      initial_device_display_name: 'Cinny Web',
+      initial_device_display_name: getInitialDeviceDisplayName(),
+    }).then(([, data]) => {
+      if (data) handleLoginComplete(data);
     });
   };
 
@@ -212,12 +241,12 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
           outlined
           after={<UsernameHint server={server} />}
         />
-        {loginState.status === AsyncStatus.Error && (
+        {loginError && (
           <>
-            {loginState.error.errcode === LoginError.ServerNotAllowed && (
+            {loginError === LoginError.ServerNotAllowed && (
               <FieldError message="Login with custom server not allowed by your client instance." />
             )}
-            {loginState.error.errcode === LoginError.InvalidServer && (
+            {loginError === LoginError.InvalidServer && (
               <FieldError message="Failed to find your Matrix ID server." />
             )}
           </>
@@ -229,24 +258,33 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
         </Text>
         <PasswordInput name="passwordInput" variant="Background" size="500" outlined required />
         <Box alignItems="Start" justifyContent="SpaceBetween" gap="200">
-          {loginState.status === AsyncStatus.Error && (
+          {loginError && (
             <>
-              {loginState.error.errcode === LoginError.Forbidden && (
+              {loginError === LoginError.Forbidden && (
                 <FieldError message="Invalid Username or Password." />
               )}
-              {loginState.error.errcode === LoginError.UserDeactivated && (
+              {loginError === LoginError.UserDeactivated && (
                 <FieldError message="This account has been deactivated." />
               )}
-              {loginState.error.errcode === LoginError.InvalidRequest && (
+              {loginError === LoginError.InvalidRequest && (
                 <FieldError message="Failed to login. Part of your request data is invalid." />
               )}
-              {loginState.error.errcode === LoginError.RateLimited && (
+              {loginError === LoginError.RateLimited && (
                 <FieldError message="Failed to login. Your login request has been rate-limited by server, Please try after some time." />
               )}
-              {loginState.error.errcode === LoginError.Unknown && (
+              {loginError === LoginError.Unknown && (
                 <FieldError message="Failed to login. Unknown reason." />
               )}
             </>
+          )}
+          {loginState.status === AsyncStatus.Error && (
+            <FieldError
+              message={
+                loginState.error instanceof Error
+                  ? loginState.error.message
+                  : 'Your request to login has been failed for unknown reasons.'
+              }
+            />
           )}
           <Box grow="Yes" shrink="No" justifyContent="End">
             <Text as="span" size="T200" priority="400" align="Right">
@@ -262,9 +300,7 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
       </Button>
 
       <Overlay
-        open={
-          loginState.status === AsyncStatus.Loading || loginState.status === AsyncStatus.Success
-        }
+        open={loginState.status === AsyncStatus.Loading || !!customLoginResponse}
         backdrop={<OverlayBackdrop />}
       >
         <OverlayCenter>

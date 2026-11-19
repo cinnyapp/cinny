@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { ComplexStyleRule, createVar, style } from '@vanilla-extract/css';
 import { RecipeVariants, recipe } from '@vanilla-extract/recipes';
 import { ContainerColor, DefaultReset, Disabled, RadiiVariant, color, config, toRem } from 'folds';

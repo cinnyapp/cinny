@@ -1,9 +1,54 @@
-import { JoinRule } from 'matrix-js-sdk';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import { AvatarFallback, AvatarImage, Icon, Icons, color } from 'folds';
-import React, { ComponentProps, ReactEventHandler, ReactNode, forwardRef, useState } from 'react';
+import React, {
+  ComponentProps,
+  ReactEventHandler,
+  ReactNode,
+  forwardRef,
+  useCallback,
+  useState,
+} from 'react';
+import classNames from 'classnames';
 import * as css from './RoomAvatar.css';
 import { getRoomIconSrc } from '../../utils/room';
 import colorMXID from '../../../util/colorMXID';
+import { JoinRule } from '../../../types/matrix/room';
+import { useDocumentVisibilityChange } from '../../hooks/useDocumentVisibilityChange';
+import { useDocumentFocusChange } from '../../hooks/useDocumentFocusChange';
+
+type RoomAvatarErrorProps = {
+  roomId: string;
+  setError: (error: boolean) => void;
+  children: ReactNode;
+};
+function RoomAvatarError({ roomId, setError, children }: RoomAvatarErrorProps) {
+  const handleVisibilityChange = useCallback(
+    (visible: boolean) => {
+      if (visible) setError(false);
+    },
+    [setError]
+  );
+
+  useDocumentVisibilityChange(handleVisibilityChange);
+  useDocumentFocusChange(handleVisibilityChange);
+
+  return (
+    <AvatarFallback
+      style={{ backgroundColor: colorMXID(roomId ?? ''), color: color.Surface.Container }}
+      className={css.RoomAvatar}
+    >
+      {children}
+    </AvatarFallback>
+  );
+}
 
 type RoomAvatarProps = {
   roomId: string;
@@ -18,7 +63,7 @@ export function RoomAvatar({ roomId, src, alt, renderFallback }: RoomAvatarProps
     evt.currentTarget.setAttribute('data-image-loaded', 'true');
   };
 
-  if (!src || error) {
+  if (!src) {
     return (
       <AvatarFallback
         style={{ backgroundColor: colorMXID(roomId ?? ''), color: color.Surface.Container }}
@@ -29,9 +74,17 @@ export function RoomAvatar({ roomId, src, alt, renderFallback }: RoomAvatarProps
     );
   }
 
+  if (error) {
+    return (
+      <RoomAvatarError roomId={roomId} setError={setError}>
+        {renderFallback()}
+      </RoomAvatarError>
+    );
+  }
+
   return (
     <AvatarImage
-      className={css.RoomAvatar}
+      className={classNames(css.RoomAvatar, css.RoomAvatarImg)}
       src={src}
       alt={alt}
       onError={() => setError(true)}

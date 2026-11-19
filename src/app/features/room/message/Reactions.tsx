@@ -1,4 +1,14 @@
-import React, { MouseEventHandler, useCallback, useState } from 'react';
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
+import React, { MouseEventHandler, useEffect, useMemo, useState } from 'react';
+import { MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import {
   Box,
   Modal,
@@ -12,35 +22,245 @@ import {
   toRem,
 } from 'folds';
 import classNames from 'classnames';
-import { Room } from 'matrix-js-sdk';
-import { type Relations } from 'matrix-js-sdk/lib/models/relations';
 import FocusTrap from 'focus-trap-react';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
-import { factoryEventSentBy } from '../../../utils/matrix';
+import { parseMatrixResp } from 'neurone/lib/matrix-request';
+import { putRedact } from 'neurone/lib/api/matrix/client/v3/rooms';
 import { Reaction, ReactionTooltipMsg } from '../../../components/message';
-import { useRelations } from '../../../hooks/useRelations';
 import * as css from './styles.css';
 import { ReactionViewer } from '../reaction-viewer';
 import { stopPropagation } from '../../../utils/keyboard';
-import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
+import { ReactionContent, RelationType } from '../../../../types/matrix/common';
+import { useClient } from '../../../hooks/useClient';
+import { getReactionGroups, ReactionGroup } from '../../../utils/room';
+import {
+  EventSenderError,
+  EventSenderIdle,
+  EventSenderPending,
+  LocalEvent,
+  LocalEventSender,
+  LocalEventSenderState,
+  LocalMessage,
+} from '../../../../client/room/local-event';
+import { MessageEvent } from '../../../../types/matrix/room';
+import { useObservableValueOptionally } from '../../../hooks/useObservableValue';
+import { useAlive } from '../../../hooks/useAlive';
+
+type ReactionUnpressedProps = {
+  roomId: string;
+  eventId: string;
+  reaction: ReactionGroup;
+  onViewReaction: MouseEventHandler<HTMLButtonElement>;
+  reactionSenderState?: LocalEventSenderState;
+  disabled?: boolean;
+};
+function ReactionUnpressed({
+  roomId,
+  eventId,
+  reaction,
+  onViewReaction,
+  reactionSenderState,
+  disabled,
+}: ReactionUnpressedProps) {
+  const ct = useClient();
+
+  const [sender, setSender] = useState<LocalEventSender<ReactionContent>>();
+  const adding = !!sender || !!reactionSenderState;
+
+  const senderState = useObservableValueOptionally(sender?.state);
+
+  useEffect(() => {
+    if (senderState instanceof EventSenderError) {
+      setSender(undefined);
+    }
+  }, [senderState]);
+
+  const handleToggleReaction = () => {
+    if (reactionSenderState) {
+      if (reactionSenderState instanceof EventSenderPending) {
+        reactionSenderState.abort();
+      }
+      return;
+    }
+
+    if (senderState instanceof EventSenderPending) {
+      senderState.abort();
+      setSender(undefined);
+      return;
+    }
+
+    // guard against double reaction
+    // we have already clicked
+    if (sender) return;
+
+    const content: ReactionContent = {
+      'm.relates_to': {
+        event_id: eventId,
+        key: reaction.key,
+        rel_type: RelationType.Annotation,
+      },
+      shortcode: reaction.shortcode,
+    };
+
+    const localMessage = new LocalMessage(roomId, MessageEvent.Reaction, content);
+    const txnId = ct.getTxnId();
+    const localEvent = new LocalEvent(localMessage, localMessage, txnId, Date.now());
+    const eventSender = new LocalEventSender(localEvent, ct.requestAuthJSON);
+
+    if (eventSender.state.read instanceof EventSenderIdle) {
+      eventSender.state.read.send();
+    }
+
+    setSender(eventSender);
+  };
+
+  return (
+    <TooltipProvider
+      key={reaction.key}
+      position="Top"
+      tooltip={
+        <Tooltip style={{ maxWidth: toRem(200) }}>
+          <Text className={css.ReactionsTooltipText} size="T300">
+            <ReactionTooltipMsg
+              shortcode={reaction.shortcode}
+              reaction={reaction.key}
+              users={Array.from(reaction.users)}
+            />
+          </Text>
+        </Tooltip>
+      }
+    >
+      {(targetRef) => (
+        <Reaction
+          ref={targetRef}
+          data-reaction-key={reaction.key}
+          aria-pressed={adding}
+          reaction={reaction.key}
+          count={adding ? reaction.users.size + 1 : reaction.users.size}
+          adding={adding}
+          onClick={disabled ? undefined : handleToggleReaction}
+          onContextMenu={onViewReaction}
+          aria-disabled={disabled}
+        />
+      )}
+    </TooltipProvider>
+  );
+}
+
+type ReactionPressedProps = {
+  roomId: string;
+  redactEventId: string;
+  reaction: ReactionGroup;
+  onViewReaction: MouseEventHandler<HTMLButtonElement>;
+  disabled?: boolean;
+};
+function ReactionPressed({
+  roomId,
+  reaction,
+  redactEventId,
+  onViewReaction,
+  disabled,
+}: ReactionPressedProps) {
+  const ct = useClient();
+  const alive = useAlive();
+
+  const [redactState, setRedactState] = useState<{
+    status: 'pending' | 'error' | 'success';
+    controller?: AbortController;
+  }>();
+
+  useEffect(() => {
+    if (redactState?.status === 'error') {
+      setRedactState(undefined);
+    }
+  }, [redactState]);
+
+  const handleToggleReaction = async () => {
+    if (redactState) {
+      redactState.controller?.abort();
+      setRedactState(undefined);
+      return;
+    }
+
+    const controller = new AbortController();
+    setRedactState({ status: 'pending', controller });
+    try {
+      const resp = await ct.requestAuthJSON(
+        putRedact({ pathParams: { roomId, eventId: redactEventId, txnId: ct.getTxnId() } })
+      );
+
+      const [error] = await parseMatrixResp(resp);
+      if (error) throw new Error(error.data.error);
+      if (!alive()) return;
+      setRedactState({ status: 'success' });
+    } catch (e) {
+      if (!alive()) return;
+      if (e instanceof Error && e.name === 'AbortError') {
+        // we already removed the state on key press
+        return;
+      }
+      setRedactState({ status: 'error' });
+    }
+  };
+
+  return (
+    <TooltipProvider
+      key={reaction.key}
+      position="Top"
+      tooltip={
+        <Tooltip style={{ maxWidth: toRem(200) }}>
+          <Text className={css.ReactionsTooltipText} size="T300">
+            <ReactionTooltipMsg
+              shortcode={reaction.shortcode}
+              reaction={reaction.key}
+              users={Array.from(reaction.users)}
+            />
+          </Text>
+        </Tooltip>
+      }
+    >
+      {(targetRef) => (
+        <Reaction
+          ref={targetRef}
+          data-reaction-key={reaction.key}
+          aria-pressed={!redactState}
+          reaction={reaction.key}
+          count={redactState ? reaction.users.size - 1 : reaction.users.size}
+          removing={!!redactState}
+          onClick={disabled ? undefined : handleToggleReaction}
+          onContextMenu={onViewReaction}
+          aria-disabled={disabled}
+        />
+      )}
+    </TooltipProvider>
+  );
+}
 
 export type ReactionsProps = {
-  room: Room;
-  mEventId: string;
+  roomId: string;
+  eventId: string;
   canSendReaction?: boolean;
-  relations: Relations;
-  onReactionToggle: (targetEventId: string, key: string, shortcode?: string) => void;
+  canRedactReaction?: boolean;
+  reactions: MessageEventWithoutRoomId<ReactionContent>[];
+  reactionSender?: LocalEventSender<ReactionContent>;
 };
 export const Reactions = as<'div', ReactionsProps>(
-  ({ className, room, relations, mEventId, canSendReaction, onReactionToggle, ...props }, ref) => {
-    const mx = useMatrixClient();
-    const useAuthentication = useMediaAuthentication();
+  (
+    {
+      className,
+      reactions,
+      reactionSender,
+      roomId,
+      eventId,
+      canSendReaction,
+      canRedactReaction,
+      ...props
+    },
+    ref
+  ) => {
+    const ct = useClient();
     const [viewer, setViewer] = useState<boolean | string>(false);
-    const myUserId = mx.getUserId();
-    const reactions = useRelations(
-      relations,
-      useCallback((rel) => [...(rel.getSortedAnnotationsByKey() ?? [])], [])
-    );
+    const reactionSenderState = useObservableValueOptionally(reactionSender?.state);
+    const senderKey = reactionSender?.localEvent.original.content['m.relates_to'].key;
 
     const handleViewReaction: MouseEventHandler<HTMLButtonElement> = (evt) => {
       evt.stopPropagation();
@@ -50,6 +270,24 @@ export const Reactions = as<'div', ReactionsProps>(
       else setViewer(key);
     };
 
+    const reactionGroups = useMemo(() => {
+      const groups = getReactionGroups(reactions);
+      if (!reactionSender) {
+        return groups;
+      }
+
+      const existingGroup = groups.some((g) => g.key === senderKey);
+      if (!existingGroup && senderKey) {
+        groups.push({
+          key: senderKey,
+          events: [],
+          users: new Set([]),
+          firstTs: Date.now(),
+        });
+      }
+      return groups;
+    }, [reactions, reactionSender, senderKey]);
+
     return (
       <Box
         className={classNames(css.ReactionsContainer, className)}
@@ -58,40 +296,28 @@ export const Reactions = as<'div', ReactionsProps>(
         {...props}
         ref={ref}
       >
-        {reactions.map(([key, events]) => {
-          const rEvents = Array.from(events);
-          if (rEvents.length === 0 || typeof key !== 'string') return null;
-          const myREvent = myUserId ? rEvents.find(factoryEventSentBy(myUserId)) : undefined;
-          const isPressed = !!myREvent?.getRelation();
+        {reactionGroups.map((reaction) => {
+          const myReactionEvent = reaction.events.find((ev) => ev.sender === ct.session.userId);
 
-          return (
-            <TooltipProvider
-              key={key}
-              position="Top"
-              tooltip={
-                <Tooltip style={{ maxWidth: toRem(200) }}>
-                  <Text className={css.ReactionsTooltipText} size="T300">
-                    <ReactionTooltipMsg room={room} reaction={key} events={rEvents} />
-                  </Text>
-                </Tooltip>
-              }
-            >
-              {(targetRef) => (
-                <Reaction
-                  ref={targetRef}
-                  data-reaction-key={key}
-                  aria-pressed={isPressed}
-                  key={key}
-                  mx={mx}
-                  reaction={key}
-                  count={events.size}
-                  onClick={canSendReaction ? () => onReactionToggle(mEventId, key) : undefined}
-                  onContextMenu={handleViewReaction}
-                  aria-disabled={!canSendReaction}
-                  useAuthentication={useAuthentication}
-                />
-              )}
-            </TooltipProvider>
+          return myReactionEvent ? (
+            <ReactionPressed
+              key={reaction.key}
+              roomId={roomId}
+              redactEventId={myReactionEvent.event_id}
+              reaction={reaction}
+              onViewReaction={handleViewReaction}
+              disabled={!canRedactReaction}
+            />
+          ) : (
+            <ReactionUnpressed
+              key={reaction.key}
+              roomId={roomId}
+              eventId={eventId}
+              reaction={reaction}
+              onViewReaction={handleViewReaction}
+              reactionSenderState={senderKey === reaction.key ? reactionSenderState : undefined}
+              disabled={!canSendReaction}
+            />
           );
         })}
         {reactions.length > 0 && (
@@ -114,9 +340,8 @@ export const Reactions = as<'div', ReactionsProps>(
               >
                 <Modal variant="Surface" size="300">
                   <ReactionViewer
-                    room={room}
                     initialKey={typeof viewer === 'string' ? viewer : undefined}
-                    relations={relations}
+                    reactions={reactionGroups}
                     requestClose={() => setViewer(false)}
                   />
                 </Modal>

@@ -1,68 +1,78 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React from 'react';
 import { Box, Text, as } from 'folds';
 import classNames from 'classnames';
-import { MatrixClient, MatrixEvent, Room } from 'matrix-js-sdk';
 import * as css from './Reaction.css';
 import { getHexcodeForEmoji, getShortcodeFor } from '../../plugins/emoji';
-import { getMemberDisplayName } from '../../utils/room';
-import { eventWithShortcode, getMxIdLocalPart, mxcUrlToHttp } from '../../utils/matrix';
+import { useRoomMembersAPI } from '../../hooks/useRoomMembers';
+import { mxcToHttp } from '../../../client/mxcToHttp';
+import { useClient } from '../../hooks/useClient';
+import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 
 export const Reaction = as<
   'button',
   {
-    mx: MatrixClient;
     count: number;
+    adding?: boolean;
+    removing?: boolean;
     reaction: string;
-    useAuthentication?: boolean;
   }
->(({ className, mx, count, reaction, useAuthentication, ...props }, ref) => (
-  <Box
-    as="button"
-    className={classNames(css.Reaction, className)}
-    alignItems="Center"
-    shrink="No"
-    gap="200"
-    {...props}
-    ref={ref}
-  >
-    <Text className={css.ReactionText} as="span" size="T400">
-      {reaction.startsWith('mxc://') ? (
-        <img
-          className={css.ReactionImg}
-          src={mxcUrlToHttp(mx, reaction, useAuthentication) ?? reaction
-          }
-          alt={reaction}
-        />
-      ) : (
-        <Text as="span" size="Inherit" truncate>
-          {reaction}
-        </Text>
-      )}
-    </Text>
-    <Text as="span" size="T300">
-      {count}
-    </Text>
-  </Box>
-));
+>(({ className, count, adding, removing, reaction, ...props }, ref) => {
+  const ct = useClient();
+  const useAuthentication = useMediaAuthentication();
+
+  return (
+    <Box
+      as="button"
+      className={classNames(css.Reaction, className)}
+      alignItems="Center"
+      shrink="No"
+      gap="200"
+      {...props}
+      ref={ref}
+    >
+      <Text
+        className={classNames(css.ReactionText, { [css.ReactionChangeAnimation]: adding })}
+        as="span"
+        size="T500"
+      >
+        {reaction.startsWith('mxc://') ? (
+          <img
+            className={css.ReactionImg}
+            src={mxcToHttp(ct.session.baseUrl, reaction, useAuthentication).url() ?? reaction}
+            alt={reaction}
+          />
+        ) : (
+          <Text as="span" size="Inherit" truncate>
+            {reaction}
+          </Text>
+        )}
+      </Text>
+      <Text className={classNames({ [css.ReactionDropAnimation]: removing })} as="span" size="T300">
+        {count}
+      </Text>
+    </Box>
+  );
+});
 
 type ReactionTooltipMsgProps = {
-  room: Room;
   reaction: string;
-  events: MatrixEvent[];
+  shortcode?: string;
+  users: string[];
 };
 
-export function ReactionTooltipMsg({ room, reaction, events }: ReactionTooltipMsgProps) {
-  const shortCodeEvt = events.find(eventWithShortcode);
-  const shortcode =
-    shortCodeEvt?.getContent().shortcode ??
-    getShortcodeFor(getHexcodeForEmoji(reaction)) ??
-    reaction;
-  const names = events.map(
-    (ev: MatrixEvent) =>
-      getMemberDisplayName(room, ev.getSender() ?? 'Unknown') ??
-      getMxIdLocalPart(ev.getSender() ?? 'Unknown') ??
-      'Unknown'
-  );
+export function ReactionTooltipMsg({ reaction, shortcode, users }: ReactionTooltipMsgProps) {
+  const memberAPI = useRoomMembersAPI();
+  const label = shortcode ?? getShortcodeFor(getHexcodeForEmoji(reaction)) ?? reaction;
+  const names = users.map((userId) => memberAPI.getName(userId));
 
   return (
     <>
@@ -107,9 +117,9 @@ export function ReactionTooltipMsg({ room, reaction, events }: ReactionTooltipMs
         </>
       )}
       <Text as="span" size="Inherit" priority="300">
-        {' reacted with '}
+        {names.length > 0 ? ' reacted with ' : 'Reacting with '}
       </Text>
-      :<b>{shortcode}</b>:
+      :<b>{label}</b>:
     </>
   );
 }

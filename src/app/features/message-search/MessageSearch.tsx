@@ -1,15 +1,22 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React, { RefObject, useEffect, useMemo, useRef } from 'react';
 import { Text, Box, Icon, Icons, config, Spinner, IconButton, Line, toRem } from 'folds';
 import { useAtomValue } from 'jotai';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { SearchOrderBy } from 'matrix-js-sdk';
+import { SearchEventOrder } from 'neurone/lib/api/types';
 import { PageHero, PageHeroEmpty, PageHeroSection } from '../../components/page';
-import { useMatrixClient } from '../../hooks/useMatrixClient';
 import { _SearchPathSearchParams } from '../../pages/paths';
-import { useSetting } from '../../state/hooks/settings';
-import { settingsAtom } from '../../state/settings';
+import { useSettings } from '../../state/hooks/settings';
 import { SequenceCard } from '../../components/sequence-card';
 import { useRoomNavigate } from '../../hooks/useRoomNavigate';
 import { ScrollTopContainer } from '../../components/scroll-top-container';
@@ -19,10 +26,15 @@ import { useRooms } from '../../state/hooks/roomList';
 import { allRoomsAtom } from '../../state/room-list/roomList';
 import { mDirectAtom } from '../../state/mDirectList';
 import { MessageSearchParams, useMessageSearch } from './useMessageSearch';
-import { SearchResultGroup } from './SearchResultGroup';
+import { SearchGroupMessages, SearchResultGroup } from './SearchResultGroup';
 import { SearchInput } from './SearchInput';
 import { SearchFilters } from './SearchFilters';
 import { VirtualTile } from '../../components/virtualizer';
+import { useClient } from '../../hooks/useClient';
+import { useObservableValue } from '../../hooks/useObservableValue';
+import { useRoomHeroes } from '../../hooks/storage/useRoomHeros';
+import { useGetRoomName } from '../../hooks/storage/useGetRoomName';
+import { useGetRoomAvatar } from '../../hooks/storage/useGetRoomAvatar';
 
 const useSearchPathSearchParams = (searchParams: URLSearchParams): _SearchPathSearchParams =>
   useMemo(
@@ -50,15 +62,11 @@ export function MessageSearch({
   senders,
   scrollRef,
 }: MessageSearchProps) {
-  const mx = useMatrixClient();
+  const ct = useClient();
   const mDirects = useAtomValue(mDirectAtom);
-  const allRooms = useRooms(mx, allRoomsAtom, mDirects);
-  const [mediaAutoLoad] = useSetting(settingsAtom, 'mediaAutoLoad');
-  const [urlPreview] = useSetting(settingsAtom, 'urlPreview');
-  const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
-
-  const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
-  const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
+  const allRooms = useRooms(ct, allRoomsAtom, mDirects);
+  const { mediaAutoLoad, urlPreview, legacyUsernameColor, hour24Clock, dateFormatString } =
+    useSettings();
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const scrollTopAnchorRef = useRef<HTMLDivElement>(null);
@@ -86,9 +94,11 @@ export function MessageSearch({
     const isGlobal = searchPathSearchParams.global === 'true';
     const defaultRooms = isGlobal ? undefined : rooms;
 
+    const { order } = searchPathSearchParams;
+
     return {
       term: searchPathSearchParams.term,
-      order: searchPathSearchParams.order ?? SearchOrderBy.Recent,
+      order: order && order === 'rank' ? 'rank' : 'recent',
       rooms: searchParamRooms ?? defaultRooms,
       senders: searchParamsSenders ?? senders,
     };
@@ -164,7 +174,7 @@ export function MessageSearch({
     });
   };
 
-  const handleOrderChange = (order?: string) => {
+  const handleOrderChange = (order?: SearchEventOrder) => {
     setSearchParams((prevParams) => {
       const newParams = new URLSearchParams(prevParams);
       newParams.delete('order');
@@ -188,6 +198,12 @@ export function MessageSearch({
       fetchNextPage();
     }
   }, [lastVItemIndex, lastGroupIndex, fetchNextPage, isFetchingNextPage, hasNextPage]);
+
+  const roomToTimeline = useObservableValue(ct.roomToTimeline);
+
+  const getRoomHeroes = useRoomHeroes();
+  const getRoomName = useGetRoomName(getRoomHeroes);
+  const getRoomAvatar = useGetRoomAvatar(getRoomHeroes);
 
   return (
     <Box direction="Column" gap="700">
@@ -221,6 +237,7 @@ export function MessageSearch({
           onGlobalChange={handleGlobalChange}
           order={msgSearchParams.order}
           onOrderChange={handleOrderChange}
+          getRoomName={getRoomName}
         />
       </Box>
 
@@ -274,8 +291,6 @@ export function MessageSearch({
             {vItems.map((vItem) => {
               const group = groups[vItem.index];
               if (!group) return null;
-              const groupRoom = mx.getRoom(group.roomId);
-              if (!groupRoom) return null;
 
               return (
                 <VirtualTile
@@ -285,16 +300,25 @@ export function MessageSearch({
                   key={vItem.index}
                 >
                   <SearchResultGroup
-                    room={groupRoom}
-                    highlights={highlights}
+                    roomId={group.roomId}
                     items={group.items}
-                    mediaAutoLoad={mediaAutoLoad}
-                    urlPreview={urlPreview}
-                    onOpen={navigateRoom}
-                    legacyUsernameColor={legacyUsernameColor || mDirects.has(groupRoom.roomId)}
-                    hour24Clock={hour24Clock}
-                    dateFormatString={dateFormatString}
-                  />
+                    getRoomName={getRoomName}
+                    getRoomAvatar={getRoomAvatar}
+                  >
+                    <SearchGroupMessages
+                      roomId={group.roomId}
+                      timeline={roomToTimeline.get(group.roomId)}
+                      highlights={highlights}
+                      items={group.items}
+                      mediaAutoLoad={mediaAutoLoad}
+                      urlPreview={urlPreview}
+                      onOpen={navigateRoom}
+                      legacyUsernameColor={legacyUsernameColor || mDirects.has(group.roomId)}
+                      hour24Clock={hour24Clock}
+                      dateFormatString={dateFormatString}
+                      getRoomName={getRoomName}
+                    />
+                  </SearchResultGroup>
                 </VirtualTile>
               );
             })}

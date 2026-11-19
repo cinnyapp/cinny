@@ -1,23 +1,25 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import {
   EncryptedAttachmentInfo,
   decryptAttachment,
   encryptAttachment,
 } from 'browser-encrypt-attachment';
-import {
-  EventTimeline,
-  MatrixClient,
-  MatrixError,
-  MatrixEvent,
-  Room,
-  RoomMember,
-  UploadProgress,
-  UploadResponse,
-} from 'matrix-js-sdk';
 import to from 'await-to-js';
+import { putAccountData } from 'neurone/lib/api/matrix/client/v3/user';
+import { MatrixError } from 'neurone/lib/matrix-request';
 import { IImageInfo, IThumbnailContent, IVideoInfo } from '../../types/matrix/common';
-import { AccountDataEvent } from '../../types/matrix/accountData';
-import { getStateEvent } from './room';
-import { Membership, StateEvent } from '../../types/matrix/room';
+import { AccountDataType } from '../../types/matrix/accountData';
+import { ClientContext } from '../../client/context';
+import { JoinRoomMemberObject } from '../../client/storage/collections';
+import { rError } from '../../client/reader';
 
 const DOMAIN_REGEX = /\b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\b/;
 
@@ -36,26 +38,6 @@ export const isUserId = (id: string): boolean => validMxId(id) && id.startsWith(
 export const isRoomId = (id: string): boolean => id.startsWith('!');
 
 export const isRoomAlias = (id: string): boolean => validMxId(id) && id.startsWith('#');
-
-export const getCanonicalAliasRoomId = (mx: MatrixClient, alias: string): string | undefined =>
-  mx
-    .getRooms()
-    ?.find(
-      (room) =>
-        room.getCanonicalAlias() === alias &&
-        getStateEvent(room, StateEvent.RoomTombstone) === undefined
-    )?.roomId;
-
-export const getCanonicalAliasOrRoomId = (mx: MatrixClient, roomId: string): string => {
-  const room = mx.getRoom(roomId);
-  if (!room) return roomId;
-  if (getStateEvent(room, StateEvent.RoomTombstone) !== undefined) return roomId;
-  const alias = room.getCanonicalAlias();
-  if (alias && getCanonicalAliasRoomId(mx, alias) === roomId) {
-    return alias;
-  }
-  return roomId;
-};
 
 export const getImageInfo = (img: HTMLImageElement, fileOrBlob: File | Blob): IImageInfo => {
   const info: IImageInfo = {};
@@ -113,9 +95,13 @@ export const encryptFile = async (
 }> => {
   const dataBuffer = await file.arrayBuffer();
   const encryptedAttachment = await encryptAttachment(dataBuffer);
-  const encFile = new File([encryptedAttachment.data], file.name, {
-    type: file.type,
-  });
+  const encFile = new File(
+    [encryptedAttachment.data],
+    file instanceof File ? file.name : 'Untitled',
+    {
+      type: file.type,
+    }
+  );
   return {
     encInfo: encryptedAttachment.info,
     file: encFile,
@@ -133,108 +119,63 @@ export const decryptFile = async (
   return blob;
 };
 
-export type TUploadContent = File | Blob;
+export type UploadContent = File | Blob;
 
-export type ContentUploadOptions = {
-  name?: string;
-  fileType?: string;
-  hideFilename?: boolean;
-  onPromise?: (promise: Promise<UploadResponse>) => void;
-  onProgress?: (progress: UploadProgress) => void;
-  onSuccess: (mxc: string) => void;
-  onError: (error: MatrixError) => void;
-};
-
-export const uploadContent = async (
-  mx: MatrixClient,
-  file: TUploadContent,
-  options: ContentUploadOptions
-) => {
-  const { name, fileType, hideFilename, onProgress, onPromise, onSuccess, onError } = options;
-
-  const uploadPromise = mx.uploadContent(file, {
-    name,
-    type: fileType,
-    includeFilename: !hideFilename,
-    progressHandler: onProgress,
-  });
-  onPromise?.(uploadPromise);
-  try {
-    const data = await uploadPromise;
-    const mxc = data.content_uri;
-    if (mxc) onSuccess(mxc);
-    else onError(new MatrixError(data));
-  } catch (e: any) {
-    const error = typeof e?.message === 'string' ? e.message : undefined;
-    const errcode = typeof e?.name === 'string' ? e.message : undefined;
-    onError(new MatrixError({ error, errcode }));
-  }
-};
-
-export const matrixEventByRecency = (m1: MatrixEvent, m2: MatrixEvent) => m2.getTs() - m1.getTs();
-
-export const factoryEventSentBy = (senderId: string) => (ev: MatrixEvent) =>
-  ev.getSender() === senderId;
-
-export const eventWithShortcode = (ev: MatrixEvent) =>
-  typeof ev.getContent().shortcode === 'string';
-
-export const getDMRoomFor = (mx: MatrixClient, userId: string): Room | undefined => {
-  const dmLikeRooms = mx
-    .getRooms()
-    .filter(
-      (room) =>
-        room.getMyMembership() === Membership.Join &&
-        room.hasEncryptionStateEvent() &&
-        room.getMembers().length <= 2
+export const getUserDirectRooms = (ct: ClientContext, userId: string): string[] => {
+  const rooms = Object.keys(ct.roomToSummary.read);
+  const directRooms = rooms.filter((roomId) => {
+    const summary = ct.roomToSummary.read.get(roomId);
+    const heroes = summary?.['m.heroes'];
+    return (
+      Array.isArray(heroes) &&
+      heroes.length === 1 &&
+      heroes[1] === userId &&
+      ct.directRooms.read.has(roomId)
     );
+  });
 
-  return dmLikeRooms.find((room) => room.getMember(userId));
+  return directRooms;
 };
 
-export const guessDmRoomUserId = (room: Room, myUserId: string): string => {
-  const getOldestMember = (members: RoomMember[]): RoomMember | undefined => {
-    let oldestMemberTs: number | undefined;
-    let oldestMember: RoomMember | undefined;
+export const guessDmRoomUserId = (members: JoinRoomMemberObject[], myUserId: string): string => {
+  let oldestMemberTs: number | undefined;
+  let oldestMember: JoinRoomMemberObject | undefined;
 
-    const pickOldestMember = (member: RoomMember) => {
-      if (member.userId === myUserId) return;
+  const pickOldestMember = (member: JoinRoomMemberObject) => {
+    if (member.userId === myUserId) return;
 
-      if (
-        oldestMemberTs === undefined ||
-        (member.events.member && member.events.member.getTs() < oldestMemberTs)
-      ) {
-        oldestMember = member;
-        oldestMemberTs = member.events.member?.getTs();
-      }
-    };
-
-    members.forEach(pickOldestMember);
-
-    return oldestMember;
+    if (oldestMemberTs === undefined || member.event.origin_server_ts < oldestMemberTs) {
+      oldestMember = member;
+      oldestMemberTs = member.event.origin_server_ts;
+    }
   };
 
-  // Pick the joined user who's been here longest (and isn't us),
-  const member = getOldestMember(room.getJoinedMembers());
-  if (member) return member.userId;
+  members.forEach(pickOldestMember);
 
-  // if there are no joined members other than us, use the oldest member
-  const member1 = getOldestMember(
-    room.getLiveTimeline().getState(EventTimeline.FORWARDS)?.getMembers() ?? []
-  );
-  return member1?.userId ?? myUserId;
+  return oldestMember?.userId ?? myUserId;
 };
 
+const getUserIdToRoomIds = (content?: Record<string, unknown>): Record<string, string[]> => {
+  const userIdToRoomIds: Record<string, string[]> = {};
+
+  if (typeof content === 'object' && content) {
+    Object.keys(content).forEach((uId) => {
+      const roomIds = content[uId];
+      if (Array.isArray(roomIds)) {
+        userIdToRoomIds[uId] = roomIds.filter((rId) => typeof rId === 'string');
+      }
+    });
+  }
+  return userIdToRoomIds;
+};
 export const addRoomIdToMDirect = async (
-  mx: MatrixClient,
+  ct: ClientContext,
   roomId: string,
   userId: string
 ): Promise<void> => {
-  const mDirectsEvent = mx.getAccountData(AccountDataEvent.Direct as any);
-  let userIdToRoomIds: Record<string, string[]> = {};
-
-  if (typeof mDirectsEvent !== 'undefined')
-    userIdToRoomIds = structuredClone(mDirectsEvent.getContent());
+  const mDirectsEventObj = await ct.storage.accountData.read.get(AccountDataType.Direct);
+  const content = mDirectsEventObj?.event.content as Record<string, unknown> | undefined;
+  const userIdToRoomIds = getUserIdToRoomIds(content);
 
   // remove it from the lists of any others users
   // (it can only be a DM room for one person)
@@ -255,15 +196,18 @@ export const addRoomIdToMDirect = async (
   }
   userIdToRoomIds[userId] = roomIds;
 
-  await mx.setAccountData(AccountDataEvent.Direct as any, userIdToRoomIds as any);
+  await ct.requestAuthJSON(
+    putAccountData({
+      pathParams: { userId: ct.session.userId, type: AccountDataType.Direct },
+      body: userIdToRoomIds,
+    })
+  );
 };
 
-export const removeRoomIdFromMDirect = async (mx: MatrixClient, roomId: string): Promise<void> => {
-  const mDirectsEvent = mx.getAccountData(AccountDataEvent.Direct as any);
-  let userIdToRoomIds: Record<string, string[]> = {};
-
-  if (typeof mDirectsEvent !== 'undefined')
-    userIdToRoomIds = structuredClone(mDirectsEvent.getContent());
+export const removeRoomIdFromMDirect = async (ct: ClientContext, roomId: string): Promise<void> => {
+  const mDirectsEventObj = await ct.storage.accountData.read.get(AccountDataType.Direct);
+  const content = mDirectsEventObj?.event.content as Record<string, unknown> | undefined;
+  const userIdToRoomIds = getUserIdToRoomIds(content);
 
   Object.keys(userIdToRoomIds).forEach((targetUserId) => {
     const roomIds = userIdToRoomIds[targetUserId];
@@ -273,28 +217,13 @@ export const removeRoomIdFromMDirect = async (mx: MatrixClient, roomId: string):
     }
   });
 
-  await mx.setAccountData(AccountDataEvent.Direct as any, userIdToRoomIds as any);
-};
-
-export const mxcUrlToHttp = (
-  mx: MatrixClient,
-  mxcUrl: string,
-  useAuthentication?: boolean,
-  width?: number,
-  height?: number,
-  resizeMethod?: string,
-  allowDirectLinks?: boolean,
-  allowRedirects?: boolean
-): string | null =>
-  mx.mxcUrlToHttp(
-    mxcUrl,
-    width,
-    height,
-    resizeMethod,
-    allowDirectLinks,
-    allowRedirects,
-    useAuthentication
+  await ct.requestAuthJSON(
+    putAccountData({
+      pathParams: { userId: ct.session.userId, type: AccountDataType.Direct },
+      body: userIdToRoomIds,
+    })
   );
+};
 
 export const downloadMedia = async (src: string): Promise<Blob> => {
   // this request is authenticated by service worker
@@ -313,9 +242,9 @@ export const downloadEncryptedMedia = async (
   return decryptedContent;
 };
 
-export const rateLimitedActions = async <T, R = void>(
+export const rateLimitedActions = async <T>(
   data: T[],
-  callback: (item: T, index: number) => Promise<R>,
+  callback: (item: T, index: number) => Promise<MatrixError | undefined>,
   maxRetryCount?: number
 ) => {
   let retryCount = 0;
@@ -328,14 +257,15 @@ export const rateLimitedActions = async <T, R = void>(
     });
 
   const performAction = async (dataItem: T, index: number) => {
-    const [err] = await to<R, MatrixError>(callback(dataItem, index));
+    const [, err] = await to<MatrixError | undefined>(callback(dataItem, index));
 
-    if (err?.httpStatus === 429) {
+    if (err?.status === 429) {
       if (retryCount === maxRetryCount) {
         return;
       }
 
-      const waitMS = err.getRetryAfterMs() ?? 3000;
+      const retryAfterMs = rError.retryAfterMs(err.data) ?? undefined;
+      const waitMS = retryAfterMs ?? 3000;
       actionInterval = waitMS * 1.5;
       await sleepForMs(waitMS);
       retryCount += 1;

@@ -1,3 +1,12 @@
+/*
+Cinny Project
+Copyright 2021-present Ajay Bura
+SPDX-License-Identifier: AGPL-3.0-only
+https://cinny.in
+
+Please see LICENSE file in root of repository for full details.
+*/
+
 import React from 'react';
 import { Box, Text, IconButton, Icon, Icons, Scroll } from 'folds';
 import { Page, PageContent, PageHeader } from '../../../components/page';
@@ -5,13 +14,10 @@ import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
 import { SettingTile } from '../../../components/setting-tile';
 import { useDeviceIds, useDeviceList, useSplitCurrentDevice } from '../../../hooks/useDeviceList';
-import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { LocalBackup } from './LocalBackup';
 import { DeviceLogoutBtn, DeviceKeyDetails, DeviceTile, DeviceTilePlaceholder } from './DeviceTile';
-import { OtherDevices } from './OtherDevices';
 import {
   DeviceVerificationOptions,
-  EnableVerification,
   VerificationStatusBadge,
   VerifyCurrentDeviceTile,
 } from './Verification';
@@ -24,8 +30,11 @@ import {
   useSecretStorageDefaultKeyId,
   useSecretStorageKeyContent,
 } from '../../../hooks/useSecretStorage';
-import { useCrossSigningActive } from '../../../hooks/useCrossSigning';
+import { useCrossSigning } from '../../../hooks/useCrossSigning';
 import { BackupRestoreTile } from '../../../components/BackupRestore';
+import { useClient } from '../../../hooks/useClient';
+import { OtherDevices } from './OtherDevices';
+import { useObservableValue } from '../../../hooks/useObservableValue';
 
 function DevicesPlaceholder() {
   return (
@@ -40,24 +49,20 @@ type DevicesProps = {
   requestClose: () => void;
 };
 export function Devices({ requestClose }: DevicesProps) {
-  const mx = useMatrixClient();
-  const crypto = mx.getCrypto();
-  const crossSigningActive = useCrossSigningActive();
+  const ct = useClient();
+  const crossSigning = useCrossSigning();
+  const keyBackup = useObservableValue(ct.megolmBackup.keyBackup);
+
   const [devices, refreshDeviceList] = useDeviceList();
 
   const [currentDevice, otherDevices] = useSplitCurrentDevice(devices);
   const verificationStatus = useDeviceVerificationStatus(
-    crypto,
-    mx.getSafeUserId(),
+    ct.session.userId,
     currentDevice?.device_id
   );
 
   const otherDevicesId = useDeviceIds(otherDevices);
-  const unverifiedDeviceCount = useUnverifiedDeviceCount(
-    crypto,
-    mx.getSafeUserId(),
-    otherDevicesId
-  );
+  const unverifiedDeviceCount = useUnverifiedDeviceCount(ct.session.userId, otherDevicesId);
 
   const defaultSecretStorageKeyId = useSecretStorageDefaultKeyId();
   const defaultSecretStorageKeyContent = useSecretStorageKeyContent(
@@ -96,18 +101,15 @@ export function Devices({ requestClose }: DevicesProps) {
                     title="Device Verification"
                     description="To verify device identity and grant access to encrypted messages."
                     after={
-                      <>
-                        <EnableVerification visible={!crossSigningActive} />
-                        {crossSigningActive && (
-                          <Box gap="200" alignItems="Center">
-                            <VerificationStatusBadge
-                              verificationStatus={verificationStatus}
-                              otherUnverifiedCount={unverifiedDeviceCount}
-                            />
-                            <DeviceVerificationOptions />
-                          </Box>
+                      <Box gap="200" alignItems="Center">
+                        {crossSigning && (
+                          <VerificationStatusBadge
+                            verificationStatus={verificationStatus}
+                            otherUnverifiedCount={unverifiedDeviceCount}
+                          />
                         )}
-                      </>
+                        <DeviceVerificationOptions enabled={!!crossSigning} />
+                      </Box>
                     }
                   />
                 </SequenceCard>
@@ -126,9 +128,9 @@ export function Devices({ requestClose }: DevicesProps) {
                       refreshDeviceList={refreshDeviceList}
                       options={<DeviceLogoutBtn />}
                     >
-                      {crypto && <DeviceKeyDetails crypto={crypto} />}
+                      <DeviceKeyDetails />
                     </DeviceTile>
-                    {crossSigningActive &&
+                    {crossSigning &&
                       verificationStatus === VerificationStatus.Unverified &&
                       defaultSecretStorageKeyId &&
                       defaultSecretStorageKeyContent && (
@@ -137,9 +139,7 @@ export function Devices({ requestClose }: DevicesProps) {
                           secretStorageKeyContent={defaultSecretStorageKeyContent}
                         />
                       )}
-                    {crypto && verificationStatus === VerificationStatus.Verified && (
-                      <BackupRestoreTile crypto={crypto} />
-                    )}
+                    {keyBackup && <BackupRestoreTile />}
                   </SequenceCard>
                 ) : (
                   <DeviceTilePlaceholder />
@@ -151,7 +151,7 @@ export function Devices({ requestClose }: DevicesProps) {
                   devices={otherDevices}
                   refreshDeviceList={refreshDeviceList}
                   showVerification={
-                    crossSigningActive && verificationStatus === VerificationStatus.Verified
+                    crossSigning && verificationStatus === VerificationStatus.Verified
                   }
                 />
               )}
