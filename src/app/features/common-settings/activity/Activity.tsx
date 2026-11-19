@@ -200,7 +200,7 @@ function FilterChip({ title, icon, label, options, onClear }: FilterChipProps) {
           <Chip
             variant={count > 0 ? 'Primary' : 'SurfaceVariant'}
             radii="400"
-            before={<Icon size="50" src={icon} />}
+            before={<Icon size="50" src={icon} filled={count > 0} />}
             onClick={
               ((evt) =>
                 setAnchor(
@@ -299,7 +299,7 @@ function SenderFilterChip({
       <Chip
         variant={senders.length > 0 ? 'Primary' : 'SurfaceVariant'}
         radii="400"
-        before={<Icon size="50" src={Icons.User} />}
+        before={<Icon size="50" src={Icons.User} filled={senders.length > 0} />}
         onClick={
           ((evt) =>
             setAnchor(
@@ -315,7 +315,7 @@ function SenderFilterChip({
         }
       >
         <Text as="span" size="L400">
-          By Sender
+          By User
         </Text>
       </Chip>
       {anchor && (
@@ -345,7 +345,7 @@ function SenderFilterChip({
                       variant="Background"
                       radii="300"
                       outlined
-                      placeholder="username"
+                      placeholder="Search"
                       onChange={handleInputChange}
                       style={{ paddingRight: config.space.S200 }}
                       after={
