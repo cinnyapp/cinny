@@ -239,6 +239,11 @@ export function PasswordLoginForm({ defaultUsername, defaultEmail }: PasswordLog
           size="500"
           required
           outlined
+          // disable auto-capitalization, which is usually undesirable for username input.
+          autoCapitalize="off"
+          // disable spell-check and auto-correction
+          spellCheck={false}
+          autoCorrect="off"
           after={<UsernameHint server={server} />}
         />
         {loginError && (
