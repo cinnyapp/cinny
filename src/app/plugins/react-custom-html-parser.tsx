@@ -568,11 +568,22 @@ export const getReactCustomHtmlParser = (
           const htmlSrc = mxcToHttp(ct.session.baseUrl, props.src, params.useAuthentication).url();
           if (htmlSrc && 'data-mx-emoticon' in props) {
             return (
-              <span className={css.EmoticonBase}>
-                <span className={css.Emoticon()}>
-                  <img {...props} className={css.EmoticonImg} src={htmlSrc} />
-                </span>
-              </span>
+              <TooltipProvider
+                position="Top"
+                tooltip={
+                  <Tooltip style={{ maxWidth: toRem(200) }}>
+                    <Text size="T300">:{props.title || props.alt || 'unknown'}:</Text>
+                  </Tooltip>
+                }
+              >
+                {(targetRef) => (
+                  <span className={css.EmoticonBase}>
+                    <span ref={targetRef} className={css.Emoticon()}>
+                      <img {...props} title={undefined} className={css.EmoticonImg} src={htmlSrc} />
+                    </span>
+                  </span>
+                )}
+              </TooltipProvider>
             );
           }
           if (htmlSrc) return <img {...props} className={css.Img} src={htmlSrc} />;
@@ -718,11 +729,22 @@ export const getReactCustomHtmlInlineParser = (
           const htmlSrc = mxcToHttp(ct.session.baseUrl, props.src, params.useAuthentication).url();
           if (htmlSrc && 'data-mx-emoticon' in props) {
             return (
-              <span className={css.EmoticonBase}>
-                <span className={css.Emoticon()}>
-                  <img {...props} className={css.EmoticonImg} src={htmlSrc} />
-                </span>
-              </span>
+              <TooltipProvider
+                position="Top"
+                tooltip={
+                  <Tooltip style={{ maxWidth: toRem(200) }}>
+                    <Text size="T300">:{props.title || props.alt || 'unknown'}:</Text>
+                  </Tooltip>
+                }
+              >
+                {(targetRef) => (
+                  <span className={css.EmoticonBase}>
+                    <span ref={targetRef} className={css.Emoticon()}>
+                      <img {...props} title={undefined} className={css.EmoticonImg} src={htmlSrc} />
+                    </span>
+                  </span>
+                )}
+              </TooltipProvider>
             );
           }
           if (htmlSrc) return <em>Click to see image</em>;
