@@ -43,6 +43,7 @@ export interface Settings {
   memberSortFilterIndex: number;
   enterForNewline: boolean;
   messageLayout: MessageLayout;
+  bubbleOwnRight?: boolean;
   messageSpacing: MessageSpacing;
   hideMembershipEvents: boolean;
   hideNickAvatarEvents: boolean;
@@ -79,6 +80,7 @@ const defaultSettings: Settings = {
   memberSortFilterIndex: 0,
   enterForNewline: false,
   messageLayout: 0,
+  bubbleOwnRight: false,
   messageSpacing: '400',
   hideMembershipEvents: false,
   hideNickAvatarEvents: true,

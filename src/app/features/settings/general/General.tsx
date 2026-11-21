@@ -916,6 +916,8 @@ function SelectMessageSpacing() {
 }
 
 function Messages() {
+  const [messageLayout] = useSetting('messageLayout');
+  const [bubbleOwnRight, setBubbleOwnRight] = useSetting('bubbleOwnRight');
   const [legacyUsernameColor, setLegacyUsernameColor] = useSetting('legacyUsernameColor');
   const [hideMembershipEvents, setHideMembershipEvents] = useSetting('hideMembershipEvents');
   const [hideNickAvatarEvents, setHideNickAvatarEvents] = useSetting('hideNickAvatarEvents');
@@ -930,6 +932,21 @@ function Messages() {
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile title="Message Layout" after={<SelectMessageLayout />} />
       </SequenceCard>
+      {messageLayout === MessageLayout.Bubble && (
+        <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
+          <SettingTile
+            title="Align Own Messages Right"
+            description="Show your own messages on the right side, in a different shade."
+            after={
+              <Switch
+                variant="Primary"
+                value={bubbleOwnRight === true}
+                onChange={setBubbleOwnRight}
+              />
+            }
+          />
+        </SequenceCard>
+      )}
       <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
         <SettingTile title="Message Spacing" after={<SelectMessageSpacing />} />
       </SequenceCard>

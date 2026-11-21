@@ -70,6 +70,7 @@ import {
 } from '../../../components/message';
 import { canEditEvent, getReactionGroups } from '../../../utils/room';
 import { MessageLayout, MessageSpacing } from '../../../state/settings';
+import { useSetting } from '../../../state/hooks/settings';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
 import * as css from './styles.css';
 import { EventReaders } from '../../../components/event-readers';
@@ -921,27 +922,32 @@ type MessageLayoutProps = {
   time?: ReactNode;
   collapse: boolean;
   messageLayout: MessageLayout;
+  own?: boolean;
   onContextMenu?: MouseEventHandler<HTMLDivElement>;
   children: ReactNode;
 };
 export function RenderMessageLayout({
   collapse,
   messageLayout,
+  own,
   avatar,
   username,
   time,
   onContextMenu,
   children,
 }: MessageLayoutProps) {
+  const [bubbleOwnRight] = useSetting('bubbleOwnRight');
+  const ownBubble = !!own && messageLayout === MessageLayout.Bubble && bubbleOwnRight === true;
+
   const headerJSX = !collapse && (
     <Box
       gap="300"
       direction={messageLayout === MessageLayout.Compact ? 'RowReverse' : 'Row'}
-      justifyContent="SpaceBetween"
+      justifyContent={ownBubble ? 'End' : 'SpaceBetween'}
       alignItems="Baseline"
       grow="Yes"
     >
-      {username}
+      {!ownBubble && username}
       <Box shrink="No" gap="100">
         {time}
       </Box>
@@ -956,7 +962,12 @@ export function RenderMessageLayout({
         </CompactLayout>
       )}
       {messageLayout === MessageLayout.Bubble && (
-        <BubbleLayout before={avatar} header={headerJSX} onContextMenu={onContextMenu}>
+        <BubbleLayout
+          own={ownBubble}
+          before={avatar}
+          header={headerJSX}
+          onContextMenu={onContextMenu}
+        >
           {children}
         </BubbleLayout>
       )}
@@ -1449,6 +1460,7 @@ export const Message = as<'div', MessageProps>(
           }
           collapse={collapse}
           messageLayout={messageLayout}
+          own={senderId === ct.session.userId}
           onContextMenu={handleContextMenu}
         >
           <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
