@@ -1,11 +1,11 @@
 {
-  "defaultHomeserver": 1,
-  "homeserverList": ["converser.eu", "matrix.org", "mozilla.org", "unredacted.org", "xmr.se"],
+  "defaultHomeserver": 0,
+  "homeserverList": ["matrix.org", "mozilla.org", "unredacted.org"],
   "allowCustomHomeservers": true,
   "featuredCommunities": {
     "openAsDefault": false,
     "spaces": [
-      "#cinny:matrix.org",
+      "#cinny-space:matrix.org",
       "#community:matrix.org",
       "#space:unredacted.org",
       "#librewolf-community:matrix.org",
@@ -16,13 +16,21 @@
       "#mathematics-on:matrix.org"
     ],
     "rooms": [
-      "#tuwunel:grin.hu",
+      "#cinny:matrix.org",
+      "#cinny-announcement:matrix.org",
+      "#cinny-offtopic:matrix.org",
+      "#tuwunel:woof.gay",
       "#free-software-movement:matrix.org",
       "#gentoo:matrix.org"
     ],
-    "servers": ["activematrixrooms.com", "matrixrooms.info", "matrix.org", "mozilla.org", "unredacted.org"]
+    "servers": [
+      "activematrixrooms.com",
+      "matrixrooms.info",
+      "matrix.org",
+      "mozilla.org",
+      "unredacted.org"
+    ]
   },
-
   "hashRouter": {
     "enabled": false,
     "basename": "/"

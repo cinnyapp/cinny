@@ -142,35 +142,6 @@ export function About({ requestClose }: AboutProps) {
                       <Text size="T300">
                         The{' '}
                         <a
-                          href="https://github.com/matrix-org/matrix-js-sdk"
-                          rel="noreferrer noopener"
-                          target="_blank"
-                        >
-                          matrix-js-sdk
-                        </a>{' '}
-                        is ©{' '}
-                        <a
-                          href="https://matrix.org/foundation"
-                          rel="noreferrer noopener"
-                          target="_blank"
-                        >
-                          The Matrix.org Foundation C.I.C
-                        </a>{' '}
-                        used under the terms of{' '}
-                        <a
-                          href="http://www.apache.org/licenses/LICENSE-2.0"
-                          rel="noreferrer noopener"
-                          target="_blank"
-                        >
-                          Apache 2.0
-                        </a>
-                        .
-                      </Text>
-                    </li>
-                    <li>
-                      <Text size="T300">
-                        The{' '}
-                        <a
                           href="https://github.com/mozilla/twemoji-colr"
                           target="_blank"
                           rel="noreferrer noopener"
