@@ -57,4 +57,3 @@ consistent code syntax, so make sure your pull request follow it.
 
 - [BEM methodology](http://getbem.com/introduction/)
 - [Atomic design](https://bradfrost.com/blog/post/atomic-web-design/)
-- [Matrix JavaScript SDK documentation](https://matrix-org.github.io/matrix-js-sdk/index.html)
