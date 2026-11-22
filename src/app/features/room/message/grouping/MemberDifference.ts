@@ -45,12 +45,12 @@ export const createMemberChangeTracker = (room) => {
     const bounces = {
         count: 0,
         members: {},
-        verb: 'joined and left'
+        verb: 'bounced'
     };
-    const dips = {
+    const rejoins = {
         count: 0,
         members: {},
-        verb: 'left and joined'
+        verb: 'rejoined'
     };
     const invites = {
         count: 0,
@@ -152,18 +152,18 @@ export const createMemberChangeTracker = (room) => {
 
             let counter = getRelevantCounter(mEvent);
 
-            if (counter === joins && deleteOccurance(userId, leaves)) {
-                counter = dips;
-            }
-            if (counter === leaves && deleteOccurance(userId, joins)) {
-                counter = bounces;
-            }
-
             // Ignore redundant events in the summary.
             // (once a user is joined you don't have to show their invite message)
             if (mergeEventpair(userId, senderId, counter, invites, joins, false)
                 || mergeEventpair(userId, senderId, counter, kicks, bans, false)) {
                 return;
+            }
+
+            if (counter === joins && deleteOccurance(userId, leaves)) {
+                counter = rejoins;
+            }
+            if (counter === leaves && deleteOccurance(userId, joins)) {
+                counter = bounces;
             }
 
             if (!counter.members[senderId]) {
@@ -182,7 +182,7 @@ export const createMemberChangeTracker = (room) => {
         getFinalMessage() {
             return [
                 getTwoActorCountMessage(invites),
-                [ joins, bounces, leaves, dips, profiles ].map(getCountMessage),
+                [ joins, bounces, leaves, rejoins, profiles ].map(getCountMessage),
                 [ kicks, bans ].map(getTwoActorCountMessage),
                 (others.count > 0 ? ` and ${others.count} other events` : '')
             ].flat().filter(m => !!m).join(', ');
