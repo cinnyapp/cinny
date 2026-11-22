@@ -1,6 +1,7 @@
 import { getMemberDisplayName } from '../../../../utils/room';
 import { getMxIdLocalPart } from '../../../../utils/matrix';
 import { TimelineEvent } from './TimelineEventGrouping';
+import { EventSummary } from './EventSummary';
 
 export const createRoomStateSummary = (room) => {
 
@@ -10,7 +11,7 @@ export const createRoomStateSummary = (room) => {
         members: {},
         verb: ''
     };
-    function getCountMessage(counter) {
+    function getCountMessage(counter : EventSummary) {
         if (counter.count == 0) {
             return '';
         }
@@ -23,7 +24,6 @@ export const createRoomStateSummary = (room) => {
     }
 
     return {
-
         accept(timelineEvent: TimelineEvent) {
             const mEvent = timelineEvent.mEvent;
             const senderId = mEvent.getSender() ?? '';
