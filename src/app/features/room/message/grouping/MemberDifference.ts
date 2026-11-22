@@ -35,6 +35,7 @@ export const createMemberChangeTracker = (room) => {
         members: {}
     };
 
+    const nonKickEvents = [ Membership.Invite, Membership.Ban, Membership.Knock ];
     const counters = {
         [Membership.Join]: joins,
         [Membership.Leave]: leaves
@@ -66,7 +67,7 @@ export const createMemberChangeTracker = (room) => {
         const userId = mEvent.getStateKey() ?? '';
         const senderId = mEvent.getSender() ?? '';
 
-        if (userId !== senderId) {
+        if (userId !== senderId && nonKickEvents.indexOf(content.membership) === -1) {
             return kicks;
         }
 
