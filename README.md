@@ -1,7 +1,7 @@
 # Cinny
 <p>
-    <a href="https://github.com/ajbura/cinny/releases">
-        <img alt="GitHub release downloads" src="https://img.shields.io/github/downloads/ajbura/cinny/total?logo=github&style=social"></a>
+    <a href="https://github.com/cinnyapp/cinny/releases">
+        <img alt="GitHub release downloads" src="https://img.shields.io/github/downloads/cinnyapp/cinny/total?logo=github&style=social"></a>
     <a href="https://hub.docker.com/r/ajbura/cinny">
         <img alt="DockerHub downloads" src="https://img.shields.io/docker/pulls/ajbura/cinny?logo=docker&style=social"></a>
     <a href="https://fosstodon.org/@cinnyapp">
