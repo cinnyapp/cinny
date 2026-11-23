@@ -160,6 +160,16 @@ export const BubbleContentArrowLeft = style({
   borderTopLeftRadius: 0,
 });
 
+export const BubbleContentOwn = style({
+  backgroundColor: color.Secondary.ContainerHover,
+  // Keep oversized content scrollable on the right.
+  marginLeft: 'auto',
+});
+
+export const BubbleContentArrowRight = style({
+  borderTopRightRadius: 0,
+});
+
 export const BubbleLeftArrow = style({
   width: toRem(9),
   height: toRem(8),
@@ -168,6 +178,17 @@ export const BubbleLeftArrow = style({
   top: 0,
   left: toRem(-8),
   zIndex: 1,
+});
+
+export const BubbleRightArrow = style({
+  width: toRem(9),
+  height: toRem(8),
+
+  position: 'absolute',
+  top: 0,
+  right: toRem(-8),
+  zIndex: 1,
+  transform: 'scaleX(-1)',
 });
 
 export const Username = style({

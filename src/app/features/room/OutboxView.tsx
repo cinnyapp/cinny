@@ -203,6 +203,7 @@ function MessageSending({
         }
         collapse={collapse}
         messageLayout={messageLayout}
+        own
       >
         {children}
         {senderState instanceof EventSenderError && (
