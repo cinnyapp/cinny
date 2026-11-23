@@ -917,8 +917,6 @@ function SelectMessageSpacing() {
 
 function Messages() {
   const [legacyUsernameColor, setLegacyUsernameColor] = useSetting('legacyUsernameColor');
-  const [hideMembershipEvents, setHideMembershipEvents] = useSetting('hideMembershipEvents');
-  const [hideNickAvatarEvents, setHideNickAvatarEvents] = useSetting('hideNickAvatarEvents');
   const [mediaAutoLoad, setMediaAutoLoad] = useSetting('mediaAutoLoad');
   const [urlPreview, setUrlPreview] = useSetting('urlPreview');
   const [encUrlPreview, setEncUrlPreview] = useSetting('encUrlPreview');
@@ -941,30 +939,6 @@ function Messages() {
               variant="Primary"
               value={legacyUsernameColor}
               onChange={setLegacyUsernameColor}
-            />
-          }
-        />
-      </SequenceCard>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile
-          title="Hide Membership Change"
-          after={
-            <Switch
-              variant="Primary"
-              value={hideMembershipEvents}
-              onChange={setHideMembershipEvents}
-            />
-          }
-        />
-      </SequenceCard>
-      <SequenceCard className={SequenceCardStyle} variant="SurfaceVariant" direction="Column">
-        <SettingTile
-          title="Hide Profile Change"
-          after={
-            <Switch
-              variant="Primary"
-              value={hideNickAvatarEvents}
-              onChange={setHideNickAvatarEvents}
             />
           }
         />

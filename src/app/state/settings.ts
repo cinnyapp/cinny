@@ -44,8 +44,6 @@ export interface Settings {
   enterForNewline: boolean;
   messageLayout: MessageLayout;
   messageSpacing: MessageSpacing;
-  hideMembershipEvents: boolean;
-  hideNickAvatarEvents: boolean;
   mediaAutoLoad: boolean;
   urlPreview: boolean;
   encUrlPreview: boolean;
@@ -80,8 +78,6 @@ const defaultSettings: Settings = {
   enterForNewline: false,
   messageLayout: 0,
   messageSpacing: '400',
-  hideMembershipEvents: false,
-  hideNickAvatarEvents: true,
   mediaAutoLoad: true,
   urlPreview: true,
   encUrlPreview: false,
