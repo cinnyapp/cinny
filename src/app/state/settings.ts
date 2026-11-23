@@ -45,8 +45,6 @@ export interface Settings {
   messageLayout: MessageLayout;
   bubbleOwnRight?: boolean;
   messageSpacing: MessageSpacing;
-  hideMembershipEvents: boolean;
-  hideNickAvatarEvents: boolean;
   mediaAutoLoad: boolean;
   urlPreview: boolean;
   encUrlPreview: boolean;
@@ -82,8 +80,6 @@ const defaultSettings: Settings = {
   messageLayout: 0,
   bubbleOwnRight: false,
   messageSpacing: '400',
-  hideMembershipEvents: false,
-  hideNickAvatarEvents: true,
   mediaAutoLoad: true,
   urlPreview: true,
   encUrlPreview: false,
