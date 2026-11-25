@@ -141,10 +141,10 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ requestClose }, re
     requestClose();
   };
 
-  const openSettings = useOpenRoomSettings();
+  const openRoomSettings = useOpenRoomSettings();
   const parentSpaceId = useSpaceOptionally();
   const handleOpenSettings = () => {
-    openSettings(roomId, parentSpaceId);
+    openRoomSettings(roomId, parentSpaceId);
     requestClose();
   };
 
@@ -481,10 +481,10 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
     setThreadsMenuAnchor(evt.currentTarget.getBoundingClientRect());
   };
 
-  const openSettings = useOpenRoomSettings();
+  const openRoomSettings = useOpenRoomSettings();
   const handleMemberToggle = () => {
     if (callView) {
-      openSettings(roomId, spaceId, RoomSettingsPage.MembersPage);
+      openRoomSettings(roomId, spaceId, { page: RoomSettingsPage.MembersPage });
       return;
     }
     setPeopleDrawer(!peopleDrawer);

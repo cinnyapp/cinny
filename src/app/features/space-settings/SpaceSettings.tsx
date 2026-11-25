@@ -7,13 +7,13 @@ https://cinny.in
 Please see LICENSE file in root of repository for full details.
 */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Avatar, Box, config, Icon, IconButton, Icons, IconSrc, MenuItem, Text } from 'folds';
 import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '../../components/page';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { RoomAvatar, RoomIcon } from '../../components/room-avatar';
-import { SpaceSettingsPage } from '../../state/spaceSettings';
+import { SpaceSettingsPage, SpaceSettingsPageData } from '../../state/spaceSettings';
 import { useRoom } from '../../hooks/useRoom';
 import { EmojisStickers } from '../common-settings/emojis-stickers';
 import { Members } from '../common-settings/members';
@@ -38,6 +38,7 @@ import { RoomMembersAPIProvider, useCreateRoomMembersAPI } from '../../hooks/use
 import { usePendingMemberLoader, usePendingMembers } from '../../hooks/usePendingMembers';
 import { useObservableValue } from '../../hooks/useObservableValue';
 import { mxcToHttp } from '../../../client/mxcToHttp';
+import { Activity } from '../common-settings/activity';
 
 type SpaceSettingsMenuItem = {
   page: SpaceSettingsPage;
@@ -59,6 +60,11 @@ const useSpaceSettingsMenuItems = (): SpaceSettingsMenuItem[] =>
         icon: Icons.User,
       },
       {
+        page: SpaceSettingsPage.ActivityPage,
+        name: 'Activity',
+        icon: Icons.Clock,
+      },
+      {
         page: SpaceSettingsPage.PermissionsPage,
         name: 'Permissions',
         icon: Icons.Lock,
@@ -78,10 +84,10 @@ const useSpaceSettingsMenuItems = (): SpaceSettingsMenuItem[] =>
   );
 
 type SpaceSettingsProps = {
-  initialPage?: SpaceSettingsPage;
+  initialPageData?: SpaceSettingsPageData;
   requestClose: () => void;
 };
-export function SpaceSettings({ initialPage, requestClose }: SpaceSettingsProps) {
+export function SpaceSettings({ initialPageData, requestClose }: SpaceSettingsProps) {
   const ct = useClient();
   const roomId = useRoom();
   const useAuthentication = useMediaAuthentication();
@@ -113,15 +119,20 @@ export function SpaceSettings({ initialPage, requestClose }: SpaceSettingsProps)
     : undefined;
 
   const screenSize = useScreenSizeContext();
-  const [activePage, setActivePage] = useState<SpaceSettingsPage | undefined>(() => {
-    if (initialPage) return initialPage;
-    return screenSize === ScreenSize.Mobile ? undefined : SpaceSettingsPage.GeneralPage;
+  const [pageData, setPageData] = useState<SpaceSettingsPageData | undefined>(() => {
+    if (initialPageData) return initialPageData;
+    return screenSize === ScreenSize.Mobile ? undefined : { page: SpaceSettingsPage.GeneralPage };
   });
+
+  useEffect(() => {
+    if (initialPageData) setPageData(initialPageData);
+  }, [initialPageData]);
+
   const menuItems = useSpaceSettingsMenuItems();
 
   const handlePageRequestClose = () => {
     if (screenSize === ScreenSize.Mobile) {
-      setActivePage(undefined);
+      setPageData(undefined);
       return;
     }
     requestClose();
@@ -133,7 +144,7 @@ export function SpaceSettings({ initialPage, requestClose }: SpaceSettingsProps)
         <PowerLevelTagsContextProvider value={powerLevelTags}>
           <PageRoot
             nav={
-              screenSize === ScreenSize.Mobile && activePage !== undefined ? undefined : (
+              screenSize === ScreenSize.Mobile && pageData?.page !== undefined ? undefined : (
                 <PageNav size="300">
                   <PageNavHeader outlined={false}>
                     <Box grow="Yes" gap="200">
@@ -172,16 +183,20 @@ export function SpaceSettings({ initialPage, requestClose }: SpaceSettingsProps)
                             key={item.name}
                             variant="Background"
                             radii="400"
-                            aria-pressed={activePage === item.page}
+                            aria-pressed={pageData?.page === item.page}
                             before={
-                              <Icon src={item.icon} size="100" filled={activePage === item.page} />
+                              <Icon
+                                src={item.icon}
+                                size="100"
+                                filled={pageData?.page === item.page}
+                              />
                             }
-                            onClick={() => setActivePage(item.page)}
+                            onClick={() => setPageData({ page: item.page })}
                           >
                             <Text
                               style={{
                                 fontWeight:
-                                  activePage === item.page ? config.fontWeight.W600 : undefined,
+                                  pageData?.page === item.page ? config.fontWeight.W600 : undefined,
                               }}
                               size="T300"
                               truncate
@@ -197,19 +212,22 @@ export function SpaceSettings({ initialPage, requestClose }: SpaceSettingsProps)
               )
             }
           >
-            {activePage === SpaceSettingsPage.GeneralPage && (
+            {pageData?.page === SpaceSettingsPage.GeneralPage && (
               <General requestClose={handlePageRequestClose} />
             )}
-            {activePage === SpaceSettingsPage.MembersPage && (
+            {pageData?.page === SpaceSettingsPage.MembersPage && (
               <Members requestClose={handlePageRequestClose} />
             )}
-            {activePage === SpaceSettingsPage.PermissionsPage && (
+            {pageData?.page === SpaceSettingsPage.ActivityPage && (
+              <Activity initialSenders={pageData.senders} requestClose={handlePageRequestClose} />
+            )}
+            {pageData?.page === SpaceSettingsPage.PermissionsPage && (
               <Permissions requestClose={handlePageRequestClose} />
             )}
-            {activePage === SpaceSettingsPage.EmojisStickersPage && (
+            {pageData?.page === SpaceSettingsPage.EmojisStickersPage && (
               <EmojisStickers requestClose={handlePageRequestClose} />
             )}
-            {activePage === SpaceSettingsPage.DeveloperToolsPage && (
+            {pageData?.page === SpaceSettingsPage.DeveloperToolsPage && (
               <DeveloperTools requestClose={handlePageRequestClose} />
             )}
           </PageRoot>

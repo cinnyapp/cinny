@@ -28,7 +28,13 @@ import {
 } from '../../hooks/usePowerLevels';
 import { useRoom } from '../../hooks/useRoom';
 import { useUserPresence } from '../../hooks/useUserPresence';
-import { IgnoredUserAlert, MutualRoomsChip, ServerChip, ShareChip } from './UserChips';
+import {
+  ActivityChip,
+  IgnoredUserAlert,
+  MutualRoomsChip,
+  ServerChip,
+  ShareChip,
+} from './UserChips';
 import { useCloseUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { PowerChip } from './PowerChip';
 import { UserInviteAlert, UserBanAlert, UserKickAlert, OptionsButton } from './UserModeration';
@@ -146,6 +152,7 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
                 <ShareChip userId={userId} />
                 {creator ? <CreatorChip /> : <PowerChip userId={userId} />}
                 {userId !== myUserId && <MutualRoomsChip userId={userId} />}
+                <ActivityChip userId={userId} />
               </Box>
             </Box>
             {ignored && <IgnoredUserAlert />}

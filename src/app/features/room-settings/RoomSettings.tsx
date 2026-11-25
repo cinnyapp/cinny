@@ -7,7 +7,7 @@ https://cinny.in
 Please see LICENSE file in root of repository for full details.
 */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Avatar, Box, config, Icon, IconButton, Icons, IconSrc, MenuItem, Text } from 'folds';
 import { PageNav, PageNavContent, PageNavHeader, PageRoot } from '../../components/page';
 import { ScreenSize, useScreenSizeContext } from '../../hooks/useScreenSize';
@@ -17,7 +17,7 @@ import { General } from './general';
 import { Members } from '../common-settings/members';
 import { EmojisStickers } from '../common-settings/emojis-stickers';
 import { Permissions } from './permissions';
-import { RoomSettingsPage } from '../../state/roomSettings';
+import { RoomSettingsPage, RoomSettingsPageData } from '../../state/roomSettings';
 import { useRoom } from '../../hooks/useRoom';
 import { DeveloperTools } from '../common-settings/developer-tools';
 import { useClient } from '../../hooks/useClient';
@@ -84,10 +84,10 @@ const useRoomSettingsMenuItems = (): RoomSettingsMenuItem[] =>
   );
 
 type RoomSettingsProps = {
-  initialPage?: RoomSettingsPage;
+  initialPageData?: RoomSettingsPageData;
   requestClose: () => void;
 };
-export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
+export function RoomSettings({ initialPageData, requestClose }: RoomSettingsProps) {
   const roomId = useRoom();
   const ct = useClient();
   const useAuthentication = useMediaAuthentication();
@@ -119,15 +119,20 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
     : undefined;
 
   const screenSize = useScreenSizeContext();
-  const [activePage, setActivePage] = useState<RoomSettingsPage | undefined>(() => {
-    if (initialPage) return initialPage;
-    return screenSize === ScreenSize.Mobile ? undefined : RoomSettingsPage.GeneralPage;
+  const [pageData, setPageData] = useState<RoomSettingsPageData | undefined>(() => {
+    if (initialPageData) return initialPageData;
+    return screenSize === ScreenSize.Mobile ? undefined : { page: RoomSettingsPage.GeneralPage };
   });
+
+  useEffect(() => {
+    if (initialPageData) setPageData(initialPageData);
+  }, [initialPageData]);
+
   const menuItems = useRoomSettingsMenuItems();
 
   const handlePageRequestClose = () => {
     if (screenSize === ScreenSize.Mobile) {
-      setActivePage(undefined);
+      setPageData(undefined);
       return;
     }
     requestClose();
@@ -139,7 +144,7 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
         <PowerLevelTagsContextProvider value={powerLevelTags}>
           <PageRoot
             nav={
-              screenSize === ScreenSize.Mobile && activePage !== undefined ? undefined : (
+              screenSize === ScreenSize.Mobile && pageData?.page !== undefined ? undefined : (
                 <PageNav size="300">
                   <PageNavHeader outlined={false}>
                     <Box grow="Yes" gap="200">
@@ -178,16 +183,20 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
                             key={item.name}
                             variant="Background"
                             radii="400"
-                            aria-pressed={activePage === item.page}
+                            aria-pressed={pageData?.page === item.page}
                             before={
-                              <Icon src={item.icon} size="100" filled={activePage === item.page} />
+                              <Icon
+                                src={item.icon}
+                                size="100"
+                                filled={pageData?.page === item.page}
+                              />
                             }
-                            onClick={() => setActivePage(item.page)}
+                            onClick={() => setPageData({ page: item.page })}
                           >
                             <Text
                               style={{
                                 fontWeight:
-                                  activePage === item.page ? config.fontWeight.W600 : undefined,
+                                  pageData?.page === item.page ? config.fontWeight.W600 : undefined,
                               }}
                               size="T300"
                               truncate
@@ -203,22 +212,22 @@ export function RoomSettings({ initialPage, requestClose }: RoomSettingsProps) {
               )
             }
           >
-            {activePage === RoomSettingsPage.GeneralPage && (
+            {pageData?.page === RoomSettingsPage.GeneralPage && (
               <General requestClose={handlePageRequestClose} />
             )}
-            {activePage === RoomSettingsPage.MembersPage && (
+            {pageData?.page === RoomSettingsPage.MembersPage && (
               <Members requestClose={handlePageRequestClose} />
             )}
-            {activePage === RoomSettingsPage.PermissionsPage && (
+            {pageData?.page === RoomSettingsPage.PermissionsPage && (
               <Permissions requestClose={handlePageRequestClose} />
             )}
-            {activePage === RoomSettingsPage.ActivityPage && (
-              <Activity requestClose={handlePageRequestClose} />
+            {pageData?.page === RoomSettingsPage.ActivityPage && (
+              <Activity initialSenders={pageData.senders} requestClose={handlePageRequestClose} />
             )}
-            {activePage === RoomSettingsPage.EmojisStickersPage && (
+            {pageData?.page === RoomSettingsPage.EmojisStickersPage && (
               <EmojisStickers requestClose={handlePageRequestClose} />
             )}
-            {activePage === RoomSettingsPage.DeveloperToolsPage && (
+            {pageData?.page === RoomSettingsPage.DeveloperToolsPage && (
               <DeveloperTools requestClose={handlePageRequestClose} />
             )}
           </PageRoot>

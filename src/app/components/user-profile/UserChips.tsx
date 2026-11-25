@@ -51,6 +51,12 @@ import { useGetRoomName } from '../../hooks/storage/useGetRoomName';
 import { useGetRoomAvatar } from '../../hooks/storage/useGetRoomAvatar';
 import { mxcToHttp } from '../../../client/mxcToHttp';
 import { useSetting } from '../../state/hooks/settings';
+import { useRoom } from '../../hooks/useRoom';
+import { useSpaceOptionally } from '../../hooks/useSpace';
+import { useOpenRoomSettings } from '../../state/hooks/roomSettings';
+import { useOpenSpaceSettings } from '../../state/hooks/spaceSettings';
+import { SpaceSettingsPage } from '../../state/spaceSettings';
+import { RoomSettingsPage } from '../../state/roomSettings';
 
 export function ServerChip({ server }: { server: string }) {
   const ct = useClient();
@@ -450,5 +456,42 @@ export function IgnoredUserAlert() {
         </Box>
       </SettingTile>
     </CutoutCard>
+  );
+}
+
+export function ActivityChip({ userId }: { userId: string }) {
+  const ct = useClient();
+  const roomId = useRoom();
+  const spaceId = useSpaceOptionally();
+
+  const openRoomSettings = useOpenRoomSettings();
+  const openSpaceSettings = useOpenSpaceSettings();
+
+  const closeUserProfile = useCloseUserRoomProfile();
+
+  return (
+    <Chip
+      variant="SurfaceVariant"
+      radii="Pill"
+      before={<Icon size="50" src={Icons.Clock} />}
+      onClick={() => {
+        if (ct.spaceRooms.read.has(roomId)) {
+          openSpaceSettings(roomId, spaceId, {
+            page: SpaceSettingsPage.ActivityPage,
+            senders: [userId],
+          });
+        } else {
+          openRoomSettings(roomId, spaceId, {
+            page: RoomSettingsPage.ActivityPage,
+            senders: [userId],
+          });
+        }
+        closeUserProfile();
+      }}
+    >
+      <Text size="B300" truncate>
+        Activity
+      </Text>
+    </Chip>
   );
 }

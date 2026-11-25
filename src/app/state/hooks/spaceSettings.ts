@@ -9,7 +9,7 @@ Please see LICENSE file in root of repository for full details.
 
 import { useCallback } from 'react';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { spaceSettingsAtom, SpaceSettingsPage, SpaceSettingsState } from '../spaceSettings';
+import { spaceSettingsAtom, SpaceSettingsPageData, SpaceSettingsState } from '../spaceSettings';
 
 export const useSpaceSettingsState = (): SpaceSettingsState | undefined => {
   const data = useAtomValue(spaceSettingsAtom);
@@ -28,13 +28,13 @@ export const useCloseSpaceSettings = (): CloseCallback => {
   return close;
 };
 
-type OpenCallback = (roomId: string, space?: string, page?: SpaceSettingsPage) => void;
+type OpenCallback = (roomId: string, space?: string, page?: SpaceSettingsPageData) => void;
 export const useOpenSpaceSettings = (): OpenCallback => {
   const setSettings = useSetAtom(spaceSettingsAtom);
 
   const open: OpenCallback = useCallback(
-    (roomId, spaceId, page) => {
-      setSettings({ roomId, spaceId, page });
+    (roomId, spaceId, pageData) => {
+      setSettings({ roomId, spaceId, pageData });
     },
     [setSettings]
   );

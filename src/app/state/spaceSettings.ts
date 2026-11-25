@@ -12,13 +12,25 @@ import { atom } from 'jotai';
 export enum SpaceSettingsPage {
   GeneralPage,
   MembersPage,
+  ActivityPage,
   PermissionsPage,
   EmojisStickersPage,
   DeveloperToolsPage,
 }
 
+export type ActivityPageData = {
+  page: SpaceSettingsPage.ActivityPage;
+  senders?: string[];
+};
+
+export type SpaceSettingsPageData =
+  | {
+      page: Exclude<SpaceSettingsPage, SpaceSettingsPage.ActivityPage>;
+    }
+  | ActivityPageData;
+
 export type SpaceSettingsState = {
-  page?: SpaceSettingsPage;
+  pageData?: SpaceSettingsPageData;
   roomId: string;
   spaceId?: string;
 };

@@ -68,9 +68,9 @@ export function CreatorChip() {
                 radii="300"
                 onClick={() => {
                   if (ct.spaceRooms.read.has(roomId)) {
-                    openSpaceSettings(roomId, spaceId, SpaceSettingsPage.PermissionsPage);
+                    openSpaceSettings(roomId, spaceId, { page: SpaceSettingsPage.PermissionsPage });
                   } else {
-                    openRoomSettings(roomId, spaceId, RoomSettingsPage.PermissionsPage);
+                    openRoomSettings(roomId, spaceId, { page: RoomSettingsPage.PermissionsPage });
                   }
                   close();
                 }}

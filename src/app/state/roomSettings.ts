@@ -18,8 +18,19 @@ export enum RoomSettingsPage {
   ActivityPage,
 }
 
+export type ActivityPageData = {
+  page: RoomSettingsPage.ActivityPage;
+  senders?: string[];
+};
+
+export type RoomSettingsPageData =
+  | {
+      page: Exclude<RoomSettingsPage, RoomSettingsPage.ActivityPage>;
+    }
+  | ActivityPageData;
+
 export type RoomSettingsState = {
-  page?: RoomSettingsPage;
+  pageData?: RoomSettingsPageData;
   roomId: string;
   spaceId?: string;
 };

@@ -523,9 +523,10 @@ function ActivityFilter({ types, onTypesChange, senders, onSendersChange }: Acti
 }
 
 type ActivityProps = {
+  initialSenders?: string[];
   requestClose: () => void;
 };
-export function Activity({ requestClose }: ActivityProps) {
+export function Activity({ initialSenders, requestClose }: ActivityProps) {
   const ct = useClient();
   const roomId = useRoom();
 
@@ -556,7 +557,14 @@ export function Activity({ requestClose }: ActivityProps) {
   );
 
   const [types, setTypes] = useState<string[]>();
-  const [senders, setSenders] = useState<string[]>([]);
+  const [senders, setSenders] = useState<string[]>(initialSenders ?? []);
+
+  useEffect(() => {
+    if (Array.isArray(initialSenders)) {
+      setSenders(initialSenders);
+    }
+  }, [initialSenders]);
+
   const { events, hasMore, isLoadingMore, loadMore, isLoading } = useActivityMessages(
     roomId,
     types,

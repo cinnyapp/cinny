@@ -21,7 +21,7 @@ type RenderSettingsProps = {
   state: SpaceSettingsState;
 };
 function RenderSettings({ state }: RenderSettingsProps) {
-  const { roomId, spaceId, page } = state;
+  const { roomId, spaceId, pageData } = state;
   const closeSettings = useCloseSpaceSettings();
 
   const ct = useClient();
@@ -33,7 +33,7 @@ function RenderSettings({ state }: RenderSettingsProps) {
     <Modal500 requestClose={closeSettings}>
       <SpaceProvider value={spaceId ?? null}>
         <RoomProvider value={roomId}>
-          <SpaceSettings initialPage={page} requestClose={closeSettings} />
+          <SpaceSettings initialPageData={pageData} requestClose={closeSettings} />
         </RoomProvider>
       </SpaceProvider>
     </Modal500>
