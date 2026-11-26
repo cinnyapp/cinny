@@ -118,7 +118,8 @@ function UrlPreview({ body, ts }: UrlPreviewProps) {
 
   if (!urls) return null;
 
-  const filteredUrls = urls.filter((url) => !testMatrixTo(url));
+  // remove matrix.to urls and limit url preview to first 6
+  const filteredUrls = urls.filter((url) => !testMatrixTo(url)).slice(0, 6);
   if (filteredUrls.length === 0) return null;
 
   return (
