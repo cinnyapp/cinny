@@ -56,7 +56,7 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
       loadPreview();
     }, [loadPreview]);
 
-    if (previewStatus.status === AsyncStatus.Error) return null;
+    // if (previewStatus.status === AsyncStatus.Error) return null;
 
     const renderContent = (prev: GetPreviewUrlOK) => {
       const ogImage = ObjectReader.string(prev, 'og:image');
@@ -125,9 +125,10 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
 
     return (
       <UrlPreview {...props} ref={ref}>
-        {previewStatus.status === AsyncStatus.Success ? (
-          renderContent(previewStatus.data)
-        ) : (
+        {previewStatus.status === AsyncStatus.Success && renderContent(previewStatus.data)}
+        {previewStatus.status === AsyncStatus.Error && renderContent({})}
+        {(previewStatus.status === AsyncStatus.Loading ||
+          previewStatus.status === AsyncStatus.Idle) && (
           <Box grow="Yes" alignItems="Center" justifyContent="Center">
             <Spinner variant="Secondary" size="400" />
           </Box>
