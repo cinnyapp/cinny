@@ -15,15 +15,28 @@ import {
 } from 'neurone/lib/api/matrix/client/v3/rooms';
 import { ClientEvent, MessageEventWithoutRoomId } from 'neurone/lib/api/types';
 import { MatrixRequest, parseMatrixResp, printMatrixError } from 'neurone/lib/matrix-request';
+import { MessageEvent } from '../../types/matrix/room';
 
 export class TimelineUtils {
   private roomId: string;
 
   private request: MatrixRequest;
 
+  private supportedEventTypes: string[] = [
+    MessageEvent.RoomMessage,
+    MessageEvent.RoomMessageEncrypted,
+    MessageEvent.Sticker,
+  ];
+
   constructor(roomId: string, request: MatrixRequest) {
     this.roomId = roomId;
     this.request = request;
+  }
+
+  public filterSupportedEvents(events: MessageEventWithoutRoomId[]): MessageEventWithoutRoomId[] {
+    return events.filter(
+      (event) => this.supportedEventTypes.includes(event.type) && !('state_key' in event)
+    );
   }
 
   public async generatePaginationToken(

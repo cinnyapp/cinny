@@ -105,7 +105,7 @@ export class Timeline implements TimelineView, Disposable {
     const { events, limited, prev_batch: prevToken } = joinRoom.timeline ?? {};
 
     const messageEvents: MessageEventWithoutRoomId[] = events
-      ? this.relations.pickAndFilter(events)
+      ? this.utils.filterSupportedEvents(this.relations.pickAndFilter(events))
       : [];
 
     queueMicrotask(() => this.syncThreads(messageEvents, limited, prevToken));
@@ -206,7 +206,9 @@ export class Timeline implements TimelineView, Disposable {
       }
 
       const { end: prevToken, chunk } = result;
-      const messageEvents: MessageEventWithoutRoomId[] = this.relations.pickAndFilter(chunk);
+      const messageEvents: MessageEventWithoutRoomId[] = this.utils.filterSupportedEvents(
+        this.relations.pickAndFilter(chunk)
+      );
 
       this.pickThreads(messageEvents);
 
@@ -243,7 +245,9 @@ export class Timeline implements TimelineView, Disposable {
       }
 
       const { end: nextToken, chunk } = result;
-      const messageEvents: MessageEventWithoutRoomId[] = this.relations.pickAndFilter(chunk);
+      const messageEvents: MessageEventWithoutRoomId[] = this.utils.filterSupportedEvents(
+        this.relations.pickAndFilter(chunk)
+      );
 
       this.pickThreads(messageEvents);
 
@@ -279,7 +283,9 @@ export class Timeline implements TimelineView, Disposable {
     }
 
     const events = [...(before ?? []), event, ...(after ?? [])];
-    const messageEvents: MessageEventWithoutRoomId[] = this.relations.pickAndFilter(events);
+    const messageEvents: MessageEventWithoutRoomId[] = this.utils.filterSupportedEvents(
+      this.relations.pickAndFilter(events)
+    );
 
     this.pickThreads(messageEvents);
 

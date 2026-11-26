@@ -222,7 +222,7 @@ export class ThreadTimeline implements TimelineView, Disposable {
 
       const { next_batch: prevToken, chunk } = result;
 
-      const messageEvents = this.relations.pickAndFilter(chunk);
+      const messageEvents = this.utils.filterSupportedEvents(this.relations.pickAndFilter(chunk));
 
       this.batchManager.handleBackwardPagination(id, messageEvents, prevToken);
     } finally {
@@ -258,7 +258,7 @@ export class ThreadTimeline implements TimelineView, Disposable {
 
       const { prev_batch: nextToken, chunk } = result;
 
-      const messageEvents = this.relations.pickAndFilter(chunk);
+      const messageEvents = this.utils.filterSupportedEvents(this.relations.pickAndFilter(chunk));
 
       this.batchManager.handleForwardPagination(id, messageEvents, nextToken);
     } finally {
@@ -297,7 +297,9 @@ export class ThreadTimeline implements TimelineView, Disposable {
     }
 
     const events = [event];
-    const messageEvents: MessageEventWithoutRoomId[] = this.relations.pickAndFilter(events);
+    const messageEvents: MessageEventWithoutRoomId[] = this.utils.filterSupportedEvents(
+      this.relations.pickAndFilter(events)
+    );
 
     const threadId = getThreadId(event);
 

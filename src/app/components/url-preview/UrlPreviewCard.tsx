@@ -56,8 +56,6 @@ export const UrlPreviewCard = as<'div', { url: string; ts: number }>(
       loadPreview();
     }, [loadPreview]);
 
-    // if (previewStatus.status === AsyncStatus.Error) return null;
-
     const renderContent = (prev: GetPreviewUrlOK) => {
       const ogImage = ObjectReader.string(prev, 'og:image');
 
