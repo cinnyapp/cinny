@@ -14,6 +14,7 @@ import { MatrixId } from './MatrixId';
 import { Profile } from './Profile';
 import { ContactInformation } from './ContactInfo';
 import { IgnoredUserList } from './IgnoredUserList';
+import { ChangePassword } from './ChangePassword';
 
 type AccountProps = {
   requestClose: () => void;
@@ -42,6 +43,7 @@ export function Account({ requestClose }: AccountProps) {
               <Profile />
               <MatrixId />
               <ContactInformation />
+              <ChangePassword />
               <IgnoredUserList />
             </Box>
           </PageContent>
