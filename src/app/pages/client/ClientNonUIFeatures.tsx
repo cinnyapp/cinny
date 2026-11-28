@@ -19,8 +19,9 @@ import LogoUnreadSVG from '../../../../public/res/svg/cinny-unread.svg';
 import LogoHighlightSVG from '../../../../public/res/svg/cinny-highlight.svg';
 import { getRoomsTotalNotifications } from '../../state/hooks/roomNotifications';
 import { useClient } from '../../hooks/useClient';
-import { getInboxInvitesPath } from '../pathUtils';
+import { getInboxInvitesPath, getInboxNotificationsPath } from '../pathUtils';
 import InviteSound from '../../../../public/sound/invite.ogg';
+import NotificationSound from '../../../../public/sound/notification.ogg';
 import { useSound } from '../../hooks/useSound';
 
 function SystemEmojiFeature() {
@@ -73,7 +74,7 @@ function InviteNotifications() {
 
   const { play } = useSound(InviteSound);
 
-  const prevInviteCount = useRef(0);
+  const prevInviteCount = useRef(ct.rooms.invite.read.length);
 
   const [showNotifications] = useSetting('showNotifications');
   const [notificationSound] = useSetting('isNotificationSounds');
@@ -96,7 +97,7 @@ function InviteNotifications() {
   );
 
   useEffect(() => {
-    const unsub = ct.rooms.invite.subscribe((invites) => {
+    const handleInvite = (invites: string[]) => {
       const prevCount = prevInviteCount.current;
 
       if (invites.length > prevCount) {
@@ -110,10 +111,72 @@ function InviteNotifications() {
       }
 
       prevInviteCount.current = invites.length;
-    });
+    };
+    const unsub = ct.rooms.invite.subscribe(handleInvite);
 
     return unsub;
   }, [ct, showNotifications, notificationSound, notify, play]);
+
+  return null;
+}
+
+function MessageNotifications() {
+  const ct = useClient();
+  const navigate = useNavigate();
+  const notifRef = useRef<Notification>();
+
+  const { play } = useSound(NotificationSound);
+
+  const roomToNotifications = useAtomValue(roomToNotificationsAtom);
+
+  const notifications = useMemo(
+    () => getRoomsTotalNotifications(roomToNotifications),
+    [roomToNotifications]
+  );
+
+  const prevNotificationCount = useRef(notifications.count);
+
+  const [showNotifications] = useSetting('showNotifications');
+  const [notificationSound] = useSetting('isNotificationSounds');
+
+  const notify = useCallback(
+    (total: number) => {
+      const noti = new window.Notification(total === 1 ? 'New message' : `${total} new messages`, {
+        icon: LogoSVG,
+        badge: LogoSVG,
+        body: 'You have unread notifications in Cinny.',
+        silent: true,
+        tag: 'cinny-messages',
+      });
+
+      noti.onclick = () => {
+        if (!window.closed) navigate(getInboxNotificationsPath());
+        noti.close();
+        notifRef.current = undefined;
+      };
+
+      notifRef.current?.close();
+      notifRef.current = noti;
+    },
+    [navigate]
+  );
+
+  useEffect(() => {
+    const previousCount = prevNotificationCount.current;
+    if (document.hasFocus()) return;
+
+    if (notifications.count > previousCount) {
+      if (notificationSound) {
+        play();
+      }
+
+      if (showNotifications && Notification.permission === 'granted') {
+        notify(notifications.count);
+      }
+    }
+
+    prevNotificationCount.current = notifications.count;
+  }, [notifications, notificationSound, showNotifications, ct, notify, play]);
 
   return null;
 }
@@ -125,6 +188,7 @@ export function ClientNonUIFeatures() {
       <PageZoomFeature />
       <FaviconUpdater />
       <InviteNotifications />
+      <MessageNotifications />
     </>
   );
 }
