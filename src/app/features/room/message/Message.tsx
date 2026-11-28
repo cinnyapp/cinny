@@ -97,6 +97,7 @@ import { MemberChangeType, RoomMembersAPI } from '../../../hooks/useRoomMembers'
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { usePowerLevelsContext } from '../../../hooks/usePowerLevels';
 import { useCanMessage } from '../hooks/useCanMessage';
+import { MessageForwardItem } from './MessageForward';
 
 export type ReactionHandler = (keyOrMxc: string, shortcode: string) => void;
 
@@ -1387,6 +1388,7 @@ export const Message = as<'div', MessageProps>(
                         )}
                       </>
                     )}
+                    <MessageForwardItem event={event} onClose={closeMenu} />
                     {!hideReadReceipts && (
                       <MessageReadReceiptItem
                         eventId={event.event_id}
