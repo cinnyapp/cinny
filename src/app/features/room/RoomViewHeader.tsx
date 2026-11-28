@@ -89,6 +89,9 @@ import { StateEvent } from '../../../types/matrix/room';
 import { isCallRoom } from '../../utils/room';
 import { ThreadsMenu } from './threads-menu';
 import { millify } from '../../plugins/millify';
+import { useMarkAsRead } from '../../hooks/useMarkAsRead';
+import { useRoomUnread } from '../../state/hooks/unread';
+import { unreadRoomsAtom } from '../../state/room/roomToUnread';
 
 type RoomMenuProps = {
   requestClose: () => void;
@@ -99,10 +102,11 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ requestClose }, re
   const navigate = useNavigate();
   const spaceId = useSpaceOptionally();
   const encryptedRooms = useObservableValue(ct.encryptedRooms);
-  const [hideActivity] = useSetting('hideActivity');
 
   const roomNotifications = useRoomNotifications(roomId, roomToNotificationsAtom);
   const notifications = useRoomTotalNotifications(roomNotifications);
+  const unread = useRoomUnread(roomId, unreadRoomsAtom);
+  const unreadOrNotification = (notifications && notifications.count > 0) || unread;
 
   const powerLevels = usePowerLevelsContext();
   const creators = useRoomCreators(roomId);
@@ -112,11 +116,12 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ requestClose }, re
   const notificationPreferences = useRoomsNotificationPreferencesContext();
   const notificationMode = getRoomNotificationMode(notificationPreferences, roomId);
   const { navigateRoom } = useRoomNavigate();
+  const markAsRead = useMarkAsRead(roomId);
 
   const [invitePrompt, setInvitePrompt] = useState(false);
 
   const handleMarkAsRead = () => {
-    // markAsRead(mx, room.roomId, hideActivity);
+    markAsRead();
     requestClose();
   };
 
@@ -165,7 +170,7 @@ const RoomMenu = forwardRef<HTMLDivElement, RoomMenuProps>(({ requestClose }, re
           size="300"
           after={<Icon size="100" src={Icons.CheckTwice} />}
           radii="300"
-          disabled={!notifications || notifications.count === 0}
+          disabled={!unreadOrNotification}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
             Mark as Read

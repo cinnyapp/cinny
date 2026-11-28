@@ -25,7 +25,6 @@ import { ScreenSize, useScreenSizeContext } from '../../../hooks/useScreenSize';
 import { useNavToActivePathAtom } from '../../../state/hooks/navToActivePath';
 import { useHomeRooms } from '../home/useHomeRooms';
 import { stopPropagation } from '../../../utils/keyboard';
-import { useSetting } from '../../../state/hooks/settings';
 import {
   TotalNotifications,
   useRoomsNotifications,
@@ -37,24 +36,23 @@ import {
 } from '../../../state/room/roomToNotifications';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
+import { useMarkMultipleRoomsAsRead } from '../../../hooks/useMarkAsRead';
 
 type HomeMenuProps = {
   homeRooms: string[];
   roomToNotifications: RoomToNotifications;
   notifications: TotalNotifications;
+  unreadRooms: Set<string>;
   requestClose: () => void;
 };
 const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(
-  ({ homeRooms, roomToNotifications, notifications, requestClose }, ref) => {
-    const [hideActivity] = useSetting('hideActivity');
+  ({ homeRooms, roomToNotifications, notifications, unreadRooms, requestClose }, ref) => {
+    const unreadOrNotification = (notifications && notifications.count > 0) || unreadRooms.size > 0;
+
+    const markAsRead = useMarkMultipleRoomsAsRead(homeRooms, roomToNotifications, unreadRooms);
 
     const handleMarkAsRead = () => {
-      homeRooms.forEach((rId) => {
-        const n = roomToNotifications.get(rId);
-        if (n?.notification_count && n.notification_count > 0) {
-          // markAsRead(mx, rId, hideActivity)
-        }
-      });
+      markAsRead();
       requestClose();
     };
 
@@ -62,11 +60,11 @@ const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(
       <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
         <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
           <MenuItem
-            onClick={handleMarkAsRead}
+            onClick={unreadOrNotification ? handleMarkAsRead : undefined}
             size="300"
             after={<Icon size="100" src={Icons.CheckTwice} />}
             radii="300"
-            aria-disabled={notifications.count === 0}
+            aria-disabled={!unreadOrNotification}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
               Mark as Read
@@ -152,6 +150,7 @@ export function HomeTab() {
                 homeRooms={homeRooms}
                 roomToNotifications={roomsNotifications}
                 notifications={notifications}
+                unreadRooms={unreadRooms}
                 requestClose={() => setMenuAnchor(undefined)}
               />
             </FocusTrap>

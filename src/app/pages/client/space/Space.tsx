@@ -102,6 +102,7 @@ import { useAllJoinedRoomsSet } from '../../../hooks/useAllJoinedRoomsSet';
 import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { RoomAccessIndicator } from '../../../components/RoomAccessIndicator';
+import { useMarkMultipleRoomsAsRead } from '../../../hooks/useMarkAsRead';
 
 type SpaceMenuProps = {
   requestClose: () => void;
@@ -110,7 +111,7 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ requestClose }, 
   const ct = useClient();
   const { userId } = ct.session;
   const spaceId = useSpace();
-  const [hideActivity] = useSetting('hideActivity');
+
   const roomToParents = useAtomValue(roomToParentsAtom);
   const powerLevelsStateResult = usePowerLevelsState(spaceId);
   const powerLevels = usePowerLevels(powerLevelsStateResult.value);
@@ -129,9 +130,14 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ requestClose }, 
   );
   const roomToNotifications = useRoomsNotifications(allChild, roomToNotificationsAtom);
   const notifications = useRoomsTotalNotifications(roomToNotifications);
+  const unreadRooms = useRoomsUnread(allChild, unreadRoomsAtom);
+
+  const unreadOrNotification = (notifications && notifications.count > 0) || unreadRooms.size > 0;
+
+  const markAsRead = useMarkMultipleRoomsAsRead(allChild, roomToNotifications, unreadRooms);
 
   const handleMarkAsRead = () => {
-    // allChild.forEach((childRoomId) => markAsRead(mx, childRoomId, hideActivity));
+    markAsRead();
     requestClose();
   };
 
@@ -164,11 +170,11 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(({ requestClose }, 
           />
         )}
         <MenuItem
-          onClick={handleMarkAsRead}
+          onClick={unreadOrNotification ? handleMarkAsRead : undefined}
           size="300"
           after={<Icon size="100" src={Icons.CheckTwice} />}
           radii="300"
-          disabled={!notifications || notifications.count === 0}
+          disabled={!unreadOrNotification}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
             Mark as Read

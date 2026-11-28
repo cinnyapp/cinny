@@ -82,19 +82,24 @@ import { useGetRoomAvatar } from '../../../hooks/storage/useGetRoomAvatar';
 import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { useRoomsLatestEvent } from '../../../hooks/useRoomsLatestEvent';
+import { useMarkMultipleRoomsAsRead } from '../../../hooks/useMarkAsRead';
 
 type HomeMenuProps = {
   requestClose: () => void;
 };
 const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(({ requestClose }, ref) => {
   const orphanRooms = useHomeRooms();
-  const [hideActivity] = useSetting('hideActivity');
-  const roomsNotifications = useRoomsNotifications(orphanRooms, roomToNotificationsAtom);
-  const notifications = useRoomsTotalNotifications(roomsNotifications);
+
+  const roomToNotifications = useRoomsNotifications(orphanRooms, roomToNotificationsAtom);
+  const notifications = useRoomsTotalNotifications(roomToNotifications);
+  const unreadRooms = useRoomsUnread(orphanRooms, unreadRoomsAtom);
+
+  const unreadOrNotification = (notifications && notifications.count > 0) || unreadRooms.size > 0;
+
+  const markAsRead = useMarkMultipleRoomsAsRead(orphanRooms, roomToNotifications, unreadRooms);
 
   const handleMarkAsRead = () => {
-    // if (!unread) return;
-    // orphanRooms.forEach((rId) => markAsRead(mx, rId, hideActivity));
+    markAsRead();
     requestClose();
   };
 
@@ -102,11 +107,11 @@ const HomeMenu = forwardRef<HTMLDivElement, HomeMenuProps>(({ requestClose }, re
     <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
       <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
         <MenuItem
-          onClick={handleMarkAsRead}
+          onClick={unreadOrNotification ? handleMarkAsRead : undefined}
           size="300"
           after={<Icon size="100" src={Icons.CheckTwice} />}
           radii="300"
-          aria-disabled={!notifications || notifications.count === 0}
+          aria-disabled={!unreadOrNotification}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
             Mark as Read

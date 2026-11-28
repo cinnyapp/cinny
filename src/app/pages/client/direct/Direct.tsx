@@ -48,7 +48,6 @@ import { useDirectRooms } from './useDirectRooms';
 import { PageNav, PageNavContent, PageNavHeader } from '../../../components/page';
 import { useClosedNavCategoriesAtom } from '../../../state/hooks/closedNavCategories';
 import { stopPropagation } from '../../../utils/keyboard';
-import { useSetting } from '../../../state/hooks/settings';
 import {
   getRoomNotificationMode,
   useRoomsNotificationPreferencesContext,
@@ -68,19 +67,24 @@ import { useClient } from '../../../hooks/useClient';
 import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { useRoomsLatestEvent } from '../../../hooks/useRoomsLatestEvent';
+import { useMarkMultipleRoomsAsRead } from '../../../hooks/useMarkAsRead';
 
 type DirectMenuProps = {
   requestClose: () => void;
 };
 const DirectMenu = forwardRef<HTMLDivElement, DirectMenuProps>(({ requestClose }, ref) => {
-  const [hideActivity] = useSetting('hideActivity');
   const directRooms = useDirectRooms();
-  const roomsNotifications = useRoomsNotifications(directRooms, roomToNotificationsAtom);
-  const notifications = useRoomsTotalNotifications(roomsNotifications);
+
+  const roomToNotifications = useRoomsNotifications(directRooms, roomToNotificationsAtom);
+  const notifications = useRoomsTotalNotifications(roomToNotifications);
+  const unreadRooms = useRoomsUnread(directRooms, unreadRoomsAtom);
+
+  const unreadOrNotification = (notifications && notifications.count > 0) || unreadRooms.size > 0;
+
+  const markAsRead = useMarkMultipleRoomsAsRead(directRooms, roomToNotifications, unreadRooms);
 
   const handleMarkAsRead = () => {
-    // if (!unread) return;
-    // directRooms.forEach((rId) => markAsRead(mx, rId, hideActivity));
+    markAsRead();
     requestClose();
   };
 
@@ -88,11 +92,11 @@ const DirectMenu = forwardRef<HTMLDivElement, DirectMenuProps>(({ requestClose }
     <Menu ref={ref} style={{ maxWidth: toRem(160), width: '100vw' }}>
       <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
         <MenuItem
-          onClick={handleMarkAsRead}
+          onClick={unreadOrNotification ? handleMarkAsRead : undefined}
           size="300"
           after={<Icon size="100" src={Icons.CheckTwice} />}
           radii="300"
-          aria-disabled={!notifications || notifications.count === 0}
+          aria-disabled={!unreadOrNotification}
         >
           <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
             Mark as Read

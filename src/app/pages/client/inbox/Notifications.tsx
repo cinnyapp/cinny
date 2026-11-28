@@ -106,13 +106,17 @@ import {
 } from '../../../hooks/useObservableValue';
 import { Timeline } from '../../../../client/room';
 import { MessageContent } from '../../../components/MessageContent';
-import { getLatestEditEvent } from '../../../utils/room';
+import { getLatestEditEvent, getThreadId } from '../../../utils/room';
 import { RenderMessageContent } from '../../../components/RenderMessageContent';
 import { rContent } from '../../../../client/reader';
 import { redacted } from '../../../../client/room/relations';
+import { useMarkAsRead } from '../../../hooks/useMarkAsRead';
+import { useRoomNotifications } from '../../../state/hooks/roomNotifications';
+import { roomToNotificationsAtom } from '../../../state/room/roomToNotifications';
 
 type RoomNotificationsGroup = {
   roomId: string;
+  threadId?: string;
   notifications: NotificationChunk[];
 };
 type NotificationTimeline = {
@@ -130,14 +134,21 @@ const groupNotifications = (
   notifications.forEach((notification) => {
     if (!allowRooms.has(notification.room_id)) return;
 
+    const threadId = getThreadId(notification.event);
+
     const groupIndex = groups.length - 1;
     const lastAddedGroup: RoomNotificationsGroup | undefined = groups[groupIndex];
-    if (lastAddedGroup && notification.room_id === lastAddedGroup.roomId) {
+    if (
+      lastAddedGroup &&
+      notification.room_id === lastAddedGroup.roomId &&
+      threadId === lastAddedGroup.threadId
+    ) {
       lastAddedGroup.notifications.push(notification);
       return;
     }
     groups.push({
       roomId: notification.room_id,
+      threadId,
       notifications: [notification],
     });
   });
@@ -243,7 +254,11 @@ const useNotificationTimeline = (
 
       // Merge into the existing first group if it's the same room, so we
       // don't end up with two adjacent groups for the same room.
-      if (lastNewGroup && firstExistingGroup?.roomId === lastNewGroup.roomId) {
+      if (
+        lastNewGroup &&
+        firstExistingGroup?.roomId === lastNewGroup.roomId &&
+        firstExistingGroup.threadId === lastNewGroup.threadId
+      ) {
         const mergedGroup: RoomNotificationsGroup = {
           roomId: firstExistingGroup.roomId,
           notifications: [...lastNewGroup.notifications, ...firstExistingGroup.notifications],
@@ -428,23 +443,28 @@ function RoomNotifications({
 
 type RoomNotificationsGroupProps = {
   roomId: string;
+  threadId?: string;
   notifications: NotificationChunk[];
   getRoomName: GetRoomNameCallback;
   getRoomAvatar: GetRoomAvatarCallback;
-  hideActivity: boolean;
   children: ReactNode;
 };
 function RoomNotificationsGroupComp({
   roomId,
+  threadId,
   notifications,
   getRoomName,
   getRoomAvatar,
-  hideActivity,
   children,
 }: RoomNotificationsGroupProps) {
   const ct = useClient();
   const useAuthentication = useMediaAuthentication();
   const unread = useRoomUnread(roomId, unreadRoomsAtom);
+  const notification = useRoomNotifications(roomId, roomToNotificationsAtom);
+  const notificationCount =
+    (threadId ? notification?.threads.get(threadId) : notification)?.notification_count ?? 0;
+
+  const unreadOrNotification = unread || notificationCount > 0;
 
   const users = useMemo(
     () => Array.from(new Set(notifications.map((n) => n.event.sender))),
@@ -461,14 +481,16 @@ function RoomNotificationsGroupComp({
 
   const membersAPI = useRoomMembers(roomId, users);
 
+  const markAsRead = useMarkAsRead(roomId, threadId);
+
   const handleMarkAsRead = () => {
-    // markAsRead(mx, room.roomId, hideActivity);
+    markAsRead();
   };
 
   return (
     <Box direction="Column" gap="200">
       <Header size="300">
-        <Box gap="200" grow="Yes">
+        <Box gap="200" grow="Yes" alignItems="Center">
           <Avatar size="200" radii="300">
             <RoomAvatar
               roomId={roomId}
@@ -495,9 +517,10 @@ function RoomNotificationsGroupComp({
           <Text size="H4" truncate>
             {getRoomName(roomId) ?? 'Unknown'}
           </Text>
+          {threadId && <Icon src={Icons.Thread} size="50" />}
         </Box>
         <Box shrink="No">
-          {unread && (
+          {(threadId ? notificationCount > 0 : unreadOrNotification) && (
             <Chip
               variant="Primary"
               radii="Pill"
@@ -536,14 +559,8 @@ const DEFAULT_REFRESH_MS = 7000;
 export function Notifications() {
   const ct = useClient();
 
-  const {
-    hideActivity,
-    mediaAutoLoad,
-    urlPreview,
-    legacyUsernameColor,
-    hour24Clock,
-    dateFormatString,
-  } = useSettings();
+  const { mediaAutoLoad, urlPreview, legacyUsernameColor, hour24Clock, dateFormatString } =
+    useSettings();
   const screenSize = useScreenSizeContext();
   const mDirects = useAtomValue(mDirectAtom);
 
@@ -700,10 +717,10 @@ export function Notifications() {
                       >
                         <RoomNotificationsGroupComp
                           roomId={group.roomId}
+                          threadId={group.threadId}
                           notifications={group.notifications}
                           getRoomName={getRoomName}
                           getRoomAvatar={getRoomAvatar}
-                          hideActivity={hideActivity}
                         >
                           <RoomNotifications
                             roomId={group.roomId}

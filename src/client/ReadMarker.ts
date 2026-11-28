@@ -41,7 +41,7 @@ export class ReadMarker {
   public async markAsRead(
     roomId: string,
     receiptType: ReceiptType,
-    eventId: string,
+    eventId?: string,
     threadId?: string
   ): Promise<void> {
     await this.queue.enqueue(() => this.read(roomId, receiptType, eventId, threadId));
@@ -50,18 +50,22 @@ export class ReadMarker {
   private async read(
     roomId: string,
     receiptType: ReceiptType,
-    eventId: string,
+    eventId?: string,
     threadId?: string
   ): Promise<void> {
     const retrier = new MatrixRequestRetrier(sleep);
 
     // clear locally, sending thread event receipt with "main" as threadId errors.
-    await this.updateStore(roomId, receiptType, eventId, threadId);
+    if (eventId) await this.updateStore(roomId, receiptType, eventId, threadId);
 
     const [, latestEventId] = await to(this.fetchTrueLatestEventId(roomId, threadId));
 
+    const targetEventId = latestEventId ?? eventId;
+
+    if (!targetEventId) return;
+
     const endpoint = postReceiptEventId({
-      pathParams: { roomId, receiptType, eventId: latestEventId ?? eventId },
+      pathParams: { roomId, receiptType, eventId: targetEventId },
       body: {
         thread_id: threadId ?? ThreadId.Main,
       },

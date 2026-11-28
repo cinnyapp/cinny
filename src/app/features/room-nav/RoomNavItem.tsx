@@ -42,7 +42,6 @@ import { stopPropagation } from '../../utils/keyboard';
 import { getMatrixToRoom } from '../../plugins/matrix-to';
 import { getViaServers } from '../../plugins/via-servers';
 import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
-import { useSetting } from '../../state/hooks/settings';
 import { useOpenRoomSettings } from '../../state/hooks/roomSettings';
 import { useSpaceOptionally } from '../../hooks/useSpace';
 import {
@@ -66,18 +65,19 @@ import { livekitSupport } from '../../hooks/useLivekitSupport';
 import { webRTCSupported } from '../../utils/rtc';
 import { getJoinRoomStateId } from '../../../client/storage/collections';
 import { isCallRoom } from '../../utils/room';
+import { useMarkAsRead } from '../../hooks/useMarkAsRead';
 
 type RoomNavItemMenuProps = {
   roomId: string;
   requestClose: () => void;
   notificationMode?: RoomNotificationMode;
   notifications?: TotalNotifications;
+  unread?: boolean;
 };
 const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
-  ({ roomId, requestClose, notificationMode, notifications }, ref) => {
+  ({ roomId, requestClose, notificationMode, notifications, unread }, ref) => {
     const ct = useClient();
     const { userId } = ct.session;
-    const [hideActivity] = useSetting('hideActivity');
     const powerLevelState = usePowerLevelsState(roomId);
     const powerLevels = usePowerLevels(powerLevelState.value);
     const creators = useRoomCreators(roomId);
@@ -86,11 +86,13 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
     const canInvite = permissions.action('invite', userId);
     const openRoomSettings = useOpenRoomSettings();
     const spaceId = useSpaceOptionally();
+    const markAsRead = useMarkAsRead(roomId);
+    const unreadOrNotification = (notifications && notifications.count > 0) || unread;
 
     const [invitePrompt, setInvitePrompt] = useState(false);
 
     const handleMarkAsRead = () => {
-      // markAsRead(mx, roomId, hideActivity);
+      markAsRead();
       requestClose();
     };
 
@@ -127,7 +129,7 @@ const RoomNavItemMenu = forwardRef<HTMLDivElement, RoomNavItemMenuProps>(
             size="300"
             after={<Icon size="100" src={Icons.CheckTwice} />}
             radii="300"
-            disabled={!notifications || notifications.count === 0}
+            disabled={!unreadOrNotification}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
               Mark as Read
@@ -447,6 +449,7 @@ export function RoomNavItem({
                   requestClose={() => setMenuAnchor(undefined)}
                   notificationMode={notificationMode}
                   notifications={notifications}
+                  unread={unread}
                 />
               </FocusTrap>
             }

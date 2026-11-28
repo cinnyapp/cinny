@@ -92,7 +92,6 @@ import { stopPropagation } from '../../../utils/keyboard';
 import { getMatrixToRoom } from '../../../plugins/matrix-to';
 import { getViaServers } from '../../../plugins/via-servers';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
-import { useSetting } from '../../../state/hooks/settings';
 import { useOpenSpaceSettings } from '../../../state/hooks/spaceSettings';
 import { useRoomCreators } from '../../../hooks/useRoomCreators';
 import { useRoomPermissions } from '../../../hooks/useRoomPermissions';
@@ -105,23 +104,32 @@ import {
   useRoomsNotifications,
   useRoomsTotalNotifications,
 } from '../../../state/hooks/roomNotifications';
-import { roomToNotificationsAtom } from '../../../state/room/roomToNotifications';
+import {
+  RoomToNotifications,
+  roomToNotificationsAtom,
+} from '../../../state/room/roomToNotifications';
 import { mxcToHttp } from '../../../../client/mxcToHttp';
 import { useRoomHeroes } from '../../../hooks/storage/useRoomHeros';
 import { GetRoomAvatarCallback, useGetRoomAvatar } from '../../../hooks/storage/useGetRoomAvatar';
 import { useRoomsUnread } from '../../../state/hooks/unread';
 import { unreadRoomsAtom } from '../../../state/room/roomToUnread';
+import { useMarkMultipleRoomsAsRead } from '../../../hooks/useMarkAsRead';
 
 type SpaceMenuProps = {
   spaceId: string;
   requestClose: () => void;
   onUnpin?: (roomId: string) => void;
-  notifications?: TotalNotifications;
+  childRooms: string[];
+  roomToNotifications: RoomToNotifications;
+  notifications: TotalNotifications;
+  unreadRooms: Set<string>;
 };
 const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
-  ({ spaceId, requestClose, onUnpin, notifications }, ref) => {
+  (
+    { spaceId, requestClose, onUnpin, childRooms, notifications, roomToNotifications, unreadRooms },
+    ref
+  ) => {
     const ct = useClient();
-    const [hideActivity] = useSetting('hideActivity');
     const powerLevelState = usePowerLevelsState(spaceId);
     const powerLevels = usePowerLevels(powerLevelState.value);
     const creators = useRoomCreators(spaceId);
@@ -132,8 +140,12 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
 
     const [invitePrompt, setInvitePrompt] = useState(false);
 
+    const unreadOrNotification = (notifications && notifications.count > 0) || unreadRooms.size > 0;
+
+    const markAsRead = useMarkMultipleRoomsAsRead(childRooms, roomToNotifications, unreadRooms);
+
     const handleMarkAsRead = () => {
-      // allChild.forEach((childRoomId) => markAsRead(mx, childRoomId, hideActivity));
+      markAsRead();
       requestClose();
     };
 
@@ -171,11 +183,11 @@ const SpaceMenu = forwardRef<HTMLDivElement, SpaceMenuProps>(
         )}
         <Box direction="Column" gap="100" style={{ padding: config.space.S100 }}>
           <MenuItem
-            onClick={handleMarkAsRead}
+            onClick={unreadOrNotification ? handleMarkAsRead : undefined}
             size="300"
             after={<Icon size="100" src={Icons.CheckTwice} />}
             radii="300"
-            disabled={!notifications || notifications.count === 0}
+            aria-disabled={!unreadOrNotification}
           >
             <Text style={{ flexGrow: 1 }} as="span" size="T300" truncate>
               Mark as Read
@@ -523,7 +535,10 @@ function SpaceTab({
                 spaceId={spaceId}
                 requestClose={() => setMenuAnchor(undefined)}
                 onUnpin={onUnpin}
+                childRooms={childRooms}
                 notifications={notifications}
+                roomToNotifications={roomsNotifications}
+                unreadRooms={unreadRooms}
               />
             </FocusTrap>
           }
